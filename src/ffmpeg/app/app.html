@@ -1,0 +1,31 @@
+<template>
+    <main>
+        <section class="tracks-summary">
+            <template for:each={audioTracksArray} for:item="track">
+                <article class="track track--summary" key={track.id}>
+                    {track.title}
+                </article>
+            </template>
+        </section>
+        <div class="editor-container">
+            <header>
+                <ffmpeg-timeline ontimelinedragstart={onTimelineDragStart} ontimelinedragend={onTimelineDragEnd}></ffmpeg-timeline>
+            </header>
+            <section class="editor">
+                <section class="waveforms-container" id="tracks">
+                    <template for:each={audioTracksArray} for:item="track">
+                        <article class="track" key={track.id}>
+                            <ffmpeg-audiotrack  track={track}></ffmpeg-audiotrack>
+                        </article>
+                    </template>
+                </section>
+                <template if:true={cursorInWindow}>
+                    <ffmpeg-cursor></ffmpeg-cursor>
+                </template>
+                <template if:true={hasVirtualCursor}>
+                    <ffmpeg-cursor virtual></ffmpeg-cursor>
+                </template>
+            </section>
+        </div>
+    </main>
+</template>

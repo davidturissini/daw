@@ -1,0 +1,10 @@
+<template>
+    <template for:each={ticks} for:item="tick">
+        <span class="tick" style={tick.style} key={tick.time.milliseconds}>
+            <template if:true={tick.renderLabel}>
+                <ffmpeg-timelabel class="tick-label" time={tick.time}></ffmpeg-timelabel>
+            </template>
+            <span class={tick.indicatorClassName}></span>
+        </span>
+    </template>
+</template>

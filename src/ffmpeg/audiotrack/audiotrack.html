@@ -1,0 +1,8 @@
+<template>
+    <template if:true={isLoading}>
+        <ffmpeg-busy message="Loading track"></ffmpeg-busy>
+    </template>
+    <template if:false={isLoading}>
+        <ffmpeg-waveform class="waveform" track={track}></ffmpeg-waveform>
+    </template>
+</template>

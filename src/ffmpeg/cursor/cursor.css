@@ -1,0 +1,15 @@
+:host {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #000;
+    z-index: 5;
+    pointer-events: none;
+}
+
+:host(.cursor--virtual) {
+    background: rgba(0, 0, 0, 0.4);
+}

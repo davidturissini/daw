@@ -1,0 +1,34 @@
+:host {
+    display: block;
+    height: 4rem;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+}
+
+.tick {
+    display: inline-flex;
+    flex-direction: column;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    font-size: 1rem;
+}
+
+.tick-indicator {
+    width: 1px;
+    height: 11px;
+    background: #000;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.tick-indicator--second {
+    height: 20px;
+}
+
+.tick-label {
+    transform: translateX(-50%);
+    margin-bottom: 0.5rem;
+}

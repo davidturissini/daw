@@ -1,0 +1,42 @@
+:host {
+    display: block;
+    font-family: Arial;
+}
+
+:host(.editor--drag) main {
+    cursor: -webkit-grabbing;
+}
+
+main {
+    display: flex;
+    cursor: pointer;
+}
+
+.track {
+    height: 120px;
+    background: #f1f1f1;
+}
+
+.track--summary {
+    padding: 1rem;
+    box-sizing: border-box;
+    border-right: 1px solid #d8d8d8;
+}
+
+.tracks-summary {
+    margin-top: 4rem;
+    flex: 0 0 200px;
+}
+
+.editor {
+    position: relative;
+    z-index: 1;
+}
+
+.editor-container {
+    flex: 1 0 auto;
+}
+
+.waveforms-container {
+    overflow: hidden;
+}
