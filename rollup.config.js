@@ -2,10 +2,14 @@ const rollupLwcCompilerPlugin = require('@lwc/rollup-plugin');
 const rollupPluginCommonJS = require('rollup-plugin-commonjs');
 const nodeResolve = require('rollup-plugin-node-resolve');
 const rollupPluginAlias = require('rollup-plugin-alias');
+const rollupPluginBuiltIns = require('rollup-plugin-node-builtins');
 const path = require('path');
 
 const baseInputConfig = {
     plugins: [
+        rollupPluginBuiltIns({
+            crypto: true
+        }),
         nodeResolve({
             jsnext: true,
             main: true

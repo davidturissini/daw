@@ -1,0 +1,9 @@
+<template>
+    <template if:true={hasSource}>
+        <ffmpeg-waveform
+            style={waveformStyle}
+            offset={segment.sourceOffset}
+            source={source}>
+        </ffmpeg-waveform>
+    </template>
+</template>

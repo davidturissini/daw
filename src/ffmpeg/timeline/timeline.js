@@ -37,7 +37,7 @@ export default class Timeline extends LightningElement {
     @track ticks = [];
 
     getTickValues(range) {
-        const tickDistanceMs = 300000;
+        const tickDistanceMs = 1000;
         const remainder = (range.start.milliseconds % tickDistanceMs);
         const lower = remainder === 0 ? range.start.milliseconds : range.start.milliseconds + (tickDistanceMs - (range.start.milliseconds  % tickDistanceMs));
         const upper = Math.floor(range.start.milliseconds + range.duration.milliseconds);
@@ -58,7 +58,7 @@ export default class Timeline extends LightningElement {
         const tickValues = this.getTickValues(visibleRange);
         const tickWidth = width / tickValues.length;
         const startOffsetMS = tickValues[0] - startMS;
-        const offsetPx = tickWidth * (startOffsetMS / 300000);
+        const offsetPx = tickWidth * (startOffsetMS / 1000);
 
         for(let i = 0; i < tickValues.length; i += 1) {
             const millisecond = tickValues[i];

@@ -1,8 +1,9 @@
 import { LightningElement, wire, track } from 'lwc';
 import { getFFMPEG } from './../../wire/ffmpeg';
-import { audioTracks as audioTracksWire, fetchAudioTrack } from './../../wire/audiotracks';
 import { editorSym, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
 import { Time } from '../../util/time';
+import { audioTracks, createTrackAndSourceFile } from './../../wire/audiotrack';
+import { generateId } from './../../util/uniqueid';
 
 export default class App extends LightningElement {
     frame = null;
@@ -23,14 +24,11 @@ export default class App extends LightningElement {
      * Audio Tracks
      *
     */
-    @track audioTracks = {};
-    @wire(audioTracksWire, {})
-    foo({ data }) {
-        this.audioTracks = data;
-    }
+    @wire(audioTracks, {})
+    audioTracks;
 
     get audioTracksArray() {
-        return Object.values(this.audioTracks);
+        return this.audioTracks.data.toList().toArray();
     }
 
     /*
@@ -99,25 +97,56 @@ export default class App extends LightningElement {
         this.template.host.classList.remove('editor--drag');
     }
 
+    onDragOver = (evt) => {
+        evt.preventDefault();
+    }
+
+    onDrop = (evt) => {
+        evt.preventDefault();
+        const { files } = evt.dataTransfer;
+        for(let i = 0, len = files.length; i < len; i += 1) {
+            const sourceId = generateId();
+            const trackId = generateId();
+            createTrackAndSourceFile(
+                trackId,
+                sourceId,
+                files[i],
+                new Time(1000)
+            );
+        }
+    }
+
     /*
      *
      * Template
      *
     */
     get hasVirtualCursor() {
-        return this.editor && this.editor.data.virtualCursor !== null;
+        return (
+            this.editor && this.editor.data.virtualCursor !== null &&
+            this.timeInWindow(this.editor.data.virtualCursor)
+        );
+    }
+
+    timeInWindow(time) {
+        if(this.editor) {
+            const { visibleRange } = this.editor.data;
+            const { milliseconds: timeMilliseconds } = time;
+            const startMilliseconds = visibleRange.start.milliseconds;
+            const endMilliseconds = startMilliseconds + visibleRange.duration.milliseconds;
+            return (
+                timeMilliseconds >= startMilliseconds &&
+                timeMilliseconds <= endMilliseconds
+            );
+        }
+
+        return false;
     }
 
     get cursorInWindow() {
         if(this.editor) {
-            const { cursor, visibleRange } = this.editor.data;
-            const { milliseconds: cursorMilliseconds } = cursor;
-            const startMilliseconds = visibleRange.start.milliseconds;
-            const endMilliseconds = startMilliseconds + visibleRange.duration.milliseconds;
-            return (
-                cursorMilliseconds >= startMilliseconds &&
-                cursorMilliseconds <= endMilliseconds
-            );
+            const { cursor } = this.editor.data;
+            return this.timeInWindow(cursor);
         }
 
         return false;
@@ -129,16 +158,14 @@ export default class App extends LightningElement {
      *
     */
     connectedCallback() {
-        fetchAudioTrack(
-            'mousetalgia',
-            'Mousetalgia',
-            'https://cdn.glitch.com/1c5226ac-9c37-4921-82e8-3b70672e4d46%2Fmousetalgia.mp3?154533585688'
-        );
-
         window.addEventListener('resize', this.updateFrame);
         this.addEventListener('mousemove', this.onMouseMove);
         this.addEventListener('mouseleave', this.onMouseLeave);
         this.addEventListener('click', this.onClick);
+
+        this.draggable = true;
+        this.addEventListener('dragover', this.onDragOver);
+        this.addEventListener('drop', this.onDrop);
     }
 
     renderedCallback() {

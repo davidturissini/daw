@@ -2,4 +2,14 @@
     overflow: hidden;
     display: block;
     height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+ffmpeg-audiotracksegment {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
 }

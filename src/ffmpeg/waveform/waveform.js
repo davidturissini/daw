@@ -1,6 +1,9 @@
-import { LightningElement, api, wire } from 'lwc';
-import { waveformSym } from './../../wire/waveform';
+import { LightningElement, api, wire, track } from 'lwc';
+import { waveformSym, loadWaveform, WaveformState } from './../../wire/waveform';
 import { editorSym } from './../../wire/editor';
+import { AudioSourceState } from '../../wire/audiosource';
+
+const waveformSource = Symbol();
 
 export default class Waveform extends LightningElement {
     /*
@@ -11,33 +14,47 @@ export default class Waveform extends LightningElement {
     @wire(editorSym, {})
     editor;
 
+    @api offset;
 
-    @api track;
-
-    get trackId() {
-        return this.track.id;
+    @api
+    get source() {
+        return this[waveformSource];
     }
 
-    @wire(waveformSym, { trackId: '$trackId' })
-    waveform;
-
-    get isReady() {
-        return this.waveform && this.waveform.data !== undefined;
-    }
-
-    get waveformBlobUrl() {
-        return this.waveform.data.url;
-    }
-
-    get waveformWidth() {
-        if (!this.editor) {
-            return 0;
+    set source(value) {
+        if (
+            !this.waveforms.data.has(value.id) &&
+            value.state === AudioSourceState.READY
+        ) {
+            loadWaveform(value);
         }
-        return this.editor.data.durationToWidth(this.track.duration);
+
+        this[waveformSource] = value;
     }
 
-    connectedCallback() {
-        this.template.host.style.width = `${this.waveformWidth}px`;
+    @wire(waveformSym, {})
+    waveforms;
+
+    get waveform() {
+        return this.waveforms.data.get(this.source.id);
     }
 
+    get hasWaveform() {
+        return !!this.waveform;
+    }
+
+    get waveformReady() {
+        return this.waveform.state === WaveformState.READY;
+    }
+
+    get waveformStyle() {
+        const width = this.editor.data.durationToWidth(this.source.duration);
+        const sourceOffsetWidth = this.editor.data.durationToWidth(this.offset);
+
+        return `transform: translateX(-${sourceOffsetWidth}px); width: ${width}px`;
+    }
+
+    get canvas() {
+        return this.template.querySelector('canvas');
+    }
 }

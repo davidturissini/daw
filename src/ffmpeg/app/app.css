@@ -1,6 +1,8 @@
 :host {
-    display: block;
+    display: flex;
+    flex-direction: column;
     font-family: Arial;
+    height: 100vh;
 }
 
 :host(.editor--drag) main {
@@ -10,10 +12,11 @@
 main {
     display: flex;
     cursor: pointer;
+    flex: 1 0 auto;
 }
 
 .track {
-    height: 120px;
+    height: 60px;
     background: #f1f1f1;
 }
 

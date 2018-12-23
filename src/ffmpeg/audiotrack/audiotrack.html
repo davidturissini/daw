@@ -1,8 +1,10 @@
 <template>
-    <template if:true={isLoading}>
-        <ffmpeg-busy message="Loading track"></ffmpeg-busy>
-    </template>
-    <template if:false={isLoading}>
-        <ffmpeg-waveform class="waveform" track={track}></ffmpeg-waveform>
+    <template for:each={trackSegments} for:item="trackSegment">
+        <ffmpeg-audiotracksegment
+            style={trackSegment.style}
+            frame={trackSegment.frame}
+            segment={trackSegment.segment}
+            key={trackSegment.key}>
+        </ffmpeg-audiotracksegment>
     </template>
 </template>

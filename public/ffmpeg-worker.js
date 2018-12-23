@@ -7023,7 +7023,7 @@
         printErr: print,
         files: message.files || [],
         arguments: message.arguments || [],
-        TOTAL_MEMORY: 268435456
+        TOTAL_MEMORY: 2000000000
         // Can play around with this option - must be a power of 2
         // TOTAL_MEMORY: 268435456
       };

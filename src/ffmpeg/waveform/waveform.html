@@ -1,8 +1,10 @@
 <template>
-    <template if:false={isReady}>
-        <ffmpeg-busy message="Generating waveform"></ffmpeg-busy>
-    </template>
-    <template if:true={isReady}>
-        <img width={waveformWidth} src={waveformBlobUrl} />
-    </template>
+   <template if:true={hasWaveform}>
+      <template if:false={waveformReady}>
+         Loading Waveform
+      </template>
+      <template if:true={waveformReady}>
+         <img style={waveformStyle} src={waveform.url} />
+      </template>
+   </template>
 </template>
