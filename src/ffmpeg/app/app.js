@@ -1,5 +1,4 @@
 import { LightningElement, wire, track } from 'lwc';
-import { getFFMPEG } from './../../wire/ffmpeg';
 import { editorSym, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
 import { Time } from '../../util/time';
 import { audioTracks, createTrackAndSourceFile } from './../../wire/audiotrack';
@@ -7,13 +6,6 @@ import { generateId } from './../../util/uniqueid';
 
 export default class App extends LightningElement {
     frame = null;
-    /*
-     *
-     * FFMPEG
-     *
-    */
-    @wire(getFFMPEG, {})
-    ffmpeg;
 
     get ffmpegLoaded() {
         return this.ffmpeg.data !== undefined;

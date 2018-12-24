@@ -29292,13 +29292,263 @@
 	  shadowAttribute: "ffmpeg-controls_controls"
 	};
 
+	let id = 0;
+	function generateId() {
+	  id += 1;
+	  return id + '';
+	}
+
+	const tracksSubject = new BehaviorSubject(new Map$1());
+
+	class AudioTrack$1 extends Record({
+	  id: null,
+	  segments: new List()
+	}) {}
+
+	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
+	  const track = createTrack(trackId, []);
+	  const secondTrackId = generateId();
+	  const secondTrack = createTrack(secondTrackId, []);
+	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
+	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
+	      return segments.push({
+	        sourceOffset: new Time(1000),
+	        duration: new Time(2000),
+	        offset: trackOffset,
+	        sourceId
+	      });
+	    }).updateIn([secondTrackId, 'segments'], segments => {
+	      return segments.push({
+	        sourceOffset: new Time(3000),
+	        duration: new Time(2000),
+	        offset: new Time(3000),
+	        sourceId
+	      });
+	    }));
+	  });
+	}
+	function createTrack(id, segments) {
+	  const audioTrack = new AudioTrack$1({
+	    id,
+	    segments: new List(segments)
+	  });
+	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
+	  return audioTrack;
+	}
+	const audioTracks = Symbol();
+	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
+
+	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
+	  const {
+	    sampleRate,
+	    numberOfChannels
+	  } = audioBuffer;
+	  const durationSeconds = durationMilliseconds / 1000;
+	  const startSeconds = startMilliseconds / 1000;
+	  const sub = new AudioBuffer({
+	    length: Math.ceil(durationSeconds * sampleRate),
+	    numberOfChannels,
+	    sampleRate
+	  });
+	  const startByte = startSeconds * sampleRate;
+	  const durationBytes = durationSeconds * sampleRate;
+	  const endBytes = startByte + durationBytes;
+
+	  for (let i = 0; i < numberOfChannels; i += 1) {
+	    const channelData = sub.getChannelData(i);
+	    const subset = audioBuffer.getChannelData(i).slice(startByte, endBytes);
+	    channelData.set(subset, 0);
+	  }
+
+	  return sub;
+	}
+	function join(audioBuffers) {
+	  const [first, ...rest] = audioBuffers;
+	  return rest.reduce((seed, audioBuffer) => {
+	    const {
+	      numberOfChannels
+	    } = seed;
+	    const buffer = new AudioBuffer({
+	      length: seed.length + audioBuffer.length,
+	      sampleRate: seed.sampleRate,
+	      numberOfChannels
+	    });
+
+	    for (let i = 0; i < numberOfChannels; i += 1) {
+	      const channelData = buffer.getChannelData(i);
+	      channelData.set(seed.getChannelData(i), 0);
+	      channelData.set(audioBuffer.getChannelData(i), seed.length);
+	    }
+
+	    return buffer;
+	  }, first);
+	}
+	function silence(sampleRate, numberOfChannels, milliseconds) {
+	  const seconds = milliseconds / 1000;
+	  return new AudioBuffer({
+	    length: Math.ceil(sampleRate * seconds),
+	    sampleRate,
+	    numberOfChannels
+	  });
+	}
+	function mix(audioBuffers) {
+	  const data = audioBuffers.reduce((seed, audioBuffer) => {
+	    if (seed.length < audioBuffer.length) {
+	      seed.length = audioBuffer.length;
+	    }
+
+	    if (seed.numberOfChannels < audioBuffer.numberOfChannels) {
+	      seed.numberOfChannels = audioBuffer.numberOfChannels;
+	    }
+
+	    if (seed.sampleRate === null) {
+	      seed.sampleRate = audioBuffer.sampleRate;
+	    }
+
+	    return seed;
+	  }, {
+	    length: 0,
+	    numberOfChannels: 0,
+	    sampleRate: null,
+	    sources: []
+	  });
+	  const context = new OfflineAudioContext(data.numberOfChannels, data.length, data.sampleRate);
+	  audioBuffers.forEach(audioBuffer => {
+	    const source = context.createBufferSource();
+	    source.buffer = audioBuffer;
+	    source.connect(context.destination);
+	    source.start();
+	  });
+	  return context.startRendering();
+	}
+
+	/*
+	 *
+	 *
+	 * Renders audio data from an audio source to a segment
+	 * Property offsets underlying audio based on cursor position
+	 *
+	 */
+
+	function renderSegment(segment, audioSource, startTime
+	/* global start */
+	, duration
+	/* global duration */
+	) {
+	  const {
+	    milliseconds: cursorMilliseconds
+	  } = startTime;
+	  const {
+	    sourceOffset,
+	    duration: segmentDuration,
+	    offset
+	  } = segment;
+	  const {
+	    milliseconds: offsetMilliseconds
+	  } = offset;
+	  const {
+	    milliseconds: segmentDurationMilliseconds
+	  } = segmentDuration;
+	  const playbackEndMs = duration.milliseconds + startTime.milliseconds;
+	  const segmentEndMilliseconds = offsetMilliseconds + segmentDurationMilliseconds;
+	  const cursorDiff = offsetMilliseconds > cursorMilliseconds ? 0 : cursorMilliseconds - offsetMilliseconds;
+	  const durationDiff = segmentEndMilliseconds < playbackEndMs ? 0 : segmentEndMilliseconds - playbackEndMs;
+	  return {
+	    audio: subbuffer(audioSource.audio, sourceOffset.milliseconds + cursorDiff, segmentDuration.milliseconds - durationDiff - cursorDiff),
+	    offset,
+	    segmentDuration
+	  };
+	}
+	/*
+	 *
+	 * Adds silent audio buffers between rendered segments
+	 *
+	 */
+
+
+	function fillRenderedSegments(renderedSegments, startTime) {
+	  const {
+	    milliseconds: cursorMilliseconds
+	  } = startTime;
+	  return renderedSegments.reduce((seed, renderedSegment, index) => {
+	    const previous = seed[index - 1];
+	    const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
+	    const startMs = renderedSegment.offset.milliseconds;
+	    const diff = startMs - previousEndMs;
+
+	    if (diff > 0) {
+	      seed.push(silence(renderedSegment.audio.sampleRate, renderedSegment.audio.numberOfChannels, diff));
+	    }
+
+	    seed.push(renderedSegment.audio);
+	    return seed;
+	  }, []);
+	}
+
+	function segmentInTimeRange(segment, startTime, duration) {
+	  const {
+	    milliseconds: cursorMilliseconds
+	  } = startTime;
+	  const {
+	    milliseconds: playbackDurationMilliseconds
+	  } = duration;
+	  const playbackEndMilliseconds = cursorMilliseconds + playbackDurationMilliseconds;
+	  const startMilliseconds = segment.offset.milliseconds;
+	  const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
+	  return startMilliseconds >= cursorMilliseconds && startMilliseconds < playbackEndMilliseconds || endMilliseconds <= playbackEndMilliseconds && endMilliseconds >= cursorMilliseconds;
+	}
+	/*
+	 *
+	 *
+	 * Renders a track to a playable AudioBuffer
+	 *
+	 */
+
+
+	function renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration) {
+	  const filteredSegments = audioTrack.segments.filter(segment => {
+	    return segmentInTimeRange(segment, start, duration);
+	  });
+
+	  if (filteredSegments.size === 0) {
+	    return null;
+	  }
+
+	  const renderedSegments = filteredSegments.map(segment => {
+	    const {
+	      sourceId
+	    } = segment;
+	    return renderSegment(segment, audioSources$$1.get(sourceId), start, duration);
+	  }).toArray();
+	  const filled = fillRenderedSegments(renderedSegments, start);
+	  return join(filled);
+	}
+
+	function play(start, duration, audioTracks, audioSources$$1) {
+	  const audioBuffers = audioTracks.map(audioTrack => {
+	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
+	  }).filter(audioBuffer => {
+	    return audioBuffer !== null;
+	  }).toList().toJS();
+	  mix(audioBuffers).then(buffer => {
+	    const source = audioContext.createBufferSource();
+	    source.buffer = buffer;
+	    source.connect(audioContext.destination);
+	    source.start();
+	  });
+	}
+
 	class Controls extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.editor = void 0;
+	    this.audioTracks = void 0;
+	    this.audioSources = void 0;
 	  }
 
-	  onPlayClick() {}
+	  onPlayClick() {
+	    play(this.editor.data.cursor, new Time(2000), this.audioTracks.data, this.audioSources.data);
+	  }
 
 	}
 
@@ -29306,6 +29556,16 @@
 	  wire: {
 	    editor: {
 	      adapter: editorSym,
+	      params: {},
+	      static: {}
+	    },
+	    audioTracks: {
+	      adapter: audioTracks,
+	      params: {},
+	      static: {}
+	    },
+	    audioSources: {
+	      adapter: audioSources,
 	      params: {},
 	      static: {}
 	    }
@@ -29408,48 +29668,10 @@
 	  shadowAttribute: "ffmpeg-app_app"
 	};
 
-	const tracksSubject = new BehaviorSubject(new Map$1());
-
-	class AudioTrack$1 extends Record({
-	  id: null,
-	  segments: new List()
-	}) {}
-
-	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
-	  const track = createTrack(trackId, []);
-	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
-	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
-	      return segments.push({
-	        sourceOffset: new Time(1000),
-	        duration: new Time(audioSource.duration.milliseconds - 2000),
-	        offset: trackOffset,
-	        sourceId
-	      });
-	    }));
-	  });
-	}
-	function createTrack(id, segments) {
-	  const audioTrack = new AudioTrack$1({
-	    id,
-	    segments: new List(segments)
-	  });
-	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
-	  return audioTrack;
-	}
-	const audioTracks = Symbol();
-	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
-
-	let id = 0;
-	function generateId() {
-	  id += 1;
-	  return id + '';
-	}
-
 	class App extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.frame = null;
-	    this.ffmpeg = void 0;
 	    this.audioTracks = void 0;
 	    this.editor = void 0;
 
@@ -29614,11 +29836,6 @@
 
 	engine_11(App, {
 	  wire: {
-	    ffmpeg: {
-	      adapter: getFFMPEG,
-	      params: {},
-	      static: {}
-	    },
 	    audioTracks: {
 	      adapter: audioTracks,
 	      params: {},
