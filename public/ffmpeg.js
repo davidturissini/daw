@@ -29037,6 +29037,26 @@
 	    this.frame = void 0;
 	    this.editor = void 0;
 	    this.sources = void 0;
+
+	    this.onDrag = evt => {
+	      const {
+	        editor,
+	        segment
+	      } = this;
+	      const {
+	        dx
+	      } = evt;
+	      const time = editor.data.pixelToTime(dx);
+	      const event = new CustomEvent('segmentmove', {
+	        composed: false,
+	        bubbles: true,
+	        detail: {
+	          time,
+	          segmentId: segment.id
+	        }
+	      });
+	      this.dispatchEvent(event);
+	    };
 	  }
 
 	  get hasSource() {
@@ -29056,6 +29076,21 @@
 	    const segmentOffset = editor.data.timeToPixel(segment.offset);
 	    const diff = frame.x - segmentOffset;
 	    return `transform: translateX(-${diff}px); width: ${frame.width + diff}px`;
+	  }
+
+	  /*
+	   *
+	   *
+	   * Lifecycle
+	   *
+	   *
+	  */
+	  connectedCallback() {
+	    interact(this.template.host).draggable({
+	      inertia: true,
+	      axis: 'y',
+	      onmove: this.onDrag
+	    });
 	  }
 
 	}
@@ -29090,9 +29125,13 @@
 	function tmpl$4($api, $cmp, $slotset, $ctx) {
 	  const {
 	    k: api_key,
+	    b: api_bind,
 	    c: api_custom_element,
 	    i: api_iterator
 	  } = $api;
+	  const {
+	    _m0
+	  } = $ctx;
 	  return api_iterator($cmp.trackSegments, function (trackSegment) {
 	    return api_custom_element("ffmpeg-audiotracksegment", _ffmpegAudiotracksegment, {
 	      style: trackSegment.style,
@@ -29100,7 +29139,10 @@
 	        "frame": trackSegment.frame,
 	        "segment": trackSegment.segment
 	      },
-	      key: api_key(3, trackSegment.key)
+	      key: api_key(3, trackSegment.key),
+	      on: {
+	        "segmentmove": _m0 || ($ctx._m0 = api_bind($cmp.handleSegmentMove))
+	      }
 	    }, []);
 	  });
 	}
@@ -29116,7 +29158,76 @@
 	  shadowAttribute: "ffmpeg-audiotrack_audiotrack"
 	};
 
-	class AudioTrack extends engine_5 {
+	let id = 0;
+	function generateId() {
+	  id += 1;
+	  return id + '';
+	}
+
+	const tracksSubject = new BehaviorSubject(new Map$1());
+
+	class AudioTrack extends Record({
+	  id: null,
+	  segments: new Map$1()
+	}) {}
+
+	class AudioTrackSegment$1 extends Record({
+	  id: null,
+	  sourceOffset: null,
+	  duration: null,
+	  offset: null,
+	  sourceId: null
+	}) {}
+
+	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
+	  const track = createTrack(trackId, []);
+	  const secondTrackId = generateId();
+	  const secondTrack = createTrack(secondTrackId, []);
+	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
+	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
+	      const segmentId = generateId();
+	      return segments.set(segmentId, new AudioTrackSegment$1({
+	        id: segmentId,
+	        sourceOffset: new Time(1000),
+	        duration: new Time(2000),
+	        offset: trackOffset,
+	        sourceId
+	      }));
+	    }).updateIn([secondTrackId, 'segments'], segments => {
+	      const segmentId = generateId();
+	      return segments.set(segmentId, new AudioTrackSegment$1({
+	        id: segmentId,
+	        sourceOffset: new Time(3000),
+	        duration: new Time(2000),
+	        offset: new Time(3000),
+	        sourceId
+	      }));
+	    }));
+	  });
+	}
+	function moveSegment(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const newOffset = new Time(segment.offset.milliseconds + time.milliseconds);
+	    return segment.set('offset', newOffset);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function createTrack(id, segments) {
+	  const segmentsMap = segments.reduce((seed, segment) => {
+	    return seed.set(segment.id, segment);
+	  }, new Map$1());
+	  const audioTrack = new AudioTrack({
+	    id,
+	    segments: segmentsMap
+	  });
+	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
+	  return audioTrack;
+	}
+	const audioTracks = Symbol();
+	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
+
+	class AudioTrack$1 extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.track = void 0;
@@ -29124,7 +29235,7 @@
 	  }
 
 	  get trackSegments() {
-	    return this.track.segments.toJS().filter(segment => {
+	    return this.track.segments.filter(segment => {
 	      const x = this.editor.data.timeToPixel(segment.offset);
 	      const width = this.editor.data.durationToWidth(segment.duration);
 	      const frameWidth = this.editor.data.frame.width;
@@ -29154,12 +29265,20 @@
 	        style: `transform: translateX(${frame.x}px); width:${width}px`,
 	        segment
 	      };
-	    });
+	    }).toList().toJS();
+	  }
+
+	  handleSegmentMove(evt) {
+	    const {
+	      time,
+	      segmentId
+	    } = evt.detail;
+	    moveSegment(this.track.id, segmentId, time);
 	  }
 
 	}
 
-	engine_11(AudioTrack, {
+	engine_11(AudioTrack$1, {
 	  publicProps: {
 	    track: {
 	      config: 0
@@ -29174,7 +29293,7 @@
 	  }
 	});
 
-	var _ffmpegAudiotrack = engine_10(AudioTrack, {
+	var _ffmpegAudiotrack = engine_10(AudioTrack$1, {
 	  tmpl: _tmpl$5
 	});
 
@@ -29291,52 +29410,6 @@
 	  hostAttribute: "ffmpeg-controls_controls-host",
 	  shadowAttribute: "ffmpeg-controls_controls"
 	};
-
-	let id = 0;
-	function generateId() {
-	  id += 1;
-	  return id + '';
-	}
-
-	const tracksSubject = new BehaviorSubject(new Map$1());
-
-	class AudioTrack$1 extends Record({
-	  id: null,
-	  segments: new List()
-	}) {}
-
-	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
-	  const track = createTrack(trackId, []);
-	  const secondTrackId = generateId();
-	  const secondTrack = createTrack(secondTrackId, []);
-	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
-	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
-	      return segments.push({
-	        sourceOffset: new Time(1000),
-	        duration: new Time(2000),
-	        offset: trackOffset,
-	        sourceId
-	      });
-	    }).updateIn([secondTrackId, 'segments'], segments => {
-	      return segments.push({
-	        sourceOffset: new Time(3000),
-	        duration: new Time(2000),
-	        offset: new Time(3000),
-	        sourceId
-	      });
-	    }));
-	  });
-	}
-	function createTrack(id, segments) {
-	  const audioTrack = new AudioTrack$1({
-	    id,
-	    segments: new List(segments)
-	  });
-	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
-	  return audioTrack;
-	}
-	const audioTracks = Symbol();
-	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
 
 	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
 	  const {
@@ -29506,7 +29579,7 @@
 
 
 	function renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration) {
-	  const filteredSegments = audioTrack.segments.filter(segment => {
+	  const filteredSegments = audioTrack.segments.toList().filter(segment => {
 	    return segmentInTimeRange(segment, start, duration);
 	  });
 

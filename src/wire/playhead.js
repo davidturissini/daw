@@ -106,7 +106,7 @@ function segmentInTimeRange(segment, startTime, duration) {
  *
  */
 function renderTrackToAudioBuffer(audioTrack, audioSources, start, duration) {
-    const filteredSegments = audioTrack.segments.filter((segment) => {
+    const filteredSegments = audioTrack.segments.toList().filter((segment) => {
         return segmentInTimeRange(
             segment,
             start,

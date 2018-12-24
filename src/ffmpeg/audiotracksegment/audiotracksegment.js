@@ -1,12 +1,11 @@
 import { LightningElement, api, wire } from 'lwc';
 import { audioSources } from './../../wire/audiosource';
 import { editorSym } from './../../wire/editor';
-
-const frameSym = Symbol();
+import interact from 'interactjs';
 
 export default class AudioTrackSegment extends LightningElement {
-    @api segment
-    @api frame
+    @api segment;
+    @api frame;
 
     @wire(editorSym, {})
     editor;
@@ -27,5 +26,36 @@ export default class AudioTrackSegment extends LightningElement {
         const segmentOffset = editor.data.timeToPixel(segment.offset);
         const diff = frame.x - segmentOffset;
         return `transform: translateX(-${diff}px); width: ${frame.width + diff}px`;
+    }
+
+    onDrag = (evt) => {
+        const { editor, segment } = this;
+        const { dx } = evt;
+        const time = editor.data.pixelToTime(dx);
+        const event = new CustomEvent('segmentmove', {
+            composed: false,
+            bubbles: true,
+            detail: {
+                time,
+                segmentId: segment.id,
+            }
+        });
+
+        this.dispatchEvent(event);
+    }
+
+    /*
+     *
+     *
+     * Lifecycle
+     *
+     *
+    */
+    connectedCallback() {
+        interact(this.template.host).draggable({
+            inertia: true,
+            axis: 'y',
+            onmove: this.onDrag,
+        })
     }
 }

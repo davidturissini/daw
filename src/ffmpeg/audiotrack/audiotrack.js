@@ -1,6 +1,6 @@
 import { LightningElement, api, wire } from 'lwc';
-import { audioSources } from './../../wire/audiosource';
 import { editorSym } from './../../wire/editor';
+import { moveSegment } from './../../wire/audiotrack';
 
 export default class AudioTrack extends LightningElement {
     @api track;
@@ -9,7 +9,7 @@ export default class AudioTrack extends LightningElement {
     editor;
 
     get trackSegments() {
-        return this.track.segments.toJS().filter((segment) => {
+        return this.track.segments.filter((segment) => {
             const x = this.editor.data.timeToPixel(segment.offset);
             const width = this.editor.data.durationToWidth(segment.duration);
             const frameWidth = this.editor.data.frame.width;
@@ -41,7 +41,18 @@ export default class AudioTrack extends LightningElement {
                 style: `transform: translateX(${frame.x}px); width:${width}px`,
                 segment,
             };
-        });
+        })
+        .toList()
+        .toJS();
+    }
+
+    handleSegmentMove(evt) {
+        const { time, segmentId } = evt.detail;
+        moveSegment(
+            this.track.id,
+            segmentId,
+            time,
+        );
     }
 
 }

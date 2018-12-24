@@ -1,6 +1,7 @@
 <template>
     <template for:each={trackSegments} for:item="trackSegment">
         <ffmpeg-audiotracksegment
+            onsegmentmove={handleSegmentMove}
             style={trackSegment.style}
             frame={trackSegment.frame}
             segment={trackSegment.segment}
