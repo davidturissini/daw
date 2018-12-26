@@ -25,8 +25,6 @@ class AudioTrackSegment extends Record({
 
 export function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
     const track = createTrack(trackId, []);
-    const secondTrackId = generateId();
-    const secondTrack = createTrack(secondTrackId, []);
     createAudioSourceFromFile(sourceId, sourceFile)
         .then((audioSource) => {
             tracksSubject.next(
@@ -34,19 +32,9 @@ export function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOff
                     const segmentId = generateId();
                     return segments.set(segmentId, new AudioTrackSegment({
                         id: segmentId,
-                        sourceOffset: new Time(1000),
-                        duration: new Time(2000),
+                        sourceOffset: new Time(0),
+                        duration: audioSource.duration,
                         offset: trackOffset,
-                        sourceId,
-                    }));
-                })
-                .updateIn([secondTrackId, 'segments'], (segments) => {
-                    const segmentId = generateId();
-                    return segments.set(segmentId, new AudioTrackSegment({
-                        id: segmentId,
-                        sourceOffset: new Time(3000),
-                        duration: new Time(2000),
-                        offset: new Time(3000),
                         sourceId,
                     }));
                 })
@@ -57,8 +45,67 @@ export function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOff
 export function moveSegment(trackId, segmentId, time) {
     const track = tracksSubject.value.get(trackId);
     const updatedTrack = track.updateIn(['segments', segmentId], (segment) => {
-        const newOffset = new Time(segment.offset.milliseconds + time.milliseconds);
+        const nextOffsetMilliseconds = segment.offset.milliseconds + time.milliseconds < 0 ? 0 : segment.offset.milliseconds + time.milliseconds;
+        const newOffset = new Time(nextOffsetMilliseconds);
         return segment.set('offset', newOffset);
+    });
+    tracksSubject.next(
+        tracksSubject.value.set(trackId, updatedTrack)
+    );
+}
+
+
+function getSourceOffsetDiff(time, sourceOffsetMilliseconds, durationMilliseconds) {
+    const end = durationMilliseconds + sourceOffsetMilliseconds - 250; // dont let segment ever be less than 100 milliseconds
+    if (sourceOffsetMilliseconds + time.milliseconds < 0) {
+        return -sourceOffsetMilliseconds
+    } else if (sourceOffsetMilliseconds + time.milliseconds > end) {
+        return end - sourceOffsetMilliseconds;
+    }
+
+    return time.milliseconds;
+}
+
+
+function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentDurationMilliseconds, sourceDurationMilliseconds) {
+    const next = time.milliseconds + segmentDurationMilliseconds;
+    const max = sourceDurationMilliseconds - segmentSourceOffsetMilliseconds;
+    const min = 250;
+    if (next > max) {
+        return max;
+    } else if (next < min) {
+        return min;
+    }
+
+    return next;
+}
+
+export function setSegmentDuration(trackId, segmentId, audioSource, time) {
+    const track = tracksSubject.value.get(trackId);
+
+    const updatedTrack = track.updateIn(['segments', segmentId], (segment) => {
+        const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
+        const newDuration = new Time(nextDurationMilliseconds);
+        return segment.set('duration', newDuration);
+    });
+    tracksSubject.next(
+        tracksSubject.value.set(trackId, updatedTrack)
+    );
+}
+
+export function moveSegmentSourceOffset(trackId, segmentId, time) {
+    const track = tracksSubject.value.get(trackId);
+    const updatedTrack = track.updateIn(['segments', segmentId], (segment) => {
+        const {
+            milliseconds: sourceOffsetMilliseconds,
+        } = segment.sourceOffset;
+        const diff = getSourceOffsetDiff(time, sourceOffsetMilliseconds, segment.duration.milliseconds);
+        const newSourceOffset = new Time(sourceOffsetMilliseconds + diff);
+        const newOffset = new Time(segment.offset.milliseconds + diff);
+        const newDuration = new Time(segment.duration.milliseconds - diff);
+        return segment.set('sourceOffset', newSourceOffset)
+            .set('offset', newOffset)
+            .set('duration', newDuration)
     });
     tracksSubject.next(
         tracksSubject.value.set(trackId, updatedTrack)

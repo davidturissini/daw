@@ -9,22 +9,29 @@ export default class Cursor extends LightningElement {
      * Editor
      *
     */
-   @wire(editorSym, {})
-   editorWireCallback(editor) {
+    @wire(editorSym, {})
+    editor;
+
+    @api
+    get time() {
+
+    }
+
+    set time(value) {
+        const { editor } = this;
         if (!editor.data.frame) {
             return;
         }
         const { host } = this.template;
-        const cursorData = this.virtual ? editor.data.virtualCursor : editor.data.cursor;
-        if (cursorData) {
-            const px = editor.data.timeToPixel(cursorData);
+        if (value) {
+            const px = editor.data.timeToPixel(value);
             host.style.transform = `translateX(${px}px)`;
         }
-   }
+    }
 
-   /*
+    /*
      *
-     * Editor
+     * Lifecycle
      *
     */
     connectedCallback() {

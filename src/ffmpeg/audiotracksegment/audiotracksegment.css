@@ -1,3 +1,30 @@
 :host {
     display: block;
+    position: relative;
+    z-index: 1;
+    border-radius: 0.2rem;
+    overflow: hidden;
+}
+
+:host(:hover) .handle {
+    opacity: 1;
+}
+
+.handle {
+    transition: opacity 400ms ease;
+    opacity: 0;
+    display: block;
+    position: absolute;
+    width: 4px;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 5;
+    background: #000;
+    cursor: col-resize;
+}
+
+.handle--end {
+    left: auto;
+    right: 0;
 }

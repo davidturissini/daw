@@ -1,7 +1,56 @@
-import { Time } from './../util/time';
 import { audioContext } from './audiosource';
+import { register } from 'wire-service';
 import { subbuffer, mix, join, silence } from './../lib/soundlab';
-import { List } from 'immutable';
+import { BehaviorSubject } from 'rxjs';
+import { Record } from 'immutable';
+import { Time } from './../util/time';
+import { wireObservable } from './../util/wire-observable';
+
+class Playhead extends Record({
+    playbackTime: null
+}) {
+
+}
+const playheadSubject = new BehaviorSubject(new Playhead());
+
+class PlaybackController {
+    constructor(audioContext, audioBuffer, start) {
+        this.audioContext = audioContext;
+        this.audioBuffer = audioBuffer;
+        this.startTime = start;
+
+        this.startAudioContextTime = null;
+    }
+
+    raf = null;
+    updateTime = () => {
+        const currentTime = Time.fromSeconds(this.audioContext.currentTime);
+        const diffMilliseconds = currentTime.milliseconds - this.startAudioContextTime.milliseconds;
+        const nextTime = new Time(this.startTime.milliseconds + diffMilliseconds);
+        playheadSubject.next(
+            playheadSubject.value.set('playbackTime', nextTime)
+        );
+        this.raf = requestAnimationFrame(this.updateTime);
+    }
+
+    start() {
+        const { audioBuffer, audioContext } = this;
+        this.startAudioContextTime = Time.fromSeconds(audioContext.currentTime);
+        return new Promise((res) => {
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+
+
+            source.addEventListener('ended', () => {
+                cancelAnimationFrame(this.raf);
+                res();
+            }, { once: true });
+            source.start();
+            this.updateTime();
+        });
+    }
+}
 
 /*
  *
@@ -89,12 +138,12 @@ function segmentInTimeRange(segment, startTime, duration) {
     const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
     return (
         (
-            startMilliseconds >= cursorMilliseconds &&
-            startMilliseconds < playbackEndMilliseconds
+            cursorMilliseconds >= startMilliseconds &&
+            cursorMilliseconds < endMilliseconds
         ) ||
         (
-            endMilliseconds <= playbackEndMilliseconds &&
-            endMilliseconds >= cursorMilliseconds
+            playbackEndMilliseconds >= startMilliseconds &&
+            playbackEndMilliseconds < endMilliseconds
         )
     );
 }
@@ -118,7 +167,7 @@ function renderTrackToAudioBuffer(audioTrack, audioSources, start, duration) {
         return null;
     }
 
-    const renderedSegments = filteredSegments.map((segment) => {
+    const renderedSegments = audioTrack.segments.toList().map((segment) => {
         const { sourceId } = segment;
         return renderSegment(
             segment,
@@ -134,8 +183,8 @@ function renderTrackToAudioBuffer(audioTrack, audioSources, start, duration) {
     return join(filled);
 }
 
-export function play(start, duration, audioTracks, audioSources) {
-    const audioBuffers = audioTracks.map((audioTrack) => {
+function getAudioBuffer(start, duration, audioTracks, audioSources) {
+    let audioBuffers = audioTracks.map((audioTrack) => {
         return renderTrackToAudioBuffer(
             audioTrack,
             audioSources,
@@ -148,11 +197,54 @@ export function play(start, duration, audioTracks, audioSources) {
     })
     .toList()
     .toJS();
-    mix(audioBuffers).then((buffer) => {
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.start();
+
+    if (audioBuffers.length === 0) {
+        audioBuffers = [
+            silence(
+                audioContext.sampleRate,
+                2,
+                duration.milliseconds,
+            )
+        ];
+    }
+
+    return mix(audioContext, audioBuffers);
+}
+
+const bufferDuration = Time.fromSeconds(1);
+
+function playSegment(start, audioBuffer, audioTracks, audioSources) {
+    const bufferDuration = Time.fromSeconds(audioBuffer.duration);
+    const playbackController = new PlaybackController(
+        audioContext,
+        audioBuffer,
+        start,
+    );
+
+    return playbackController.start().then(() => {
+        const nextStart = new Time(start.milliseconds + bufferDuration.milliseconds);
+        return getAudioBuffer(nextStart, bufferDuration, audioTracks, audioSources).then((nextBuffer) => {
+            return playSegment(
+                nextStart,
+                nextBuffer,
+                audioTracks,
+                audioSources,
+            );
+        });
+    })
+}
+
+export function play(start, duration, audioTracks, audioSources) {
+    getAudioBuffer(start, bufferDuration, audioTracks, audioSources).then((buffer) => {
+        return playSegment(
+            start,
+            buffer,
+            audioTracks,
+            audioSources,
+        );
     });
 
 }
+
+export const playheadSym = Symbol();
+register(playheadSym, wireObservable(playheadSubject.asObservable()));

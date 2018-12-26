@@ -1,9 +1,12 @@
 :host {
     display: block;
-    height: 4rem;
+    height: 1rem;
     user-select: none;
     position: relative;
     z-index: 1;
+    padding: 0.25rem 0;
+    background: #000;
+    color: #fff;
 }
 
 .tick {
@@ -11,21 +14,9 @@
     flex-direction: column;
     position: absolute;
     left: 0;
-    top: 0;
+    top: 0.25rem;
     z-index: 2;
-    font-size: 1rem;
-}
-
-.tick-indicator {
-    width: 1px;
-    height: 11px;
-    background: #000;
-    display: inline-block;
-    margin-bottom: 0.5rem;
-}
-
-.tick-indicator--second {
-    height: 20px;
+    font-size: 0.8rem;
 }
 
 .tick-label {

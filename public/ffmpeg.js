@@ -10292,123 +10292,41 @@
 	var wire_3 = wire.ValueChangedEvent;
 
 	function stylesheet(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\nmain" + shadowSelector + " {display: flex;cursor: pointer;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;background: #f1f1f1;}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-right: 1px solid #d8d8d8;}\n.tracks-summary" + shadowSelector + " {margin-top: 4rem;flex: 0 0 200px;}\n.editor" + shadowSelector + " {position: relative;z-index: 1;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;background: #f1f1f1;}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-right: 1px solid #d8d8d8;}\n.tracks-summary" + shadowSelector + " {margin-top: 4.5rem;flex: 0 0 200px;}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
 	}
 	var _implicitStylesheets = [stylesheet];
 
 	function stylesheet$1(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;height: 4rem;user-select: none;position: relative;z-index: 1;}") : (hostSelector + " {display: block;height: 4rem;user-select: none;position: relative;z-index: 1;}")) + "\n.tick" + shadowSelector + " {display: inline-flex;flex-direction: column;position: absolute;left: 0;top: 0;z-index: 2;font-size: 1rem;}\n.tick-indicator" + shadowSelector + " {width: 1px;height: 11px;background: #000;display: inline-block;margin-bottom: 0.5rem;}\n.tick-indicator--second" + shadowSelector + " {height: 20px;}\n.tick-label" + shadowSelector + " {transform: translateX(-50%);margin-bottom: 0.5rem;}\n";
+	  return "\n" + (nativeShadow ? (":host {padding: 0.5rem;display: flex;justify-content: center;border-top: 1px solid #f1f1f1;}") : (hostSelector + " {padding: 0.5rem;display: flex;justify-content: center;border-top: 1px solid #f1f1f1;}")) + "\n";
 	}
 	var _implicitStylesheets$1 = [stylesheet$1];
 
 	function tmpl($api, $cmp, $slotset, $ctx) {
 	  const {
-	    d: api_dynamic
+	    t: api_text,
+	    b: api_bind,
+	    h: api_element
 	  } = $api;
-	  return [api_dynamic($cmp.formatted)];
+	  const {
+	    _m0
+	  } = $ctx;
+	  return [api_element("button", {
+	    key: 2,
+	    on: {
+	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onPlayClick))
+	    }
+	  }, [api_text("Play")])];
 	}
 
 	var _tmpl = engine_8(tmpl);
 	tmpl.stylesheets = [];
-	tmpl.stylesheetTokens = {
-	  hostAttribute: "ffmpeg-timelabel_timelabel-host",
-	  shadowAttribute: "ffmpeg-timelabel_timelabel"
-	};
-
-	var parseMs = ms => {
-	  if (typeof ms !== 'number') {
-	    throw new TypeError('Expected a number');
-	  }
-
-	  const roundTowardsZero = ms > 0 ? Math.floor : Math.ceil;
-	  return {
-	    days: roundTowardsZero(ms / 86400000),
-	    hours: roundTowardsZero(ms / 3600000) % 24,
-	    minutes: roundTowardsZero(ms / 60000) % 60,
-	    seconds: roundTowardsZero(ms / 1000) % 60,
-	    milliseconds: roundTowardsZero(ms) % 1000,
-	    microseconds: roundTowardsZero(ms * 1000) % 1000,
-	    nanoseconds: roundTowardsZero(ms * 1e6) % 1000
-	  };
-	};
-
-	class TimeLabel extends engine_5 {
-	  constructor(...args) {
-	    super(...args);
-	    this.time = void 0;
-	  }
-
-	  get formatted() {
-	    const {
-	      milliseconds: timeMilliseconds
-	    } = this.time;
-	    const {
-	      hours,
-	      minutes,
-	      seconds,
-	      milliseconds
-	    } = parseMs(timeMilliseconds);
-	    const str = `${minutes}:${seconds}:${milliseconds / 1000}`;
-
-	    if (hours > 0) {
-	      return `${hours}:${str}`;
-	    }
-
-	    return str;
-	  }
-
-	}
-
-	engine_11(TimeLabel, {
-	  publicProps: {
-	    time: {
-	      config: 0
-	    }
-	  }
-	});
-
-	var _ffmpegTimelabel = engine_10(TimeLabel, {
-	  tmpl: _tmpl
-	});
-
-	function tmpl$1($api, $cmp, $slotset, $ctx) {
-	  const {
-	    c: api_custom_element,
-	    h: api_element,
-	    k: api_key,
-	    i: api_iterator
-	  } = $api;
-	  return api_iterator($cmp.ticks, function (tick) {
-	    return api_element("span", {
-	      classMap: {
-	        "tick": true
-	      },
-	      style: tick.style,
-	      key: api_key(3, tick.time.milliseconds)
-	    }, [tick.renderLabel ? api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
-	      classMap: {
-	        "tick-label": true
-	      },
-	      props: {
-	        "time": tick.time
-	      },
-	      key: 5
-	    }, []) : null, api_element("span", {
-	      className: tick.indicatorClassName,
-	      key: 6
-	    }, [])]);
-	  });
-	}
-
-	var _tmpl$1 = engine_8(tmpl$1);
-	tmpl$1.stylesheets = [];
 
 	if (_implicitStylesheets$1) {
-	  tmpl$1.stylesheets.push.apply(tmpl$1.stylesheets, _implicitStylesheets$1);
+	  tmpl.stylesheets.push.apply(tmpl.stylesheets, _implicitStylesheets$1);
 	}
-	tmpl$1.stylesheetTokens = {
-	  hostAttribute: "ffmpeg-timeline_timeline-host",
-	  shadowAttribute: "ffmpeg-timeline_timeline"
+	tmpl.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-controls_controls-host",
+	  shadowAttribute: "ffmpeg-controls_controls"
 	};
 
 	class AudioRange {
@@ -13939,7 +13857,7 @@
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
 
-	var _tmpl$2 = void 0;
+	var _tmpl$1 = void 0;
 
 	/**
 	 * Copyright (c) 2014-present, Facebook, Inc.
@@ -19712,14 +19630,15 @@
 	  updateIn: updateIn
 	}; // Note: Iterable is deprecated
 	engine_10(Immutable, {
-	  tmpl: _tmpl$2
+	  tmpl: _tmpl$1
 	});
 
 	class Editor extends Record({
 	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
 	  frame: null,
 	  cursor: Time.fromSeconds(1),
-	  virtualCursor: Time.fromSeconds(2)
+	  virtualCursor: Time.fromSeconds(2),
+	  quanitization: 1 / 8
 	}) {
 	  pixelToTime(pixel) {
 	    const {
@@ -19731,6 +19650,11 @@
 	    const percent = pixel / width;
 	    const millisecond = percent * visibleRange.duration.milliseconds;
 	    return new Time(millisecond);
+	  }
+
+	  absolutePixelToTime(pixel) {
+	    const time = this.pixelToTime(pixel);
+	    return new Time(time.milliseconds + this.visibleRange.start.milliseconds);
 	  }
 
 	  timeToPixel(time) {
@@ -19774,6 +19698,1750 @@
 	const editorSubject = new BehaviorSubject(new Editor());
 	const editorSym = Symbol();
 	wire_2(editorSym, wireObservable(editorSubject.asObservable()));
+
+	const audioContext = new AudioContext();
+	const audioSourcesSubject = new BehaviorSubject(new Map$1());
+	const stream = audioSourcesSubject.asObservable();
+	const AudioSourceState = {
+	  LOADING: 'LOADING',
+	  READY: 'READY'
+	};
+
+	class AudioSource extends Record({
+	  title: null,
+	  id: null,
+	  data: null,
+	  audio: null,
+	  duration: null,
+	  state: null
+	}) {}
+
+	function createAudioSourceFromFile(id, file) {
+	  const source = new AudioSource({
+	    title: file.name,
+	    id,
+	    state: AudioSourceState.LOADING
+	  });
+	  audioSourcesSubject.next(audioSourcesSubject.value.set(id, source));
+	  return new Promise(res => {
+	    const reader = new FileReader();
+
+	    reader.onload = () => {
+	      const clone = reader.result.slice(0);
+	      audioContext.decodeAudioData(reader.result, audioBuffer => {
+	        const duration = Time.fromSeconds(audioBuffer.duration);
+	        const ready = audioSourcesSubject.value.mergeIn([id], {
+	          duration,
+	          data: clone,
+	          audio: audioBuffer,
+	          state: AudioSourceState.READY
+	        });
+	        audioSourcesSubject.next(ready);
+	        res(ready.get(id));
+	      });
+	    };
+
+	    reader.readAsArrayBuffer(file);
+	  });
+	}
+	const audioSources = Symbol();
+	wire_2(audioSources, wireObservable(stream));
+
+	let id = 0;
+	function generateId() {
+	  id += 1;
+	  return id + '';
+	}
+
+	const tracksSubject = new BehaviorSubject(new Map$1());
+
+	class AudioTrack extends Record({
+	  id: null,
+	  segments: new Map$1()
+	}) {}
+
+	class AudioTrackSegment extends Record({
+	  id: null,
+	  sourceOffset: null,
+	  duration: null,
+	  offset: null,
+	  sourceId: null
+	}) {}
+
+	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
+	  const track = createTrack(trackId, []);
+	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
+	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
+	      const segmentId = generateId();
+	      return segments.set(segmentId, new AudioTrackSegment({
+	        id: segmentId,
+	        sourceOffset: new Time(0),
+	        duration: audioSource.duration,
+	        offset: trackOffset,
+	        sourceId
+	      }));
+	    }));
+	  });
+	}
+	function moveSegment(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const nextOffsetMilliseconds = segment.offset.milliseconds + time.milliseconds < 0 ? 0 : segment.offset.milliseconds + time.milliseconds;
+	    const newOffset = new Time(nextOffsetMilliseconds);
+	    return segment.set('offset', newOffset);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+
+	function getSourceOffsetDiff(time, sourceOffsetMilliseconds, durationMilliseconds) {
+	  const end = durationMilliseconds + sourceOffsetMilliseconds - 250; // dont let segment ever be less than 100 milliseconds
+
+	  if (sourceOffsetMilliseconds + time.milliseconds < 0) {
+	    return -sourceOffsetMilliseconds;
+	  } else if (sourceOffsetMilliseconds + time.milliseconds > end) {
+	    return end - sourceOffsetMilliseconds;
+	  }
+
+	  return time.milliseconds;
+	}
+
+	function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentDurationMilliseconds, sourceDurationMilliseconds) {
+	  const next = time.milliseconds + segmentDurationMilliseconds;
+	  const max = sourceDurationMilliseconds - segmentSourceOffsetMilliseconds;
+	  const min = 250;
+
+	  if (next > max) {
+	    return max;
+	  } else if (next < min) {
+	    return min;
+	  }
+
+	  return next;
+	}
+
+	function setSegmentDuration(trackId, segmentId, audioSource, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
+	    const newDuration = new Time(nextDurationMilliseconds);
+	    return segment.set('duration', newDuration);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function moveSegmentSourceOffset(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const {
+	      milliseconds: sourceOffsetMilliseconds
+	    } = segment.sourceOffset;
+	    const diff = getSourceOffsetDiff(time, sourceOffsetMilliseconds, segment.duration.milliseconds);
+	    const newSourceOffset = new Time(sourceOffsetMilliseconds + diff);
+	    const newOffset = new Time(segment.offset.milliseconds + diff);
+	    const newDuration = new Time(segment.duration.milliseconds - diff);
+	    return segment.set('sourceOffset', newSourceOffset).set('offset', newOffset).set('duration', newDuration);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function createTrack(id, segments) {
+	  const segmentsMap = segments.reduce((seed, segment) => {
+	    return seed.set(segment.id, segment);
+	  }, new Map$1());
+	  const audioTrack = new AudioTrack({
+	    id,
+	    segments: segmentsMap
+	  });
+	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
+	  return audioTrack;
+	}
+	const audioTracks = Symbol();
+	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
+
+	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
+	  const {
+	    sampleRate,
+	    numberOfChannels
+	  } = audioBuffer;
+	  const durationSeconds = durationMilliseconds / 1000;
+	  const startSeconds = startMilliseconds / 1000;
+	  const sub = new AudioBuffer({
+	    length: Math.ceil(durationSeconds * sampleRate),
+	    numberOfChannels,
+	    sampleRate
+	  });
+	  const startByte = startSeconds * sampleRate;
+	  const durationBytes = durationSeconds * sampleRate;
+	  const endBytes = startByte + durationBytes;
+
+	  for (let i = 0; i < numberOfChannels; i += 1) {
+	    const channelData = sub.getChannelData(i);
+	    const subset = audioBuffer.getChannelData(i).slice(startByte, endBytes);
+	    channelData.set(subset, 0);
+	  }
+
+	  return sub;
+	}
+	function join(audioBuffers) {
+	  const [first, ...rest] = audioBuffers;
+	  return rest.reduce((seed, audioBuffer) => {
+	    const {
+	      numberOfChannels
+	    } = seed;
+	    const buffer = new AudioBuffer({
+	      length: seed.length + audioBuffer.length,
+	      sampleRate: seed.sampleRate,
+	      numberOfChannels
+	    });
+
+	    for (let i = 0; i < numberOfChannels; i += 1) {
+	      const channelData = buffer.getChannelData(i);
+	      channelData.set(seed.getChannelData(i), 0);
+	      channelData.set(audioBuffer.getChannelData(i), seed.length);
+	    }
+
+	    return buffer;
+	  }, first);
+	}
+	function silence(sampleRate, numberOfChannels, milliseconds) {
+	  const seconds = milliseconds / 1000;
+	  return new AudioBuffer({
+	    length: Math.ceil(sampleRate * seconds),
+	    sampleRate,
+	    numberOfChannels
+	  });
+	}
+	function mix(audioContext, audioBuffers) {
+	  const data = audioBuffers.reduce((seed, audioBuffer) => {
+	    if (seed.length < audioBuffer.length) {
+	      seed.length = audioBuffer.length;
+	    }
+
+	    if (seed.numberOfChannels < audioBuffer.numberOfChannels) {
+	      seed.numberOfChannels = audioBuffer.numberOfChannels;
+	    }
+
+	    if (seed.sampleRate === null) {
+	      seed.sampleRate = audioBuffer.sampleRate;
+	    }
+
+	    return seed;
+	  }, {
+	    length: 0,
+	    numberOfChannels: 1,
+	    sampleRate: audioContext.sampleRate
+	  });
+	  const context = new OfflineAudioContext(data.numberOfChannels, data.length, data.sampleRate);
+	  audioBuffers.forEach(audioBuffer => {
+	    const source = context.createBufferSource();
+	    source.buffer = audioBuffer;
+	    source.connect(context.destination);
+	    source.start();
+	  });
+	  return context.startRendering();
+	}
+
+	class Playhead extends Record({
+	  playbackTime: null
+	}) {}
+
+	const playheadSubject = new BehaviorSubject(new Playhead());
+
+	class PlaybackController {
+	  constructor(audioContext$$1, audioBuffer, start) {
+	    this.raf = null;
+
+	    this.updateTime = () => {
+	      const currentTime = Time.fromSeconds(this.audioContext.currentTime);
+	      const diffMilliseconds = currentTime.milliseconds - this.startAudioContextTime.milliseconds;
+	      const nextTime = new Time(this.startTime.milliseconds + diffMilliseconds);
+	      playheadSubject.next(playheadSubject.value.set('playbackTime', nextTime));
+	      this.raf = requestAnimationFrame(this.updateTime);
+	    };
+
+	    this.audioContext = audioContext$$1;
+	    this.audioBuffer = audioBuffer;
+	    this.startTime = start;
+	    this.startAudioContextTime = null;
+	  }
+
+	  start() {
+	    const {
+	      audioBuffer,
+	      audioContext: audioContext$$1
+	    } = this;
+	    this.startAudioContextTime = Time.fromSeconds(audioContext$$1.currentTime);
+	    return new Promise(res => {
+	      const source = audioContext$$1.createBufferSource();
+	      source.buffer = audioBuffer;
+	      source.connect(audioContext$$1.destination);
+	      source.addEventListener('ended', () => {
+	        cancelAnimationFrame(this.raf);
+	        res();
+	      }, {
+	        once: true
+	      });
+	      source.start();
+	      this.updateTime();
+	    });
+	  }
+
+	}
+	/*
+	 *
+	 *
+	 * Renders audio data from an audio source to a segment
+	 * Property offsets underlying audio based on cursor position
+	 *
+	 */
+
+
+	function renderSegment(segment, audioSource, startTime
+	/* global start */
+	, duration
+	/* global duration */
+	) {
+	  const {
+	    milliseconds: cursorMilliseconds
+	  } = startTime;
+	  const {
+	    sourceOffset,
+	    duration: segmentDuration,
+	    offset
+	  } = segment;
+	  const {
+	    milliseconds: offsetMilliseconds
+	  } = offset;
+	  const {
+	    milliseconds: segmentDurationMilliseconds
+	  } = segmentDuration;
+	  const playbackEndMs = duration.milliseconds + startTime.milliseconds;
+	  const segmentEndMilliseconds = offsetMilliseconds + segmentDurationMilliseconds;
+	  const cursorDiff = offsetMilliseconds > cursorMilliseconds ? 0 : cursorMilliseconds - offsetMilliseconds;
+	  const durationDiff = segmentEndMilliseconds < playbackEndMs ? 0 : segmentEndMilliseconds - playbackEndMs;
+	  return {
+	    audio: subbuffer(audioSource.audio, sourceOffset.milliseconds + cursorDiff, segmentDuration.milliseconds - durationDiff - cursorDiff),
+	    offset,
+	    segmentDuration
+	  };
+	}
+	/*
+	 *
+	 * Adds silent audio buffers between rendered segments
+	 *
+	 */
+
+
+	function fillRenderedSegments(renderedSegments, startTime) {
+	  const {
+	    milliseconds: cursorMilliseconds
+	  } = startTime;
+	  return renderedSegments.reduce((seed, renderedSegment, index) => {
+	    const previous = seed[index - 1];
+	    const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
+	    const startMs = renderedSegment.offset.milliseconds;
+	    const diff = startMs - previousEndMs;
+
+	    if (diff > 0) {
+	      seed.push(silence(renderedSegment.audio.sampleRate, renderedSegment.audio.numberOfChannels, diff));
+	    }
+
+	    seed.push(renderedSegment.audio);
+	    return seed;
+	  }, []);
+	}
+
+	function segmentInTimeRange(segment, startTime, duration) {
+	  const {
+	    milliseconds: cursorMilliseconds
+	  } = startTime;
+	  const {
+	    milliseconds: playbackDurationMilliseconds
+	  } = duration;
+	  const playbackEndMilliseconds = cursorMilliseconds + playbackDurationMilliseconds;
+	  const startMilliseconds = segment.offset.milliseconds;
+	  const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
+	  return cursorMilliseconds >= startMilliseconds && cursorMilliseconds < endMilliseconds || playbackEndMilliseconds >= startMilliseconds && playbackEndMilliseconds < endMilliseconds;
+	}
+	/*
+	 *
+	 *
+	 * Renders a track to a playable AudioBuffer
+	 *
+	 */
+
+
+	function renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration) {
+	  const filteredSegments = audioTrack.segments.toList().filter(segment => {
+	    return segmentInTimeRange(segment, start, duration);
+	  });
+
+	  if (filteredSegments.size === 0) {
+	    return null;
+	  }
+
+	  const renderedSegments = audioTrack.segments.toList().map(segment => {
+	    const {
+	      sourceId
+	    } = segment;
+	    return renderSegment(segment, audioSources$$1.get(sourceId), start, duration);
+	  }).toArray();
+	  const filled = fillRenderedSegments(renderedSegments, start);
+	  return join(filled);
+	}
+
+	function getAudioBuffer(start, duration, audioTracks, audioSources$$1) {
+	  let audioBuffers = audioTracks.map(audioTrack => {
+	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
+	  }).filter(audioBuffer => {
+	    return audioBuffer !== null;
+	  }).toList().toJS();
+
+	  if (audioBuffers.length === 0) {
+	    audioBuffers = [silence(audioContext.sampleRate, 2, duration.milliseconds)];
+	  }
+
+	  return mix(audioContext, audioBuffers);
+	}
+
+	const bufferDuration = Time.fromSeconds(1);
+
+	function playSegment(start, audioBuffer, audioTracks, audioSources$$1) {
+	  const bufferDuration = Time.fromSeconds(audioBuffer.duration);
+	  const playbackController = new PlaybackController(audioContext, audioBuffer, start);
+	  return playbackController.start().then(() => {
+	    const nextStart = new Time(start.milliseconds + bufferDuration.milliseconds);
+	    return getAudioBuffer(nextStart, bufferDuration, audioTracks, audioSources$$1).then(nextBuffer => {
+	      return playSegment(nextStart, nextBuffer, audioTracks, audioSources$$1);
+	    });
+	  });
+	}
+
+	function play(start, duration, audioTracks, audioSources$$1) {
+	  getAudioBuffer(start, bufferDuration, audioTracks, audioSources$$1).then(buffer => {
+	    return playSegment(start, buffer, audioTracks, audioSources$$1);
+	  });
+	}
+	const playheadSym = Symbol();
+	wire_2(playheadSym, wireObservable(playheadSubject.asObservable()));
+
+	class Controls extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.editor = void 0;
+	    this.audioTracks = void 0;
+	    this.audioSources = void 0;
+	  }
+
+	  onPlayClick() {
+	    play(this.editor.data.cursor, new Time(2000), this.audioTracks.data, this.audioSources.data);
+	  }
+
+	}
+
+	engine_11(Controls, {
+	  wire: {
+	    editor: {
+	      adapter: editorSym,
+	      params: {},
+	      static: {}
+	    },
+	    audioTracks: {
+	      adapter: audioTracks,
+	      params: {},
+	      static: {}
+	    },
+	    audioSources: {
+	      adapter: audioSources,
+	      params: {},
+	      static: {}
+	    }
+	  }
+	});
+
+	var _ffmpegControls = engine_10(Controls, {
+	  tmpl: _tmpl
+	});
+
+	function stylesheet$2(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: #000;color: #fff;}") : (hostSelector + " {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: #000;color: #fff;}")) + "\n.tick" + shadowSelector + " {display: inline-flex;flex-direction: column;position: absolute;left: 0;top: 0.25rem;z-index: 2;font-size: 0.8rem;}\n.tick-label" + shadowSelector + " {transform: translateX(-50%);margin-bottom: 0.5rem;}\n";
+	}
+	var _implicitStylesheets$2 = [stylesheet$2];
+
+	function tmpl$1($api, $cmp, $slotset, $ctx) {
+	  const {
+	    d: api_dynamic
+	  } = $api;
+	  return [api_dynamic($cmp.formatted)];
+	}
+
+	var _tmpl$2 = engine_8(tmpl$1);
+	tmpl$1.stylesheets = [];
+	tmpl$1.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-timelabel_timelabel-host",
+	  shadowAttribute: "ffmpeg-timelabel_timelabel"
+	};
+
+	var parseMs = ms => {
+	  if (typeof ms !== 'number') {
+	    throw new TypeError('Expected a number');
+	  }
+
+	  const roundTowardsZero = ms > 0 ? Math.floor : Math.ceil;
+	  return {
+	    days: roundTowardsZero(ms / 86400000),
+	    hours: roundTowardsZero(ms / 3600000) % 24,
+	    minutes: roundTowardsZero(ms / 60000) % 60,
+	    seconds: roundTowardsZero(ms / 1000) % 60,
+	    milliseconds: roundTowardsZero(ms) % 1000,
+	    microseconds: roundTowardsZero(ms * 1000) % 1000,
+	    nanoseconds: roundTowardsZero(ms * 1e6) % 1000
+	  };
+	};
+
+	/**
+	 * lodash (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+	 * Released under MIT license <https://lodash.com/license>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 */
+
+	/** Used as references for various `Number` constants. */
+	var INFINITY = 1 / 0,
+	    MAX_SAFE_INTEGER = 9007199254740991,
+	    MAX_INTEGER = 1.7976931348623157e+308,
+	    NAN = 0 / 0;
+	/** `Object#toString` result references. */
+
+	var symbolTag = '[object Symbol]';
+	/** Used to match leading and trailing whitespace. */
+
+	var reTrim = /^\s+|\s+$/g;
+	/** Used to detect bad signed hexadecimal string values. */
+
+	var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+	/** Used to detect binary string values. */
+
+	var reIsBinary = /^0b[01]+$/i;
+	/** Used to detect octal string values. */
+
+	var reIsOctal = /^0o[0-7]+$/i;
+	/** Used to compose unicode character classes. */
+
+	var rsAstralRange = '\\ud800-\\udfff',
+	    rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
+	    rsComboSymbolsRange = '\\u20d0-\\u20f0',
+	    rsVarRange = '\\ufe0e\\ufe0f';
+	/** Used to compose unicode capture groups. */
+
+	var rsAstral = '[' + rsAstralRange + ']',
+	    rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
+	    rsFitz = '\\ud83c[\\udffb-\\udfff]',
+	    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+	    rsNonAstral = '[^' + rsAstralRange + ']',
+	    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+	    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+	    rsZWJ = '\\u200d';
+	/** Used to compose unicode regexes. */
+
+	var reOptMod = rsModifier + '?',
+	    rsOptVar = '[' + rsVarRange + ']?',
+	    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+	    rsSeq = rsOptVar + reOptMod + rsOptJoin,
+	    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
+	/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
+
+	var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
+	/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
+
+	var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange + rsComboMarksRange + rsComboSymbolsRange + rsVarRange + ']');
+	/** Built-in method references without a dependency on `root`. */
+
+	var freeParseInt = parseInt;
+	/** Detect free variable `global` from Node.js. */
+
+	var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+	/** Detect free variable `self`. */
+
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	/** Used as a reference to the global object. */
+
+	var root = freeGlobal || freeSelf || Function('return this')();
+	/**
+	 * Gets the size of an ASCII `string`.
+	 *
+	 * @private
+	 * @param {string} string The string inspect.
+	 * @returns {number} Returns the string size.
+	 */
+
+	var asciiSize = baseProperty('length');
+	/**
+	 * Converts an ASCII `string` to an array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the converted array.
+	 */
+
+	function asciiToArray(string) {
+	  return string.split('');
+	}
+	/**
+	 * The base implementation of `_.property` without support for deep paths.
+	 *
+	 * @private
+	 * @param {string} key The key of the property to get.
+	 * @returns {Function} Returns the new accessor function.
+	 */
+
+
+	function baseProperty(key) {
+	  return function (object) {
+	    return object == null ? undefined : object[key];
+	  };
+	}
+	/**
+	 * Checks if `string` contains Unicode symbols.
+	 *
+	 * @private
+	 * @param {string} string The string to inspect.
+	 * @returns {boolean} Returns `true` if a symbol is found, else `false`.
+	 */
+
+
+	function hasUnicode(string) {
+	  return reHasUnicode.test(string);
+	}
+	/**
+	 * Gets the number of symbols in `string`.
+	 *
+	 * @private
+	 * @param {string} string The string to inspect.
+	 * @returns {number} Returns the string size.
+	 */
+
+
+	function stringSize(string) {
+	  return hasUnicode(string) ? unicodeSize(string) : asciiSize(string);
+	}
+	/**
+	 * Converts `string` to an array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the converted array.
+	 */
+
+
+	function stringToArray(string) {
+	  return hasUnicode(string) ? unicodeToArray(string) : asciiToArray(string);
+	}
+	/**
+	 * Gets the size of a Unicode `string`.
+	 *
+	 * @private
+	 * @param {string} string The string inspect.
+	 * @returns {number} Returns the string size.
+	 */
+
+
+	function unicodeSize(string) {
+	  var result = reUnicode.lastIndex = 0;
+
+	  while (reUnicode.test(string)) {
+	    result++;
+	  }
+
+	  return result;
+	}
+	/**
+	 * Converts a Unicode `string` to an array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the converted array.
+	 */
+
+
+	function unicodeToArray(string) {
+	  return string.match(reUnicode) || [];
+	}
+	/** Used for built-in method references. */
+
+
+	var objectProto = Object.prototype;
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+
+	var objectToString = objectProto.toString;
+	/** Built-in value references. */
+
+	var Symbol$1 = root.Symbol;
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+
+	var nativeCeil = Math.ceil,
+	    nativeFloor = Math.floor;
+	/** Used to convert symbols to primitives and strings. */
+
+	var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined,
+	    symbolToString = symbolProto ? symbolProto.toString : undefined;
+	/**
+	 * The base implementation of `_.repeat` which doesn't coerce arguments.
+	 *
+	 * @private
+	 * @param {string} string The string to repeat.
+	 * @param {number} n The number of times to repeat the string.
+	 * @returns {string} Returns the repeated string.
+	 */
+
+	function baseRepeat(string, n) {
+	  var result = '';
+
+	  if (!string || n < 1 || n > MAX_SAFE_INTEGER) {
+	    return result;
+	  } // Leverage the exponentiation by squaring algorithm for a faster repeat.
+	  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
+
+
+	  do {
+	    if (n % 2) {
+	      result += string;
+	    }
+
+	    n = nativeFloor(n / 2);
+
+	    if (n) {
+	      string += string;
+	    }
+	  } while (n);
+
+	  return result;
+	}
+	/**
+	 * The base implementation of `_.slice` without an iteratee call guard.
+	 *
+	 * @private
+	 * @param {Array} array The array to slice.
+	 * @param {number} [start=0] The start position.
+	 * @param {number} [end=array.length] The end position.
+	 * @returns {Array} Returns the slice of `array`.
+	 */
+
+
+	function baseSlice(array, start, end) {
+	  var index = -1,
+	      length = array.length;
+
+	  if (start < 0) {
+	    start = -start > length ? 0 : length + start;
+	  }
+
+	  end = end > length ? length : end;
+
+	  if (end < 0) {
+	    end += length;
+	  }
+
+	  length = start > end ? 0 : end - start >>> 0;
+	  start >>>= 0;
+	  var result = Array(length);
+
+	  while (++index < length) {
+	    result[index] = array[index + start];
+	  }
+
+	  return result;
+	}
+	/**
+	 * The base implementation of `_.toString` which doesn't convert nullish
+	 * values to empty strings.
+	 *
+	 * @private
+	 * @param {*} value The value to process.
+	 * @returns {string} Returns the string.
+	 */
+
+
+	function baseToString(value) {
+	  // Exit early for strings to avoid a performance hit in some environments.
+	  if (typeof value == 'string') {
+	    return value;
+	  }
+
+	  if (isSymbol(value)) {
+	    return symbolToString ? symbolToString.call(value) : '';
+	  }
+
+	  var result = value + '';
+	  return result == '0' && 1 / value == -INFINITY ? '-0' : result;
+	}
+	/**
+	 * Casts `array` to a slice if it's needed.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {number} start The start position.
+	 * @param {number} [end=array.length] The end position.
+	 * @returns {Array} Returns the cast slice.
+	 */
+
+
+	function castSlice(array, start, end) {
+	  var length = array.length;
+	  end = end === undefined ? length : end;
+	  return !start && end >= length ? array : baseSlice(array, start, end);
+	}
+	/**
+	 * Creates the padding for `string` based on `length`. The `chars` string
+	 * is truncated if the number of characters exceeds `length`.
+	 *
+	 * @private
+	 * @param {number} length The padding length.
+	 * @param {string} [chars=' '] The string used as padding.
+	 * @returns {string} Returns the padding for `string`.
+	 */
+
+
+	function createPadding(length, chars) {
+	  chars = chars === undefined ? ' ' : baseToString(chars);
+	  var charsLength = chars.length;
+
+	  if (charsLength < 2) {
+	    return charsLength ? baseRepeat(chars, length) : chars;
+	  }
+
+	  var result = baseRepeat(chars, nativeCeil(length / stringSize(chars)));
+	  return hasUnicode(chars) ? castSlice(stringToArray(result), 0, length).join('') : result.slice(0, length);
+	}
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+
+
+	function isObject$1(value) {
+	  var type = typeof value;
+	  return !!value && (type == 'object' || type == 'function');
+	}
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+
+
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
+	}
+	/**
+	 * Checks if `value` is classified as a `Symbol` primitive or object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+	 * @example
+	 *
+	 * _.isSymbol(Symbol.iterator);
+	 * // => true
+	 *
+	 * _.isSymbol('abc');
+	 * // => false
+	 */
+
+
+	function isSymbol(value) {
+	  return typeof value == 'symbol' || isObjectLike(value) && objectToString.call(value) == symbolTag;
+	}
+	/**
+	 * Converts `value` to a finite number.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.12.0
+	 * @category Lang
+	 * @param {*} value The value to convert.
+	 * @returns {number} Returns the converted number.
+	 * @example
+	 *
+	 * _.toFinite(3.2);
+	 * // => 3.2
+	 *
+	 * _.toFinite(Number.MIN_VALUE);
+	 * // => 5e-324
+	 *
+	 * _.toFinite(Infinity);
+	 * // => 1.7976931348623157e+308
+	 *
+	 * _.toFinite('3.2');
+	 * // => 3.2
+	 */
+
+
+	function toFinite(value) {
+	  if (!value) {
+	    return value === 0 ? value : 0;
+	  }
+
+	  value = toNumber(value);
+
+	  if (value === INFINITY || value === -INFINITY) {
+	    var sign = value < 0 ? -1 : 1;
+	    return sign * MAX_INTEGER;
+	  }
+
+	  return value === value ? value : 0;
+	}
+	/**
+	 * Converts `value` to an integer.
+	 *
+	 * **Note:** This method is loosely based on
+	 * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to convert.
+	 * @returns {number} Returns the converted integer.
+	 * @example
+	 *
+	 * _.toInteger(3.2);
+	 * // => 3
+	 *
+	 * _.toInteger(Number.MIN_VALUE);
+	 * // => 0
+	 *
+	 * _.toInteger(Infinity);
+	 * // => 1.7976931348623157e+308
+	 *
+	 * _.toInteger('3.2');
+	 * // => 3
+	 */
+
+
+	function toInteger(value) {
+	  var result = toFinite(value),
+	      remainder = result % 1;
+	  return result === result ? remainder ? result - remainder : result : 0;
+	}
+	/**
+	 * Converts `value` to a number.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to process.
+	 * @returns {number} Returns the number.
+	 * @example
+	 *
+	 * _.toNumber(3.2);
+	 * // => 3.2
+	 *
+	 * _.toNumber(Number.MIN_VALUE);
+	 * // => 5e-324
+	 *
+	 * _.toNumber(Infinity);
+	 * // => Infinity
+	 *
+	 * _.toNumber('3.2');
+	 * // => 3.2
+	 */
+
+
+	function toNumber(value) {
+	  if (typeof value == 'number') {
+	    return value;
+	  }
+
+	  if (isSymbol(value)) {
+	    return NAN;
+	  }
+
+	  if (isObject$1(value)) {
+	    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+	    value = isObject$1(other) ? other + '' : other;
+	  }
+
+	  if (typeof value != 'string') {
+	    return value === 0 ? value : +value;
+	  }
+
+	  value = value.replace(reTrim, '');
+	  var isBinary = reIsBinary.test(value);
+	  return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+	}
+	/**
+	 * Converts `value` to a string. An empty string is returned for `null`
+	 * and `undefined` values. The sign of `-0` is preserved.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to process.
+	 * @returns {string} Returns the string.
+	 * @example
+	 *
+	 * _.toString(null);
+	 * // => ''
+	 *
+	 * _.toString(-0);
+	 * // => '-0'
+	 *
+	 * _.toString([1, 2, 3]);
+	 * // => '1,2,3'
+	 */
+
+
+	function toString$1(value) {
+	  return value == null ? '' : baseToString(value);
+	}
+	/**
+	 * Pads `string` on the left side if it's shorter than `length`. Padding
+	 * characters are truncated if they exceed `length`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category String
+	 * @param {string} [string=''] The string to pad.
+	 * @param {number} [length=0] The padding length.
+	 * @param {string} [chars=' '] The string used as padding.
+	 * @returns {string} Returns the padded string.
+	 * @example
+	 *
+	 * _.padStart('abc', 6);
+	 * // => '   abc'
+	 *
+	 * _.padStart('abc', 6, '_-');
+	 * // => '_-_abc'
+	 *
+	 * _.padStart('abc', 3);
+	 * // => 'abc'
+	 */
+
+
+	function padStart(string, length, chars) {
+	  string = toString$1(string);
+	  length = toInteger(length);
+	  var strLength = length ? stringSize(string) : 0;
+	  return length && strLength < length ? createPadding(length - strLength, chars) + string : string;
+	}
+
+	var lodash_padstart = padStart;
+
+	/**
+	 * lodash (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+	 * Released under MIT license <https://lodash.com/license>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 */
+
+	/** Used as references for various `Number` constants. */
+	var INFINITY$1 = 1 / 0,
+	    MAX_SAFE_INTEGER$1 = 9007199254740991,
+	    MAX_INTEGER$1 = 1.7976931348623157e+308,
+	    NAN$1 = 0 / 0;
+	/** `Object#toString` result references. */
+
+	var symbolTag$1 = '[object Symbol]';
+	/** Used to match leading and trailing whitespace. */
+
+	var reTrim$1 = /^\s+|\s+$/g;
+	/** Used to detect bad signed hexadecimal string values. */
+
+	var reIsBadHex$1 = /^[-+]0x[0-9a-f]+$/i;
+	/** Used to detect binary string values. */
+
+	var reIsBinary$1 = /^0b[01]+$/i;
+	/** Used to detect octal string values. */
+
+	var reIsOctal$1 = /^0o[0-7]+$/i;
+	/** Used to compose unicode character classes. */
+
+	var rsAstralRange$1 = '\\ud800-\\udfff',
+	    rsComboMarksRange$1 = '\\u0300-\\u036f\\ufe20-\\ufe23',
+	    rsComboSymbolsRange$1 = '\\u20d0-\\u20f0',
+	    rsVarRange$1 = '\\ufe0e\\ufe0f';
+	/** Used to compose unicode capture groups. */
+
+	var rsAstral$1 = '[' + rsAstralRange$1 + ']',
+	    rsCombo$1 = '[' + rsComboMarksRange$1 + rsComboSymbolsRange$1 + ']',
+	    rsFitz$1 = '\\ud83c[\\udffb-\\udfff]',
+	    rsModifier$1 = '(?:' + rsCombo$1 + '|' + rsFitz$1 + ')',
+	    rsNonAstral$1 = '[^' + rsAstralRange$1 + ']',
+	    rsRegional$1 = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+	    rsSurrPair$1 = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+	    rsZWJ$1 = '\\u200d';
+	/** Used to compose unicode regexes. */
+
+	var reOptMod$1 = rsModifier$1 + '?',
+	    rsOptVar$1 = '[' + rsVarRange$1 + ']?',
+	    rsOptJoin$1 = '(?:' + rsZWJ$1 + '(?:' + [rsNonAstral$1, rsRegional$1, rsSurrPair$1].join('|') + ')' + rsOptVar$1 + reOptMod$1 + ')*',
+	    rsSeq$1 = rsOptVar$1 + reOptMod$1 + rsOptJoin$1,
+	    rsSymbol$1 = '(?:' + [rsNonAstral$1 + rsCombo$1 + '?', rsCombo$1, rsRegional$1, rsSurrPair$1, rsAstral$1].join('|') + ')';
+	/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
+
+	var reUnicode$1 = RegExp(rsFitz$1 + '(?=' + rsFitz$1 + ')|' + rsSymbol$1 + rsSeq$1, 'g');
+	/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
+
+	var reHasUnicode$1 = RegExp('[' + rsZWJ$1 + rsAstralRange$1 + rsComboMarksRange$1 + rsComboSymbolsRange$1 + rsVarRange$1 + ']');
+	/** Built-in method references without a dependency on `root`. */
+
+	var freeParseInt$1 = parseInt;
+	/** Detect free variable `global` from Node.js. */
+
+	var freeGlobal$1 = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+	/** Detect free variable `self`. */
+
+	var freeSelf$1 = typeof self == 'object' && self && self.Object === Object && self;
+	/** Used as a reference to the global object. */
+
+	var root$1 = freeGlobal$1 || freeSelf$1 || Function('return this')();
+	/**
+	 * Gets the size of an ASCII `string`.
+	 *
+	 * @private
+	 * @param {string} string The string inspect.
+	 * @returns {number} Returns the string size.
+	 */
+
+	var asciiSize$1 = baseProperty$1('length');
+	/**
+	 * Converts an ASCII `string` to an array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the converted array.
+	 */
+
+	function asciiToArray$1(string) {
+	  return string.split('');
+	}
+	/**
+	 * The base implementation of `_.property` without support for deep paths.
+	 *
+	 * @private
+	 * @param {string} key The key of the property to get.
+	 * @returns {Function} Returns the new accessor function.
+	 */
+
+
+	function baseProperty$1(key) {
+	  return function (object) {
+	    return object == null ? undefined : object[key];
+	  };
+	}
+	/**
+	 * Checks if `string` contains Unicode symbols.
+	 *
+	 * @private
+	 * @param {string} string The string to inspect.
+	 * @returns {boolean} Returns `true` if a symbol is found, else `false`.
+	 */
+
+
+	function hasUnicode$1(string) {
+	  return reHasUnicode$1.test(string);
+	}
+	/**
+	 * Gets the number of symbols in `string`.
+	 *
+	 * @private
+	 * @param {string} string The string to inspect.
+	 * @returns {number} Returns the string size.
+	 */
+
+
+	function stringSize$1(string) {
+	  return hasUnicode$1(string) ? unicodeSize$1(string) : asciiSize$1(string);
+	}
+	/**
+	 * Converts `string` to an array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the converted array.
+	 */
+
+
+	function stringToArray$1(string) {
+	  return hasUnicode$1(string) ? unicodeToArray$1(string) : asciiToArray$1(string);
+	}
+	/**
+	 * Gets the size of a Unicode `string`.
+	 *
+	 * @private
+	 * @param {string} string The string inspect.
+	 * @returns {number} Returns the string size.
+	 */
+
+
+	function unicodeSize$1(string) {
+	  var result = reUnicode$1.lastIndex = 0;
+
+	  while (reUnicode$1.test(string)) {
+	    result++;
+	  }
+
+	  return result;
+	}
+	/**
+	 * Converts a Unicode `string` to an array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the converted array.
+	 */
+
+
+	function unicodeToArray$1(string) {
+	  return string.match(reUnicode$1) || [];
+	}
+	/** Used for built-in method references. */
+
+
+	var objectProto$1 = Object.prototype;
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+
+	var objectToString$1 = objectProto$1.toString;
+	/** Built-in value references. */
+
+	var Symbol$2 = root$1.Symbol;
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+
+	var nativeCeil$1 = Math.ceil,
+	    nativeFloor$1 = Math.floor;
+	/** Used to convert symbols to primitives and strings. */
+
+	var symbolProto$1 = Symbol$2 ? Symbol$2.prototype : undefined,
+	    symbolToString$1 = symbolProto$1 ? symbolProto$1.toString : undefined;
+	/**
+	 * The base implementation of `_.repeat` which doesn't coerce arguments.
+	 *
+	 * @private
+	 * @param {string} string The string to repeat.
+	 * @param {number} n The number of times to repeat the string.
+	 * @returns {string} Returns the repeated string.
+	 */
+
+	function baseRepeat$1(string, n) {
+	  var result = '';
+
+	  if (!string || n < 1 || n > MAX_SAFE_INTEGER$1) {
+	    return result;
+	  } // Leverage the exponentiation by squaring algorithm for a faster repeat.
+	  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
+
+
+	  do {
+	    if (n % 2) {
+	      result += string;
+	    }
+
+	    n = nativeFloor$1(n / 2);
+
+	    if (n) {
+	      string += string;
+	    }
+	  } while (n);
+
+	  return result;
+	}
+	/**
+	 * The base implementation of `_.slice` without an iteratee call guard.
+	 *
+	 * @private
+	 * @param {Array} array The array to slice.
+	 * @param {number} [start=0] The start position.
+	 * @param {number} [end=array.length] The end position.
+	 * @returns {Array} Returns the slice of `array`.
+	 */
+
+
+	function baseSlice$1(array, start, end) {
+	  var index = -1,
+	      length = array.length;
+
+	  if (start < 0) {
+	    start = -start > length ? 0 : length + start;
+	  }
+
+	  end = end > length ? length : end;
+
+	  if (end < 0) {
+	    end += length;
+	  }
+
+	  length = start > end ? 0 : end - start >>> 0;
+	  start >>>= 0;
+	  var result = Array(length);
+
+	  while (++index < length) {
+	    result[index] = array[index + start];
+	  }
+
+	  return result;
+	}
+	/**
+	 * The base implementation of `_.toString` which doesn't convert nullish
+	 * values to empty strings.
+	 *
+	 * @private
+	 * @param {*} value The value to process.
+	 * @returns {string} Returns the string.
+	 */
+
+
+	function baseToString$1(value) {
+	  // Exit early for strings to avoid a performance hit in some environments.
+	  if (typeof value == 'string') {
+	    return value;
+	  }
+
+	  if (isSymbol$1(value)) {
+	    return symbolToString$1 ? symbolToString$1.call(value) : '';
+	  }
+
+	  var result = value + '';
+	  return result == '0' && 1 / value == -INFINITY$1 ? '-0' : result;
+	}
+	/**
+	 * Casts `array` to a slice if it's needed.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {number} start The start position.
+	 * @param {number} [end=array.length] The end position.
+	 * @returns {Array} Returns the cast slice.
+	 */
+
+
+	function castSlice$1(array, start, end) {
+	  var length = array.length;
+	  end = end === undefined ? length : end;
+	  return !start && end >= length ? array : baseSlice$1(array, start, end);
+	}
+	/**
+	 * Creates the padding for `string` based on `length`. The `chars` string
+	 * is truncated if the number of characters exceeds `length`.
+	 *
+	 * @private
+	 * @param {number} length The padding length.
+	 * @param {string} [chars=' '] The string used as padding.
+	 * @returns {string} Returns the padding for `string`.
+	 */
+
+
+	function createPadding$1(length, chars) {
+	  chars = chars === undefined ? ' ' : baseToString$1(chars);
+	  var charsLength = chars.length;
+
+	  if (charsLength < 2) {
+	    return charsLength ? baseRepeat$1(chars, length) : chars;
+	  }
+
+	  var result = baseRepeat$1(chars, nativeCeil$1(length / stringSize$1(chars)));
+	  return hasUnicode$1(chars) ? castSlice$1(stringToArray$1(result), 0, length).join('') : result.slice(0, length);
+	}
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+
+
+	function isObject$2(value) {
+	  var type = typeof value;
+	  return !!value && (type == 'object' || type == 'function');
+	}
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+
+
+	function isObjectLike$1(value) {
+	  return !!value && typeof value == 'object';
+	}
+	/**
+	 * Checks if `value` is classified as a `Symbol` primitive or object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+	 * @example
+	 *
+	 * _.isSymbol(Symbol.iterator);
+	 * // => true
+	 *
+	 * _.isSymbol('abc');
+	 * // => false
+	 */
+
+
+	function isSymbol$1(value) {
+	  return typeof value == 'symbol' || isObjectLike$1(value) && objectToString$1.call(value) == symbolTag$1;
+	}
+	/**
+	 * Converts `value` to a finite number.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.12.0
+	 * @category Lang
+	 * @param {*} value The value to convert.
+	 * @returns {number} Returns the converted number.
+	 * @example
+	 *
+	 * _.toFinite(3.2);
+	 * // => 3.2
+	 *
+	 * _.toFinite(Number.MIN_VALUE);
+	 * // => 5e-324
+	 *
+	 * _.toFinite(Infinity);
+	 * // => 1.7976931348623157e+308
+	 *
+	 * _.toFinite('3.2');
+	 * // => 3.2
+	 */
+
+
+	function toFinite$1(value) {
+	  if (!value) {
+	    return value === 0 ? value : 0;
+	  }
+
+	  value = toNumber$1(value);
+
+	  if (value === INFINITY$1 || value === -INFINITY$1) {
+	    var sign = value < 0 ? -1 : 1;
+	    return sign * MAX_INTEGER$1;
+	  }
+
+	  return value === value ? value : 0;
+	}
+	/**
+	 * Converts `value` to an integer.
+	 *
+	 * **Note:** This method is loosely based on
+	 * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to convert.
+	 * @returns {number} Returns the converted integer.
+	 * @example
+	 *
+	 * _.toInteger(3.2);
+	 * // => 3
+	 *
+	 * _.toInteger(Number.MIN_VALUE);
+	 * // => 0
+	 *
+	 * _.toInteger(Infinity);
+	 * // => 1.7976931348623157e+308
+	 *
+	 * _.toInteger('3.2');
+	 * // => 3
+	 */
+
+
+	function toInteger$1(value) {
+	  var result = toFinite$1(value),
+	      remainder = result % 1;
+	  return result === result ? remainder ? result - remainder : result : 0;
+	}
+	/**
+	 * Converts `value` to a number.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to process.
+	 * @returns {number} Returns the number.
+	 * @example
+	 *
+	 * _.toNumber(3.2);
+	 * // => 3.2
+	 *
+	 * _.toNumber(Number.MIN_VALUE);
+	 * // => 5e-324
+	 *
+	 * _.toNumber(Infinity);
+	 * // => Infinity
+	 *
+	 * _.toNumber('3.2');
+	 * // => 3.2
+	 */
+
+
+	function toNumber$1(value) {
+	  if (typeof value == 'number') {
+	    return value;
+	  }
+
+	  if (isSymbol$1(value)) {
+	    return NAN$1;
+	  }
+
+	  if (isObject$2(value)) {
+	    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+	    value = isObject$2(other) ? other + '' : other;
+	  }
+
+	  if (typeof value != 'string') {
+	    return value === 0 ? value : +value;
+	  }
+
+	  value = value.replace(reTrim$1, '');
+	  var isBinary = reIsBinary$1.test(value);
+	  return isBinary || reIsOctal$1.test(value) ? freeParseInt$1(value.slice(2), isBinary ? 2 : 8) : reIsBadHex$1.test(value) ? NAN$1 : +value;
+	}
+	/**
+	 * Converts `value` to a string. An empty string is returned for `null`
+	 * and `undefined` values. The sign of `-0` is preserved.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to process.
+	 * @returns {string} Returns the string.
+	 * @example
+	 *
+	 * _.toString(null);
+	 * // => ''
+	 *
+	 * _.toString(-0);
+	 * // => '-0'
+	 *
+	 * _.toString([1, 2, 3]);
+	 * // => '1,2,3'
+	 */
+
+
+	function toString$2(value) {
+	  return value == null ? '' : baseToString$1(value);
+	}
+	/**
+	 * Pads `string` on the right side if it's shorter than `length`. Padding
+	 * characters are truncated if they exceed `length`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category String
+	 * @param {string} [string=''] The string to pad.
+	 * @param {number} [length=0] The padding length.
+	 * @param {string} [chars=' '] The string used as padding.
+	 * @returns {string} Returns the padded string.
+	 * @example
+	 *
+	 * _.padEnd('abc', 6);
+	 * // => 'abc   '
+	 *
+	 * _.padEnd('abc', 6, '_-');
+	 * // => 'abc_-_'
+	 *
+	 * _.padEnd('abc', 3);
+	 * // => 'abc'
+	 */
+
+
+	function padEnd(string, length, chars) {
+	  string = toString$2(string);
+	  length = toInteger$1(length);
+	  var strLength = length ? stringSize$1(string) : 0;
+	  return length && strLength < length ? string + createPadding$1(length - strLength, chars) : string;
+	}
+
+	var lodash_padend = padEnd;
+
+	class TimeLabel extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.time = void 0;
+	  }
+
+	  get formatted() {
+	    const {
+	      milliseconds: timeMilliseconds
+	    } = this.time;
+	    const {
+	      hours,
+	      minutes,
+	      seconds,
+	      milliseconds
+	    } = parseMs(timeMilliseconds);
+	    const millisecondsString = lodash_padend(milliseconds / 1000, 3, '0');
+	    let str = `${lodash_padstart(seconds, 2, '0')}`;
+
+	    if (minutes > 0) {
+	      str = `${lodash_padstart(minutes, 2, '0')}:${str}`;
+	    }
+
+	    if (hours > 0) {
+	      return `${hours}:${str}`;
+	    }
+
+	    return str;
+	  }
+
+	}
+
+	engine_11(TimeLabel, {
+	  publicProps: {
+	    time: {
+	      config: 0
+	    }
+	  }
+	});
+
+	var _ffmpegTimelabel = engine_10(TimeLabel, {
+	  tmpl: _tmpl$2
+	});
+
+	function tmpl$2($api, $cmp, $slotset, $ctx) {
+	  const {
+	    c: api_custom_element,
+	    h: api_element,
+	    k: api_key,
+	    i: api_iterator
+	  } = $api;
+	  return api_iterator($cmp.ticks, function (tick) {
+	    return api_element("span", {
+	      classMap: {
+	        "tick": true
+	      },
+	      style: tick.style,
+	      key: api_key(3, tick.time.milliseconds)
+	    }, [tick.renderLabel ? api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
+	      classMap: {
+	        "tick-label": true
+	      },
+	      props: {
+	        "time": tick.time
+	      },
+	      key: 5
+	    }, []) : null, api_element("span", {
+	      className: tick.indicatorClassName,
+	      key: 6
+	    }, [])]);
+	  });
+	}
+
+	var _tmpl$3 = engine_8(tmpl$2);
+	tmpl$2.stylesheets = [];
+
+	if (_implicitStylesheets$2) {
+	  tmpl$2.stylesheets.push.apply(tmpl$2.stylesheets, _implicitStylesheets$2);
+	}
+	tmpl$2.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-timeline_timeline-host",
+	  shadowAttribute: "ffmpeg-timeline_timeline"
+	};
 
 	var interact = createCommonjsModule(function (module, exports) {
 	/**
@@ -27117,25 +28785,127 @@
 	});
 
 	var _ffmpegTimeline = engine_10(Timeline, {
-	  tmpl: _tmpl$1
+	  tmpl: _tmpl$3
 	});
 
-	function stylesheet$2(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n";
-	}
-	var _implicitStylesheets$2 = [stylesheet$2];
-
 	function stylesheet$3(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;}") : (hostSelector + " {display: block;}")) + "\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}") : (hostSelector + " {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}")) + "\nul" + shadowSelector + " {margin: 0;padding: 0;}\nli" + shadowSelector + " {position: absolute;top: 0;left: 0;bottom: 0;width: 1px;background: #f1f1f1;z-index: 1;list-style-type: none;}\n";
 	}
 	var _implicitStylesheets$3 = [stylesheet$3];
 
+	function tmpl$3($api, $cmp, $slotset, $ctx) {
+	  const {
+	    k: api_key,
+	    h: api_element,
+	    i: api_iterator
+	  } = $api;
+	  return [api_element("ul", {
+	    key: 2
+	  }, api_iterator($cmp.gridLines, function (gridLine) {
+	    return api_element("li", {
+	      style: gridLine.style,
+	      key: api_key(4, gridLine.time.milliseconds)
+	    }, []);
+	  }))];
+	}
+
+	var _tmpl$4 = engine_8(tmpl$3);
+	tmpl$3.stylesheets = [];
+
+	if (_implicitStylesheets$3) {
+	  tmpl$3.stylesheets.push.apply(tmpl$3.stylesheets, _implicitStylesheets$3);
+	}
+	tmpl$3.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-grid_grid-host",
+	  shadowAttribute: "ffmpeg-grid_grid"
+	};
+
+	function getGridTimes(range, tickDistanceMs) {
+	  const remainder = range.start.milliseconds % tickDistanceMs;
+	  const lower = remainder === 0 ? range.start.milliseconds : range.start.milliseconds + (tickDistanceMs - range.start.milliseconds % tickDistanceMs);
+	  const upper = Math.floor(range.start.milliseconds + range.duration.milliseconds);
+	  const numberOfTicks = (upper - lower) / tickDistanceMs;
+	  const values = [];
+
+	  for (let i = 0; i < numberOfTicks; i += 1) {
+	    const time = new Time(lower + i * tickDistanceMs);
+	    values.push(time);
+	  }
+
+	  return values;
+	}
+
+	function gridLines(editor) {
+	  const {
+	    visibleRange,
+	    quanitization
+	  } = editor;
+	  const tickDistanceMs = 1000 * quanitization;
+	  const ticks = [];
+	  const times = getGridTimes(visibleRange, tickDistanceMs);
+
+	  for (let i = 0, len = times.length; i < len; i += 1) {
+	    const time = times[i];
+	    const translateX = editor.timeToPixel(time);
+	    ticks.push({
+	      time,
+	      style: `transform: translateX(${translateX}px)`
+	    });
+	  }
+
+	  return ticks;
+	}
+
+	class Grid extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.editor = void 0;
+	  }
+
+	  get gridLines() {
+	    const {
+	      editor
+	    } = this;
+
+	    if (!editor.data.frame) {
+	      return [];
+	    }
+
+	    return gridLines(editor.data);
+	  }
+
+	}
+
+	engine_11(Grid, {
+	  wire: {
+	    editor: {
+	      adapter: editorSym,
+	      params: {},
+	      static: {}
+	    }
+	  }
+	});
+
+	var _ffmpegGrid = engine_10(Grid, {
+	  tmpl: _tmpl$4
+	});
+
 	function stylesheet$4(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;background: #aaa;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;background: #aaa;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n";
 	}
 	var _implicitStylesheets$4 = [stylesheet$4];
 
-	function tmpl$2($api, $cmp, $slotset, $ctx) {
+	function stylesheet$5(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;background: #000;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n";
+	}
+	var _implicitStylesheets$5 = [stylesheet$5];
+
+	function stylesheet$6(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;background: #aaa;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;background: #aaa;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	}
+	var _implicitStylesheets$6 = [stylesheet$6];
+
+	function tmpl$4($api, $cmp, $slotset, $ctx) {
 	  const {
 	    t: api_text,
 	    h: api_element
@@ -27149,13 +28919,13 @@
 	  }, []) : null : null];
 	}
 
-	var _tmpl$3 = engine_8(tmpl$2);
-	tmpl$2.stylesheets = [];
+	var _tmpl$5 = engine_8(tmpl$4);
+	tmpl$4.stylesheets = [];
 
-	if (_implicitStylesheets$4) {
-	  tmpl$2.stylesheets.push.apply(tmpl$2.stylesheets, _implicitStylesheets$4);
+	if (_implicitStylesheets$6) {
+	  tmpl$4.stylesheets.push.apply(tmpl$4.stylesheets, _implicitStylesheets$6);
 	}
-	tmpl$2.stylesheetTokens = {
+	tmpl$4.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-waveform_waveform-host",
 	  shadowAttribute: "ffmpeg-waveform_waveform"
 	};
@@ -28550,54 +30320,6 @@
 	core.adapters = adapters;
 	var waveformData = core;
 
-	const audioContext = new AudioContext();
-	const audioSourcesSubject = new BehaviorSubject(new Map$1());
-	const stream = audioSourcesSubject.asObservable();
-	const AudioSourceState = {
-	  LOADING: 'LOADING',
-	  READY: 'READY'
-	};
-
-	class AudioSource extends Record({
-	  title: null,
-	  id: null,
-	  data: null,
-	  audio: null,
-	  duration: null,
-	  state: null
-	}) {}
-
-	function createAudioSourceFromFile(id, file) {
-	  const source = new AudioSource({
-	    title: file.name,
-	    id,
-	    state: AudioSourceState.LOADING
-	  });
-	  audioSourcesSubject.next(audioSourcesSubject.value.set(id, source));
-	  return new Promise(res => {
-	    const reader = new FileReader();
-
-	    reader.onload = () => {
-	      const clone = reader.result.slice(0);
-	      audioContext.decodeAudioData(reader.result, audioBuffer => {
-	        const duration = Time.fromSeconds(audioBuffer.duration);
-	        const ready = audioSourcesSubject.value.mergeIn([id], {
-	          duration,
-	          data: clone,
-	          audio: audioBuffer,
-	          state: AudioSourceState.READY
-	        });
-	        audioSourcesSubject.next(ready);
-	        res(ready.get(id));
-	      });
-	    };
-
-	    reader.readAsArrayBuffer(file);
-	  });
-	}
-	const audioSources = Symbol();
-	wire_2(audioSources, wireObservable(stream));
-
 	var WORKER_ENABLED = !!(commonjsGlobal === commonjsGlobal.window && commonjsGlobal.URL && commonjsGlobal.Blob && commonjsGlobal.Worker);
 
 	function InlineWorker(func, self) {
@@ -29002,41 +30724,57 @@
 	});
 
 	var _ffmpegWaveform = engine_10(Waveform$1, {
-	  tmpl: _tmpl$3
+	  tmpl: _tmpl$5
 	});
 
-	function tmpl$3($api, $cmp, $slotset, $ctx) {
+	function tmpl$5($api, $cmp, $slotset, $ctx) {
 	  const {
+	    h: api_element,
 	    c: api_custom_element
 	  } = $api;
-	  return [$cmp.hasSource ? api_custom_element("ffmpeg-waveform", _ffmpegWaveform, {
+	  return [$cmp.hasSource ? api_element("span", {
+	    classMap: {
+	      "handle": true,
+	      "handle--start": true
+	    },
+	    key: 3
+	  }, []) : null, $cmp.hasSource ? api_custom_element("ffmpeg-waveform", _ffmpegWaveform, {
 	    style: $cmp.waveformStyle,
 	    props: {
 	      "offset": $cmp.segment.sourceOffset,
 	      "source": $cmp.source
 	    },
-	    key: 3
+	    key: 4
+	  }, []) : null, $cmp.hasSource ? api_element("span", {
+	    classMap: {
+	      "handle": true,
+	      "handle--end": true
+	    },
+	    key: 5
 	  }, []) : null];
 	}
 
-	var _tmpl$4 = engine_8(tmpl$3);
-	tmpl$3.stylesheets = [];
+	var _tmpl$6 = engine_8(tmpl$5);
+	tmpl$5.stylesheets = [];
 
-	if (_implicitStylesheets$3) {
-	  tmpl$3.stylesheets.push.apply(tmpl$3.stylesheets, _implicitStylesheets$3);
+	if (_implicitStylesheets$5) {
+	  tmpl$5.stylesheets.push.apply(tmpl$5.stylesheets, _implicitStylesheets$5);
 	}
-	tmpl$3.stylesheetTokens = {
+	tmpl$5.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-audiotracksegment_audiotracksegment-host",
 	  shadowAttribute: "ffmpeg-audiotracksegment_audiotracksegment"
 	};
 
-	class AudioTrackSegment extends engine_5 {
+	class AudioTrackSegment$1 extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.segment = void 0;
 	    this.frame = void 0;
 	    this.editor = void 0;
 	    this.sources = void 0;
+	    this.moveInteract = void 0;
+	    this.startHandleIneract = void 0;
+	    this.endHandleInteract = void 0;
 
 	    this.onDrag = evt => {
 	      const {
@@ -29057,6 +30795,45 @@
 	      });
 	      this.dispatchEvent(event);
 	    };
+
+	    this.onStartHandleDrag = rafThrottle(evt => {
+	      const {
+	        editor,
+	        segment
+	      } = this;
+	      const {
+	        dx
+	      } = evt;
+	      const time = editor.data.pixelToTime(dx);
+	      const event = new CustomEvent('segmentsourceoffsetchange', {
+	        composed: false,
+	        bubbles: true,
+	        detail: {
+	          time,
+	          segmentId: segment.id
+	        }
+	      });
+	      this.dispatchEvent(event);
+	    });
+	    this.onEndHandleDrag = rafThrottle(evt => {
+	      const {
+	        editor,
+	        segment
+	      } = this;
+	      const {
+	        dx
+	      } = evt;
+	      const time = editor.data.pixelToTime(dx);
+	      const event = new CustomEvent('segmentdurationchange', {
+	        composed: false,
+	        bubbles: true,
+	        detail: {
+	          time,
+	          segmentId: segment.id
+	        }
+	      });
+	      this.dispatchEvent(event);
+	    });
 	  }
 
 	  get hasSource() {
@@ -29086,16 +30863,43 @@
 	   *
 	  */
 	  connectedCallback() {
-	    interact(this.template.host).draggable({
-	      inertia: true,
+	    this.moveInteract = interact(this.template.host).draggable({
+	      inertia: false,
 	      axis: 'y',
 	      onmove: this.onDrag
 	    });
 	  }
 
+	  renderedCallback() {
+	    if (!this.startHandleIneract) {
+	      this.startHandleIneract = interact(this.template.querySelector('.handle--start')).draggable({
+	        inertia: false,
+	        axis: 'x',
+	        onmove: this.onStartHandleDrag
+	      });
+	    }
+
+	    if (!this.endHandleInteract) {
+	      this.endHandleInteract = interact(this.template.querySelector('.handle--end')).draggable({
+	        inertia: false,
+	        axis: 'x',
+	        onmove: this.onEndHandleDrag
+	      });
+	    }
+	  }
+
+	  disconnectedCallback() {
+	    this.startHandleIneract.unset();
+	    this.endHandleInteract.unset();
+	    this.moveInteract.unset();
+	    this.moveInteract = null;
+	    this.startHandleIneract = null;
+	    this.endHandleInteract = null;
+	  }
+
 	}
 
-	engine_11(AudioTrackSegment, {
+	engine_11(AudioTrackSegment$1, {
 	  publicProps: {
 	    segment: {
 	      config: 0
@@ -29118,11 +30922,11 @@
 	  }
 	});
 
-	var _ffmpegAudiotracksegment = engine_10(AudioTrackSegment, {
-	  tmpl: _tmpl$4
+	var _ffmpegAudiotracksegment = engine_10(AudioTrackSegment$1, {
+	  tmpl: _tmpl$6
 	});
 
-	function tmpl$4($api, $cmp, $slotset, $ctx) {
+	function tmpl$6($api, $cmp, $slotset, $ctx) {
 	  const {
 	    k: api_key,
 	    b: api_bind,
@@ -29130,7 +30934,9 @@
 	    i: api_iterator
 	  } = $api;
 	  const {
-	    _m0
+	    _m0,
+	    _m1,
+	    _m2
 	  } = $ctx;
 	  return api_iterator($cmp.trackSegments, function (trackSegment) {
 	    return api_custom_element("ffmpeg-audiotracksegment", _ffmpegAudiotracksegment, {
@@ -29141,97 +30947,31 @@
 	      },
 	      key: api_key(3, trackSegment.key),
 	      on: {
-	        "segmentmove": _m0 || ($ctx._m0 = api_bind($cmp.handleSegmentMove))
+	        "segmentdurationchange": _m0 || ($ctx._m0 = api_bind($cmp.handleSegmentDurationChange)),
+	        "segmentsourceoffsetchange": _m1 || ($ctx._m1 = api_bind($cmp.handleSegmentSourceOffsetChange)),
+	        "segmentmove": _m2 || ($ctx._m2 = api_bind($cmp.handleSegmentMove))
 	      }
 	    }, []);
 	  });
 	}
 
-	var _tmpl$5 = engine_8(tmpl$4);
-	tmpl$4.stylesheets = [];
+	var _tmpl$7 = engine_8(tmpl$6);
+	tmpl$6.stylesheets = [];
 
-	if (_implicitStylesheets$2) {
-	  tmpl$4.stylesheets.push.apply(tmpl$4.stylesheets, _implicitStylesheets$2);
+	if (_implicitStylesheets$4) {
+	  tmpl$6.stylesheets.push.apply(tmpl$6.stylesheets, _implicitStylesheets$4);
 	}
-	tmpl$4.stylesheetTokens = {
+	tmpl$6.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-audiotrack_audiotrack-host",
 	  shadowAttribute: "ffmpeg-audiotrack_audiotrack"
 	};
-
-	let id = 0;
-	function generateId() {
-	  id += 1;
-	  return id + '';
-	}
-
-	const tracksSubject = new BehaviorSubject(new Map$1());
-
-	class AudioTrack extends Record({
-	  id: null,
-	  segments: new Map$1()
-	}) {}
-
-	class AudioTrackSegment$1 extends Record({
-	  id: null,
-	  sourceOffset: null,
-	  duration: null,
-	  offset: null,
-	  sourceId: null
-	}) {}
-
-	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
-	  const track = createTrack(trackId, []);
-	  const secondTrackId = generateId();
-	  const secondTrack = createTrack(secondTrackId, []);
-	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
-	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
-	      const segmentId = generateId();
-	      return segments.set(segmentId, new AudioTrackSegment$1({
-	        id: segmentId,
-	        sourceOffset: new Time(1000),
-	        duration: new Time(2000),
-	        offset: trackOffset,
-	        sourceId
-	      }));
-	    }).updateIn([secondTrackId, 'segments'], segments => {
-	      const segmentId = generateId();
-	      return segments.set(segmentId, new AudioTrackSegment$1({
-	        id: segmentId,
-	        sourceOffset: new Time(3000),
-	        duration: new Time(2000),
-	        offset: new Time(3000),
-	        sourceId
-	      }));
-	    }));
-	  });
-	}
-	function moveSegment(trackId, segmentId, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const newOffset = new Time(segment.offset.milliseconds + time.milliseconds);
-	    return segment.set('offset', newOffset);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-	function createTrack(id, segments) {
-	  const segmentsMap = segments.reduce((seed, segment) => {
-	    return seed.set(segment.id, segment);
-	  }, new Map$1());
-	  const audioTrack = new AudioTrack({
-	    id,
-	    segments: segmentsMap
-	  });
-	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
-	  return audioTrack;
-	}
-	const audioTracks = Symbol();
-	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
 
 	class AudioTrack$1 extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.track = void 0;
 	    this.editor = void 0;
+	    this.audioSources = void 0;
 	  }
 
 	  get trackSegments() {
@@ -29276,6 +31016,24 @@
 	    moveSegment(this.track.id, segmentId, time);
 	  }
 
+	  handleSegmentSourceOffsetChange(evt) {
+	    const {
+	      time,
+	      segmentId
+	    } = evt.detail;
+	    moveSegmentSourceOffset(this.track.id, segmentId, time);
+	  }
+
+	  handleSegmentDurationChange(evt) {
+	    const {
+	      time,
+	      segmentId
+	    } = evt.detail;
+	    const audioSourceId = this.track.segments.getIn([segmentId, 'sourceId']);
+	    const audioSource = this.audioSources.data.get(audioSourceId);
+	    setSegmentDuration(this.track.id, segmentId, audioSource, time);
+	  }
+
 	}
 
 	engine_11(AudioTrack$1, {
@@ -29289,30 +31047,35 @@
 	      adapter: editorSym,
 	      params: {},
 	      static: {}
+	    },
+	    audioSources: {
+	      adapter: audioSources,
+	      params: {},
+	      static: {}
 	    }
 	  }
 	});
 
 	var _ffmpegAudiotrack = engine_10(AudioTrack$1, {
-	  tmpl: _tmpl$5
+	  tmpl: _tmpl$7
 	});
 
-	function stylesheet$5(hostSelector, shadowSelector, nativeShadow) {
+	function stylesheet$7(hostSelector, shadowSelector, nativeShadow) {
 	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 1px;background: #000;z-index: 5;pointer-events: none;}") : (hostSelector + " {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 1px;background: #000;z-index: 5;pointer-events: none;}")) + "\n\n" + (nativeShadow ? (":host(.cursor--virtual) {background: rgba(0, 0, 0, 0.4);}") : (hostSelector + ".cursor--virtual {background: rgba(0, 0, 0, 0.4);}")) + "\n";
 	}
-	var _implicitStylesheets$5 = [stylesheet$5];
+	var _implicitStylesheets$7 = [stylesheet$7];
 
-	function tmpl$5($api, $cmp, $slotset, $ctx) {
+	function tmpl$7($api, $cmp, $slotset, $ctx) {
 	  return [];
 	}
 
-	var _tmpl$6 = engine_8(tmpl$5);
-	tmpl$5.stylesheets = [];
+	var _tmpl$8 = engine_8(tmpl$7);
+	tmpl$7.stylesheets = [];
 
-	if (_implicitStylesheets$5) {
-	  tmpl$5.stylesheets.push.apply(tmpl$5.stylesheets, _implicitStylesheets$5);
+	if (_implicitStylesheets$7) {
+	  tmpl$7.stylesheets.push.apply(tmpl$7.stylesheets, _implicitStylesheets$7);
 	}
-	tmpl$5.stylesheetTokens = {
+	tmpl$7.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-cursor_cursor-host",
 	  shadowAttribute: "ffmpeg-cursor_cursor"
 	};
@@ -29321,14 +31084,16 @@
 	  constructor(...args) {
 	    super(...args);
 	    this.virtual = void 0;
+	    this.editor = void 0;
 	  }
 
-	  /*
-	   *
-	   * Editor
-	   *
-	  */
-	  editorWireCallback(editor) {
+	  get time() {}
+
+	  set time(value) {
+	    const {
+	      editor
+	    } = this;
+
 	    if (!editor.data.frame) {
 	      return;
 	    }
@@ -29336,18 +31101,17 @@
 	    const {
 	      host
 	    } = this.template;
-	    const cursorData = this.virtual ? editor.data.virtualCursor : editor.data.cursor;
 
-	    if (cursorData) {
-	      const px = editor.data.timeToPixel(cursorData);
+	    if (value) {
+	      const px = editor.data.timeToPixel(value);
 	      host.style.transform = `translateX(${px}px)`;
 	    }
 	  }
 	  /*
-	    *
-	    * Editor
-	    *
-	   */
+	   *
+	   * Lifecycle
+	   *
+	  */
 
 
 	  connectedCallback() {
@@ -29362,381 +31126,131 @@
 	  publicProps: {
 	    virtual: {
 	      config: 0
+	    },
+	    time: {
+	      config: 3
 	    }
 	  },
-	  wire: {
-	    editorWireCallback: {
-	      adapter: editorSym,
-	      params: {},
-	      static: {},
-	      method: 1
-	    }
-	  }
-	});
-
-	var _ffmpegCursor = engine_10(Cursor, {
-	  tmpl: _tmpl$6
-	});
-
-	function stylesheet$6(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {padding: 0.5rem;display: flex;justify-content: center;}") : (hostSelector + " {padding: 0.5rem;display: flex;justify-content: center;}")) + "\n";
-	}
-	var _implicitStylesheets$6 = [stylesheet$6];
-
-	function tmpl$6($api, $cmp, $slotset, $ctx) {
-	  const {
-	    t: api_text,
-	    b: api_bind,
-	    h: api_element
-	  } = $api;
-	  const {
-	    _m0
-	  } = $ctx;
-	  return [api_element("button", {
-	    key: 2,
-	    on: {
-	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onPlayClick))
-	    }
-	  }, [api_text("Play")])];
-	}
-
-	var _tmpl$7 = engine_8(tmpl$6);
-	tmpl$6.stylesheets = [];
-
-	if (_implicitStylesheets$6) {
-	  tmpl$6.stylesheets.push.apply(tmpl$6.stylesheets, _implicitStylesheets$6);
-	}
-	tmpl$6.stylesheetTokens = {
-	  hostAttribute: "ffmpeg-controls_controls-host",
-	  shadowAttribute: "ffmpeg-controls_controls"
-	};
-
-	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
-	  const {
-	    sampleRate,
-	    numberOfChannels
-	  } = audioBuffer;
-	  const durationSeconds = durationMilliseconds / 1000;
-	  const startSeconds = startMilliseconds / 1000;
-	  const sub = new AudioBuffer({
-	    length: Math.ceil(durationSeconds * sampleRate),
-	    numberOfChannels,
-	    sampleRate
-	  });
-	  const startByte = startSeconds * sampleRate;
-	  const durationBytes = durationSeconds * sampleRate;
-	  const endBytes = startByte + durationBytes;
-
-	  for (let i = 0; i < numberOfChannels; i += 1) {
-	    const channelData = sub.getChannelData(i);
-	    const subset = audioBuffer.getChannelData(i).slice(startByte, endBytes);
-	    channelData.set(subset, 0);
-	  }
-
-	  return sub;
-	}
-	function join(audioBuffers) {
-	  const [first, ...rest] = audioBuffers;
-	  return rest.reduce((seed, audioBuffer) => {
-	    const {
-	      numberOfChannels
-	    } = seed;
-	    const buffer = new AudioBuffer({
-	      length: seed.length + audioBuffer.length,
-	      sampleRate: seed.sampleRate,
-	      numberOfChannels
-	    });
-
-	    for (let i = 0; i < numberOfChannels; i += 1) {
-	      const channelData = buffer.getChannelData(i);
-	      channelData.set(seed.getChannelData(i), 0);
-	      channelData.set(audioBuffer.getChannelData(i), seed.length);
-	    }
-
-	    return buffer;
-	  }, first);
-	}
-	function silence(sampleRate, numberOfChannels, milliseconds) {
-	  const seconds = milliseconds / 1000;
-	  return new AudioBuffer({
-	    length: Math.ceil(sampleRate * seconds),
-	    sampleRate,
-	    numberOfChannels
-	  });
-	}
-	function mix(audioBuffers) {
-	  const data = audioBuffers.reduce((seed, audioBuffer) => {
-	    if (seed.length < audioBuffer.length) {
-	      seed.length = audioBuffer.length;
-	    }
-
-	    if (seed.numberOfChannels < audioBuffer.numberOfChannels) {
-	      seed.numberOfChannels = audioBuffer.numberOfChannels;
-	    }
-
-	    if (seed.sampleRate === null) {
-	      seed.sampleRate = audioBuffer.sampleRate;
-	    }
-
-	    return seed;
-	  }, {
-	    length: 0,
-	    numberOfChannels: 0,
-	    sampleRate: null,
-	    sources: []
-	  });
-	  const context = new OfflineAudioContext(data.numberOfChannels, data.length, data.sampleRate);
-	  audioBuffers.forEach(audioBuffer => {
-	    const source = context.createBufferSource();
-	    source.buffer = audioBuffer;
-	    source.connect(context.destination);
-	    source.start();
-	  });
-	  return context.startRendering();
-	}
-
-	/*
-	 *
-	 *
-	 * Renders audio data from an audio source to a segment
-	 * Property offsets underlying audio based on cursor position
-	 *
-	 */
-
-	function renderSegment(segment, audioSource, startTime
-	/* global start */
-	, duration
-	/* global duration */
-	) {
-	  const {
-	    milliseconds: cursorMilliseconds
-	  } = startTime;
-	  const {
-	    sourceOffset,
-	    duration: segmentDuration,
-	    offset
-	  } = segment;
-	  const {
-	    milliseconds: offsetMilliseconds
-	  } = offset;
-	  const {
-	    milliseconds: segmentDurationMilliseconds
-	  } = segmentDuration;
-	  const playbackEndMs = duration.milliseconds + startTime.milliseconds;
-	  const segmentEndMilliseconds = offsetMilliseconds + segmentDurationMilliseconds;
-	  const cursorDiff = offsetMilliseconds > cursorMilliseconds ? 0 : cursorMilliseconds - offsetMilliseconds;
-	  const durationDiff = segmentEndMilliseconds < playbackEndMs ? 0 : segmentEndMilliseconds - playbackEndMs;
-	  return {
-	    audio: subbuffer(audioSource.audio, sourceOffset.milliseconds + cursorDiff, segmentDuration.milliseconds - durationDiff - cursorDiff),
-	    offset,
-	    segmentDuration
-	  };
-	}
-	/*
-	 *
-	 * Adds silent audio buffers between rendered segments
-	 *
-	 */
-
-
-	function fillRenderedSegments(renderedSegments, startTime) {
-	  const {
-	    milliseconds: cursorMilliseconds
-	  } = startTime;
-	  return renderedSegments.reduce((seed, renderedSegment, index) => {
-	    const previous = seed[index - 1];
-	    const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
-	    const startMs = renderedSegment.offset.milliseconds;
-	    const diff = startMs - previousEndMs;
-
-	    if (diff > 0) {
-	      seed.push(silence(renderedSegment.audio.sampleRate, renderedSegment.audio.numberOfChannels, diff));
-	    }
-
-	    seed.push(renderedSegment.audio);
-	    return seed;
-	  }, []);
-	}
-
-	function segmentInTimeRange(segment, startTime, duration) {
-	  const {
-	    milliseconds: cursorMilliseconds
-	  } = startTime;
-	  const {
-	    milliseconds: playbackDurationMilliseconds
-	  } = duration;
-	  const playbackEndMilliseconds = cursorMilliseconds + playbackDurationMilliseconds;
-	  const startMilliseconds = segment.offset.milliseconds;
-	  const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
-	  return startMilliseconds >= cursorMilliseconds && startMilliseconds < playbackEndMilliseconds || endMilliseconds <= playbackEndMilliseconds && endMilliseconds >= cursorMilliseconds;
-	}
-	/*
-	 *
-	 *
-	 * Renders a track to a playable AudioBuffer
-	 *
-	 */
-
-
-	function renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration) {
-	  const filteredSegments = audioTrack.segments.toList().filter(segment => {
-	    return segmentInTimeRange(segment, start, duration);
-	  });
-
-	  if (filteredSegments.size === 0) {
-	    return null;
-	  }
-
-	  const renderedSegments = filteredSegments.map(segment => {
-	    const {
-	      sourceId
-	    } = segment;
-	    return renderSegment(segment, audioSources$$1.get(sourceId), start, duration);
-	  }).toArray();
-	  const filled = fillRenderedSegments(renderedSegments, start);
-	  return join(filled);
-	}
-
-	function play(start, duration, audioTracks, audioSources$$1) {
-	  const audioBuffers = audioTracks.map(audioTrack => {
-	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
-	  }).filter(audioBuffer => {
-	    return audioBuffer !== null;
-	  }).toList().toJS();
-	  mix(audioBuffers).then(buffer => {
-	    const source = audioContext.createBufferSource();
-	    source.buffer = buffer;
-	    source.connect(audioContext.destination);
-	    source.start();
-	  });
-	}
-
-	class Controls extends engine_5 {
-	  constructor(...args) {
-	    super(...args);
-	    this.editor = void 0;
-	    this.audioTracks = void 0;
-	    this.audioSources = void 0;
-	  }
-
-	  onPlayClick() {
-	    play(this.editor.data.cursor, new Time(2000), this.audioTracks.data, this.audioSources.data);
-	  }
-
-	}
-
-	engine_11(Controls, {
 	  wire: {
 	    editor: {
 	      adapter: editorSym,
 	      params: {},
 	      static: {}
-	    },
-	    audioTracks: {
-	      adapter: audioTracks,
-	      params: {},
-	      static: {}
-	    },
-	    audioSources: {
-	      adapter: audioSources,
-	      params: {},
-	      static: {}
 	    }
 	  }
 	});
 
-	var _ffmpegControls = engine_10(Controls, {
-	  tmpl: _tmpl$7
+	var _ffmpegCursor = engine_10(Cursor, {
+	  tmpl: _tmpl$8
 	});
 
-	function tmpl$7($api, $cmp, $slotset, $ctx) {
+	function tmpl$8($api, $cmp, $slotset, $ctx) {
 	  const {
+	    c: api_custom_element,
+	    h: api_element,
 	    d: api_dynamic,
 	    k: api_key,
-	    h: api_element,
 	    i: api_iterator,
 	    b: api_bind,
-	    c: api_custom_element,
 	    gid: api_scoped_id
 	  } = $api;
 	  const {
 	    _m0,
-	    _m1
+	    _m1,
+	    _m2,
+	    _m3,
+	    _m4
 	  } = $ctx;
-	  return [api_element("main", {
+	  return [api_element("header", {
 	    key: 2
+	  }, [api_custom_element("ffmpeg-controls", _ffmpegControls, {
+	    key: 3
+	  }, [])]), api_element("main", {
+	    key: 4
 	  }, [api_element("section", {
 	    classMap: {
 	      "tracks-summary": true
 	    },
-	    key: 3
+	    key: 5
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true,
 	        "track--summary": true
 	      },
-	      key: api_key(5, track.id)
+	      key: api_key(7, track.id)
 	    }, [api_dynamic(track.title)]);
 	  })), api_element("div", {
 	    classMap: {
 	      "editor-container": true
 	    },
-	    key: 6
-	  }, [api_element("header", {
-	    key: 7
+	    key: 8
+	  }, [$cmp.editor.data.frame ? api_element("header", {
+	    key: 10
 	  }, [api_custom_element("ffmpeg-timeline", _ffmpegTimeline, {
-	    key: 8,
+	    key: 11,
 	    on: {
-	      "timelinedragstart": _m0 || ($ctx._m0 = api_bind($cmp.onTimelineDragStart)),
-	      "timelinedragend": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineDragEnd))
+	      "mouseenter": _m0 || ($ctx._m0 = api_bind($cmp.onTimelineMouseEnter)),
+	      "mouseleave": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineMouseLeave)),
+	      "timelinedragstart": _m2 || ($ctx._m2 = api_bind($cmp.onTimelineDragStart)),
+	      "timelinedragend": _m3 || ($ctx._m3 = api_bind($cmp.onTimelineDragEnd))
 	    }
-	  }, [])]), api_element("section", {
+	  }, [])]) : null, $cmp.editor.data.frame ? api_element("section", {
 	    classMap: {
 	      "editor": true
 	    },
-	    key: 9
-	  }, [api_element("section", {
+	    key: 12,
+	    on: {
+	      "click": _m4 || ($ctx._m4 = api_bind($cmp.handleEditorClick))
+	    }
+	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
+	    key: 13
+	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
 	    },
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 10
+	    key: 14
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(12, track.id)
+	      key: api_key(16, track.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
 	        "track": track
 	      },
-	      key: 13
+	      key: 17
 	    }, [])]);
 	  })), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
-	    key: 15
+	    props: {
+	      "time": $cmp.editor.data.cursor
+	    },
+	    key: 19
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
+	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 17
-	  }, []) : null])])]), api_element("footer", {
-	    key: 18
-	  }, [api_custom_element("ffmpeg-controls", _ffmpegControls, {
-	    key: 19
-	  }, [])])];
+	    key: 21
+	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
+	    props: {
+	      "time": $cmp.playhead.data.playbackTime
+	    },
+	    key: 23
+	  }, []) : null]) : null])])];
 	}
 
-	var _tmpl$8 = engine_8(tmpl$7);
-	tmpl$7.stylesheets = [];
+	var _tmpl$9 = engine_8(tmpl$8);
+	tmpl$8.stylesheets = [];
 
 	if (_implicitStylesheets) {
-	  tmpl$7.stylesheets.push.apply(tmpl$7.stylesheets, _implicitStylesheets);
+	  tmpl$8.stylesheets.push.apply(tmpl$8.stylesheets, _implicitStylesheets);
 	}
-	tmpl$7.stylesheetTokens = {
+	tmpl$8.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-app_app-host",
 	  shadowAttribute: "ffmpeg-app_app"
 	};
@@ -29747,6 +31261,7 @@
 	    this.frame = null;
 	    this.audioTracks = void 0;
 	    this.editor = void 0;
+	    this.playhead = void 0;
 
 	    this.updateFrame = () => {
 	      const rect = this.template.querySelector('.editor-container').getBoundingClientRect();
@@ -29777,17 +31292,19 @@
 	      setVirtualCursorTime(null);
 	    };
 
-	    this.onClick = evt => {
-	      const {
-	        offsetX
-	      } = evt;
-	      const time = this.editor.data.pixelToTime(offsetX - this.editor.data.frame.left);
-	      const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
+	    this.handleEditorClick = evt => {
+	      const next = this.editor.data.absolutePixelToTime(evt.offsetX);
 	      setCursorTime(next);
 	    };
 
 	    this.onDragOver = evt => {
 	      evt.preventDefault();
+	      const {
+	        offsetX
+	      } = evt;
+	      const time = this.editor.data.pixelToTime(offsetX - this.editor.data.frame.left);
+	      const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
+	      setVirtualCursorTime(next);
 	    };
 
 	    this.onDrop = evt => {
@@ -29799,8 +31316,17 @@
 	      for (let i = 0, len = files.length; i < len; i += 1) {
 	        const sourceId = generateId();
 	        const trackId = generateId();
-	        createTrackAndSourceFile(trackId, sourceId, files[i], new Time(1000));
+	        const time = this.editor.data.pixelToTime(evt.offsetX - this.editor.data.frame.left);
+	        createTrackAndSourceFile(trackId, sourceId, files[i], time);
 	      }
+	    };
+
+	    this.onTimelineMouseEnter = () => {
+	      this.template.host.classList.add('editor--draggable');
+	    };
+
+	    this.onTimelineMouseLeave = () => {
+	      this.template.host.classList.remove('editor--draggable');
 	    };
 	  }
 
@@ -29849,6 +31375,10 @@
 	    return this.editor && this.editor.data.virtualCursor !== null && this.timeInWindow(this.editor.data.virtualCursor);
 	  }
 
+	  get hasPlaybackCursor() {
+	    return this.playhead.data.playbackTime !== null;
+	  }
+
 	  timeInWindow(time) {
 	    if (this.editor) {
 	      const {
@@ -29886,7 +31416,6 @@
 	    window.addEventListener('resize', this.updateFrame);
 	    this.addEventListener('mousemove', this.onMouseMove);
 	    this.addEventListener('mouseleave', this.onMouseLeave);
-	    this.addEventListener('click', this.onClick);
 	    this.draggable = true;
 	    this.addEventListener('dragover', this.onDragOver);
 	    this.addEventListener('drop', this.onDrop);
@@ -29902,7 +31431,6 @@
 	    window.removeEventListener('resize', this.updateFrame);
 	    this.removeEventListener('mousemove', this.onMouseMove);
 	    this.removeEventListener('mouseleave', this.onMouseLeave);
-	    this.removeEventListener('click', this.onClick);
 	  }
 
 	}
@@ -29918,12 +31446,17 @@
 	      adapter: editorSym,
 	      params: {},
 	      static: {}
+	    },
+	    playhead: {
+	      adapter: playheadSym,
+	      params: {},
+	      static: {}
 	    }
 	  }
 	});
 
 	var App$1 = engine_10(App, {
-	  tmpl: _tmpl$8
+	  tmpl: _tmpl$9
 	});
 
 	wire_1(engine_6);

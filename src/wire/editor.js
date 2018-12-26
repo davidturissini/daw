@@ -13,6 +13,7 @@ class Editor extends Record({
     frame: null,
     cursor: Time.fromSeconds(1),
     virtualCursor: Time.fromSeconds(2),
+    quanitization: 1 / 8
 }) {
     pixelToTime(pixel) {
         const { width } = this.frame;
@@ -21,6 +22,11 @@ class Editor extends Record({
 
         const millisecond = percent * visibleRange.duration.milliseconds;
         return new Time(millisecond);
+    }
+
+    absolutePixelToTime(pixel) {
+        const time = this.pixelToTime(pixel);
+        return new Time(time.milliseconds + this.visibleRange.start.milliseconds);
     }
 
     timeToPixel(time) {

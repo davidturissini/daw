@@ -1,12 +1,20 @@
 import { LightningElement, api, wire } from 'lwc';
 import { editorSym } from './../../wire/editor';
-import { moveSegment } from './../../wire/audiotrack';
+import { audioSources } from './../../wire/audiosource';
+import {
+    moveSegment,
+    moveSegmentSourceOffset,
+    setSegmentDuration,
+} from './../../wire/audiotrack';
 
 export default class AudioTrack extends LightningElement {
     @api track;
 
     @wire(editorSym, {})
     editor;
+
+    @wire(audioSources, {})
+    audioSources;
 
     get trackSegments() {
         return this.track.segments.filter((segment) => {
@@ -51,6 +59,27 @@ export default class AudioTrack extends LightningElement {
         moveSegment(
             this.track.id,
             segmentId,
+            time,
+        );
+    }
+
+    handleSegmentSourceOffsetChange(evt) {
+        const { time, segmentId } = evt.detail;
+        moveSegmentSourceOffset(
+            this.track.id,
+            segmentId,
+            time,
+        );
+    }
+
+    handleSegmentDurationChange(evt) {
+        const { time, segmentId } = evt.detail;
+        const audioSourceId = this.track.segments.getIn([segmentId, 'sourceId']);
+        const audioSource = this.audioSources.data.get(audioSourceId);
+        setSegmentDuration(
+            this.track.id,
+            segmentId,
+            audioSource,
             time,
         );
     }

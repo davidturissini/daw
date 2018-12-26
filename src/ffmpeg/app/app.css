@@ -5,13 +5,17 @@
     height: 100vh;
 }
 
+:host(.editor--draggable) main {
+    cursor: -webkit-grab;
+}
+
 :host(.editor--drag) main {
     cursor: -webkit-grabbing;
 }
 
 main {
     display: flex;
-    cursor: pointer;
+    cursor: auto;
     flex: 1 0 auto;
 }
 
@@ -27,17 +31,20 @@ main {
 }
 
 .tracks-summary {
-    margin-top: 4rem;
+    margin-top: 4.5rem;
     flex: 0 0 200px;
 }
 
 .editor {
     position: relative;
     z-index: 1;
+    flex: 1 0 auto;
 }
 
 .editor-container {
     flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .waveforms-container {

@@ -2,6 +2,7 @@ import { LightningElement, api, wire } from 'lwc';
 import { audioSources } from './../../wire/audiosource';
 import { editorSym } from './../../wire/editor';
 import interact from 'interactjs';
+import rafThrottle from 'raf-throttle';
 
 export default class AudioTrackSegment extends LightningElement {
     @api segment;
@@ -12,6 +13,10 @@ export default class AudioTrackSegment extends LightningElement {
 
     @wire(audioSources, {})
     sources;
+
+    moveInteract;
+    startHandleIneract;
+    endHandleInteract;
 
     get hasSource() {
         return !!this.source;
@@ -44,6 +49,38 @@ export default class AudioTrackSegment extends LightningElement {
         this.dispatchEvent(event);
     }
 
+    onStartHandleDrag = rafThrottle((evt) => {
+        const { editor, segment } = this;
+        const { dx } = evt;
+        const time = editor.data.pixelToTime(dx);
+        const event = new CustomEvent('segmentsourceoffsetchange', {
+            composed: false,
+            bubbles: true,
+            detail: {
+                time,
+                segmentId: segment.id,
+            }
+        });
+
+        this.dispatchEvent(event);
+    })
+
+    onEndHandleDrag = rafThrottle((evt) => {
+        const { editor, segment } = this;
+        const { dx } = evt;
+        const time = editor.data.pixelToTime(dx);
+        const event = new CustomEvent('segmentdurationchange', {
+            composed: false,
+            bubbles: true,
+            detail: {
+                time,
+                segmentId: segment.id,
+            }
+        });
+
+        this.dispatchEvent(event);
+    })
+
     /*
      *
      *
@@ -52,10 +89,40 @@ export default class AudioTrackSegment extends LightningElement {
      *
     */
     connectedCallback() {
-        interact(this.template.host).draggable({
-            inertia: true,
+        this.moveInteract = interact(this.template.host).draggable({
+            inertia: false,
             axis: 'y',
             onmove: this.onDrag,
         })
+    }
+
+    renderedCallback() {
+        if (!this.startHandleIneract) {
+            this.startHandleIneract = interact(this.template.querySelector('.handle--start'))
+                .draggable({
+                    inertia: false,
+                    axis: 'x',
+                    onmove: this.onStartHandleDrag,
+                })
+        }
+
+        if (!this.endHandleInteract) {
+            this.endHandleInteract = interact(this.template.querySelector('.handle--end'))
+                .draggable({
+                    inertia: false,
+                    axis: 'x',
+                    onmove: this.onEndHandleDrag,
+                })
+        }
+    }
+
+    disconnectedCallback() {
+        this.startHandleIneract.unset();
+        this.endHandleInteract.unset();
+        this.moveInteract.unset();
+
+        this.moveInteract = null;
+        this.startHandleIneract = null;
+        this.endHandleInteract = null;
     }
 }

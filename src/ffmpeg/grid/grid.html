@@ -1,0 +1,7 @@
+<template>
+    <ul>
+        <template for:each={gridLines} for:item="gridLine">
+            <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
+        </template>
+    </ul>
+</template>

@@ -100,7 +100,7 @@ export function silence(sampleRate, numberOfChannels, milliseconds) {
     });
 }
 
-export function mix(audioBuffers) {
+export function mix(audioContext, audioBuffers) {
     const data = audioBuffers.reduce((seed, audioBuffer) => {
         if (seed.length < audioBuffer.length) {
             seed.length = audioBuffer.length;
@@ -117,9 +117,8 @@ export function mix(audioBuffers) {
         return seed;
     }, {
         length: 0,
-        numberOfChannels: 0,
-        sampleRate: null,
-        sources: [],
+        numberOfChannels: 1,
+        sampleRate: audioContext.sampleRate,
     });
     const context = new OfflineAudioContext(
         data.numberOfChannels,
