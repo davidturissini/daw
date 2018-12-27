@@ -3,6 +3,7 @@ import { editorSym } from './../../wire/editor';
 
 export default class Cursor extends LightningElement {
     @api virtual;
+    @api playhead;
 
     /*
      *
@@ -12,31 +13,26 @@ export default class Cursor extends LightningElement {
     @wire(editorSym, {})
     editor;
 
-    @api
-    get time() {
+    @api time;
 
-    }
-
-    set time(value) {
+    get lineStyle() {
         const { editor } = this;
         if (!editor.data.frame) {
-            return;
+            return '';
         }
-        const { host } = this.template;
-        if (value) {
-            const px = editor.data.timeToPixel(value);
-            host.style.transform = `translateX(${px}px)`;
-        }
+
+        const px = editor.data.timeToPixel(this.time);
+        return `transform: translateX(${px}px)`;
     }
 
-    /*
-     *
-     * Lifecycle
-     *
-    */
-    connectedCallback() {
+    get lineClassName() {
+        let base = 'line'
         if (this.virtual) {
-            this.template.host.classList.add('cursor--virtual');
+            return `${base} line--virtual`;
         }
+        if (this.playhead) {
+            return `${base} line--playhead`;
+        }
+        return base;
     }
 }

@@ -1,3 +1,13 @@
 <template>
-    <button onclick={onPlayClick}>Play</button>
+    <div class="buttons-container">
+        <button class={stopButtonClass} onclick={onStopClick}>
+            <i class="control-icon control-icon--stop"></i>
+        </button>
+        <button class={playButtonClass} onclick={onPlayClick}>
+            <i class="control-icon control-icon--play"></i>
+        </button>
+    </div>
+    <div class="time-container">
+        <ffmpeg-timelabel format="hh:mm:ss.sss" time={displayTime}></ffmpeg-timelabel>
+    </div>
 </template>

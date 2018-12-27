@@ -2,7 +2,7 @@ import { LightningElement, wire } from 'lwc';
 import { editorSym } from './../../wire/editor';
 import { audioTracks } from './../../wire/audiotrack';
 import { audioSources } from './../../wire/audiosource';
-import { play } from './../../wire/playhead';
+import { playheadSym, play, stop } from './../../wire/playhead';
 import { Time } from './../../util/time';
 
 export default class Controls extends LightningElement {
@@ -15,12 +15,38 @@ export default class Controls extends LightningElement {
     @wire(audioSources, {})
     audioSources
 
+    @wire(playheadSym, {})
+    playhead
+
+    get isPlaying() {
+        return this.playhead.data.playbackTime !== null;
+    }
+
+    get displayTime() {
+        return this.isPlaying ? this.playhead.data.playbackTime : this.editor.data.cursor;
+    }
+
+    get playButtonClass() {
+        const base = `control`;
+
+        if (this.isPlaying) {
+            return `${base} control--playing`;
+        }
+
+        return base;
+    }
+
+    get stopButtonClass() {
+        return 'control';
+    }
+
+    onStopClick() {
+        stop();
+    }
+
     onPlayClick() {
         play(
             this.editor.data.cursor,
-            new Time(2000),
-            this.audioTracks.data,
-            this.audioSources.data
         );
     }
 }

@@ -1,13 +1,15 @@
 import { audioContext } from './audiosource';
 import { register } from 'wire-service';
-import { subbuffer, mix, join, silence } from './../lib/soundlab';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest as observableCombineLatest } from 'rxjs';
 import { switchMap, map, take, materialize, dematerialize } from 'rxjs/operators';
 import { Record } from 'immutable';
 import { Time } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
 import { stream as audioSourceStream } from './audiosource';
 import { stream as audioTrackStream } from './audiotrack';
+import { incrementVisibleRangeStart } from './editor';
+import { renderAudioBuffer } from './audiorender';
+import { stream as masterOutStream, connectMasterOut } from './masterout';
 
 class Playhead extends Record({
     playbackTime: null
@@ -16,40 +18,32 @@ class Playhead extends Record({
 }
 const playheadSubject = new BehaviorSubject(new Playhead());
 
-function playbackQueue(time, duration, audioTracks, audioSources) {
-    const queue = [];
-
-    return {
-        next() {
-
-        }
-    }
-}
-
 class PlaybackQueue {
     queue = [];
     popResolve = null;
 
-    constructor(time, duration, audioTracks, audioSources) {
+    constructor(time, duration, masterOut, audioTracks, audioSources) {
         this.audioTracks = audioTracks;
         this.audioSources = audioSources;
         this.time = time;
         this.end = new Time(duration.milliseconds + time.milliseconds);
-        this.splitDuration = Time.fromSeconds(1);
+        this.splitDuration = Time.fromSeconds(5);
         this.finished = false;
+        this.masterOut = masterOut;
     }
 
     destroyed = false;
 
     getBuffer(time, duration) {
-        const { end, splitDuration, audioTracks, audioSources } = this;
+        const { end, splitDuration, audioTracks, audioSources, masterOut } = this;
         let audioBufferDuration = duration;
         if (duration.milliseconds + time.milliseconds > end.milliseconds) {
             audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
         }
-        getAudioBuffer(
+        renderAudioBuffer(
             time,
             audioBufferDuration,
+            masterOut,
             audioTracks,
             audioSources
         )
@@ -69,12 +63,10 @@ class PlaybackQueue {
             }
 
             if (time.milliseconds + splitDuration.milliseconds === end.milliseconds) {
-                console.log('done queueing');
                 return;
             }
 
             if (time.milliseconds + audioBufferDuration.milliseconds === end.milliseconds) {
-                console.log('finished buffering');
                 this.finished = true;
                 return;
             }
@@ -124,7 +116,7 @@ class AudioBufferPlayer {
         const { audioContext } = this;
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
+        connectMasterOut(source);
         this.currentSource = source;
         return new Promise((res) => {
             source.addEventListener('ended', res, { once: true });
@@ -182,35 +174,45 @@ class AudioBufferPlayer {
 class PlaybackController {
     constructor(audioContext, start) {
         this.audioContext = audioContext;
-        this.currentTime = this.startTime = start;
+        this.currentTime = start;
         this.state = this.states['stop'];
     }
 
     states = {
         stop: {
             enter() {
-                console.log('enter stop');
+                playheadSubject.next(
+                    playheadSubject.value.set('playbackTime', null)
+                );
             },
-            exit() {
-                console.log('exit stop');
-            }
+            exit() {}
         },
         play: {
             enter(playbackController) {
-                audioTrackStream.pipe(switchMap((audioTracks) => {
+                this.subscription = observableCombineLatest(
+                    audioTrackStream,
+                    masterOutStream,
+                ).pipe(switchMap(([audioTracks, masterOut]) => {
                     return audioSourceStream
                         .pipe(map((audioSources) => {
                             return {
                                 audioTracks,
-                                audioSources
+                                audioSources,
+                                masterOut
                             };
                         }))
                         .pipe(take(1));
                 }))
-                .pipe(switchMap(({ audioTracks, audioSources }) => {
+                .pipe(switchMap(({ audioTracks, audioSources, masterOut }) => {
                     const timeAnchor = playbackController.currentTime;
                     return Observable.create((o) => {
-                        const queue = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), audioTracks, audioSources);
+                        const queue = new PlaybackQueue(
+                            timeAnchor,
+                            new Time(10 * 60 * 1000),
+                            masterOut,
+                            audioTracks,
+                            audioSources
+                        );
                         queue.beginQueue();
                         const bufferPlayer = new AudioBufferPlayer(audioContext, queue);
                         bufferPlayer.start();
@@ -230,14 +232,16 @@ class PlaybackController {
                 .pipe(dematerialize())
                 .subscribe(
                     (time) => {
+                        const millisecondsDiff = time.milliseconds - playbackController.currentTime.milliseconds;
+                        incrementVisibleRangeStart(new Time(millisecondsDiff))
                         playbackController.currentTime = time;
                         playheadSubject.next(
                             playheadSubject.value.set('playbackTime', time)
                         );
+
                     },
                     null,
                     () => {
-                        console.log('done?')
                         playheadSubject.next(
                             playheadSubject.value.set('playbackTime', null)
                         );
@@ -245,7 +249,7 @@ class PlaybackController {
                 );
             },
             exit() {
-                console.log('exit play');
+                this.subscription.unsubscribe();
             },
         }
     }
@@ -260,170 +264,30 @@ class PlaybackController {
         this.enter('play');
     }
 
-
-}
-
-/*
- *
- *
- * Renders audio data from an audio source to a segment
- * Property offsets underlying audio based on cursor position
- *
- */
-function renderSegment(segment, audioSource, startTime /* global start */, duration /* global duration */) {
-    const {
-        milliseconds: cursorMilliseconds,
-    } = startTime;
-    const {
-        sourceOffset,
-        duration: segmentDuration,
-        offset,
-    } = segment;
-    const {
-        milliseconds: offsetMilliseconds,
-    } = offset;
-
-    const {
-        milliseconds: segmentDurationMilliseconds,
-    } = segmentDuration;
-
-    const playbackEndMs = duration.milliseconds + startTime.milliseconds;
-
-    const segmentEndMilliseconds = offsetMilliseconds + segmentDurationMilliseconds;
-
-    const cursorDiff = offsetMilliseconds > cursorMilliseconds ? 0 : cursorMilliseconds - offsetMilliseconds;
-    const durationDiff = segmentEndMilliseconds < playbackEndMs ? 0 : segmentEndMilliseconds - playbackEndMs;
-
-    return {
-        audio: subbuffer(
-            audioSource.audio,
-            sourceOffset.milliseconds + cursorDiff,
-            (segmentDuration.milliseconds - durationDiff) - cursorDiff,
-        ),
-        offset,
-        segmentDuration,
-    };
-}
-
-/*
- *
- * Adds silent audio buffers between rendered segments
- *
- */
-function fillRenderedSegments(renderedSegments, startTime) {
-    const {
-        milliseconds: cursorMilliseconds,
-    } = startTime;
-
-    return renderedSegments.reduce((seed, renderedSegment, index) => {
-        const previous = seed[index - 1];
-        const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
-        const startMs = renderedSegment.offset.milliseconds;
-        const diff = startMs - previousEndMs;
-        if (diff > 0) {
-            seed.push(
-                silence(
-                    renderedSegment.audio.sampleRate,
-                    renderedSegment.audio.numberOfChannels,
-                    diff
-                )
-            );
-        }
-
-        seed.push(renderedSegment.audio);
-        return seed;
-    }, []);
-}
-
-function segmentInTimeRange(segment, startTime, duration) {
-    const {
-        milliseconds: cursorMilliseconds,
-    } = startTime;
-
-    const {
-        milliseconds: playbackDurationMilliseconds,
-    } = duration;
-
-    const playbackEndMilliseconds = cursorMilliseconds + playbackDurationMilliseconds;
-    const startMilliseconds = segment.offset.milliseconds;
-    const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
-    return (
-        (
-            cursorMilliseconds >= startMilliseconds &&
-            cursorMilliseconds < endMilliseconds
-        ) ||
-        (
-            playbackEndMilliseconds >= startMilliseconds &&
-            playbackEndMilliseconds < endMilliseconds
-        )
-    );
-}
-
-/*
- *
- *
- * Renders a track to a playable AudioBuffer
- *
- */
-function renderTrackToAudioBuffer(audioTrack, audioSources, start, duration) {
-    const filteredSegments = audioTrack.segments.toList().filter((segment) => {
-        return segmentInTimeRange(
-            segment,
-            start,
-            duration,
-        );
-    });
-
-    if (filteredSegments.size === 0) {
-        return null;
+    stop() {
+        this.enter('stop');
     }
 
-    const renderedSegments = audioTrack.segments.toList().map((segment) => {
-        const { sourceId } = segment;
-        return renderSegment(
-            segment,
-            audioSources.get(sourceId),
-            start,
-            duration,
-        );
-    })
-    .toArray();
 
-    const filled = fillRenderedSegments(renderedSegments, start)
-
-    return join(filled);
 }
 
-function getAudioBuffer(start, duration, audioTracks, audioSources) {
-    let audioBuffers = audioTracks.map((audioTrack) => {
-        return renderTrackToAudioBuffer(
-            audioTrack,
-            audioSources,
-            start,
-            duration,
-        );
-    })
-    .filter((audioBuffer) => {
-        return audioBuffer !== null;
-    })
-    .toList()
-    .toJS();
+let playbackController = null;
 
-    if (audioBuffers.length === 0) {
-        audioBuffers = [
-            silence(
-                audioContext.sampleRate,
-                2,
-                duration.milliseconds,
-            )
-        ];
+export function isPlaying() {
+    return playheadSubject.value.playbackTime !== null;
+}
+
+export function stop() {
+    if (playbackController) {
+        playbackController.stop();
     }
-
-    return mix(audioContext, audioBuffers);
 }
 
 export function play(start) {
-    const playbackController = new PlaybackController(
+    if (playbackController) {
+        stop();
+    }
+    playbackController = new PlaybackController(
         audioContext,
         start,
     );

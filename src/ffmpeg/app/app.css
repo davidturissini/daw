@@ -31,8 +31,13 @@ main {
 }
 
 .tracks-summary {
-    margin-top: 4.5rem;
+
     flex: 0 0 200px;
+}
+
+.tracks-summary__header {
+    height: 1.5rem;
+    background: rgb(52, 52, 52);
 }
 
 .editor {

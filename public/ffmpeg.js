@@ -10292,39 +10292,298 @@
 	var wire_3 = wire.ValueChangedEvent;
 
 	function stylesheet(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;background: #f1f1f1;}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-right: 1px solid #d8d8d8;}\n.tracks-summary" + shadowSelector + " {margin-top: 4.5rem;flex: 0 0 200px;}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;background: #f1f1f1;}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-right: 1px solid #d8d8d8;}\n.tracks-summary" + shadowSelector + " {flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 1.5rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
 	}
 	var _implicitStylesheets = [stylesheet];
 
 	function stylesheet$1(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {padding: 0.5rem;display: flex;justify-content: center;border-top: 1px solid #f1f1f1;}") : (hostSelector + " {padding: 0.5rem;display: flex;justify-content: center;border-top: 1px solid #f1f1f1;}")) + "\n";
+	  return "\n" + (nativeShadow ? (":host {padding: 0.4rem;display: flex;justify-content: center;background: rgba(163, 163, 163, 1);}") : (hostSelector + " {padding: 0.4rem;display: flex;justify-content: center;background: rgba(163, 163, 163, 1);}")) + "\n.control" + shadowSelector + " {background: rgb(131, 131, 131);border: 0;display: flex;align-items: center;padding: 0.5rem;cursor: pointer;border-left: 1px inset #f1f1f1;}\n.control:focus" + shadowSelector + " {outline: none;}\n.control--playing" + shadowSelector + " {background: rgb(49, 99, 59);}\n.control:first-child" + shadowSelector + " {border-left: 0;}\n.buttons-container" + shadowSelector + " {display: flex;border-radius: 0.3rem;overflow: hidden;margin: 0 1rem;}\n.control-icon" + shadowSelector + " {display: inline-block;}\n.control-icon--play" + shadowSelector + " {height: 0;width: 0;border: 0.6em solid transparent;border-left: 1.2em solid #fff;margin-right: -0.7em;}\n.control-icon--stop" + shadowSelector + " {width: 1em;height: 1em;background: #fff;}\n.time-container" + shadowSelector + " {color: rgb(52, 52, 52);font-size: 0.8rem;display: flex;align-items: center;}\n";
 	}
 	var _implicitStylesheets$1 = [stylesheet$1];
 
 	function tmpl($api, $cmp, $slotset, $ctx) {
 	  const {
-	    t: api_text,
-	    b: api_bind,
-	    h: api_element
+	    d: api_dynamic
 	  } = $api;
-	  const {
-	    _m0
-	  } = $ctx;
-	  return [api_element("button", {
-	    key: 2,
-	    on: {
-	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onPlayClick))
-	    }
-	  }, [api_text("Play")])];
+	  return [api_dynamic($cmp.formatted)];
 	}
 
 	var _tmpl = engine_8(tmpl);
 	tmpl.stylesheets = [];
+	tmpl.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-timelabel_timelabel-host",
+	  shadowAttribute: "ffmpeg-timelabel_timelabel"
+	};
+
+	/** Detect free variable `global` from Node.js. */
+
+	var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+	/** Detect free variable `self`. */
+
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	/** Used as a reference to the global object. */
+
+	var root = freeGlobal || freeSelf || Function('return this')();
+	/** Built-in value references. */
+
+	var Symbol$1 = root.Symbol;
+	/** Used to convert symbols to primitives and strings. */
+
+	var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined,
+	    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+	/** Detect free variable `global` from Node.js. */
+
+	var freeGlobal$1 = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+	/** Detect free variable `self`. */
+
+	var freeSelf$1 = typeof self == 'object' && self && self.Object === Object && self;
+	/** Used as a reference to the global object. */
+
+	var root$1 = freeGlobal$1 || freeSelf$1 || Function('return this')();
+	/** Built-in value references. */
+
+	var Symbol$2 = root$1.Symbol;
+	/** Used to convert symbols to primitives and strings. */
+
+	var symbolProto$1 = Symbol$2 ? Symbol$2.prototype : undefined,
+	    symbolToString$1 = symbolProto$1 ? symbolProto$1.toString : undefined;
+
+	/**
+	 * Given a number, return a zero-filled string.
+	 * From http://stackoverflow.com/questions/1267283/
+	 * @param  {number} width
+	 * @param  {number} number
+	 * @return {string}
+	 */
+	var zeroFill = function zeroFill(width, number, pad) {
+	  if (number === undefined) {
+	    return function (number, pad) {
+	      return zeroFill(width, number, pad);
+	    };
+	  }
+
+	  if (pad === undefined) pad = '0';
+	  width -= number.toString().length;
+	  if (width > 0) return new Array(width + (/\./.test(number) ? 2 : 1)).join(pad) + number;
+	  return number + '';
+	};
+
+	var hhMmSs = {
+	  fromMs,
+	  fromS,
+	  toMs,
+	  toS
+	};
+
+	 // Time units with their corresponding values in miliseconds
+
+
+	const HOUR = 3600000;
+	const MINUTE = 60000;
+	const SECOND = 1000;
+	const TIME_FORMAT_ERRMSG = 'Time format error'; // =============================================================================
+	// Export functions
+	// =============================================================================
+
+	function fromMs(ms, format = 'mm:ss') {
+	  if (typeof ms !== 'number' || Number.isNaN(ms)) {
+	    throw new Error('NaN error');
+	  }
+
+	  let absMs = Math.abs(ms);
+	  let negative = ms < 0;
+	  let hours = Math.floor(absMs / HOUR);
+	  let minutes = Math.floor(absMs % HOUR / MINUTE);
+	  let seconds = Math.floor(absMs % MINUTE / SECOND);
+	  let miliseconds = Math.floor(absMs % SECOND);
+	  return formatTime({
+	    negative,
+	    hours,
+	    minutes,
+	    seconds,
+	    miliseconds
+	  }, format);
+	}
+
+	function fromS(s, format = 'mm:ss') {
+	  if (typeof s !== 'number' || Number.isNaN(s)) {
+	    throw new Error('NaN error');
+	  }
+
+	  let ms = s * SECOND;
+	  return fromMs(ms, format);
+	}
+
+	function toMs(time, format = 'mm:ss') {
+	  let re;
+
+	  if (['mm:ss', 'mm:ss.sss', 'hh:mm:ss', 'hh:mm:ss.sss'].includes(format)) {
+	    re = /^(-)?(?:(\d\d+):)?(\d\d):(\d\d)(\.\d+)?$/;
+	  } else if (format === 'hh:mm') {
+	    re = /^(-)?(\d\d):(\d\d)(?::(\d\d)(?:(\.\d+))?)?$/;
+	  } else {
+	    throw new Error(TIME_FORMAT_ERRMSG);
+	  }
+
+	  let result = re.exec(time);
+	  if (!result) throw new Error();
+	  let negative = result[1] === '-';
+	  let hours = result[2] | 0;
+	  let minutes = result[3] | 0;
+	  let seconds = result[4] | 0;
+	  let miliseconds = Math.floor(1000 * result[5] | 0);
+
+	  if (minutes > 60 || seconds > 60) {
+	    throw new Error();
+	  }
+
+	  return (negative ? -1 : 1) * (hours * HOUR + minutes * MINUTE + seconds * SECOND + miliseconds);
+	}
+
+	function toS(time, format = 'mm:ss') {
+	  let ms = toMs(time, format);
+	  return Math.floor(ms / SECOND);
+	} // =============================================================================
+	// Utility functions
+	// =============================================================================
+
+
+	function formatTime(time, format) {
+	  let showMs;
+	  let showSc;
+	  let showHr;
+
+	  switch (format.toLowerCase()) {
+	    case 'hh:mm:ss.sss':
+	      showMs = true;
+	      showSc = true;
+	      showHr = true;
+	      break;
+
+	    case 'hh:mm:ss':
+	      showMs = !!time.miliseconds;
+	      showSc = true;
+	      showHr = true;
+	      break;
+
+	    case 'hh:mm':
+	      showMs = !!time.miliseconds;
+	      showSc = showMs || !!time.seconds;
+	      showHr = true;
+	      break;
+
+	    case 'mm:ss':
+	      showMs = !!time.miliseconds;
+	      showSc = true;
+	      showHr = !!time.hours;
+	      break;
+
+	    case 'mm:ss.sss':
+	      showMs = true;
+	      showSc = true;
+	      showHr = !!time.hours;
+	      break;
+
+	    default:
+	      throw new Error(TIME_FORMAT_ERRMSG);
+	  }
+
+	  let hh = zeroFill(2, time.hours);
+	  let mm = zeroFill(2, time.minutes);
+	  let ss = zeroFill(2, time.seconds);
+	  let sss = zeroFill(3, time.miliseconds);
+	  return (time.negative ? '-' : '') + (showHr ? showMs ? `${hh}:${mm}:${ss}.${sss}` : showSc ? `${hh}:${mm}:${ss}` : `${hh}:${mm}` : showMs ? `${mm}:${ss}.${sss}` : `${mm}:${ss}`);
+	}
+
+	class TimeLabel extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.time = void 0;
+	    this.format = 'mm:ss';
+	  }
+
+	  get formatted() {
+	    return hhMmSs.fromMs(this.time.milliseconds, this.format);
+	  }
+
+	}
+
+	engine_11(TimeLabel, {
+	  publicProps: {
+	    time: {
+	      config: 0
+	    },
+	    format: {
+	      config: 0
+	    }
+	  }
+	});
+
+	var _ffmpegTimelabel = engine_10(TimeLabel, {
+	  tmpl: _tmpl
+	});
+
+	function tmpl$1($api, $cmp, $slotset, $ctx) {
+	  const {
+	    h: api_element,
+	    b: api_bind,
+	    c: api_custom_element
+	  } = $api;
+	  const {
+	    _m0,
+	    _m1
+	  } = $ctx;
+	  return [api_element("div", {
+	    classMap: {
+	      "buttons-container": true
+	    },
+	    key: 2
+	  }, [api_element("button", {
+	    className: $cmp.stopButtonClass,
+	    key: 3,
+	    on: {
+	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onStopClick))
+	    }
+	  }, [api_element("i", {
+	    classMap: {
+	      "control-icon": true,
+	      "control-icon--stop": true
+	    },
+	    key: 4
+	  }, [])]), api_element("button", {
+	    className: $cmp.playButtonClass,
+	    key: 5,
+	    on: {
+	      "click": _m1 || ($ctx._m1 = api_bind($cmp.onPlayClick))
+	    }
+	  }, [api_element("i", {
+	    classMap: {
+	      "control-icon": true,
+	      "control-icon--play": true
+	    },
+	    key: 6
+	  }, [])])]), api_element("div", {
+	    classMap: {
+	      "time-container": true
+	    },
+	    key: 7
+	  }, [api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
+	    props: {
+	      "format": "hh:mm:ss.sss",
+	      "time": $cmp.displayTime
+	    },
+	    key: 8
+	  }, [])])];
+	}
+
+	var _tmpl$1 = engine_8(tmpl$1);
+	tmpl$1.stylesheets = [];
 
 	if (_implicitStylesheets$1) {
-	  tmpl.stylesheets.push.apply(tmpl.stylesheets, _implicitStylesheets$1);
+	  tmpl$1.stylesheets.push.apply(tmpl$1.stylesheets, _implicitStylesheets$1);
 	}
-	tmpl.stylesheetTokens = {
+	tmpl$1.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-controls_controls-host",
 	  shadowAttribute: "ffmpeg-controls_controls"
 	};
@@ -10463,7 +10722,7 @@
 	};
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
-	function isObject(x) {
+	function isObject$2(x) {
 	  return x != null && typeof x === 'object';
 	}
 
@@ -10564,7 +10823,7 @@
 	      while (++index < len) {
 	        var sub = _subscriptions[index];
 
-	        if (isObject(sub)) {
+	        if (isObject$2(sub)) {
 	          var trial = tryCatch(sub.unsubscribe).call(sub);
 
 	          if (trial === errorObject) {
@@ -13292,7 +13551,7 @@
 	  } else if (result && typeof result[iterator] === 'function') {
 	    return subscribeToIterable(result);
 	  } else {
-	    var value = isObject(result) ? 'an invalid object' : "'" + result + "'";
+	    var value = isObject$2(result) ? 'an invalid object' : "'" + result + "'";
 	    var msg = "You provided " + value + " where a stream was expected." + ' You can provide an Observable, Promise, Array, or Iterable.';
 	    throw new TypeError(msg);
 	  }
@@ -13313,6 +13572,44 @@
 
 	/** PURE_IMPORTS_START tslib,_util_isScheduler,_util_isArray,_OuterSubscriber,_util_subscribeToResult,_fromArray PURE_IMPORTS_END */
 	var NONE = {};
+	function combineLatest() {
+	  var observables = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    observables[_i] = arguments[_i];
+	  }
+
+	  var resultSelector = null;
+	  var scheduler = null;
+
+	  if (isScheduler(observables[observables.length - 1])) {
+	    scheduler = observables.pop();
+	  }
+
+	  if (typeof observables[observables.length - 1] === 'function') {
+	    resultSelector = observables.pop();
+	  }
+
+	  if (observables.length === 1 && isArray(observables[0])) {
+	    observables = observables[0];
+	  }
+
+	  return fromArray(observables, scheduler).lift(new CombineLatestOperator(resultSelector));
+	}
+
+	var CombineLatestOperator =
+	/*@__PURE__*/
+	function () {
+	  function CombineLatestOperator(resultSelector) {
+	    this.resultSelector = resultSelector;
+	  }
+
+	  CombineLatestOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new CombineLatestSubscriber(subscriber, this.resultSelector));
+	  };
+
+	  return CombineLatestOperator;
+	}();
 
 	var CombineLatestSubscriber =
 	/*@__PURE__*/
@@ -14036,7 +14333,7 @@
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
 
-	var _tmpl$1 = void 0;
+	var _tmpl$2 = void 0;
 
 	/**
 	 * Copyright (c) 2014-present, Facebook, Inc.
@@ -19809,74 +20106,8 @@
 	  updateIn: updateIn
 	}; // Note: Iterable is deprecated
 	engine_10(Immutable, {
-	  tmpl: _tmpl$1
+	  tmpl: _tmpl$2
 	});
-
-	class Editor extends Record({
-	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
-	  frame: null,
-	  cursor: Time.fromSeconds(1),
-	  virtualCursor: Time.fromSeconds(2),
-	  quanitization: 1 / 8
-	}) {
-	  pixelToTime(pixel) {
-	    const {
-	      width
-	    } = this.frame;
-	    const {
-	      visibleRange
-	    } = this;
-	    const percent = pixel / width;
-	    const millisecond = percent * visibleRange.duration.milliseconds;
-	    return new Time(millisecond);
-	  }
-
-	  absolutePixelToTime(pixel) {
-	    const time = this.pixelToTime(pixel);
-	    return new Time(time.milliseconds + this.visibleRange.start.milliseconds);
-	  }
-
-	  timeToPixel(time) {
-	    const {
-	      width
-	    } = this.frame;
-	    const {
-	      visibleRange
-	    } = this;
-	    const percent = (time.milliseconds - visibleRange.start.milliseconds) / visibleRange.duration.milliseconds;
-	    return percent * width;
-	  }
-
-	  durationToWidth(time) {
-	    const {
-	      width
-	    } = this.frame;
-	    const {
-	      visibleRange
-	    } = this;
-	    const pixelsPerMillisecond = width / visibleRange.duration.milliseconds;
-	    return pixelsPerMillisecond * time.milliseconds;
-	  }
-
-	}
-
-	function setVirtualCursorTime(time) {
-	  editorSubject.next(editorSubject.value.set('virtualCursor', time));
-	}
-	function setCursorTime(time) {
-	  editorSubject.next(editorSubject.value.set('cursor', time));
-	}
-	function setVisibleRangeStart(time) {
-	  const editor = editorSubject.value;
-	  const range$$1 = new AudioRange(time, editor.visibleRange.duration);
-	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
-	}
-	function setFrame(frame) {
-	  editorSubject.next(editorSubject.value.set('frame', frame));
-	}
-	const editorSubject = new BehaviorSubject(new Editor());
-	const editorSym = Symbol();
-	wire_2(editorSym, wireObservable(editorSubject.asObservable()));
 
 	const audioContext = new AudioContext();
 	const audioSourcesSubject = new BehaviorSubject(new Map$1());
@@ -19925,199 +20156,6 @@
 	}
 	const audioSources = Symbol();
 	wire_2(audioSources, wireObservable(stream));
-
-	let id = 0;
-	function generateId() {
-	  id += 1;
-	  return id + '';
-	}
-
-	const tracksSubject = new BehaviorSubject(new Map$1());
-	const stream$1 = tracksSubject.asObservable();
-
-	class AudioTrack extends Record({
-	  id: null,
-	  segments: new Map$1()
-	}) {}
-
-	class AudioTrackSegment extends Record({
-	  id: null,
-	  sourceOffset: null,
-	  duration: null,
-	  offset: null,
-	  sourceId: null
-	}) {}
-
-	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
-	  const track = createTrack(trackId, []);
-	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
-	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
-	      const segmentId = generateId();
-	      return segments.set(segmentId, new AudioTrackSegment({
-	        id: segmentId,
-	        sourceOffset: new Time(0),
-	        duration: audioSource.duration,
-	        offset: trackOffset,
-	        sourceId
-	      }));
-	    }));
-	  });
-	}
-	function moveSegment(trackId, segmentId, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const nextOffsetMilliseconds = segment.offset.milliseconds + time.milliseconds < 0 ? 0 : segment.offset.milliseconds + time.milliseconds;
-	    const newOffset = new Time(nextOffsetMilliseconds);
-	    return segment.set('offset', newOffset);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-
-	function getSourceOffsetDiff(time, sourceOffsetMilliseconds, durationMilliseconds) {
-	  const end = durationMilliseconds + sourceOffsetMilliseconds - 250; // dont let segment ever be less than 100 milliseconds
-
-	  if (sourceOffsetMilliseconds + time.milliseconds < 0) {
-	    return -sourceOffsetMilliseconds;
-	  } else if (sourceOffsetMilliseconds + time.milliseconds > end) {
-	    return end - sourceOffsetMilliseconds;
-	  }
-
-	  return time.milliseconds;
-	}
-
-	function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentDurationMilliseconds, sourceDurationMilliseconds) {
-	  const next = time.milliseconds + segmentDurationMilliseconds;
-	  const max = sourceDurationMilliseconds - segmentSourceOffsetMilliseconds;
-	  const min = 250;
-
-	  if (next > max) {
-	    return max;
-	  } else if (next < min) {
-	    return min;
-	  }
-
-	  return next;
-	}
-
-	function setSegmentDuration(trackId, segmentId, audioSource, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
-	    const newDuration = new Time(nextDurationMilliseconds);
-	    return segment.set('duration', newDuration);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-	function moveSegmentSourceOffset(trackId, segmentId, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const {
-	      milliseconds: sourceOffsetMilliseconds
-	    } = segment.sourceOffset;
-	    const diff = getSourceOffsetDiff(time, sourceOffsetMilliseconds, segment.duration.milliseconds);
-	    const newSourceOffset = new Time(sourceOffsetMilliseconds + diff);
-	    const newOffset = new Time(segment.offset.milliseconds + diff);
-	    const newDuration = new Time(segment.duration.milliseconds - diff);
-	    return segment.set('sourceOffset', newSourceOffset).set('offset', newOffset).set('duration', newDuration);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-	function createTrack(id, segments) {
-	  const segmentsMap = segments.reduce((seed, segment) => {
-	    return seed.set(segment.id, segment);
-	  }, new Map$1());
-	  const audioTrack = new AudioTrack({
-	    id,
-	    segments: segmentsMap
-	  });
-	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
-	  return audioTrack;
-	}
-	const audioTracks = Symbol();
-	wire_2(audioTracks, wireObservable(stream$1));
-
-	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
-	  const {
-	    sampleRate,
-	    numberOfChannels
-	  } = audioBuffer;
-	  const durationSeconds = durationMilliseconds / 1000;
-	  const startSeconds = startMilliseconds / 1000;
-	  const sub = new AudioBuffer({
-	    length: Math.ceil(durationSeconds * sampleRate),
-	    numberOfChannels,
-	    sampleRate
-	  });
-	  const startByte = startSeconds * sampleRate;
-	  const durationBytes = durationSeconds * sampleRate;
-	  const endBytes = startByte + durationBytes;
-
-	  for (let i = 0; i < numberOfChannels; i += 1) {
-	    const channelData = sub.getChannelData(i);
-	    const subset = audioBuffer.getChannelData(i).slice(startByte, endBytes);
-	    channelData.set(subset, 0);
-	  }
-
-	  return sub;
-	}
-	function join(audioBuffers) {
-	  const [first, ...rest] = audioBuffers;
-	  return rest.reduce((seed, audioBuffer) => {
-	    const {
-	      numberOfChannels
-	    } = seed;
-	    const buffer = new AudioBuffer({
-	      length: seed.length + audioBuffer.length,
-	      sampleRate: seed.sampleRate,
-	      numberOfChannels
-	    });
-
-	    for (let i = 0; i < numberOfChannels; i += 1) {
-	      const channelData = buffer.getChannelData(i);
-	      channelData.set(seed.getChannelData(i), 0);
-	      channelData.set(audioBuffer.getChannelData(i), seed.length);
-	    }
-
-	    return buffer;
-	  }, first);
-	}
-	function silence(sampleRate, numberOfChannels, milliseconds) {
-	  const seconds = milliseconds / 1000;
-	  return new AudioBuffer({
-	    length: Math.ceil(sampleRate * seconds),
-	    sampleRate,
-	    numberOfChannels
-	  });
-	}
-	function mix(audioContext, audioBuffers) {
-	  const data = audioBuffers.reduce((seed, audioBuffer) => {
-	    if (seed.length < audioBuffer.length) {
-	      seed.length = audioBuffer.length;
-	    }
-
-	    if (seed.numberOfChannels < audioBuffer.numberOfChannels) {
-	      seed.numberOfChannels = audioBuffer.numberOfChannels;
-	    }
-
-	    if (seed.sampleRate === null) {
-	      seed.sampleRate = audioBuffer.sampleRate;
-	    }
-
-	    return seed;
-	  }, {
-	    length: 0,
-	    numberOfChannels: 1,
-	    sampleRate: audioContext.sampleRate
-	  });
-	  const context = new OfflineAudioContext(data.numberOfChannels, data.length, data.sampleRate);
-	  audioBuffers.forEach(audioBuffer => {
-	    const source = context.createBufferSource();
-	    source.buffer = audioBuffer;
-	    source.connect(context.destination);
-	    source.start();
-	  });
-	  return context.startRendering();
-	}
 
 	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
 
@@ -23976,244 +24014,227 @@
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
 
-	class Playhead extends Record({
-	  playbackTime: null
+	let id = 0;
+	function generateId() {
+	  id += 1;
+	  return id + '';
+	}
+
+	const tracksSubject = new BehaviorSubject(new Map$1());
+	const stream$1 = tracksSubject.asObservable();
+
+	class AudioTrack extends Record({
+	  id: null,
+	  segments: new Map$1()
 	}) {}
 
-	const playheadSubject = new BehaviorSubject(new Playhead());
+	class AudioTrackSegment extends Record({
+	  id: null,
+	  sourceOffset: null,
+	  duration: null,
+	  offset: null,
+	  sourceId: null
+	}) {}
 
-	class PlaybackQueue {
-	  constructor(time, duration, audioTracks$$1, audioSources$$1) {
-	    this.queue = [];
-	    this.popResolve = null;
-	    this.destroyed = false;
-	    this.audioTracks = audioTracks$$1;
-	    this.audioSources = audioSources$$1;
-	    this.time = time;
-	    this.end = new Time(duration.milliseconds + time.milliseconds);
-	    this.splitDuration = Time.fromSeconds(1);
-	    this.finished = false;
-	  }
-
-	  getBuffer(time, duration) {
-	    const {
-	      end,
-	      splitDuration,
-	      audioTracks: audioTracks$$1,
-	      audioSources: audioSources$$1
-	    } = this;
-	    let audioBufferDuration = duration;
-
-	    if (duration.milliseconds + time.milliseconds > end.milliseconds) {
-	      audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
-	    }
-
-	    getAudioBuffer(time, audioBufferDuration, audioTracks$$1, audioSources$$1).then(buffer$$1 => {
-	      if (this.destroyed === true) {
-	        return;
-	      }
-
-	      if (this.popResolve) {
-	        this.popResolve({
-	          done: false,
-	          buffer: buffer$$1
-	        });
-	        this.popResolve = null;
-	      } else {
-	        this.queue.push(buffer$$1);
-	      }
-
-	      if (time.milliseconds + splitDuration.milliseconds === end.milliseconds) {
-	        console.log('done queueing');
-	        return;
-	      }
-
-	      if (time.milliseconds + audioBufferDuration.milliseconds === end.milliseconds) {
-	        console.log('finished buffering');
-	        this.finished = true;
-	        return;
-	      }
-
-	      this.getBuffer(new Time(time.milliseconds + this.splitDuration.milliseconds), this.splitDuration);
-	    });
-	  }
-
-	  beginQueue() {
-	    this.getBuffer(this.time, this.splitDuration);
-	  }
-
-	  pop() {
-	    return new Promise(res => {
-	      const next = this.queue.shift(); // If we aren't done building the queue,
-	      // but we don't have anything yet,
-	      // Its likely that values are being asked before
-	      // Audio buffers have been created
-	      // So we need to store the resolver
-
-	      if (!this.finished && !next) {
-	        this.popResolve = res;
-	        return;
-	      }
-
-	      res({
-	        buffer: next,
-	        done: this.queue.length === 0
-	      });
-	    });
-	  }
-
-	  stopQueue() {
-	    this.destroyed = true;
-	    this.queue = [];
-	  }
-
+	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
+	  const track = createTrack(trackId, []);
+	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
+	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
+	      const segmentId = generateId();
+	      return segments.set(segmentId, new AudioTrackSegment({
+	        id: segmentId,
+	        sourceOffset: new Time(0),
+	        duration: audioSource.duration,
+	        offset: trackOffset,
+	        sourceId
+	      }));
+	    }));
+	  });
+	}
+	function moveSegment(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const nextOffsetMilliseconds = segment.offset.milliseconds + time.milliseconds < 0 ? 0 : segment.offset.milliseconds + time.milliseconds;
+	    const newOffset = new Time(nextOffsetMilliseconds);
+	    return segment.set('offset', newOffset);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
 	}
 
-	class AudioBufferPlayer {
-	  constructor(audioContext$$1, queue$$1) {
-	    this.updateCurrentTime = previousAudioContextSeconds => {
-	      const currentTime = this.timeSubject.value;
-	      const currentAudioContextSeconds = this.audioContext.currentTime;
-	      const diffSeconds = currentAudioContextSeconds - previousAudioContextSeconds;
-	      const nextTime = Time.fromSeconds(currentTime.seconds + diffSeconds);
-	      this.timeSubject.next(nextTime);
-	      this.raf = requestAnimationFrame(() => {
-	        this.updateCurrentTime(currentAudioContextSeconds);
-	      });
-	    };
+	function getSourceOffsetDiff(time, sourceOffsetMilliseconds, durationMilliseconds) {
+	  const end = durationMilliseconds + sourceOffsetMilliseconds - 250; // dont let segment ever be less than 100 milliseconds
 
-	    this.popQueue = () => {
-	      this.queue.pop().then(({
-	        buffer: buffer$$1,
-	        done
-	      }) => {
-	        return this.playBuffer(buffer$$1).then(() => {
-	          if (this.playing === false) {
-	            return;
-	          }
-
-	          if (done === false) {
-	            this.popQueue();
-	          } else {
-	            this.timeSubject.complete();
-	          }
-	        });
-	      });
-	    };
-
-	    this.queue = queue$$1;
-	    this.audioContext = audioContext$$1;
-	    this.timeSubject = new BehaviorSubject(new Time(0));
+	  if (sourceOffsetMilliseconds + time.milliseconds < 0) {
+	    return -sourceOffsetMilliseconds;
+	  } else if (sourceOffsetMilliseconds + time.milliseconds > end) {
+	    return end - sourceOffsetMilliseconds;
 	  }
 
-	  playBuffer(audioBuffer) {
+	  return time.milliseconds;
+	}
+
+	function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentDurationMilliseconds, sourceDurationMilliseconds) {
+	  const next = time.milliseconds + segmentDurationMilliseconds;
+	  const max = sourceDurationMilliseconds - segmentSourceOffsetMilliseconds;
+	  const min = 250;
+
+	  if (next > max) {
+	    return max;
+	  } else if (next < min) {
+	    return min;
+	  }
+
+	  return next;
+	}
+
+	function setSegmentDuration(trackId, segmentId, audioSource, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
+	    const newDuration = new Time(nextDurationMilliseconds);
+	    return segment.set('duration', newDuration);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function moveSegmentSourceOffset(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
 	    const {
-	      audioContext: audioContext$$1
-	    } = this;
-	    const source = audioContext$$1.createBufferSource();
+	      milliseconds: sourceOffsetMilliseconds
+	    } = segment.sourceOffset;
+	    const diff = getSourceOffsetDiff(time, sourceOffsetMilliseconds, segment.duration.milliseconds);
+	    const newSourceOffset = new Time(sourceOffsetMilliseconds + diff);
+	    const newOffset = new Time(segment.offset.milliseconds + diff);
+	    const newDuration = new Time(segment.duration.milliseconds - diff);
+	    return segment.set('sourceOffset', newSourceOffset).set('offset', newOffset).set('duration', newDuration);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function createTrack(id, segments) {
+	  const segmentsMap = segments.reduce((seed, segment) => {
+	    return seed.set(segment.id, segment);
+	  }, new Map$1());
+	  const audioTrack = new AudioTrack({
+	    id,
+	    segments: segmentsMap
+	  });
+	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
+	  return audioTrack;
+	}
+	const audioTracks = Symbol();
+	wire_2(audioTracks, wireObservable(stream$1));
+
+	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
+	  const {
+	    sampleRate,
+	    numberOfChannels
+	  } = audioBuffer;
+	  const durationSeconds = durationMilliseconds / 1000;
+	  const startSeconds = startMilliseconds / 1000;
+	  const sub = new AudioBuffer({
+	    length: Math.ceil(durationSeconds * sampleRate),
+	    numberOfChannels,
+	    sampleRate
+	  });
+	  const startByte = startSeconds * sampleRate;
+	  const durationBytes = durationSeconds * sampleRate;
+	  const endBytes = startByte + durationBytes;
+
+	  for (let i = 0; i < numberOfChannels; i += 1) {
+	    const channelData = sub.getChannelData(i);
+	    const subset = audioBuffer.getChannelData(i).slice(startByte, endBytes);
+	    channelData.set(subset, 0);
+	  }
+
+	  return sub;
+	}
+	function join(audioBuffers) {
+	  const [first, ...rest] = audioBuffers;
+	  return rest.reduce((seed, audioBuffer) => {
+	    const {
+	      numberOfChannels
+	    } = seed;
+	    const buffer = new AudioBuffer({
+	      length: seed.length + audioBuffer.length,
+	      sampleRate: seed.sampleRate,
+	      numberOfChannels
+	    });
+
+	    for (let i = 0; i < numberOfChannels; i += 1) {
+	      const channelData = buffer.getChannelData(i);
+	      channelData.set(seed.getChannelData(i), 0);
+	      channelData.set(audioBuffer.getChannelData(i), seed.length);
+	    }
+
+	    return buffer;
+	  }, first);
+	}
+	function silence(sampleRate, numberOfChannels, milliseconds) {
+	  const seconds = milliseconds / 1000;
+	  return new AudioBuffer({
+	    length: Math.ceil(sampleRate * seconds),
+	    sampleRate,
+	    numberOfChannels
+	  });
+	}
+	function postprocess(audioBuffer, audioNodeBuilders) {
+	  const context = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
+	  const source = context.createBufferSource();
+	  source.buffer = audioBuffer;
+	  const processed = audioNodeBuilders.reduce((seed, builder) => {
+	    const node = builder(context);
+	    seed.connect(node);
+	    return node;
+	  }, source);
+	  processed.connect(context.destination);
+	  source.start();
+	  return context.startRendering();
+	}
+	function mix(audioContext, audioBuffers) {
+	  const data = audioBuffers.reduce((seed, audioBuffer) => {
+	    if (seed.length < audioBuffer.length) {
+	      seed.length = audioBuffer.length;
+	    }
+
+	    if (seed.numberOfChannels < audioBuffer.numberOfChannels) {
+	      seed.numberOfChannels = audioBuffer.numberOfChannels;
+	    }
+
+	    if (seed.sampleRate === null) {
+	      seed.sampleRate = audioBuffer.sampleRate;
+	    }
+
+	    return seed;
+	  }, {
+	    length: 0,
+	    numberOfChannels: 1,
+	    sampleRate: audioContext.sampleRate
+	  });
+	  const context = new OfflineAudioContext(data.numberOfChannels, data.length, data.sampleRate);
+	  audioBuffers.forEach(audioBuffer => {
+	    const source = context.createBufferSource();
 	    source.buffer = audioBuffer;
-	    source.connect(audioContext$$1.destination);
-	    this.currentSource = source;
-	    return new Promise(res => {
-	      source.addEventListener('ended', res, {
-	        once: true
-	      });
-	      source.start();
-	    });
-	  }
-
-	  get timeStream() {
-	    return this.timeSubject.asObservable();
-	  }
-
-	  start() {
-	    this.updateCurrentTime(this.audioContext.currentTime);
-	    this.popQueue();
-	  }
-
-	  stop() {
-	    this.playing = false;
-	    this.timeSubject.complete();
-	    cancelAnimationFrame(this.raf);
-
-	    if (this.currentSource) {
-	      this.currentSource.stop();
-	    }
-	  }
-
+	    source.connect(context.destination);
+	    source.start();
+	  });
+	  return context.startRendering();
 	}
 
-	class PlaybackController {
-	  constructor(_audioContext, start) {
-	    this.states = {
-	      stop: {
-	        enter() {
-	          console.log('enter stop');
-	        },
+	class MasterOut extends Record({
+	  gain: 5
+	}) {}
 
-	        exit() {
-	          console.log('exit stop');
-	        }
-
-	      },
-	      play: {
-	        enter(playbackController) {
-	          stream$1.pipe(switchMap(audioTracks$$1 => {
-	            return stream.pipe(map(audioSources$$1 => {
-	              return {
-	                audioTracks: audioTracks$$1,
-	                audioSources: audioSources$$1
-	              };
-	            })).pipe(take(1));
-	          })).pipe(switchMap(({
-	            audioTracks: audioTracks$$1,
-	            audioSources: audioSources$$1
-	          }) => {
-	            const timeAnchor = playbackController.currentTime;
-	            return Observable.create(o => {
-	              const queue$$1 = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), audioTracks$$1, audioSources$$1);
-	              queue$$1.beginQueue();
-	              const bufferPlayer = new AudioBufferPlayer(audioContext, queue$$1);
-	              bufferPlayer.start();
-	              bufferPlayer.timeStream.subscribe(o);
-	              return () => {
-	                queue$$1.stopQueue();
-	                bufferPlayer.stop();
-	              };
-	            }).pipe(map(time => {
-	              return new Time(timeAnchor.milliseconds + time.milliseconds);
-	            })).pipe(materialize());
-	          })).pipe(dematerialize()).subscribe(time => {
-	            playbackController.currentTime = time;
-	            playheadSubject.next(playheadSubject.value.set('playbackTime', time));
-	          }, null, () => {
-	            console.log('done?');
-	            playheadSubject.next(playheadSubject.value.set('playbackTime', null));
-	          });
-	        },
-
-	        exit() {
-	          console.log('exit play');
-	        }
-
-	      }
-	    };
-	    this.audioContext = _audioContext;
-	    this.currentTime = this.startTime = start;
-	    this.state = this.states['stop'];
-	  }
-
-	  enter(key) {
-	    this.state.exit(this);
-	    this.state = this.states[key];
-	    this.state.enter(this);
-	  }
-
-	  play() {
-	    this.enter('play');
-	  }
-
+	const masterOutSubject = new BehaviorSubject(new MasterOut());
+	const stream$2 = masterOutSubject.asObservable();
+	function connectMasterOut(bufferSource) {
+	  bufferSource.connect(audioContext.destination);
 	}
+	function setGain(value) {
+	  masterOutSubject.next(masterOutSubject.value.set('gain', value));
+	}
+	const masterOutSym = Symbol();
+	wire_2(masterOutSym, wireObservable(stream$2));
+
 	/*
 	 *
 	 *
@@ -24221,7 +24242,6 @@
 	 * Property offsets underlying audio based on cursor position
 	 *
 	 */
-
 
 	function renderSegment(segment, audioSource, startTime
 	/* global start */
@@ -24317,8 +24337,8 @@
 	  return join(filled);
 	}
 
-	function getAudioBuffer(start, duration, audioTracks$$1, audioSources$$1) {
-	  let audioBuffers = audioTracks$$1.map(audioTrack => {
+	function renderAudioBuffer(start, duration, masterOut, audioTracks, audioSources$$1) {
+	  let audioBuffers = audioTracks.map(audioTrack => {
 	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
 	  }).filter(audioBuffer => {
 	    return audioBuffer !== null;
@@ -24328,15 +24348,354 @@
 	    audioBuffers = [silence(audioContext.sampleRate, 2, duration.milliseconds)];
 	  }
 
-	  return mix(audioContext, audioBuffers);
+	  return mix(audioContext, audioBuffers).then(mixed => {
+	    return postprocess(mixed, [offlineAudioContext => {
+	      const gainNode = offlineAudioContext.createGain();
+	      gainNode.gain.value = masterOut.gain;
+	      return gainNode;
+	    }]);
+	  });
 	}
 
+	class Playhead extends Record({
+	  playbackTime: null
+	}) {}
+
+	const playheadSubject = new BehaviorSubject(new Playhead());
+
+	class PlaybackQueue {
+	  constructor(time, duration, masterOut, audioTracks$$1, audioSources$$1) {
+	    this.queue = [];
+	    this.popResolve = null;
+	    this.destroyed = false;
+	    this.audioTracks = audioTracks$$1;
+	    this.audioSources = audioSources$$1;
+	    this.time = time;
+	    this.end = new Time(duration.milliseconds + time.milliseconds);
+	    this.splitDuration = Time.fromSeconds(5);
+	    this.finished = false;
+	    this.masterOut = masterOut;
+	  }
+
+	  getBuffer(time, duration) {
+	    const {
+	      end,
+	      splitDuration,
+	      audioTracks: audioTracks$$1,
+	      audioSources: audioSources$$1,
+	      masterOut
+	    } = this;
+	    let audioBufferDuration = duration;
+
+	    if (duration.milliseconds + time.milliseconds > end.milliseconds) {
+	      audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
+	    }
+
+	    renderAudioBuffer(time, audioBufferDuration, masterOut, audioTracks$$1, audioSources$$1).then(buffer$$1 => {
+	      if (this.destroyed === true) {
+	        return;
+	      }
+
+	      if (this.popResolve) {
+	        this.popResolve({
+	          done: false,
+	          buffer: buffer$$1
+	        });
+	        this.popResolve = null;
+	      } else {
+	        this.queue.push(buffer$$1);
+	      }
+
+	      if (time.milliseconds + splitDuration.milliseconds === end.milliseconds) {
+	        return;
+	      }
+
+	      if (time.milliseconds + audioBufferDuration.milliseconds === end.milliseconds) {
+	        this.finished = true;
+	        return;
+	      }
+
+	      this.getBuffer(new Time(time.milliseconds + this.splitDuration.milliseconds), this.splitDuration);
+	    });
+	  }
+
+	  beginQueue() {
+	    this.getBuffer(this.time, this.splitDuration);
+	  }
+
+	  pop() {
+	    return new Promise(res => {
+	      const next = this.queue.shift(); // If we aren't done building the queue,
+	      // but we don't have anything yet,
+	      // Its likely that values are being asked before
+	      // Audio buffers have been created
+	      // So we need to store the resolver
+
+	      if (!this.finished && !next) {
+	        this.popResolve = res;
+	        return;
+	      }
+
+	      res({
+	        buffer: next,
+	        done: this.queue.length === 0
+	      });
+	    });
+	  }
+
+	  stopQueue() {
+	    this.destroyed = true;
+	    this.queue = [];
+	  }
+
+	}
+
+	class AudioBufferPlayer {
+	  constructor(audioContext$$1, queue$$1) {
+	    this.updateCurrentTime = previousAudioContextSeconds => {
+	      const currentTime = this.timeSubject.value;
+	      const currentAudioContextSeconds = this.audioContext.currentTime;
+	      const diffSeconds = currentAudioContextSeconds - previousAudioContextSeconds;
+	      const nextTime = Time.fromSeconds(currentTime.seconds + diffSeconds);
+	      this.timeSubject.next(nextTime);
+	      this.raf = requestAnimationFrame(() => {
+	        this.updateCurrentTime(currentAudioContextSeconds);
+	      });
+	    };
+
+	    this.popQueue = () => {
+	      this.queue.pop().then(({
+	        buffer: buffer$$1,
+	        done
+	      }) => {
+	        return this.playBuffer(buffer$$1).then(() => {
+	          if (this.playing === false) {
+	            return;
+	          }
+
+	          if (done === false) {
+	            this.popQueue();
+	          } else {
+	            this.timeSubject.complete();
+	          }
+	        });
+	      });
+	    };
+
+	    this.queue = queue$$1;
+	    this.audioContext = audioContext$$1;
+	    this.timeSubject = new BehaviorSubject(new Time(0));
+	  }
+
+	  playBuffer(audioBuffer) {
+	    const {
+	      audioContext: audioContext$$1
+	    } = this;
+	    const source = audioContext$$1.createBufferSource();
+	    source.buffer = audioBuffer;
+	    connectMasterOut(source);
+	    this.currentSource = source;
+	    return new Promise(res => {
+	      source.addEventListener('ended', res, {
+	        once: true
+	      });
+	      source.start();
+	    });
+	  }
+
+	  get timeStream() {
+	    return this.timeSubject.asObservable();
+	  }
+
+	  start() {
+	    this.updateCurrentTime(this.audioContext.currentTime);
+	    this.popQueue();
+	  }
+
+	  stop() {
+	    this.playing = false;
+	    this.timeSubject.complete();
+	    cancelAnimationFrame(this.raf);
+
+	    if (this.currentSource) {
+	      this.currentSource.stop();
+	    }
+	  }
+
+	}
+
+	class PlaybackController {
+	  constructor(_audioContext, start) {
+	    this.states = {
+	      stop: {
+	        enter() {
+	          playheadSubject.next(playheadSubject.value.set('playbackTime', null));
+	        },
+
+	        exit() {}
+
+	      },
+	      play: {
+	        enter(playbackController) {
+	          this.subscription = combineLatest(stream$1, stream$2).pipe(switchMap(([audioTracks$$1, masterOut]) => {
+	            return stream.pipe(map(audioSources$$1 => {
+	              return {
+	                audioTracks: audioTracks$$1,
+	                audioSources: audioSources$$1,
+	                masterOut
+	              };
+	            })).pipe(take(1));
+	          })).pipe(switchMap(({
+	            audioTracks: audioTracks$$1,
+	            audioSources: audioSources$$1,
+	            masterOut
+	          }) => {
+	            const timeAnchor = playbackController.currentTime;
+	            return Observable.create(o => {
+	              const queue$$1 = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), masterOut, audioTracks$$1, audioSources$$1);
+	              queue$$1.beginQueue();
+	              const bufferPlayer = new AudioBufferPlayer(audioContext, queue$$1);
+	              bufferPlayer.start();
+	              bufferPlayer.timeStream.subscribe(o);
+	              return () => {
+	                queue$$1.stopQueue();
+	                bufferPlayer.stop();
+	              };
+	            }).pipe(map(time => {
+	              return new Time(timeAnchor.milliseconds + time.milliseconds);
+	            })).pipe(materialize());
+	          })).pipe(dematerialize()).subscribe(time => {
+	            const millisecondsDiff = time.milliseconds - playbackController.currentTime.milliseconds;
+	            incrementVisibleRangeStart(new Time(millisecondsDiff));
+	            playbackController.currentTime = time;
+	            playheadSubject.next(playheadSubject.value.set('playbackTime', time));
+	          }, null, () => {
+	            playheadSubject.next(playheadSubject.value.set('playbackTime', null));
+	          });
+	        },
+
+	        exit() {
+	          this.subscription.unsubscribe();
+	        }
+
+	      }
+	    };
+	    this.audioContext = _audioContext;
+	    this.currentTime = start;
+	    this.state = this.states['stop'];
+	  }
+
+	  enter(key) {
+	    this.state.exit(this);
+	    this.state = this.states[key];
+	    this.state.enter(this);
+	  }
+
+	  play() {
+	    this.enter('play');
+	  }
+
+	  stop() {
+	    this.enter('stop');
+	  }
+
+	}
+
+	let playbackController = null;
+	function isPlaying() {
+	  return playheadSubject.value.playbackTime !== null;
+	}
+	function stop() {
+	  if (playbackController) {
+	    playbackController.stop();
+	  }
+	}
 	function play(start) {
-	  const playbackController = new PlaybackController(audioContext, start);
+	  if (playbackController) {
+	    stop();
+	  }
+
+	  playbackController = new PlaybackController(audioContext, start);
 	  playbackController.play();
 	}
 	const playheadSym = Symbol();
 	wire_2(playheadSym, wireObservable(playheadSubject.asObservable()));
+
+	class Editor extends Record({
+	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
+	  frame: null,
+	  cursor: Time.fromSeconds(1),
+	  virtualCursor: Time.fromSeconds(2),
+	  quanitization: 1 / 8
+	}) {
+	  pixelToTime(pixel) {
+	    const {
+	      width
+	    } = this.frame;
+	    const {
+	      visibleRange
+	    } = this;
+	    const percent = pixel / width;
+	    const millisecond = percent * visibleRange.duration.milliseconds;
+	    return new Time(millisecond);
+	  }
+
+	  absolutePixelToTime(pixel) {
+	    const time = this.pixelToTime(pixel);
+	    return new Time(time.milliseconds + this.visibleRange.start.milliseconds);
+	  }
+
+	  timeToPixel(time) {
+	    const {
+	      width
+	    } = this.frame;
+	    const {
+	      visibleRange
+	    } = this;
+	    const percent = (time.milliseconds - visibleRange.start.milliseconds) / visibleRange.duration.milliseconds;
+	    return percent * width;
+	  }
+
+	  durationToWidth(time) {
+	    const {
+	      width
+	    } = this.frame;
+	    const {
+	      visibleRange
+	    } = this;
+	    const pixelsPerMillisecond = width / visibleRange.duration.milliseconds;
+	    return pixelsPerMillisecond * time.milliseconds;
+	  }
+
+	}
+
+	function setVirtualCursorTime(time) {
+	  editorSubject.next(editorSubject.value.set('virtualCursor', time));
+	}
+	function setCursorTime(time) {
+	  editorSubject.next(editorSubject.value.set('cursor', time));
+
+	  if (isPlaying()) {
+	    play(time);
+	  }
+	}
+	function setVisibleRangeStart(time) {
+	  const editor = editorSubject.value;
+	  const range$$1 = new AudioRange(time, editor.visibleRange.duration);
+	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
+	}
+	function incrementVisibleRangeStart(incrementTime) {
+	  const editor = editorSubject.value;
+	  const time = new Time(incrementTime.milliseconds + editor.visibleRange.start.milliseconds);
+	  setVisibleRangeStart(time);
+	}
+	function setFrame(frame) {
+	  editorSubject.next(editorSubject.value.set('frame', frame));
+	}
+	const editorSubject = new BehaviorSubject(new Editor());
+	const stream$3 = editorSubject.asObservable();
+	const editorSym = Symbol();
+	wire_2(editorSym, wireObservable(stream$3));
 
 	class Controls extends engine_5 {
 	  constructor(...args) {
@@ -24344,10 +24703,37 @@
 	    this.editor = void 0;
 	    this.audioTracks = void 0;
 	    this.audioSources = void 0;
+	    this.playhead = void 0;
+	  }
+
+	  get isPlaying() {
+	    return this.playhead.data.playbackTime !== null;
+	  }
+
+	  get displayTime() {
+	    return this.isPlaying ? this.playhead.data.playbackTime : this.editor.data.cursor;
+	  }
+
+	  get playButtonClass() {
+	    const base = `control`;
+
+	    if (this.isPlaying) {
+	      return `${base} control--playing`;
+	    }
+
+	    return base;
+	  }
+
+	  get stopButtonClass() {
+	    return 'control';
+	  }
+
+	  onStopClick() {
+	    stop();
 	  }
 
 	  onPlayClick() {
-	    play(this.editor.data.cursor, new Time(2000), this.audioTracks.data, this.audioSources.data);
+	    play(this.editor.data.cursor);
 	  }
 
 	}
@@ -24368,1255 +24754,23 @@
 	      adapter: audioSources,
 	      params: {},
 	      static: {}
+	    },
+	    playhead: {
+	      adapter: playheadSym,
+	      params: {},
+	      static: {}
 	    }
 	  }
 	});
 
 	var _ffmpegControls = engine_10(Controls, {
-	  tmpl: _tmpl
+	  tmpl: _tmpl$1
 	});
 
 	function stylesheet$2(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: #000;color: #fff;}") : (hostSelector + " {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: #000;color: #fff;}")) + "\n.tick" + shadowSelector + " {display: inline-flex;flex-direction: column;position: absolute;left: 0;top: 0.25rem;z-index: 2;font-size: 0.8rem;}\n.tick-label" + shadowSelector + " {transform: translateX(-50%);margin-bottom: 0.5rem;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: rgb(52, 52, 52);color: rgb(150, 150, 150);}") : (hostSelector + " {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: rgb(52, 52, 52);color: rgb(150, 150, 150);}")) + "\n.tick" + shadowSelector + " {display: inline-flex;flex-direction: column;position: absolute;left: 0;top: 0.25rem;z-index: 2;font-size: 0.8rem;}\n.tick-label" + shadowSelector + " {transform: translateX(-50%);margin-bottom: 0.5rem;}\n";
 	}
 	var _implicitStylesheets$2 = [stylesheet$2];
-
-	function tmpl$1($api, $cmp, $slotset, $ctx) {
-	  const {
-	    d: api_dynamic
-	  } = $api;
-	  return [api_dynamic($cmp.formatted)];
-	}
-
-	var _tmpl$2 = engine_8(tmpl$1);
-	tmpl$1.stylesheets = [];
-	tmpl$1.stylesheetTokens = {
-	  hostAttribute: "ffmpeg-timelabel_timelabel-host",
-	  shadowAttribute: "ffmpeg-timelabel_timelabel"
-	};
-
-	var parseMs = ms => {
-	  if (typeof ms !== 'number') {
-	    throw new TypeError('Expected a number');
-	  }
-
-	  const roundTowardsZero = ms > 0 ? Math.floor : Math.ceil;
-	  return {
-	    days: roundTowardsZero(ms / 86400000),
-	    hours: roundTowardsZero(ms / 3600000) % 24,
-	    minutes: roundTowardsZero(ms / 60000) % 60,
-	    seconds: roundTowardsZero(ms / 1000) % 60,
-	    milliseconds: roundTowardsZero(ms) % 1000,
-	    microseconds: roundTowardsZero(ms * 1000) % 1000,
-	    nanoseconds: roundTowardsZero(ms * 1e6) % 1000
-	  };
-	};
-
-	/**
-	 * lodash (Custom Build) <https://lodash.com/>
-	 * Build: `lodash modularize exports="npm" -o ./`
-	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
-	 * Released under MIT license <https://lodash.com/license>
-	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
-	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-	 */
-
-	/** Used as references for various `Number` constants. */
-	var INFINITY = 1 / 0,
-	    MAX_SAFE_INTEGER = 9007199254740991,
-	    MAX_INTEGER = 1.7976931348623157e+308,
-	    NAN = 0 / 0;
-	/** `Object#toString` result references. */
-
-	var symbolTag = '[object Symbol]';
-	/** Used to match leading and trailing whitespace. */
-
-	var reTrim = /^\s+|\s+$/g;
-	/** Used to detect bad signed hexadecimal string values. */
-
-	var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-	/** Used to detect binary string values. */
-
-	var reIsBinary = /^0b[01]+$/i;
-	/** Used to detect octal string values. */
-
-	var reIsOctal = /^0o[0-7]+$/i;
-	/** Used to compose unicode character classes. */
-
-	var rsAstralRange = '\\ud800-\\udfff',
-	    rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
-	    rsComboSymbolsRange = '\\u20d0-\\u20f0',
-	    rsVarRange = '\\ufe0e\\ufe0f';
-	/** Used to compose unicode capture groups. */
-
-	var rsAstral = '[' + rsAstralRange + ']',
-	    rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
-	    rsFitz = '\\ud83c[\\udffb-\\udfff]',
-	    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
-	    rsNonAstral = '[^' + rsAstralRange + ']',
-	    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-	    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-	    rsZWJ = '\\u200d';
-	/** Used to compose unicode regexes. */
-
-	var reOptMod = rsModifier + '?',
-	    rsOptVar = '[' + rsVarRange + ']?',
-	    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
-	    rsSeq = rsOptVar + reOptMod + rsOptJoin,
-	    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
-	/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-
-	var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
-	/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-
-	var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange + rsComboMarksRange + rsComboSymbolsRange + rsVarRange + ']');
-	/** Built-in method references without a dependency on `root`. */
-
-	var freeParseInt = parseInt;
-	/** Detect free variable `global` from Node.js. */
-
-	var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
-	/** Detect free variable `self`. */
-
-	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-	/** Used as a reference to the global object. */
-
-	var root = freeGlobal || freeSelf || Function('return this')();
-	/**
-	 * Gets the size of an ASCII `string`.
-	 *
-	 * @private
-	 * @param {string} string The string inspect.
-	 * @returns {number} Returns the string size.
-	 */
-
-	var asciiSize = baseProperty('length');
-	/**
-	 * Converts an ASCII `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-
-	function asciiToArray(string) {
-	  return string.split('');
-	}
-	/**
-	 * The base implementation of `_.property` without support for deep paths.
-	 *
-	 * @private
-	 * @param {string} key The key of the property to get.
-	 * @returns {Function} Returns the new accessor function.
-	 */
-
-
-	function baseProperty(key) {
-	  return function (object) {
-	    return object == null ? undefined : object[key];
-	  };
-	}
-	/**
-	 * Checks if `string` contains Unicode symbols.
-	 *
-	 * @private
-	 * @param {string} string The string to inspect.
-	 * @returns {boolean} Returns `true` if a symbol is found, else `false`.
-	 */
-
-
-	function hasUnicode(string) {
-	  return reHasUnicode.test(string);
-	}
-	/**
-	 * Gets the number of symbols in `string`.
-	 *
-	 * @private
-	 * @param {string} string The string to inspect.
-	 * @returns {number} Returns the string size.
-	 */
-
-
-	function stringSize(string) {
-	  return hasUnicode(string) ? unicodeSize(string) : asciiSize(string);
-	}
-	/**
-	 * Converts `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-
-
-	function stringToArray(string) {
-	  return hasUnicode(string) ? unicodeToArray(string) : asciiToArray(string);
-	}
-	/**
-	 * Gets the size of a Unicode `string`.
-	 *
-	 * @private
-	 * @param {string} string The string inspect.
-	 * @returns {number} Returns the string size.
-	 */
-
-
-	function unicodeSize(string) {
-	  var result = reUnicode.lastIndex = 0;
-
-	  while (reUnicode.test(string)) {
-	    result++;
-	  }
-
-	  return result;
-	}
-	/**
-	 * Converts a Unicode `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-
-
-	function unicodeToArray(string) {
-	  return string.match(reUnicode) || [];
-	}
-	/** Used for built-in method references. */
-
-
-	var objectProto = Object.prototype;
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-
-	var objectToString = objectProto.toString;
-	/** Built-in value references. */
-
-	var Symbol$1 = root.Symbol;
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-
-	var nativeCeil = Math.ceil,
-	    nativeFloor = Math.floor;
-	/** Used to convert symbols to primitives and strings. */
-
-	var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined,
-	    symbolToString = symbolProto ? symbolProto.toString : undefined;
-	/**
-	 * The base implementation of `_.repeat` which doesn't coerce arguments.
-	 *
-	 * @private
-	 * @param {string} string The string to repeat.
-	 * @param {number} n The number of times to repeat the string.
-	 * @returns {string} Returns the repeated string.
-	 */
-
-	function baseRepeat(string, n) {
-	  var result = '';
-
-	  if (!string || n < 1 || n > MAX_SAFE_INTEGER) {
-	    return result;
-	  } // Leverage the exponentiation by squaring algorithm for a faster repeat.
-	  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
-
-
-	  do {
-	    if (n % 2) {
-	      result += string;
-	    }
-
-	    n = nativeFloor(n / 2);
-
-	    if (n) {
-	      string += string;
-	    }
-	  } while (n);
-
-	  return result;
-	}
-	/**
-	 * The base implementation of `_.slice` without an iteratee call guard.
-	 *
-	 * @private
-	 * @param {Array} array The array to slice.
-	 * @param {number} [start=0] The start position.
-	 * @param {number} [end=array.length] The end position.
-	 * @returns {Array} Returns the slice of `array`.
-	 */
-
-
-	function baseSlice(array, start, end) {
-	  var index = -1,
-	      length = array.length;
-
-	  if (start < 0) {
-	    start = -start > length ? 0 : length + start;
-	  }
-
-	  end = end > length ? length : end;
-
-	  if (end < 0) {
-	    end += length;
-	  }
-
-	  length = start > end ? 0 : end - start >>> 0;
-	  start >>>= 0;
-	  var result = Array(length);
-
-	  while (++index < length) {
-	    result[index] = array[index + start];
-	  }
-
-	  return result;
-	}
-	/**
-	 * The base implementation of `_.toString` which doesn't convert nullish
-	 * values to empty strings.
-	 *
-	 * @private
-	 * @param {*} value The value to process.
-	 * @returns {string} Returns the string.
-	 */
-
-
-	function baseToString(value) {
-	  // Exit early for strings to avoid a performance hit in some environments.
-	  if (typeof value == 'string') {
-	    return value;
-	  }
-
-	  if (isSymbol(value)) {
-	    return symbolToString ? symbolToString.call(value) : '';
-	  }
-
-	  var result = value + '';
-	  return result == '0' && 1 / value == -INFINITY ? '-0' : result;
-	}
-	/**
-	 * Casts `array` to a slice if it's needed.
-	 *
-	 * @private
-	 * @param {Array} array The array to inspect.
-	 * @param {number} start The start position.
-	 * @param {number} [end=array.length] The end position.
-	 * @returns {Array} Returns the cast slice.
-	 */
-
-
-	function castSlice(array, start, end) {
-	  var length = array.length;
-	  end = end === undefined ? length : end;
-	  return !start && end >= length ? array : baseSlice(array, start, end);
-	}
-	/**
-	 * Creates the padding for `string` based on `length`. The `chars` string
-	 * is truncated if the number of characters exceeds `length`.
-	 *
-	 * @private
-	 * @param {number} length The padding length.
-	 * @param {string} [chars=' '] The string used as padding.
-	 * @returns {string} Returns the padding for `string`.
-	 */
-
-
-	function createPadding(length, chars) {
-	  chars = chars === undefined ? ' ' : baseToString(chars);
-	  var charsLength = chars.length;
-
-	  if (charsLength < 2) {
-	    return charsLength ? baseRepeat(chars, length) : chars;
-	  }
-
-	  var result = baseRepeat(chars, nativeCeil(length / stringSize(chars)));
-	  return hasUnicode(chars) ? castSlice(stringToArray(result), 0, length).join('') : result.slice(0, length);
-	}
-	/**
-	 * Checks if `value` is the
-	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
-	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
-	 * @example
-	 *
-	 * _.isObject({});
-	 * // => true
-	 *
-	 * _.isObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObject(_.noop);
-	 * // => true
-	 *
-	 * _.isObject(null);
-	 * // => false
-	 */
-
-
-	function isObject$1(value) {
-	  var type = typeof value;
-	  return !!value && (type == 'object' || type == 'function');
-	}
-	/**
-	 * Checks if `value` is object-like. A value is object-like if it's not `null`
-	 * and has a `typeof` result of "object".
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
-	 * @example
-	 *
-	 * _.isObjectLike({});
-	 * // => true
-	 *
-	 * _.isObjectLike([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObjectLike(_.noop);
-	 * // => false
-	 *
-	 * _.isObjectLike(null);
-	 * // => false
-	 */
-
-
-	function isObjectLike(value) {
-	  return !!value && typeof value == 'object';
-	}
-	/**
-	 * Checks if `value` is classified as a `Symbol` primitive or object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
-	 * @example
-	 *
-	 * _.isSymbol(Symbol.iterator);
-	 * // => true
-	 *
-	 * _.isSymbol('abc');
-	 * // => false
-	 */
-
-
-	function isSymbol(value) {
-	  return typeof value == 'symbol' || isObjectLike(value) && objectToString.call(value) == symbolTag;
-	}
-	/**
-	 * Converts `value` to a finite number.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.12.0
-	 * @category Lang
-	 * @param {*} value The value to convert.
-	 * @returns {number} Returns the converted number.
-	 * @example
-	 *
-	 * _.toFinite(3.2);
-	 * // => 3.2
-	 *
-	 * _.toFinite(Number.MIN_VALUE);
-	 * // => 5e-324
-	 *
-	 * _.toFinite(Infinity);
-	 * // => 1.7976931348623157e+308
-	 *
-	 * _.toFinite('3.2');
-	 * // => 3.2
-	 */
-
-
-	function toFinite(value) {
-	  if (!value) {
-	    return value === 0 ? value : 0;
-	  }
-
-	  value = toNumber(value);
-
-	  if (value === INFINITY || value === -INFINITY) {
-	    var sign = value < 0 ? -1 : 1;
-	    return sign * MAX_INTEGER;
-	  }
-
-	  return value === value ? value : 0;
-	}
-	/**
-	 * Converts `value` to an integer.
-	 *
-	 * **Note:** This method is loosely based on
-	 * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to convert.
-	 * @returns {number} Returns the converted integer.
-	 * @example
-	 *
-	 * _.toInteger(3.2);
-	 * // => 3
-	 *
-	 * _.toInteger(Number.MIN_VALUE);
-	 * // => 0
-	 *
-	 * _.toInteger(Infinity);
-	 * // => 1.7976931348623157e+308
-	 *
-	 * _.toInteger('3.2');
-	 * // => 3
-	 */
-
-
-	function toInteger(value) {
-	  var result = toFinite(value),
-	      remainder = result % 1;
-	  return result === result ? remainder ? result - remainder : result : 0;
-	}
-	/**
-	 * Converts `value` to a number.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to process.
-	 * @returns {number} Returns the number.
-	 * @example
-	 *
-	 * _.toNumber(3.2);
-	 * // => 3.2
-	 *
-	 * _.toNumber(Number.MIN_VALUE);
-	 * // => 5e-324
-	 *
-	 * _.toNumber(Infinity);
-	 * // => Infinity
-	 *
-	 * _.toNumber('3.2');
-	 * // => 3.2
-	 */
-
-
-	function toNumber(value) {
-	  if (typeof value == 'number') {
-	    return value;
-	  }
-
-	  if (isSymbol(value)) {
-	    return NAN;
-	  }
-
-	  if (isObject$1(value)) {
-	    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-	    value = isObject$1(other) ? other + '' : other;
-	  }
-
-	  if (typeof value != 'string') {
-	    return value === 0 ? value : +value;
-	  }
-
-	  value = value.replace(reTrim, '');
-	  var isBinary = reIsBinary.test(value);
-	  return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
-	}
-	/**
-	 * Converts `value` to a string. An empty string is returned for `null`
-	 * and `undefined` values. The sign of `-0` is preserved.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to process.
-	 * @returns {string} Returns the string.
-	 * @example
-	 *
-	 * _.toString(null);
-	 * // => ''
-	 *
-	 * _.toString(-0);
-	 * // => '-0'
-	 *
-	 * _.toString([1, 2, 3]);
-	 * // => '1,2,3'
-	 */
-
-
-	function toString$1(value) {
-	  return value == null ? '' : baseToString(value);
-	}
-	/**
-	 * Pads `string` on the left side if it's shorter than `length`. Padding
-	 * characters are truncated if they exceed `length`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category String
-	 * @param {string} [string=''] The string to pad.
-	 * @param {number} [length=0] The padding length.
-	 * @param {string} [chars=' '] The string used as padding.
-	 * @returns {string} Returns the padded string.
-	 * @example
-	 *
-	 * _.padStart('abc', 6);
-	 * // => '   abc'
-	 *
-	 * _.padStart('abc', 6, '_-');
-	 * // => '_-_abc'
-	 *
-	 * _.padStart('abc', 3);
-	 * // => 'abc'
-	 */
-
-
-	function padStart(string, length, chars) {
-	  string = toString$1(string);
-	  length = toInteger(length);
-	  var strLength = length ? stringSize(string) : 0;
-	  return length && strLength < length ? createPadding(length - strLength, chars) + string : string;
-	}
-
-	var lodash_padstart = padStart;
-
-	/**
-	 * lodash (Custom Build) <https://lodash.com/>
-	 * Build: `lodash modularize exports="npm" -o ./`
-	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
-	 * Released under MIT license <https://lodash.com/license>
-	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
-	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-	 */
-
-	/** Used as references for various `Number` constants. */
-	var INFINITY$1 = 1 / 0,
-	    MAX_SAFE_INTEGER$1 = 9007199254740991,
-	    MAX_INTEGER$1 = 1.7976931348623157e+308,
-	    NAN$1 = 0 / 0;
-	/** `Object#toString` result references. */
-
-	var symbolTag$1 = '[object Symbol]';
-	/** Used to match leading and trailing whitespace. */
-
-	var reTrim$1 = /^\s+|\s+$/g;
-	/** Used to detect bad signed hexadecimal string values. */
-
-	var reIsBadHex$1 = /^[-+]0x[0-9a-f]+$/i;
-	/** Used to detect binary string values. */
-
-	var reIsBinary$1 = /^0b[01]+$/i;
-	/** Used to detect octal string values. */
-
-	var reIsOctal$1 = /^0o[0-7]+$/i;
-	/** Used to compose unicode character classes. */
-
-	var rsAstralRange$1 = '\\ud800-\\udfff',
-	    rsComboMarksRange$1 = '\\u0300-\\u036f\\ufe20-\\ufe23',
-	    rsComboSymbolsRange$1 = '\\u20d0-\\u20f0',
-	    rsVarRange$1 = '\\ufe0e\\ufe0f';
-	/** Used to compose unicode capture groups. */
-
-	var rsAstral$1 = '[' + rsAstralRange$1 + ']',
-	    rsCombo$1 = '[' + rsComboMarksRange$1 + rsComboSymbolsRange$1 + ']',
-	    rsFitz$1 = '\\ud83c[\\udffb-\\udfff]',
-	    rsModifier$1 = '(?:' + rsCombo$1 + '|' + rsFitz$1 + ')',
-	    rsNonAstral$1 = '[^' + rsAstralRange$1 + ']',
-	    rsRegional$1 = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-	    rsSurrPair$1 = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-	    rsZWJ$1 = '\\u200d';
-	/** Used to compose unicode regexes. */
-
-	var reOptMod$1 = rsModifier$1 + '?',
-	    rsOptVar$1 = '[' + rsVarRange$1 + ']?',
-	    rsOptJoin$1 = '(?:' + rsZWJ$1 + '(?:' + [rsNonAstral$1, rsRegional$1, rsSurrPair$1].join('|') + ')' + rsOptVar$1 + reOptMod$1 + ')*',
-	    rsSeq$1 = rsOptVar$1 + reOptMod$1 + rsOptJoin$1,
-	    rsSymbol$1 = '(?:' + [rsNonAstral$1 + rsCombo$1 + '?', rsCombo$1, rsRegional$1, rsSurrPair$1, rsAstral$1].join('|') + ')';
-	/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-
-	var reUnicode$1 = RegExp(rsFitz$1 + '(?=' + rsFitz$1 + ')|' + rsSymbol$1 + rsSeq$1, 'g');
-	/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-
-	var reHasUnicode$1 = RegExp('[' + rsZWJ$1 + rsAstralRange$1 + rsComboMarksRange$1 + rsComboSymbolsRange$1 + rsVarRange$1 + ']');
-	/** Built-in method references without a dependency on `root`. */
-
-	var freeParseInt$1 = parseInt;
-	/** Detect free variable `global` from Node.js. */
-
-	var freeGlobal$1 = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
-	/** Detect free variable `self`. */
-
-	var freeSelf$1 = typeof self == 'object' && self && self.Object === Object && self;
-	/** Used as a reference to the global object. */
-
-	var root$1 = freeGlobal$1 || freeSelf$1 || Function('return this')();
-	/**
-	 * Gets the size of an ASCII `string`.
-	 *
-	 * @private
-	 * @param {string} string The string inspect.
-	 * @returns {number} Returns the string size.
-	 */
-
-	var asciiSize$1 = baseProperty$1('length');
-	/**
-	 * Converts an ASCII `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-
-	function asciiToArray$1(string) {
-	  return string.split('');
-	}
-	/**
-	 * The base implementation of `_.property` without support for deep paths.
-	 *
-	 * @private
-	 * @param {string} key The key of the property to get.
-	 * @returns {Function} Returns the new accessor function.
-	 */
-
-
-	function baseProperty$1(key) {
-	  return function (object) {
-	    return object == null ? undefined : object[key];
-	  };
-	}
-	/**
-	 * Checks if `string` contains Unicode symbols.
-	 *
-	 * @private
-	 * @param {string} string The string to inspect.
-	 * @returns {boolean} Returns `true` if a symbol is found, else `false`.
-	 */
-
-
-	function hasUnicode$1(string) {
-	  return reHasUnicode$1.test(string);
-	}
-	/**
-	 * Gets the number of symbols in `string`.
-	 *
-	 * @private
-	 * @param {string} string The string to inspect.
-	 * @returns {number} Returns the string size.
-	 */
-
-
-	function stringSize$1(string) {
-	  return hasUnicode$1(string) ? unicodeSize$1(string) : asciiSize$1(string);
-	}
-	/**
-	 * Converts `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-
-
-	function stringToArray$1(string) {
-	  return hasUnicode$1(string) ? unicodeToArray$1(string) : asciiToArray$1(string);
-	}
-	/**
-	 * Gets the size of a Unicode `string`.
-	 *
-	 * @private
-	 * @param {string} string The string inspect.
-	 * @returns {number} Returns the string size.
-	 */
-
-
-	function unicodeSize$1(string) {
-	  var result = reUnicode$1.lastIndex = 0;
-
-	  while (reUnicode$1.test(string)) {
-	    result++;
-	  }
-
-	  return result;
-	}
-	/**
-	 * Converts a Unicode `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-
-
-	function unicodeToArray$1(string) {
-	  return string.match(reUnicode$1) || [];
-	}
-	/** Used for built-in method references. */
-
-
-	var objectProto$1 = Object.prototype;
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-
-	var objectToString$1 = objectProto$1.toString;
-	/** Built-in value references. */
-
-	var Symbol$2 = root$1.Symbol;
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-
-	var nativeCeil$1 = Math.ceil,
-	    nativeFloor$1 = Math.floor;
-	/** Used to convert symbols to primitives and strings. */
-
-	var symbolProto$1 = Symbol$2 ? Symbol$2.prototype : undefined,
-	    symbolToString$1 = symbolProto$1 ? symbolProto$1.toString : undefined;
-	/**
-	 * The base implementation of `_.repeat` which doesn't coerce arguments.
-	 *
-	 * @private
-	 * @param {string} string The string to repeat.
-	 * @param {number} n The number of times to repeat the string.
-	 * @returns {string} Returns the repeated string.
-	 */
-
-	function baseRepeat$1(string, n) {
-	  var result = '';
-
-	  if (!string || n < 1 || n > MAX_SAFE_INTEGER$1) {
-	    return result;
-	  } // Leverage the exponentiation by squaring algorithm for a faster repeat.
-	  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
-
-
-	  do {
-	    if (n % 2) {
-	      result += string;
-	    }
-
-	    n = nativeFloor$1(n / 2);
-
-	    if (n) {
-	      string += string;
-	    }
-	  } while (n);
-
-	  return result;
-	}
-	/**
-	 * The base implementation of `_.slice` without an iteratee call guard.
-	 *
-	 * @private
-	 * @param {Array} array The array to slice.
-	 * @param {number} [start=0] The start position.
-	 * @param {number} [end=array.length] The end position.
-	 * @returns {Array} Returns the slice of `array`.
-	 */
-
-
-	function baseSlice$1(array, start, end) {
-	  var index = -1,
-	      length = array.length;
-
-	  if (start < 0) {
-	    start = -start > length ? 0 : length + start;
-	  }
-
-	  end = end > length ? length : end;
-
-	  if (end < 0) {
-	    end += length;
-	  }
-
-	  length = start > end ? 0 : end - start >>> 0;
-	  start >>>= 0;
-	  var result = Array(length);
-
-	  while (++index < length) {
-	    result[index] = array[index + start];
-	  }
-
-	  return result;
-	}
-	/**
-	 * The base implementation of `_.toString` which doesn't convert nullish
-	 * values to empty strings.
-	 *
-	 * @private
-	 * @param {*} value The value to process.
-	 * @returns {string} Returns the string.
-	 */
-
-
-	function baseToString$1(value) {
-	  // Exit early for strings to avoid a performance hit in some environments.
-	  if (typeof value == 'string') {
-	    return value;
-	  }
-
-	  if (isSymbol$1(value)) {
-	    return symbolToString$1 ? symbolToString$1.call(value) : '';
-	  }
-
-	  var result = value + '';
-	  return result == '0' && 1 / value == -INFINITY$1 ? '-0' : result;
-	}
-	/**
-	 * Casts `array` to a slice if it's needed.
-	 *
-	 * @private
-	 * @param {Array} array The array to inspect.
-	 * @param {number} start The start position.
-	 * @param {number} [end=array.length] The end position.
-	 * @returns {Array} Returns the cast slice.
-	 */
-
-
-	function castSlice$1(array, start, end) {
-	  var length = array.length;
-	  end = end === undefined ? length : end;
-	  return !start && end >= length ? array : baseSlice$1(array, start, end);
-	}
-	/**
-	 * Creates the padding for `string` based on `length`. The `chars` string
-	 * is truncated if the number of characters exceeds `length`.
-	 *
-	 * @private
-	 * @param {number} length The padding length.
-	 * @param {string} [chars=' '] The string used as padding.
-	 * @returns {string} Returns the padding for `string`.
-	 */
-
-
-	function createPadding$1(length, chars) {
-	  chars = chars === undefined ? ' ' : baseToString$1(chars);
-	  var charsLength = chars.length;
-
-	  if (charsLength < 2) {
-	    return charsLength ? baseRepeat$1(chars, length) : chars;
-	  }
-
-	  var result = baseRepeat$1(chars, nativeCeil$1(length / stringSize$1(chars)));
-	  return hasUnicode$1(chars) ? castSlice$1(stringToArray$1(result), 0, length).join('') : result.slice(0, length);
-	}
-	/**
-	 * Checks if `value` is the
-	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
-	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
-	 * @example
-	 *
-	 * _.isObject({});
-	 * // => true
-	 *
-	 * _.isObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObject(_.noop);
-	 * // => true
-	 *
-	 * _.isObject(null);
-	 * // => false
-	 */
-
-
-	function isObject$2(value) {
-	  var type = typeof value;
-	  return !!value && (type == 'object' || type == 'function');
-	}
-	/**
-	 * Checks if `value` is object-like. A value is object-like if it's not `null`
-	 * and has a `typeof` result of "object".
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
-	 * @example
-	 *
-	 * _.isObjectLike({});
-	 * // => true
-	 *
-	 * _.isObjectLike([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObjectLike(_.noop);
-	 * // => false
-	 *
-	 * _.isObjectLike(null);
-	 * // => false
-	 */
-
-
-	function isObjectLike$1(value) {
-	  return !!value && typeof value == 'object';
-	}
-	/**
-	 * Checks if `value` is classified as a `Symbol` primitive or object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
-	 * @example
-	 *
-	 * _.isSymbol(Symbol.iterator);
-	 * // => true
-	 *
-	 * _.isSymbol('abc');
-	 * // => false
-	 */
-
-
-	function isSymbol$1(value) {
-	  return typeof value == 'symbol' || isObjectLike$1(value) && objectToString$1.call(value) == symbolTag$1;
-	}
-	/**
-	 * Converts `value` to a finite number.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.12.0
-	 * @category Lang
-	 * @param {*} value The value to convert.
-	 * @returns {number} Returns the converted number.
-	 * @example
-	 *
-	 * _.toFinite(3.2);
-	 * // => 3.2
-	 *
-	 * _.toFinite(Number.MIN_VALUE);
-	 * // => 5e-324
-	 *
-	 * _.toFinite(Infinity);
-	 * // => 1.7976931348623157e+308
-	 *
-	 * _.toFinite('3.2');
-	 * // => 3.2
-	 */
-
-
-	function toFinite$1(value) {
-	  if (!value) {
-	    return value === 0 ? value : 0;
-	  }
-
-	  value = toNumber$1(value);
-
-	  if (value === INFINITY$1 || value === -INFINITY$1) {
-	    var sign = value < 0 ? -1 : 1;
-	    return sign * MAX_INTEGER$1;
-	  }
-
-	  return value === value ? value : 0;
-	}
-	/**
-	 * Converts `value` to an integer.
-	 *
-	 * **Note:** This method is loosely based on
-	 * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to convert.
-	 * @returns {number} Returns the converted integer.
-	 * @example
-	 *
-	 * _.toInteger(3.2);
-	 * // => 3
-	 *
-	 * _.toInteger(Number.MIN_VALUE);
-	 * // => 0
-	 *
-	 * _.toInteger(Infinity);
-	 * // => 1.7976931348623157e+308
-	 *
-	 * _.toInteger('3.2');
-	 * // => 3
-	 */
-
-
-	function toInteger$1(value) {
-	  var result = toFinite$1(value),
-	      remainder = result % 1;
-	  return result === result ? remainder ? result - remainder : result : 0;
-	}
-	/**
-	 * Converts `value` to a number.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to process.
-	 * @returns {number} Returns the number.
-	 * @example
-	 *
-	 * _.toNumber(3.2);
-	 * // => 3.2
-	 *
-	 * _.toNumber(Number.MIN_VALUE);
-	 * // => 5e-324
-	 *
-	 * _.toNumber(Infinity);
-	 * // => Infinity
-	 *
-	 * _.toNumber('3.2');
-	 * // => 3.2
-	 */
-
-
-	function toNumber$1(value) {
-	  if (typeof value == 'number') {
-	    return value;
-	  }
-
-	  if (isSymbol$1(value)) {
-	    return NAN$1;
-	  }
-
-	  if (isObject$2(value)) {
-	    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-	    value = isObject$2(other) ? other + '' : other;
-	  }
-
-	  if (typeof value != 'string') {
-	    return value === 0 ? value : +value;
-	  }
-
-	  value = value.replace(reTrim$1, '');
-	  var isBinary = reIsBinary$1.test(value);
-	  return isBinary || reIsOctal$1.test(value) ? freeParseInt$1(value.slice(2), isBinary ? 2 : 8) : reIsBadHex$1.test(value) ? NAN$1 : +value;
-	}
-	/**
-	 * Converts `value` to a string. An empty string is returned for `null`
-	 * and `undefined` values. The sign of `-0` is preserved.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to process.
-	 * @returns {string} Returns the string.
-	 * @example
-	 *
-	 * _.toString(null);
-	 * // => ''
-	 *
-	 * _.toString(-0);
-	 * // => '-0'
-	 *
-	 * _.toString([1, 2, 3]);
-	 * // => '1,2,3'
-	 */
-
-
-	function toString$2(value) {
-	  return value == null ? '' : baseToString$1(value);
-	}
-	/**
-	 * Pads `string` on the right side if it's shorter than `length`. Padding
-	 * characters are truncated if they exceed `length`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category String
-	 * @param {string} [string=''] The string to pad.
-	 * @param {number} [length=0] The padding length.
-	 * @param {string} [chars=' '] The string used as padding.
-	 * @returns {string} Returns the padded string.
-	 * @example
-	 *
-	 * _.padEnd('abc', 6);
-	 * // => 'abc   '
-	 *
-	 * _.padEnd('abc', 6, '_-');
-	 * // => 'abc_-_'
-	 *
-	 * _.padEnd('abc', 3);
-	 * // => 'abc'
-	 */
-
-
-	function padEnd(string, length, chars) {
-	  string = toString$2(string);
-	  length = toInteger$1(length);
-	  var strLength = length ? stringSize$1(string) : 0;
-	  return length && strLength < length ? string + createPadding$1(length - strLength, chars) : string;
-	}
-
-	var lodash_padend = padEnd;
-
-	class TimeLabel extends engine_5 {
-	  constructor(...args) {
-	    super(...args);
-	    this.time = void 0;
-	  }
-
-	  get formatted() {
-	    const {
-	      milliseconds: timeMilliseconds
-	    } = this.time;
-	    const {
-	      hours,
-	      minutes,
-	      seconds,
-	      milliseconds
-	    } = parseMs(timeMilliseconds);
-	    const millisecondsString = lodash_padend(milliseconds / 1000, 3, '0');
-	    let str = `${lodash_padstart(seconds, 2, '0')}`;
-
-	    if (minutes > 0) {
-	      str = `${lodash_padstart(minutes, 2, '0')}:${str}`;
-	    }
-
-	    if (hours > 0) {
-	      return `${hours}:${str}`;
-	    }
-
-	    return str;
-	  }
-
-	}
-
-	engine_11(TimeLabel, {
-	  publicProps: {
-	    time: {
-	      config: 0
-	    }
-	  }
-	});
-
-	var _ffmpegTimelabel = engine_10(TimeLabel, {
-	  tmpl: _tmpl$2
-	});
 
 	function tmpl$2($api, $cmp, $slotset, $ctx) {
 	  const {
@@ -33145,94 +32299,6 @@
 	  shadowAttribute: "ffmpeg-waveform_waveform"
 	};
 
-	class Process {
-	  constructor(worker, pid, args, files) {
-	    this.pid = pid;
-	    this.worker = worker;
-	    this.args = args;
-	    this.files = files;
-	  }
-
-	  execute() {
-	    return new Promise(res => {
-	      const {
-	        worker
-	      } = this;
-
-	      const onMessage = evt => {
-	        const {
-	          data
-	        } = evt;
-
-	        if (data.pid === this.pid) {
-	          if (data.type == 'stdout' && this.stdout) {
-	            this.stdout(data);
-	          } else if (data.type === 'done') {
-	            worker.removeEventListener('message', onMessage);
-	            res(data);
-	          }
-	        }
-	      };
-
-	      worker.addEventListener('message', onMessage);
-	      worker.postMessage({
-	        type: 'command',
-	        pid: this.pid,
-	        arguments: this.args,
-	        files: this.files
-	      });
-	    });
-	  }
-
-	}
-
-	class FFMPEG {
-	  constructor(worker) {
-	    this.worker = worker;
-	    this.pid = 0;
-	  }
-
-	  createProcess(args, files) {
-	    if (!this.worker) {
-	      throw new Error(`cannot create process. FFMPEG worker hasn't been created yet`);
-	    }
-
-	    return new Process(this.worker, this.pid += 1, args, files);
-	  }
-
-	}
-	function getFFMPEG() {
-	  return new Promise(res => {
-	    const worker = new Worker('/ffmpeg-worker.js');
-
-	    const onReady = event => {
-	      const {
-	        data: message
-	      } = event;
-
-	      if (message.type == "ready") {
-	        worker.removeEventListener('message', onReady);
-	        const ffmpeg = new FFMPEG(worker);
-	        res(ffmpeg);
-	      }
-	    };
-
-	    worker.addEventListener('message', onReady);
-	  });
-	}
-	wire_2(getFFMPEG, function (wiredEventTarget) {
-	  wiredEventTarget.dispatchEvent(new wire_3({
-	    data: undefined,
-	    error: undefined
-	  }));
-	  getFFMPEG().then(ffmpeg => {
-	    wiredEventTarget.dispatchEvent(new wire_3({
-	      data: ffmpeg,
-	      error: undefined
-	    }));
-	  });
-	});
-
 	/**
 	 * Segments are an easy way to keep track of portions of the described
 	 * audio file.
@@ -34805,6 +33871,11 @@
 
 	function drawWaveformImage(waveform) {
 	  const canvas = document.createElement('canvas');
+	  canvas.width = waveform.pixels_per_second * waveform.duration;
+
+	  if (canvas.width > 10000) {
+	    canvas.width = 10000;
+	  }
 
 	  const interpolateHeight = total_height => {
 	    const amplitude = 256;
@@ -35276,12 +34347,19 @@
 	});
 
 	function stylesheet$7(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 1px;background: #000;z-index: 5;pointer-events: none;}") : (hostSelector + " {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 1px;background: #000;z-index: 5;pointer-events: none;}")) + "\n\n" + (nativeShadow ? (":host(.cursor--virtual) {background: rgba(0, 0, 0, 0.4);}") : (hostSelector + ".cursor--virtual {background: rgba(0, 0, 0, 0.4);}")) + "\n";
+	  return ".line" + shadowSelector + " {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 0;border-right:1px solid #000;z-index: 5;pointer-events: none;}\n.line--virtual" + shadowSelector + " {border-right:1px dashed rgba(0, 0, 0, 0.4);}\n.line--playhead" + shadowSelector + " {border-right:1px solid rgb(200, 200, 200);}\n";
 	}
 	var _implicitStylesheets$7 = [stylesheet$7];
 
 	function tmpl$7($api, $cmp, $slotset, $ctx) {
-	  return [];
+	  const {
+	    h: api_element
+	  } = $api;
+	  return [api_element("span", {
+	    className: $cmp.lineClassName,
+	    style: $cmp.lineStyle,
+	    key: 2
+	  }, [])];
 	}
 
 	var _tmpl$8 = engine_8(tmpl$7);
@@ -35299,40 +34377,36 @@
 	  constructor(...args) {
 	    super(...args);
 	    this.virtual = void 0;
+	    this.playhead = void 0;
 	    this.editor = void 0;
+	    this.time = void 0;
 	  }
 
-	  get time() {}
-
-	  set time(value) {
+	  get lineStyle() {
 	    const {
 	      editor
 	    } = this;
 
 	    if (!editor.data.frame) {
-	      return;
+	      return '';
 	    }
 
-	    const {
-	      host
-	    } = this.template;
-
-	    if (value) {
-	      const px = editor.data.timeToPixel(value);
-	      host.style.transform = `translateX(${px}px)`;
-	    }
+	    const px = editor.data.timeToPixel(this.time);
+	    return `transform: translateX(${px}px)`;
 	  }
-	  /*
-	   *
-	   * Lifecycle
-	   *
-	  */
 
+	  get lineClassName() {
+	    let base = 'line';
 
-	  connectedCallback() {
 	    if (this.virtual) {
-	      this.template.host.classList.add('cursor--virtual');
+	      return `${base} line--virtual`;
 	    }
+
+	    if (this.playhead) {
+	      return `${base} line--playhead`;
+	    }
+
+	    return base;
 	  }
 
 	}
@@ -35342,8 +34416,11 @@
 	    virtual: {
 	      config: 0
 	    },
+	    playhead: {
+	      config: 0
+	    },
 	    time: {
-	      config: 3
+	      config: 0
 	    }
 	  },
 	  wire: {
@@ -35361,11 +34438,67 @@
 
 	function tmpl$8($api, $cmp, $slotset, $ctx) {
 	  const {
+	    b: api_bind,
+	    h: api_element
+	  } = $api;
+	  const {
+	    _m0
+	  } = $ctx;
+	  return [api_element("input", {
+	    attrs: {
+	      "min": "0",
+	      "max": "10",
+	      "step": "0.1",
+	      "type": "range"
+	    },
+	    key: 2,
+	    on: {
+	      "input": _m0 || ($ctx._m0 = api_bind($cmp.handleGainChange))
+	    }
+	  }, [])];
+	}
+
+	var _tmpl$9 = engine_8(tmpl$8);
+	tmpl$8.stylesheets = [];
+	tmpl$8.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-masterout_masterout-host",
+	  shadowAttribute: "ffmpeg-masterout_masterout"
+	};
+
+	class MasterOut$1 extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.masterOut = void 0;
+	  }
+
+	  handleGainChange(evt) {
+	    setGain(parseFloat(evt.target.value));
+	  }
+
+	}
+
+	engine_11(MasterOut$1, {
+	  wire: {
+	    masterOut: {
+	      adapter: masterOutSym,
+	      params: {},
+	      static: {}
+	    }
+	  }
+	});
+
+	var _ffmpegMasterout = engine_10(MasterOut$1, {
+	  tmpl: _tmpl$9
+	});
+
+	function tmpl$9($api, $cmp, $slotset, $ctx) {
+	  const {
 	    c: api_custom_element,
 	    h: api_element,
 	    d: api_dynamic,
 	    k: api_key,
 	    i: api_iterator,
+	    f: api_flatten,
 	    b: api_bind,
 	    gid: api_scoped_id
 	  } = $api;
@@ -35374,7 +34507,9 @@
 	    _m1,
 	    _m2,
 	    _m3,
-	    _m4
+	    _m4,
+	    _m5,
+	    _m6
 	  } = $ctx;
 	  return [api_element("header", {
 	    key: 2
@@ -35387,23 +34522,28 @@
 	      "tracks-summary": true
 	    },
 	    key: 5
-	  }, api_iterator($cmp.audioTracksArray, function (track) {
+	  }, api_flatten([api_element("header", {
+	    classMap: {
+	      "tracks-summary__header": true
+	    },
+	    key: 6
+	  }, []), api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true,
 	        "track--summary": true
 	      },
-	      key: api_key(7, track.id)
+	      key: api_key(8, track.id)
 	    }, [api_dynamic(track.title)]);
-	  })), api_element("div", {
+	  })])), api_element("div", {
 	    classMap: {
 	      "editor-container": true
 	    },
-	    key: 8
+	    key: 9
 	  }, [$cmp.editor.data.frame ? api_element("header", {
-	    key: 10
+	    key: 11
 	  }, [api_custom_element("ffmpeg-timeline", _ffmpegTimeline, {
-	    key: 11,
+	    key: 12,
 	    on: {
 	      "mouseenter": _m0 || ($ctx._m0 = api_bind($cmp.onTimelineMouseEnter)),
 	      "mouseleave": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineMouseLeave)),
@@ -35414,12 +34554,14 @@
 	    classMap: {
 	      "editor": true
 	    },
-	    key: 12,
+	    key: 13,
 	    on: {
-	      "click": _m4 || ($ctx._m4 = api_bind($cmp.handleEditorClick))
+	      "mousemove": _m4 || ($ctx._m4 = api_bind($cmp.onEditorMouseMove)),
+	      "mouseleave": _m5 || ($ctx._m5 = api_bind($cmp.onEditorMouseLeave)),
+	      "click": _m6 || ($ctx._m6 = api_bind($cmp.handleEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
-	    key: 13
+	    key: 14
 	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
@@ -35427,45 +34569,50 @@
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 14
+	    key: 15
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(16, track.id)
+	      key: api_key(17, track.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
 	        "track": track
 	      },
-	      key: 17
+	      key: 18
 	    }, [])]);
 	  })), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.cursor
 	    },
-	    key: 19
+	    key: 20
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 21
+	    key: 22
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
-	      "time": $cmp.playhead.data.playbackTime
+	      "time": $cmp.playhead.data.playbackTime,
+	      "playhead": true
 	    },
-	    key: 23
-	  }, []) : null]) : null])])];
+	    key: 24
+	  }, []) : null]) : null])]), api_element("footer", {
+	    key: 25
+	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
+	    key: 26
+	  }, [])])];
 	}
 
-	var _tmpl$9 = engine_8(tmpl$8);
-	tmpl$8.stylesheets = [];
+	var _tmpl$a = engine_8(tmpl$9);
+	tmpl$9.stylesheets = [];
 
 	if (_implicitStylesheets) {
-	  tmpl$8.stylesheets.push.apply(tmpl$8.stylesheets, _implicitStylesheets);
+	  tmpl$9.stylesheets.push.apply(tmpl$9.stylesheets, _implicitStylesheets);
 	}
-	tmpl$8.stylesheetTokens = {
+	tmpl$9.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-app_app-host",
 	  shadowAttribute: "ffmpeg-app_app"
 	};
@@ -35494,16 +34641,16 @@
 	      });
 	    };
 
-	    this.onMouseMove = evt => {
+	    this.onEditorMouseMove = evt => {
 	      const {
 	        offsetX
 	      } = evt;
-	      const time = this.editor.data.pixelToTime(offsetX - this.editor.data.frame.left);
+	      const time = this.editor.data.pixelToTime(offsetX);
 	      const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
 	      setVirtualCursorTime(next);
 	    };
 
-	    this.onMouseLeave = evt => {
+	    this.onEditorMouseLeave = evt => {
 	      setVirtualCursorTime(null);
 	    };
 
@@ -35531,7 +34678,7 @@
 	      for (let i = 0, len = files.length; i < len; i += 1) {
 	        const sourceId = generateId();
 	        const trackId = generateId();
-	        const time = this.editor.data.pixelToTime(evt.offsetX - this.editor.data.frame.left);
+	        const time = this.editor.data.absolutePixelToTime(evt.offsetX - this.editor.data.frame.left);
 	        createTrackAndSourceFile(trackId, sourceId, files[i], time);
 	      }
 	    };
@@ -35566,18 +34713,10 @@
 
 
 	  onTimelineDragStart() {
-	    this.removeEventListener('click', this.onClick);
 	    this.template.host.classList.add('editor--drag');
 	  }
 
 	  onTimelineDragEnd() {
-	    this.addEventListener('click', () => {
-	      Promise.resolve().then(() => {
-	        this.addEventListener('click', this.onClick);
-	      });
-	    }, {
-	      once: true
-	    });
 	    this.template.host.classList.remove('editor--drag');
 	  }
 
@@ -35629,9 +34768,6 @@
 
 	  connectedCallback() {
 	    window.addEventListener('resize', this.updateFrame);
-	    this.addEventListener('mousemove', this.onMouseMove);
-	    this.addEventListener('mouseleave', this.onMouseLeave);
-	    this.draggable = true;
 	    this.addEventListener('dragover', this.onDragOver);
 	    this.addEventListener('drop', this.onDrop);
 	  }
@@ -35644,8 +34780,6 @@
 
 	  disconnectedCallback() {
 	    window.removeEventListener('resize', this.updateFrame);
-	    this.removeEventListener('mousemove', this.onMouseMove);
-	    this.removeEventListener('mouseleave', this.onMouseLeave);
 	  }
 
 	}
@@ -35671,7 +34805,7 @@
 	});
 
 	var App$1 = engine_10(App, {
-	  tmpl: _tmpl$9
+	  tmpl: _tmpl$a
 	});
 
 	wire_1(engine_6);

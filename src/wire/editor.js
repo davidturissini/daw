@@ -1,9 +1,10 @@
-import { register, ValueChangedEvent } from 'wire-service';
+import { register } from 'wire-service';
 import { AudioRange } from './../util/audiorange';
 import { Time } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
 import { Record } from 'immutable';
+import { play, isPlaying } from './playhead';
 
 class Editor extends Record({
     visibleRange: new AudioRange(
@@ -57,6 +58,9 @@ export function setCursorTime(time) {
     editorSubject.next(
         editorSubject.value.set('cursor', time)
     );
+    if (isPlaying()) {
+        play(time);
+    }
 }
 
 export function setVisibleRangeStart(time) {
@@ -67,6 +71,12 @@ export function setVisibleRangeStart(time) {
     );
 }
 
+export function incrementVisibleRangeStart(incrementTime) {
+    const editor = editorSubject.value;
+    const time = new Time(incrementTime.milliseconds + editor.visibleRange.start.milliseconds);
+    setVisibleRangeStart(time);
+}
+
 export function setFrame(frame) {
     editorSubject.next(
         editorSubject.value.set('frame', frame)
@@ -74,6 +84,7 @@ export function setFrame(frame) {
 }
 
 const editorSubject = new BehaviorSubject(new Editor());
+export const stream = editorSubject.asObservable();
 export const editorSym = Symbol();
 
-register(editorSym, wireObservable(editorSubject.asObservable()));
+register(editorSym, wireObservable(stream));

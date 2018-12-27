@@ -1,3 +1,5 @@
+const { isArray } = Array;
+
 export function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
     const {
         sampleRate,
@@ -98,6 +100,28 @@ export function silence(sampleRate, numberOfChannels, milliseconds) {
         sampleRate,
         numberOfChannels,
     });
+}
+
+export function postprocess(audioBuffer, audioNodeBuilders) {
+    const context = new OfflineAudioContext(
+        audioBuffer.numberOfChannels,
+        audioBuffer.length,
+        audioBuffer.sampleRate
+    );
+
+    const source = context.createBufferSource();
+    source.buffer = audioBuffer;
+
+    const processed = audioNodeBuilders.reduce((seed, builder) => {
+        const node = builder(context);
+        seed.connect(node);
+        return node;
+    }, source);
+
+    processed.connect(context.destination);
+    source.start();
+
+    return context.startRendering();
 }
 
 export function mix(audioContext, audioBuffers) {

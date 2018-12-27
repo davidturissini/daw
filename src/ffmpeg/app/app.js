@@ -66,14 +66,14 @@ export default class App extends LightningElement {
      * Events
      *
     */
-    onMouseMove = (evt) => {
+    onEditorMouseMove = (evt) => {
         const { offsetX } = evt;
-        const time = this.editor.data.pixelToTime(offsetX - this.editor.data.frame.left);
+        const time = this.editor.data.pixelToTime(offsetX);
         const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
         setVirtualCursorTime(next);
     }
 
-    onMouseLeave = (evt) => {
+    onEditorMouseLeave = (evt) => {
         setVirtualCursorTime(null);
     }
 
@@ -83,16 +83,10 @@ export default class App extends LightningElement {
     }
 
     onTimelineDragStart() {
-        this.removeEventListener('click', this.onClick);
         this.template.host.classList.add('editor--drag');
     }
 
     onTimelineDragEnd() {
-        this.addEventListener('click', () => {
-            Promise.resolve().then(() => {
-                this.addEventListener('click', this.onClick);
-            });
-        }, { once: true });
         this.template.host.classList.remove('editor--drag');
     }
 
@@ -110,7 +104,7 @@ export default class App extends LightningElement {
         for(let i = 0, len = files.length; i < len; i += 1) {
             const sourceId = generateId();
             const trackId = generateId();
-            const time = this.editor.data.pixelToTime(evt.offsetX - this.editor.data.frame.left);
+            const time = this.editor.data.absolutePixelToTime(evt.offsetX - this.editor.data.frame.left);
             createTrackAndSourceFile(
                 trackId,
                 sourceId,
@@ -175,10 +169,7 @@ export default class App extends LightningElement {
     */
     connectedCallback() {
         window.addEventListener('resize', this.updateFrame);
-        this.addEventListener('mousemove', this.onMouseMove);
-        this.addEventListener('mouseleave', this.onMouseLeave);
 
-        this.draggable = true;
         this.addEventListener('dragover', this.onDragOver);
         this.addEventListener('drop', this.onDrop);
     }
@@ -191,7 +182,5 @@ export default class App extends LightningElement {
 
     disconnectedCallback() {
         window.removeEventListener('resize', this.updateFrame);
-        this.removeEventListener('mousemove', this.onMouseMove);
-        this.removeEventListener('mouseleave', this.onMouseLeave);
     }
 }

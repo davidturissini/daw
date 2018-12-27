@@ -1,6 +1,4 @@
-import { register, ValueChangedEvent } from 'wire-service';
-import { getInstance } from './ffmpeg';
-import WaveformData from 'waveform-data';
+import { register } from 'wire-service';
 import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
 import { Map as ImmutableMap, Record } from 'immutable';
@@ -25,6 +23,10 @@ class Waveform extends Record({
 
 function drawWaveformImage(waveform) {
     const canvas = document.createElement('canvas');
+    canvas.width = waveform.pixels_per_second * waveform.duration;
+    if (canvas.width > 10000) {
+        canvas.width = 10000;
+    }
     const interpolateHeight = (total_height) => {
         const amplitude = 256;
         return (size) => total_height - ((size + 128) * total_height) / amplitude;
