@@ -13572,44 +13572,6 @@
 
 	/** PURE_IMPORTS_START tslib,_util_isScheduler,_util_isArray,_OuterSubscriber,_util_subscribeToResult,_fromArray PURE_IMPORTS_END */
 	var NONE = {};
-	function combineLatest() {
-	  var observables = [];
-
-	  for (var _i = 0; _i < arguments.length; _i++) {
-	    observables[_i] = arguments[_i];
-	  }
-
-	  var resultSelector = null;
-	  var scheduler = null;
-
-	  if (isScheduler(observables[observables.length - 1])) {
-	    scheduler = observables.pop();
-	  }
-
-	  if (typeof observables[observables.length - 1] === 'function') {
-	    resultSelector = observables.pop();
-	  }
-
-	  if (observables.length === 1 && isArray(observables[0])) {
-	    observables = observables[0];
-	  }
-
-	  return fromArray(observables, scheduler).lift(new CombineLatestOperator(resultSelector));
-	}
-
-	var CombineLatestOperator =
-	/*@__PURE__*/
-	function () {
-	  function CombineLatestOperator(resultSelector) {
-	    this.resultSelector = resultSelector;
-	  }
-
-	  CombineLatestOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new CombineLatestSubscriber(subscriber, this.resultSelector));
-	  };
-
-	  return CombineLatestOperator;
-	}();
 
 	var CombineLatestSubscriber =
 	/*@__PURE__*/
@@ -24177,19 +24139,6 @@
 	    numberOfChannels
 	  });
 	}
-	function postprocess(audioBuffer, audioNodeBuilders) {
-	  const context = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
-	  const source = context.createBufferSource();
-	  source.buffer = audioBuffer;
-	  const processed = audioNodeBuilders.reduce((seed, builder) => {
-	    const node = builder(context);
-	    seed.connect(node);
-	    return node;
-	  }, source);
-	  processed.connect(context.destination);
-	  source.start();
-	  return context.startRendering();
-	}
 	function mix(audioContext, audioBuffers) {
 	  const data = audioBuffers.reduce((seed, audioBuffer) => {
 	    if (seed.length < audioBuffer.length) {
@@ -24227,7 +24176,12 @@
 	const masterOutSubject = new BehaviorSubject(new MasterOut());
 	const stream$2 = masterOutSubject.asObservable();
 	function connectMasterOut(bufferSource) {
-	  bufferSource.connect(audioContext.destination);
+	  const gainNode = audioContext.createGain();
+	  stream$2.subscribe(masterOut => {
+	    gainNode.gain.value = masterOut.gain;
+	  });
+	  bufferSource.connect(gainNode);
+	  gainNode.connect(audioContext.destination);
 	}
 	function setGain(value) {
 	  masterOutSubject.next(masterOutSubject.value.set('gain', value));
@@ -24337,7 +24291,7 @@
 	  return join(filled);
 	}
 
-	function renderAudioBuffer(start, duration, masterOut, audioTracks, audioSources$$1) {
+	function renderAudioBuffer(start, duration, audioTracks, audioSources$$1) {
 	  let audioBuffers = audioTracks.map(audioTrack => {
 	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
 	  }).filter(audioBuffer => {
@@ -24348,13 +24302,7 @@
 	    audioBuffers = [silence(audioContext.sampleRate, 2, duration.milliseconds)];
 	  }
 
-	  return mix(audioContext, audioBuffers).then(mixed => {
-	    return postprocess(mixed, [offlineAudioContext => {
-	      const gainNode = offlineAudioContext.createGain();
-	      gainNode.gain.value = masterOut.gain;
-	      return gainNode;
-	    }]);
-	  });
+	  return mix(audioContext, audioBuffers);
 	}
 
 	class Playhead extends Record({
@@ -24364,7 +24312,7 @@
 	const playheadSubject = new BehaviorSubject(new Playhead());
 
 	class PlaybackQueue {
-	  constructor(time, duration, masterOut, audioTracks$$1, audioSources$$1) {
+	  constructor(time, duration, audioTracks$$1, audioSources$$1) {
 	    this.queue = [];
 	    this.popResolve = null;
 	    this.destroyed = false;
@@ -24374,7 +24322,6 @@
 	    this.end = new Time(duration.milliseconds + time.milliseconds);
 	    this.splitDuration = Time.fromSeconds(5);
 	    this.finished = false;
-	    this.masterOut = masterOut;
 	  }
 
 	  getBuffer(time, duration) {
@@ -24382,8 +24329,7 @@
 	      end,
 	      splitDuration,
 	      audioTracks: audioTracks$$1,
-	      audioSources: audioSources$$1,
-	      masterOut
+	      audioSources: audioSources$$1
 	    } = this;
 	    let audioBufferDuration = duration;
 
@@ -24391,7 +24337,7 @@
 	      audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
 	    }
 
-	    renderAudioBuffer(time, audioBufferDuration, masterOut, audioTracks$$1, audioSources$$1).then(buffer$$1 => {
+	    renderAudioBuffer(time, audioBufferDuration, audioTracks$$1, audioSources$$1).then(buffer$$1 => {
 	      if (this.destroyed === true) {
 	        return;
 	      }
@@ -24537,22 +24483,20 @@
 	      },
 	      play: {
 	        enter(playbackController) {
-	          this.subscription = combineLatest(stream$1, stream$2).pipe(switchMap(([audioTracks$$1, masterOut]) => {
+	          this.subscription = stream$1.pipe(switchMap(audioTracks$$1 => {
 	            return stream.pipe(map(audioSources$$1 => {
 	              return {
 	                audioTracks: audioTracks$$1,
-	                audioSources: audioSources$$1,
-	                masterOut
+	                audioSources: audioSources$$1
 	              };
 	            })).pipe(take(1));
 	          })).pipe(switchMap(({
 	            audioTracks: audioTracks$$1,
-	            audioSources: audioSources$$1,
-	            masterOut
+	            audioSources: audioSources$$1
 	          }) => {
 	            const timeAnchor = playbackController.currentTime;
 	            return Observable.create(o => {
-	              const queue$$1 = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), masterOut, audioTracks$$1, audioSources$$1);
+	              const queue$$1 = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), audioTracks$$1, audioSources$$1);
 	              queue$$1.beginQueue();
 	              const bufferPlayer = new AudioBufferPlayer(audioContext, queue$$1);
 	              bufferPlayer.start();

@@ -1,6 +1,6 @@
 import { audioContext } from './audiosource';
 import { register } from 'wire-service';
-import { BehaviorSubject, Observable, combineLatest as observableCombineLatest } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { switchMap, map, take, materialize, dematerialize } from 'rxjs/operators';
 import { Record } from 'immutable';
 import { Time } from './../util/time';
@@ -9,7 +9,7 @@ import { stream as audioSourceStream } from './audiosource';
 import { stream as audioTrackStream } from './audiotrack';
 import { incrementVisibleRangeStart } from './editor';
 import { renderAudioBuffer } from './audiorender';
-import { stream as masterOutStream, connectMasterOut } from './masterout';
+import { connectMasterOut } from './masterout';
 
 class Playhead extends Record({
     playbackTime: null
@@ -22,20 +22,19 @@ class PlaybackQueue {
     queue = [];
     popResolve = null;
 
-    constructor(time, duration, masterOut, audioTracks, audioSources) {
+    constructor(time, duration, audioTracks, audioSources) {
         this.audioTracks = audioTracks;
         this.audioSources = audioSources;
         this.time = time;
         this.end = new Time(duration.milliseconds + time.milliseconds);
         this.splitDuration = Time.fromSeconds(5);
         this.finished = false;
-        this.masterOut = masterOut;
     }
 
     destroyed = false;
 
     getBuffer(time, duration) {
-        const { end, splitDuration, audioTracks, audioSources, masterOut } = this;
+        const { end, splitDuration, audioTracks, audioSources } = this;
         let audioBufferDuration = duration;
         if (duration.milliseconds + time.milliseconds > end.milliseconds) {
             audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
@@ -43,7 +42,6 @@ class PlaybackQueue {
         renderAudioBuffer(
             time,
             audioBufferDuration,
-            masterOut,
             audioTracks,
             audioSources
         )
@@ -189,27 +187,22 @@ class PlaybackController {
         },
         play: {
             enter(playbackController) {
-                this.subscription = observableCombineLatest(
-                    audioTrackStream,
-                    masterOutStream,
-                ).pipe(switchMap(([audioTracks, masterOut]) => {
+                this.subscription = audioTrackStream.pipe(switchMap((audioTracks) => {
                     return audioSourceStream
                         .pipe(map((audioSources) => {
                             return {
                                 audioTracks,
                                 audioSources,
-                                masterOut
                             };
                         }))
                         .pipe(take(1));
                 }))
-                .pipe(switchMap(({ audioTracks, audioSources, masterOut }) => {
+                .pipe(switchMap(({ audioTracks, audioSources }) => {
                     const timeAnchor = playbackController.currentTime;
                     return Observable.create((o) => {
                         const queue = new PlaybackQueue(
                             timeAnchor,
                             new Time(10 * 60 * 1000),
-                            masterOut,
                             audioTracks,
                             audioSources
                         );

@@ -1,4 +1,4 @@
-import { subbuffer, mix, join, silence, postprocess } from './../lib/soundlab';
+import { subbuffer, mix, join, silence } from './../lib/soundlab';
 import { audioContext } from './audiosource';
 import { stream as masterOutStream } from './masterout';
 
@@ -133,7 +133,7 @@ function renderTrackToAudioBuffer(audioTrack, audioSources, start, duration) {
     return join(filled);
 }
 
-export function renderAudioBuffer(start, duration, masterOut, audioTracks, audioSources) {
+export function renderAudioBuffer(start, duration, audioTracks, audioSources) {
     let audioBuffers = audioTracks.map((audioTrack) => {
         return renderTrackToAudioBuffer(
             audioTrack,
@@ -158,17 +158,5 @@ export function renderAudioBuffer(start, duration, masterOut, audioTracks, audio
         ];
     }
 
-    return mix(audioContext, audioBuffers)
-        .then((mixed) => {
-            return postprocess(
-                mixed,
-                [
-                    (offlineAudioContext) => {
-                        const gainNode = offlineAudioContext.createGain();
-                        gainNode.gain.value = masterOut.gain;
-                        return gainNode;
-                    }
-                ]
-            );
-        });
+    return mix(audioContext, audioBuffers);
 }

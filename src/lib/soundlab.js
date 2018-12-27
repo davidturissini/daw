@@ -102,28 +102,6 @@ export function silence(sampleRate, numberOfChannels, milliseconds) {
     });
 }
 
-export function postprocess(audioBuffer, audioNodeBuilders) {
-    const context = new OfflineAudioContext(
-        audioBuffer.numberOfChannels,
-        audioBuffer.length,
-        audioBuffer.sampleRate
-    );
-
-    const source = context.createBufferSource();
-    source.buffer = audioBuffer;
-
-    const processed = audioNodeBuilders.reduce((seed, builder) => {
-        const node = builder(context);
-        seed.connect(node);
-        return node;
-    }, source);
-
-    processed.connect(context.destination);
-    source.start();
-
-    return context.startRendering();
-}
-
 export function mix(audioContext, audioBuffers) {
     const data = audioBuffers.reduce((seed, audioBuffer) => {
         if (seed.length < audioBuffer.length) {

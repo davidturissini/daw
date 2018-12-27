@@ -12,7 +12,14 @@ const masterOutSubject = new BehaviorSubject(new MasterOut());
 export const stream = masterOutSubject.asObservable();
 
 export function connectMasterOut(bufferSource) {
-    bufferSource.connect(audioContext.destination);
+    const gainNode = audioContext.createGain();
+
+    stream.subscribe((masterOut) => {
+        gainNode.gain.value = masterOut.gain;
+    });
+
+    bufferSource.connect(gainNode);
+    gainNode.connect(audioContext.destination);
 }
 
 export function setGain(value) {
