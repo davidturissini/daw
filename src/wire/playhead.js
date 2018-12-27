@@ -1,10 +1,13 @@
 import { audioContext } from './audiosource';
 import { register } from 'wire-service';
 import { subbuffer, mix, join, silence } from './../lib/soundlab';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { switchMap, map, take, materialize, dematerialize } from 'rxjs/operators';
 import { Record } from 'immutable';
 import { Time } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
+import { stream as audioSourceStream } from './audiosource';
+import { stream as audioTrackStream } from './audiotrack';
 
 class Playhead extends Record({
     playbackTime: null
@@ -13,43 +16,251 @@ class Playhead extends Record({
 }
 const playheadSubject = new BehaviorSubject(new Playhead());
 
-class PlaybackController {
-    constructor(audioContext, audioBuffer, start) {
-        this.audioContext = audioContext;
-        this.audioBuffer = audioBuffer;
-        this.startTime = start;
+function playbackQueue(time, duration, audioTracks, audioSources) {
+    const queue = [];
 
-        this.startAudioContextTime = null;
+    return {
+        next() {
+
+        }
+    }
+}
+
+class PlaybackQueue {
+    queue = [];
+    popResolve = null;
+
+    constructor(time, duration, audioTracks, audioSources) {
+        this.audioTracks = audioTracks;
+        this.audioSources = audioSources;
+        this.time = time;
+        this.end = new Time(duration.milliseconds + time.milliseconds);
+        this.splitDuration = Time.fromSeconds(1);
+        this.finished = false;
     }
 
-    raf = null;
-    updateTime = () => {
-        const currentTime = Time.fromSeconds(this.audioContext.currentTime);
-        const diffMilliseconds = currentTime.milliseconds - this.startAudioContextTime.milliseconds;
-        const nextTime = new Time(this.startTime.milliseconds + diffMilliseconds);
-        playheadSubject.next(
-            playheadSubject.value.set('playbackTime', nextTime)
-        );
-        this.raf = requestAnimationFrame(this.updateTime);
+    destroyed = false;
+
+    getBuffer(time, duration) {
+        const { end, splitDuration, audioTracks, audioSources } = this;
+        let audioBufferDuration = duration;
+        if (duration.milliseconds + time.milliseconds > end.milliseconds) {
+            audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
+        }
+        getAudioBuffer(
+            time,
+            audioBufferDuration,
+            audioTracks,
+            audioSources
+        )
+        .then((buffer) => {
+            if (this.destroyed === true) {
+                return;
+            }
+
+            if (this.popResolve) {
+                this.popResolve({
+                    done: false,
+                    buffer
+                });
+                this.popResolve = null;
+            } else {
+                this.queue.push(buffer);
+            }
+
+            if (time.milliseconds + splitDuration.milliseconds === end.milliseconds) {
+                console.log('done queueing');
+                return;
+            }
+
+            if (time.milliseconds + audioBufferDuration.milliseconds === end.milliseconds) {
+                console.log('finished buffering');
+                this.finished = true;
+                return;
+            }
+            this.getBuffer(new Time(time.milliseconds + this.splitDuration.milliseconds), this.splitDuration);
+        });
+    }
+
+    beginQueue() {
+        this.getBuffer(this.time, this.splitDuration);
+    }
+
+    pop() {
+        return new Promise((res) => {
+            const next = this.queue.shift();
+
+            // If we aren't done building the queue,
+            // but we don't have anything yet,
+            // Its likely that values are being asked before
+            // Audio buffers have been created
+            // So we need to store the resolver
+            if (!this.finished && !next) {
+                this.popResolve = res;
+                return;
+            }
+
+            res({
+                buffer: next,
+                done: this.queue.length === 0,
+            });
+        });
+    }
+
+    stopQueue() {
+        this.destroyed = true;
+        this.queue = [];
+    }
+}
+
+class AudioBufferPlayer {
+    constructor(audioContext, queue) {
+        this.queue = queue;
+        this.audioContext = audioContext;
+        this.timeSubject = new BehaviorSubject(new Time(0));
+    }
+
+    playBuffer(audioBuffer) {
+        const { audioContext } = this;
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        this.currentSource = source;
+        return new Promise((res) => {
+            source.addEventListener('ended', res, { once: true });
+            source.start();
+        });
+    }
+
+    updateCurrentTime = (previousAudioContextSeconds) => {
+        const currentTime = this.timeSubject.value;
+        const currentAudioContextSeconds = this.audioContext.currentTime;
+        const diffSeconds = currentAudioContextSeconds - previousAudioContextSeconds;
+        const nextTime = Time.fromSeconds(currentTime.seconds + diffSeconds);
+        this.timeSubject.next(nextTime);
+        this.raf = requestAnimationFrame(() => {
+            this.updateCurrentTime(currentAudioContextSeconds);
+        });
+    }
+
+    get timeStream() {
+        return this.timeSubject.asObservable();
+    }
+
+    popQueue = () => {
+        this.queue.pop().then(({ buffer, done }) => {
+            return this.playBuffer(buffer)
+                .then(() => {
+                    if (this.playing === false) {
+                        return;
+                    }
+                    if (done === false) {
+                        this.popQueue();
+                    } else {
+                        this.timeSubject.complete();
+                    }
+                });
+        })
+
     }
 
     start() {
-        const { audioBuffer, audioContext } = this;
-        this.startAudioContextTime = Time.fromSeconds(audioContext.currentTime);
-        return new Promise((res) => {
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(audioContext.destination);
-
-
-            source.addEventListener('ended', () => {
-                cancelAnimationFrame(this.raf);
-                res();
-            }, { once: true });
-            source.start();
-            this.updateTime();
-        });
+        this.updateCurrentTime(this.audioContext.currentTime);
+        this.popQueue();
     }
+
+    stop() {
+        this.playing = false;
+        this.timeSubject.complete();
+        cancelAnimationFrame(this.raf);
+        if (this.currentSource) {
+            this.currentSource.stop();
+        }
+    }
+}
+
+class PlaybackController {
+    constructor(audioContext, start) {
+        this.audioContext = audioContext;
+        this.currentTime = this.startTime = start;
+        this.state = this.states['stop'];
+    }
+
+    states = {
+        stop: {
+            enter() {
+                console.log('enter stop');
+            },
+            exit() {
+                console.log('exit stop');
+            }
+        },
+        play: {
+            enter(playbackController) {
+                audioTrackStream.pipe(switchMap((audioTracks) => {
+                    return audioSourceStream
+                        .pipe(map((audioSources) => {
+                            return {
+                                audioTracks,
+                                audioSources
+                            };
+                        }))
+                        .pipe(take(1));
+                }))
+                .pipe(switchMap(({ audioTracks, audioSources }) => {
+                    const timeAnchor = playbackController.currentTime;
+                    return Observable.create((o) => {
+                        const queue = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), audioTracks, audioSources);
+                        queue.beginQueue();
+                        const bufferPlayer = new AudioBufferPlayer(audioContext, queue);
+                        bufferPlayer.start();
+                        bufferPlayer.timeStream.subscribe(o);
+                        return () => {
+                            queue.stopQueue();
+                            bufferPlayer.stop();
+                        }
+                    })
+                    .pipe(map((time) => {
+                        return new Time(
+                            timeAnchor.milliseconds + time.milliseconds
+                        );
+                    }))
+                    .pipe(materialize());
+                }))
+                .pipe(dematerialize())
+                .subscribe(
+                    (time) => {
+                        playbackController.currentTime = time;
+                        playheadSubject.next(
+                            playheadSubject.value.set('playbackTime', time)
+                        );
+                    },
+                    null,
+                    () => {
+                        console.log('done?')
+                        playheadSubject.next(
+                            playheadSubject.value.set('playbackTime', null)
+                        );
+                    }
+                );
+            },
+            exit() {
+                console.log('exit play');
+            },
+        }
+    }
+
+    enter(key) {
+        this.state.exit(this);
+        this.state = this.states[key];
+        this.state.enter(this);
+    }
+
+    play() {
+        this.enter('play');
+    }
+
+
 }
 
 /*
@@ -211,39 +422,13 @@ function getAudioBuffer(start, duration, audioTracks, audioSources) {
     return mix(audioContext, audioBuffers);
 }
 
-const bufferDuration = Time.fromSeconds(1);
-
-function playSegment(start, audioBuffer, audioTracks, audioSources) {
-    const bufferDuration = Time.fromSeconds(audioBuffer.duration);
+export function play(start) {
     const playbackController = new PlaybackController(
         audioContext,
-        audioBuffer,
         start,
     );
 
-    return playbackController.start().then(() => {
-        const nextStart = new Time(start.milliseconds + bufferDuration.milliseconds);
-        return getAudioBuffer(nextStart, bufferDuration, audioTracks, audioSources).then((nextBuffer) => {
-            return playSegment(
-                nextStart,
-                nextBuffer,
-                audioTracks,
-                audioSources,
-            );
-        });
-    })
-}
-
-export function play(start, duration, audioTracks, audioSources) {
-    getAudioBuffer(start, bufferDuration, audioTracks, audioSources).then((buffer) => {
-        return playSegment(
-            start,
-            buffer,
-            audioTracks,
-            audioSources,
-        );
-    });
-
+    playbackController.play();
 }
 
 export const playheadSym = Symbol();

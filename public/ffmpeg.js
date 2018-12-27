@@ -13042,12 +13042,58 @@
 	/** PURE_IMPORTS_START _Observable PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+	function ArgumentOutOfRangeErrorImpl() {
+	  Error.call(this);
+	  this.message = 'argument out of range';
+	  this.name = 'ArgumentOutOfRangeError';
+	  return this;
+	}
+
+	ArgumentOutOfRangeErrorImpl.prototype =
+	/*@__PURE__*/
+	Object.create(Error.prototype);
+	var ArgumentOutOfRangeError = ArgumentOutOfRangeErrorImpl;
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+	function EmptyErrorImpl() {
+	  Error.call(this);
+	  this.message = 'no elements in sequence';
+	  this.name = 'EmptyError';
+	  return this;
+	}
+
+	EmptyErrorImpl.prototype =
+	/*@__PURE__*/
+	Object.create(Error.prototype);
+	var EmptyError = EmptyErrorImpl;
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+	function map(project, thisArg) {
+	  return function mapOperation(source) {
+	    if (typeof project !== 'function') {
+	      throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
+	    }
+
+	    return source.lift(new MapOperator(project, thisArg));
+	  };
+	}
+
+	var MapOperator =
+	/*@__PURE__*/
+	function () {
+	  function MapOperator(project, thisArg) {
+	    this.project = project;
+	    this.thisArg = thisArg;
+	  }
+
+	  MapOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
+	  };
+
+	  return MapOperator;
+	}();
 
 	var MapSubscriber =
 	/*@__PURE__*/
@@ -13343,16 +13389,146 @@
 	}(OuterSubscriber);
 
 	/** PURE_IMPORTS_START _symbol_observable PURE_IMPORTS_END */
+	function isInteropObservable(input) {
+	  return input && typeof input[observable] === 'function';
+	}
 
 	/** PURE_IMPORTS_START _symbol_iterator PURE_IMPORTS_END */
+	function isIterable(input) {
+	  return input && typeof input[iterator] === 'function';
+	}
 
 	/** PURE_IMPORTS_START _Observable,_Subscription,_util_subscribeToPromise PURE_IMPORTS_END */
+	function fromPromise(input, scheduler) {
+	  if (!scheduler) {
+	    return new Observable(subscribeToPromise(input));
+	  } else {
+	    return new Observable(function (subscriber) {
+	      var sub = new Subscription();
+	      sub.add(scheduler.schedule(function () {
+	        return input.then(function (value) {
+	          sub.add(scheduler.schedule(function () {
+	            subscriber.next(value);
+	            sub.add(scheduler.schedule(function () {
+	              return subscriber.complete();
+	            }));
+	          }));
+	        }, function (err) {
+	          sub.add(scheduler.schedule(function () {
+	            return subscriber.error(err);
+	          }));
+	        });
+	      }));
+	      return sub;
+	    });
+	  }
+	}
 
 	/** PURE_IMPORTS_START _Observable,_Subscription,_symbol_iterator,_util_subscribeToIterable PURE_IMPORTS_END */
+	function fromIterable(input, scheduler) {
+	  if (!input) {
+	    throw new Error('Iterable cannot be null');
+	  }
+
+	  if (!scheduler) {
+	    return new Observable(subscribeToIterable(input));
+	  } else {
+	    return new Observable(function (subscriber) {
+	      var sub = new Subscription();
+	      var iterator$$1;
+	      sub.add(function () {
+	        if (iterator$$1 && typeof iterator$$1.return === 'function') {
+	          iterator$$1.return();
+	        }
+	      });
+	      sub.add(scheduler.schedule(function () {
+	        iterator$$1 = input[iterator]();
+	        sub.add(scheduler.schedule(function () {
+	          if (subscriber.closed) {
+	            return;
+	          }
+
+	          var value;
+	          var done;
+
+	          try {
+	            var result = iterator$$1.next();
+	            value = result.value;
+	            done = result.done;
+	          } catch (err) {
+	            subscriber.error(err);
+	            return;
+	          }
+
+	          if (done) {
+	            subscriber.complete();
+	          } else {
+	            subscriber.next(value);
+	            this.schedule();
+	          }
+	        }));
+	      }));
+	      return sub;
+	    });
+	  }
+	}
 
 	/** PURE_IMPORTS_START _Observable,_Subscription,_symbol_observable,_util_subscribeToObservable PURE_IMPORTS_END */
+	function fromObservable(input, scheduler) {
+	  if (!scheduler) {
+	    return new Observable(subscribeToObservable(input));
+	  } else {
+	    return new Observable(function (subscriber) {
+	      var sub = new Subscription();
+	      sub.add(scheduler.schedule(function () {
+	        var observable$$1 = input[observable]();
+	        sub.add(observable$$1.subscribe({
+	          next: function (value) {
+	            sub.add(scheduler.schedule(function () {
+	              return subscriber.next(value);
+	            }));
+	          },
+	          error: function (err) {
+	            sub.add(scheduler.schedule(function () {
+	              return subscriber.error(err);
+	            }));
+	          },
+	          complete: function () {
+	            sub.add(scheduler.schedule(function () {
+	              return subscriber.complete();
+	            }));
+	          }
+	        }));
+	      }));
+	      return sub;
+	    });
+	  }
+	}
 
 	/** PURE_IMPORTS_START _Observable,_util_isPromise,_util_isArrayLike,_util_isInteropObservable,_util_isIterable,_fromArray,_fromPromise,_fromIterable,_fromObservable,_util_subscribeTo PURE_IMPORTS_END */
+	function from(input, scheduler) {
+	  if (!scheduler) {
+	    if (input instanceof Observable) {
+	      return input;
+	    }
+
+	    return new Observable(subscribeTo(input));
+	  }
+
+	  if (input != null) {
+	    if (isInteropObservable(input)) {
+	      return fromObservable(input, scheduler);
+	    } else if (isPromise(input)) {
+	      return fromPromise(input, scheduler);
+	    } else if (isArrayLike(input)) {
+	      return fromArray(input, scheduler);
+	    } else if (isIterable(input) || typeof input === 'string') {
+	      return fromIterable(input, scheduler);
+	    }
+	  }
+
+	  throw new TypeError((input !== null && typeof input || input) + ' is not observable');
+	}
 
 	/** PURE_IMPORTS_START tslib,_util_subscribeToResult,_OuterSubscriber,_InnerSubscriber,_map,_observable_from PURE_IMPORTS_END */
 
@@ -13520,6 +13696,9 @@
 	/** PURE_IMPORTS_START _defer,_empty PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START _isArray PURE_IMPORTS_END */
+	function isNumeric(val) {
+	  return !isArray(val) && val - parseFloat(val) + 1 >= 0;
+	}
 
 	/** PURE_IMPORTS_START _Observable,_scheduler_async,_util_isNumeric PURE_IMPORTS_END */
 
@@ -19754,6 +19933,7 @@
 	}
 
 	const tracksSubject = new BehaviorSubject(new Map$1());
+	const stream$1 = tracksSubject.asObservable();
 
 	class AudioTrack extends Record({
 	  id: null,
@@ -19854,7 +20034,7 @@
 	  return audioTrack;
 	}
 	const audioTracks = Symbol();
-	wire_2(audioTracks, wireObservable(tracksSubject.asObservable()));
+	wire_2(audioTracks, wireObservable(stream$1));
 
 	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
 	  const {
@@ -19939,49 +20119,4098 @@
 	  return context.startRendering();
 	}
 
+	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var AuditSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(AuditSubscriber, _super);
+
+	  function AuditSubscriber(destination, durationSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.durationSelector = durationSelector;
+	    _this.hasValue = false;
+	    return _this;
+	  }
+
+	  AuditSubscriber.prototype._next = function (value) {
+	    this.value = value;
+	    this.hasValue = true;
+
+	    if (!this.throttled) {
+	      var duration = tryCatch(this.durationSelector)(value);
+
+	      if (duration === errorObject) {
+	        this.destination.error(errorObject.e);
+	      } else {
+	        var innerSubscription = subscribeToResult(this, duration);
+
+	        if (!innerSubscription || innerSubscription.closed) {
+	          this.clearThrottle();
+	        } else {
+	          this.add(this.throttled = innerSubscription);
+	        }
+	      }
+	    }
+	  };
+
+	  AuditSubscriber.prototype.clearThrottle = function () {
+	    var _a = this,
+	        value = _a.value,
+	        hasValue = _a.hasValue,
+	        throttled = _a.throttled;
+
+	    if (throttled) {
+	      this.remove(throttled);
+	      this.throttled = null;
+	      throttled.unsubscribe();
+	    }
+
+	    if (hasValue) {
+	      this.value = null;
+	      this.hasValue = false;
+	      this.destination.next(value);
+	    }
+	  };
+
+	  AuditSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex) {
+	    this.clearThrottle();
+	  };
+
+	  AuditSubscriber.prototype.notifyComplete = function () {
+	    this.clearThrottle();
+	  };
+
+	  return AuditSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _scheduler_async,_audit,_observable_timer PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var BufferSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferSubscriber, _super);
+
+	  function BufferSubscriber(destination, closingNotifier) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.buffer = [];
+
+	    _this.add(subscribeToResult(_this, closingNotifier));
+
+	    return _this;
+	  }
+
+	  BufferSubscriber.prototype._next = function (value) {
+	    this.buffer.push(value);
+	  };
+
+	  BufferSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    var buffer = this.buffer;
+	    this.buffer = [];
+	    this.destination.next(buffer);
+	  };
+
+	  return BufferSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var BufferCountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferCountSubscriber, _super);
+
+	  function BufferCountSubscriber(destination, bufferSize) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.bufferSize = bufferSize;
+	    _this.buffer = [];
+	    return _this;
+	  }
+
+	  BufferCountSubscriber.prototype._next = function (value) {
+	    var buffer = this.buffer;
+	    buffer.push(value);
+
+	    if (buffer.length == this.bufferSize) {
+	      this.destination.next(buffer);
+	      this.buffer = [];
+	    }
+	  };
+
+	  BufferCountSubscriber.prototype._complete = function () {
+	    var buffer = this.buffer;
+
+	    if (buffer.length > 0) {
+	      this.destination.next(buffer);
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  return BufferCountSubscriber;
+	}(Subscriber);
+
+	var BufferSkipCountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferSkipCountSubscriber, _super);
+
+	  function BufferSkipCountSubscriber(destination, bufferSize, startBufferEvery) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.bufferSize = bufferSize;
+	    _this.startBufferEvery = startBufferEvery;
+	    _this.buffers = [];
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  BufferSkipCountSubscriber.prototype._next = function (value) {
+	    var _a = this,
+	        bufferSize = _a.bufferSize,
+	        startBufferEvery = _a.startBufferEvery,
+	        buffers = _a.buffers,
+	        count = _a.count;
+
+	    this.count++;
+
+	    if (count % startBufferEvery === 0) {
+	      buffers.push([]);
+	    }
+
+	    for (var i = buffers.length; i--;) {
+	      var buffer = buffers[i];
+	      buffer.push(value);
+
+	      if (buffer.length === bufferSize) {
+	        buffers.splice(i, 1);
+	        this.destination.next(buffer);
+	      }
+	    }
+	  };
+
+	  BufferSkipCountSubscriber.prototype._complete = function () {
+	    var _a = this,
+	        buffers = _a.buffers,
+	        destination = _a.destination;
+
+	    while (buffers.length > 0) {
+	      var buffer = buffers.shift();
+
+	      if (buffer.length > 0) {
+	        destination.next(buffer);
+	      }
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  return BufferSkipCountSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_scheduler_async,_Subscriber,_util_isScheduler PURE_IMPORTS_END */
+
+	var Context =
+	/*@__PURE__*/
+	function () {
+	  function Context() {
+	    this.buffer = [];
+	  }
+
+	  return Context;
+	}();
+
+	var BufferTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferTimeSubscriber, _super);
+
+	  function BufferTimeSubscriber(destination, bufferTimeSpan, bufferCreationInterval, maxBufferSize, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.bufferTimeSpan = bufferTimeSpan;
+	    _this.bufferCreationInterval = bufferCreationInterval;
+	    _this.maxBufferSize = maxBufferSize;
+	    _this.scheduler = scheduler;
+	    _this.contexts = [];
+
+	    var context = _this.openContext();
+
+	    _this.timespanOnly = bufferCreationInterval == null || bufferCreationInterval < 0;
+
+	    if (_this.timespanOnly) {
+	      var timeSpanOnlyState = {
+	        subscriber: _this,
+	        context: context,
+	        bufferTimeSpan: bufferTimeSpan
+	      };
+
+	      _this.add(context.closeAction = scheduler.schedule(dispatchBufferTimeSpanOnly, bufferTimeSpan, timeSpanOnlyState));
+	    } else {
+	      var closeState = {
+	        subscriber: _this,
+	        context: context
+	      };
+	      var creationState = {
+	        bufferTimeSpan: bufferTimeSpan,
+	        bufferCreationInterval: bufferCreationInterval,
+	        subscriber: _this,
+	        scheduler: scheduler
+	      };
+
+	      _this.add(context.closeAction = scheduler.schedule(dispatchBufferClose, bufferTimeSpan, closeState));
+
+	      _this.add(scheduler.schedule(dispatchBufferCreation, bufferCreationInterval, creationState));
+	    }
+
+	    return _this;
+	  }
+
+	  BufferTimeSubscriber.prototype._next = function (value) {
+	    var contexts = this.contexts;
+	    var len = contexts.length;
+	    var filledBufferContext;
+
+	    for (var i = 0; i < len; i++) {
+	      var context_1 = contexts[i];
+	      var buffer = context_1.buffer;
+	      buffer.push(value);
+
+	      if (buffer.length == this.maxBufferSize) {
+	        filledBufferContext = context_1;
+	      }
+	    }
+
+	    if (filledBufferContext) {
+	      this.onBufferFull(filledBufferContext);
+	    }
+	  };
+
+	  BufferTimeSubscriber.prototype._error = function (err) {
+	    this.contexts.length = 0;
+
+	    _super.prototype._error.call(this, err);
+	  };
+
+	  BufferTimeSubscriber.prototype._complete = function () {
+	    var _a = this,
+	        contexts = _a.contexts,
+	        destination = _a.destination;
+
+	    while (contexts.length > 0) {
+	      var context_2 = contexts.shift();
+	      destination.next(context_2.buffer);
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  BufferTimeSubscriber.prototype._unsubscribe = function () {
+	    this.contexts = null;
+	  };
+
+	  BufferTimeSubscriber.prototype.onBufferFull = function (context) {
+	    this.closeContext(context);
+	    var closeAction = context.closeAction;
+	    closeAction.unsubscribe();
+	    this.remove(closeAction);
+
+	    if (!this.closed && this.timespanOnly) {
+	      context = this.openContext();
+	      var bufferTimeSpan = this.bufferTimeSpan;
+	      var timeSpanOnlyState = {
+	        subscriber: this,
+	        context: context,
+	        bufferTimeSpan: bufferTimeSpan
+	      };
+	      this.add(context.closeAction = this.scheduler.schedule(dispatchBufferTimeSpanOnly, bufferTimeSpan, timeSpanOnlyState));
+	    }
+	  };
+
+	  BufferTimeSubscriber.prototype.openContext = function () {
+	    var context = new Context();
+	    this.contexts.push(context);
+	    return context;
+	  };
+
+	  BufferTimeSubscriber.prototype.closeContext = function (context) {
+	    this.destination.next(context.buffer);
+	    var contexts = this.contexts;
+	    var spliceIndex = contexts ? contexts.indexOf(context) : -1;
+
+	    if (spliceIndex >= 0) {
+	      contexts.splice(contexts.indexOf(context), 1);
+	    }
+	  };
+
+	  return BufferTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchBufferTimeSpanOnly(state) {
+	  var subscriber = state.subscriber;
+	  var prevContext = state.context;
+
+	  if (prevContext) {
+	    subscriber.closeContext(prevContext);
+	  }
+
+	  if (!subscriber.closed) {
+	    state.context = subscriber.openContext();
+	    state.context.closeAction = this.schedule(state, state.bufferTimeSpan);
+	  }
+	}
+
+	function dispatchBufferCreation(state) {
+	  var bufferCreationInterval = state.bufferCreationInterval,
+	      bufferTimeSpan = state.bufferTimeSpan,
+	      subscriber = state.subscriber,
+	      scheduler = state.scheduler;
+	  var context = subscriber.openContext();
+	  var action = this;
+
+	  if (!subscriber.closed) {
+	    subscriber.add(context.closeAction = scheduler.schedule(dispatchBufferClose, bufferTimeSpan, {
+	      subscriber: subscriber,
+	      context: context
+	    }));
+	    action.schedule(state, bufferCreationInterval);
+	  }
+	}
+
+	function dispatchBufferClose(arg) {
+	  var subscriber = arg.subscriber,
+	      context = arg.context;
+	  subscriber.closeContext(context);
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subscription,_util_subscribeToResult,_OuterSubscriber PURE_IMPORTS_END */
+
+	var BufferToggleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferToggleSubscriber, _super);
+
+	  function BufferToggleSubscriber(destination, openings, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.openings = openings;
+	    _this.closingSelector = closingSelector;
+	    _this.contexts = [];
+
+	    _this.add(subscribeToResult(_this, openings));
+
+	    return _this;
+	  }
+
+	  BufferToggleSubscriber.prototype._next = function (value) {
+	    var contexts = this.contexts;
+	    var len = contexts.length;
+
+	    for (var i = 0; i < len; i++) {
+	      contexts[i].buffer.push(value);
+	    }
+	  };
+
+	  BufferToggleSubscriber.prototype._error = function (err) {
+	    var contexts = this.contexts;
+
+	    while (contexts.length > 0) {
+	      var context_1 = contexts.shift();
+	      context_1.subscription.unsubscribe();
+	      context_1.buffer = null;
+	      context_1.subscription = null;
+	    }
+
+	    this.contexts = null;
+
+	    _super.prototype._error.call(this, err);
+	  };
+
+	  BufferToggleSubscriber.prototype._complete = function () {
+	    var contexts = this.contexts;
+
+	    while (contexts.length > 0) {
+	      var context_2 = contexts.shift();
+	      this.destination.next(context_2.buffer);
+	      context_2.subscription.unsubscribe();
+	      context_2.buffer = null;
+	      context_2.subscription = null;
+	    }
+
+	    this.contexts = null;
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  BufferToggleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    outerValue ? this.closeBuffer(outerValue) : this.openBuffer(innerValue);
+	  };
+
+	  BufferToggleSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.closeBuffer(innerSub.context);
+	  };
+
+	  BufferToggleSubscriber.prototype.openBuffer = function (value) {
+	    try {
+	      var closingSelector = this.closingSelector;
+	      var closingNotifier = closingSelector.call(this, value);
+
+	      if (closingNotifier) {
+	        this.trySubscribe(closingNotifier);
+	      }
+	    } catch (err) {
+	      this._error(err);
+	    }
+	  };
+
+	  BufferToggleSubscriber.prototype.closeBuffer = function (context) {
+	    var contexts = this.contexts;
+
+	    if (contexts && context) {
+	      var buffer = context.buffer,
+	          subscription = context.subscription;
+	      this.destination.next(buffer);
+	      contexts.splice(contexts.indexOf(context), 1);
+	      this.remove(subscription);
+	      subscription.unsubscribe();
+	    }
+	  };
+
+	  BufferToggleSubscriber.prototype.trySubscribe = function (closingNotifier) {
+	    var contexts = this.contexts;
+	    var buffer = [];
+	    var subscription = new Subscription();
+	    var context = {
+	      buffer: buffer,
+	      subscription: subscription
+	    };
+	    contexts.push(context);
+	    var innerSubscription = subscribeToResult(this, closingNotifier, context);
+
+	    if (!innerSubscription || innerSubscription.closed) {
+	      this.closeBuffer(context);
+	    } else {
+	      innerSubscription.context = context;
+	      this.add(innerSubscription);
+	      subscription.add(innerSubscription);
+	    }
+	  };
+
+	  return BufferToggleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscription,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var BufferWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferWhenSubscriber, _super);
+
+	  function BufferWhenSubscriber(destination, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.closingSelector = closingSelector;
+	    _this.subscribing = false;
+
+	    _this.openBuffer();
+
+	    return _this;
+	  }
+
+	  BufferWhenSubscriber.prototype._next = function (value) {
+	    this.buffer.push(value);
+	  };
+
+	  BufferWhenSubscriber.prototype._complete = function () {
+	    var buffer = this.buffer;
+
+	    if (buffer) {
+	      this.destination.next(buffer);
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  BufferWhenSubscriber.prototype._unsubscribe = function () {
+	    this.buffer = null;
+	    this.subscribing = false;
+	  };
+
+	  BufferWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.openBuffer();
+	  };
+
+	  BufferWhenSubscriber.prototype.notifyComplete = function () {
+	    if (this.subscribing) {
+	      this.complete();
+	    } else {
+	      this.openBuffer();
+	    }
+	  };
+
+	  BufferWhenSubscriber.prototype.openBuffer = function () {
+	    var closingSubscription = this.closingSubscription;
+
+	    if (closingSubscription) {
+	      this.remove(closingSubscription);
+	      closingSubscription.unsubscribe();
+	    }
+
+	    var buffer = this.buffer;
+
+	    if (this.buffer) {
+	      this.destination.next(buffer);
+	    }
+
+	    this.buffer = [];
+	    var closingNotifier = tryCatch(this.closingSelector)();
+
+	    if (closingNotifier === errorObject) {
+	      this.error(errorObject.e);
+	    } else {
+	      closingSubscription = new Subscription();
+	      this.closingSubscription = closingSubscription;
+	      this.add(closingSubscription);
+	      this.subscribing = true;
+	      closingSubscription.add(subscribeToResult(this, closingNotifier));
+	      this.subscribing = false;
+	    }
+	  };
+
+	  return BufferWhenSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var CatchSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(CatchSubscriber, _super);
+
+	  function CatchSubscriber(destination, selector, caught) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.selector = selector;
+	    _this.caught = caught;
+	    return _this;
+	  }
+
+	  CatchSubscriber.prototype.error = function (err) {
+	    if (!this.isStopped) {
+	      var result = void 0;
+
+	      try {
+	        result = this.selector(err, this.caught);
+	      } catch (err2) {
+	        _super.prototype.error.call(this, err2);
+
+	        return;
+	      }
+
+	      this._unsubscribeAndRecycle();
+
+	      var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	      this.add(innerSubscriber);
+	      subscribeToResult(this, result, undefined, undefined, innerSubscriber);
+	    }
+	  };
+
+	  return CatchSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _observable_combineLatest PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_isArray,_observable_combineLatest,_observable_from PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_concat PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _concatMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var CountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(CountSubscriber, _super);
+
+	  function CountSubscriber(destination, predicate, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.source = source;
+	    _this.count = 0;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  CountSubscriber.prototype._next = function (value) {
+	    if (this.predicate) {
+	      this._tryPredicate(value);
+	    } else {
+	      this.count++;
+	    }
+	  };
+
+	  CountSubscriber.prototype._tryPredicate = function (value) {
+	    var result;
+
+	    try {
+	      result = this.predicate(value, this.index++, this.source);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    if (result) {
+	      this.count++;
+	    }
+	  };
+
+	  CountSubscriber.prototype._complete = function () {
+	    this.destination.next(this.count);
+	    this.destination.complete();
+	  };
+
+	  return CountSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var DebounceSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DebounceSubscriber, _super);
+
+	  function DebounceSubscriber(destination, durationSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.durationSelector = durationSelector;
+	    _this.hasValue = false;
+	    _this.durationSubscription = null;
+	    return _this;
+	  }
+
+	  DebounceSubscriber.prototype._next = function (value) {
+	    try {
+	      var result = this.durationSelector.call(this, value);
+
+	      if (result) {
+	        this._tryNext(value, result);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  DebounceSubscriber.prototype._complete = function () {
+	    this.emitValue();
+	    this.destination.complete();
+	  };
+
+	  DebounceSubscriber.prototype._tryNext = function (value, duration) {
+	    var subscription = this.durationSubscription;
+	    this.value = value;
+	    this.hasValue = true;
+
+	    if (subscription) {
+	      subscription.unsubscribe();
+	      this.remove(subscription);
+	    }
+
+	    subscription = subscribeToResult(this, duration);
+
+	    if (subscription && !subscription.closed) {
+	      this.add(this.durationSubscription = subscription);
+	    }
+	  };
+
+	  DebounceSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.emitValue();
+	  };
+
+	  DebounceSubscriber.prototype.notifyComplete = function () {
+	    this.emitValue();
+	  };
+
+	  DebounceSubscriber.prototype.emitValue = function () {
+	    if (this.hasValue) {
+	      var value = this.value;
+	      var subscription = this.durationSubscription;
+
+	      if (subscription) {
+	        this.durationSubscription = null;
+	        subscription.unsubscribe();
+	        this.remove(subscription);
+	      }
+
+	      this.value = null;
+	      this.hasValue = false;
+
+	      _super.prototype._next.call(this, value);
+	    }
+	  };
+
+	  return DebounceSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async PURE_IMPORTS_END */
+
+	var DebounceTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DebounceTimeSubscriber, _super);
+
+	  function DebounceTimeSubscriber(destination, dueTime, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.dueTime = dueTime;
+	    _this.scheduler = scheduler;
+	    _this.debouncedSubscription = null;
+	    _this.lastValue = null;
+	    _this.hasValue = false;
+	    return _this;
+	  }
+
+	  DebounceTimeSubscriber.prototype._next = function (value) {
+	    this.clearDebounce();
+	    this.lastValue = value;
+	    this.hasValue = true;
+	    this.add(this.debouncedSubscription = this.scheduler.schedule(dispatchNext$2, this.dueTime, this));
+	  };
+
+	  DebounceTimeSubscriber.prototype._complete = function () {
+	    this.debouncedNext();
+	    this.destination.complete();
+	  };
+
+	  DebounceTimeSubscriber.prototype.debouncedNext = function () {
+	    this.clearDebounce();
+
+	    if (this.hasValue) {
+	      var lastValue = this.lastValue;
+	      this.lastValue = null;
+	      this.hasValue = false;
+	      this.destination.next(lastValue);
+	    }
+	  };
+
+	  DebounceTimeSubscriber.prototype.clearDebounce = function () {
+	    var debouncedSubscription = this.debouncedSubscription;
+
+	    if (debouncedSubscription !== null) {
+	      this.remove(debouncedSubscription);
+	      debouncedSubscription.unsubscribe();
+	      this.debouncedSubscription = null;
+	    }
+	  };
+
+	  return DebounceTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchNext$2(subscriber) {
+	  subscriber.debouncedNext();
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var DefaultIfEmptySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DefaultIfEmptySubscriber, _super);
+
+	  function DefaultIfEmptySubscriber(destination, defaultValue) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.defaultValue = defaultValue;
+	    _this.isEmpty = true;
+	    return _this;
+	  }
+
+	  DefaultIfEmptySubscriber.prototype._next = function (value) {
+	    this.isEmpty = false;
+	    this.destination.next(value);
+	  };
+
+	  DefaultIfEmptySubscriber.prototype._complete = function () {
+	    if (this.isEmpty) {
+	      this.destination.next(this.defaultValue);
+	    }
+
+	    this.destination.complete();
+	  };
+
+	  return DefaultIfEmptySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_scheduler_async,_util_isDate,_Subscriber,_Notification PURE_IMPORTS_END */
+
+	var DelaySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DelaySubscriber, _super);
+
+	  function DelaySubscriber(destination, delay, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.delay = delay;
+	    _this.scheduler = scheduler;
+	    _this.queue = [];
+	    _this.active = false;
+	    _this.errored = false;
+	    return _this;
+	  }
+
+	  DelaySubscriber.dispatch = function (state) {
+	    var source = state.source;
+	    var queue = source.queue;
+	    var scheduler = state.scheduler;
+	    var destination = state.destination;
+
+	    while (queue.length > 0 && queue[0].time - scheduler.now() <= 0) {
+	      queue.shift().notification.observe(destination);
+	    }
+
+	    if (queue.length > 0) {
+	      var delay_1 = Math.max(0, queue[0].time - scheduler.now());
+	      this.schedule(state, delay_1);
+	    } else {
+	      this.unsubscribe();
+	      source.active = false;
+	    }
+	  };
+
+	  DelaySubscriber.prototype._schedule = function (scheduler) {
+	    this.active = true;
+	    var destination = this.destination;
+	    destination.add(scheduler.schedule(DelaySubscriber.dispatch, this.delay, {
+	      source: this,
+	      destination: this.destination,
+	      scheduler: scheduler
+	    }));
+	  };
+
+	  DelaySubscriber.prototype.scheduleNotification = function (notification) {
+	    if (this.errored === true) {
+	      return;
+	    }
+
+	    var scheduler = this.scheduler;
+	    var message = new DelayMessage(scheduler.now() + this.delay, notification);
+	    this.queue.push(message);
+
+	    if (this.active === false) {
+	      this._schedule(scheduler);
+	    }
+	  };
+
+	  DelaySubscriber.prototype._next = function (value) {
+	    this.scheduleNotification(Notification.createNext(value));
+	  };
+
+	  DelaySubscriber.prototype._error = function (err) {
+	    this.errored = true;
+	    this.queue = [];
+	    this.destination.error(err);
+	    this.unsubscribe();
+	  };
+
+	  DelaySubscriber.prototype._complete = function () {
+	    this.scheduleNotification(Notification.createComplete());
+	    this.unsubscribe();
+	  };
+
+	  return DelaySubscriber;
+	}(Subscriber);
+
+	var DelayMessage =
+	/*@__PURE__*/
+	function () {
+	  function DelayMessage(time, notification) {
+	    this.time = time;
+	    this.notification = notification;
+	  }
+
+	  return DelayMessage;
+	}();
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Observable,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var DelayWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DelayWhenSubscriber, _super);
+
+	  function DelayWhenSubscriber(destination, delayDurationSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.delayDurationSelector = delayDurationSelector;
+	    _this.completed = false;
+	    _this.delayNotifierSubscriptions = [];
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  DelayWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.destination.next(outerValue);
+	    this.removeSubscription(innerSub);
+	    this.tryComplete();
+	  };
+
+	  DelayWhenSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  DelayWhenSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var value = this.removeSubscription(innerSub);
+
+	    if (value) {
+	      this.destination.next(value);
+	    }
+
+	    this.tryComplete();
+	  };
+
+	  DelayWhenSubscriber.prototype._next = function (value) {
+	    var index = this.index++;
+
+	    try {
+	      var delayNotifier = this.delayDurationSelector(value, index);
+
+	      if (delayNotifier) {
+	        this.tryDelay(delayNotifier, value);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  DelayWhenSubscriber.prototype._complete = function () {
+	    this.completed = true;
+	    this.tryComplete();
+	    this.unsubscribe();
+	  };
+
+	  DelayWhenSubscriber.prototype.removeSubscription = function (subscription) {
+	    subscription.unsubscribe();
+	    var subscriptionIdx = this.delayNotifierSubscriptions.indexOf(subscription);
+
+	    if (subscriptionIdx !== -1) {
+	      this.delayNotifierSubscriptions.splice(subscriptionIdx, 1);
+	    }
+
+	    return subscription.outerValue;
+	  };
+
+	  DelayWhenSubscriber.prototype.tryDelay = function (delayNotifier, value) {
+	    var notifierSubscription = subscribeToResult(this, delayNotifier, value);
+
+	    if (notifierSubscription && !notifierSubscription.closed) {
+	      var destination = this.destination;
+	      destination.add(notifierSubscription);
+	      this.delayNotifierSubscriptions.push(notifierSubscription);
+	    }
+	  };
+
+	  DelayWhenSubscriber.prototype.tryComplete = function () {
+	    if (this.completed && this.delayNotifierSubscriptions.length === 0) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return DelayWhenSubscriber;
+	}(OuterSubscriber);
+
+	var SubscriptionDelayObservable =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SubscriptionDelayObservable, _super);
+
+	  function SubscriptionDelayObservable(source, subscriptionDelay) {
+	    var _this = _super.call(this) || this;
+
+	    _this.source = source;
+	    _this.subscriptionDelay = subscriptionDelay;
+	    return _this;
+	  }
+
+	  SubscriptionDelayObservable.prototype._subscribe = function (subscriber) {
+	    this.subscriptionDelay.subscribe(new SubscriptionDelaySubscriber(subscriber, this.source));
+	  };
+
+	  return SubscriptionDelayObservable;
+	}(Observable);
+
+	var SubscriptionDelaySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SubscriptionDelaySubscriber, _super);
+
+	  function SubscriptionDelaySubscriber(parent, source) {
+	    var _this = _super.call(this) || this;
+
+	    _this.parent = parent;
+	    _this.source = source;
+	    _this.sourceSubscribed = false;
+	    return _this;
+	  }
+
+	  SubscriptionDelaySubscriber.prototype._next = function (unused) {
+	    this.subscribeToSource();
+	  };
+
+	  SubscriptionDelaySubscriber.prototype._error = function (err) {
+	    this.unsubscribe();
+	    this.parent.error(err);
+	  };
+
+	  SubscriptionDelaySubscriber.prototype._complete = function () {
+	    this.unsubscribe();
+	    this.subscribeToSource();
+	  };
+
+	  SubscriptionDelaySubscriber.prototype.subscribeToSource = function () {
+	    if (!this.sourceSubscribed) {
+	      this.sourceSubscribed = true;
+	      this.unsubscribe();
+	      this.source.subscribe(this.parent);
+	    }
+	  };
+
+	  return SubscriptionDelaySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+	function dematerialize() {
+	  return function dematerializeOperatorFunction(source) {
+	    return source.lift(new DeMaterializeOperator());
+	  };
+	}
+
+	var DeMaterializeOperator =
+	/*@__PURE__*/
+	function () {
+	  function DeMaterializeOperator() {}
+
+	  DeMaterializeOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new DeMaterializeSubscriber(subscriber));
+	  };
+
+	  return DeMaterializeOperator;
+	}();
+
+	var DeMaterializeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DeMaterializeSubscriber, _super);
+
+	  function DeMaterializeSubscriber(destination) {
+	    return _super.call(this, destination) || this;
+	  }
+
+	  DeMaterializeSubscriber.prototype._next = function (value) {
+	    value.observe(this.destination);
+	  };
+
+	  return DeMaterializeSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var DistinctSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DistinctSubscriber, _super);
+
+	  function DistinctSubscriber(destination, keySelector, flushes) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.keySelector = keySelector;
+	    _this.values = new Set();
+
+	    if (flushes) {
+	      _this.add(subscribeToResult(_this, flushes));
+	    }
+
+	    return _this;
+	  }
+
+	  DistinctSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.values.clear();
+	  };
+
+	  DistinctSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  DistinctSubscriber.prototype._next = function (value) {
+	    if (this.keySelector) {
+	      this._useKeySelector(value);
+	    } else {
+	      this._finalizeNext(value, value);
+	    }
+	  };
+
+	  DistinctSubscriber.prototype._useKeySelector = function (value) {
+	    var key;
+	    var destination = this.destination;
+
+	    try {
+	      key = this.keySelector(value);
+	    } catch (err) {
+	      destination.error(err);
+	      return;
+	    }
+
+	    this._finalizeNext(key, value);
+	  };
+
+	  DistinctSubscriber.prototype._finalizeNext = function (key, value) {
+	    var values = this.values;
+
+	    if (!values.has(key)) {
+	      values.add(key);
+	      this.destination.next(value);
+	    }
+	  };
+
+	  return DistinctSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
+
+	var DistinctUntilChangedSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DistinctUntilChangedSubscriber, _super);
+
+	  function DistinctUntilChangedSubscriber(destination, compare, keySelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.keySelector = keySelector;
+	    _this.hasKey = false;
+
+	    if (typeof compare === 'function') {
+	      _this.compare = compare;
+	    }
+
+	    return _this;
+	  }
+
+	  DistinctUntilChangedSubscriber.prototype.compare = function (x, y) {
+	    return x === y;
+	  };
+
+	  DistinctUntilChangedSubscriber.prototype._next = function (value) {
+	    var keySelector = this.keySelector;
+	    var key = value;
+
+	    if (keySelector) {
+	      key = tryCatch(this.keySelector)(value);
+
+	      if (key === errorObject) {
+	        return this.destination.error(errorObject.e);
+	      }
+	    }
+
+	    var result = false;
+
+	    if (this.hasKey) {
+	      result = tryCatch(this.compare)(this.key, key);
+
+	      if (result === errorObject) {
+	        return this.destination.error(errorObject.e);
+	      }
+	    } else {
+	      this.hasKey = true;
+	    }
+
+	    if (Boolean(result) === false) {
+	      this.key = key;
+	      this.destination.next(value);
+	    }
+	  };
+
+	  return DistinctUntilChangedSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _distinctUntilChanged PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var FilterSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(FilterSubscriber, _super);
+
+	  function FilterSubscriber(destination, predicate, thisArg) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.thisArg = thisArg;
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  FilterSubscriber.prototype._next = function (value) {
+	    var result;
+
+	    try {
+	      result = this.predicate.call(this.thisArg, value, this.count++);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    if (result) {
+	      this.destination.next(value);
+	    }
+	  };
+
+	  return FilterSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_noop,_util_isFunction PURE_IMPORTS_END */
+
+	var TapSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TapSubscriber, _super);
+
+	  function TapSubscriber(destination, observerOrNext, error, complete) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this._tapNext = noop;
+	    _this._tapError = noop;
+	    _this._tapComplete = noop;
+	    _this._tapError = error || noop;
+	    _this._tapComplete = complete || noop;
+
+	    if (isFunction(observerOrNext)) {
+	      _this._context = _this;
+	      _this._tapNext = observerOrNext;
+	    } else if (observerOrNext) {
+	      _this._context = observerOrNext;
+	      _this._tapNext = observerOrNext.next || noop;
+	      _this._tapError = observerOrNext.error || noop;
+	      _this._tapComplete = observerOrNext.complete || noop;
+	    }
+
+	    return _this;
+	  }
+
+	  TapSubscriber.prototype._next = function (value) {
+	    try {
+	      this._tapNext.call(this._context, value);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.destination.next(value);
+	  };
+
+	  TapSubscriber.prototype._error = function (err) {
+	    try {
+	      this._tapError.call(this._context, err);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.destination.error(err);
+	  };
+
+	  TapSubscriber.prototype._complete = function () {
+	    try {
+	      this._tapComplete.call(this._context);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    return this.destination.complete();
+	  };
+
+	  return TapSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _tap,_util_EmptyError PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError,_observable_empty PURE_IMPORTS_END */
+	function take(count) {
+	  return function (source) {
+	    if (count === 0) {
+	      return empty$1();
+	    } else {
+	      return source.lift(new TakeOperator(count));
+	    }
+	  };
+	}
+
+	var TakeOperator =
+	/*@__PURE__*/
+	function () {
+	  function TakeOperator(total) {
+	    this.total = total;
+
+	    if (this.total < 0) {
+	      throw new ArgumentOutOfRangeError();
+	    }
+	  }
+
+	  TakeOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new TakeSubscriber(subscriber, this.total));
+	  };
+
+	  return TakeOperator;
+	}();
+
+	var TakeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeSubscriber, _super);
+
+	  function TakeSubscriber(destination, total) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.total = total;
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  TakeSubscriber.prototype._next = function (value) {
+	    var total = this.total;
+	    var count = ++this.count;
+
+	    if (count <= total) {
+	      this.destination.next(value);
+
+	      if (count === total) {
+	        this.destination.complete();
+	        this.unsubscribe();
+	      }
+	    }
+	  };
+
+	  return TakeSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _util_ArgumentOutOfRangeError,_filter,_throwIfEmpty,_defaultIfEmpty,_take PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var EverySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(EverySubscriber, _super);
+
+	  function EverySubscriber(destination, predicate, thisArg, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.thisArg = thisArg;
+	    _this.source = source;
+	    _this.index = 0;
+	    _this.thisArg = thisArg || _this;
+	    return _this;
+	  }
+
+	  EverySubscriber.prototype.notifyComplete = function (everyValueMatch) {
+	    this.destination.next(everyValueMatch);
+	    this.destination.complete();
+	  };
+
+	  EverySubscriber.prototype._next = function (value) {
+	    var result = false;
+
+	    try {
+	      result = this.predicate.call(this.thisArg, value, this.index++, this.source);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    if (!result) {
+	      this.notifyComplete(false);
+	    }
+	  };
+
+	  EverySubscriber.prototype._complete = function () {
+	    this.notifyComplete(true);
+	  };
+
+	  return EverySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var SwitchFirstSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SwitchFirstSubscriber, _super);
+
+	  function SwitchFirstSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.hasCompleted = false;
+	    _this.hasSubscription = false;
+	    return _this;
+	  }
+
+	  SwitchFirstSubscriber.prototype._next = function (value) {
+	    if (!this.hasSubscription) {
+	      this.hasSubscription = true;
+	      this.add(subscribeToResult(this, value));
+	    }
+	  };
+
+	  SwitchFirstSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (!this.hasSubscription) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  SwitchFirstSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.remove(innerSub);
+	    this.hasSubscription = false;
+
+	    if (this.hasCompleted) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return SwitchFirstSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult,_map,_observable_from PURE_IMPORTS_END */
+
+	var ExhaustMapSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ExhaustMapSubscriber, _super);
+
+	  function ExhaustMapSubscriber(destination, project) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.project = project;
+	    _this.hasSubscription = false;
+	    _this.hasCompleted = false;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  ExhaustMapSubscriber.prototype._next = function (value) {
+	    if (!this.hasSubscription) {
+	      this.tryNext(value);
+	    }
+	  };
+
+	  ExhaustMapSubscriber.prototype.tryNext = function (value) {
+	    var result;
+	    var index = this.index++;
+
+	    try {
+	      result = this.project(value, index);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.hasSubscription = true;
+
+	    this._innerSub(result, value, index);
+	  };
+
+	  ExhaustMapSubscriber.prototype._innerSub = function (result, value, index) {
+	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	    var destination = this.destination;
+	    destination.add(innerSubscriber);
+	    subscribeToResult(this, result, value, index, innerSubscriber);
+	  };
+
+	  ExhaustMapSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (!this.hasSubscription) {
+	      this.destination.complete();
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  ExhaustMapSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.destination.next(innerValue);
+	  };
+
+	  ExhaustMapSubscriber.prototype.notifyError = function (err) {
+	    this.destination.error(err);
+	  };
+
+	  ExhaustMapSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.hasSubscription = false;
+
+	    if (this.hasCompleted) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return ExhaustMapSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var ExpandSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ExpandSubscriber, _super);
+
+	  function ExpandSubscriber(destination, project, concurrent, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.project = project;
+	    _this.concurrent = concurrent;
+	    _this.scheduler = scheduler;
+	    _this.index = 0;
+	    _this.active = 0;
+	    _this.hasCompleted = false;
+
+	    if (concurrent < Number.POSITIVE_INFINITY) {
+	      _this.buffer = [];
+	    }
+
+	    return _this;
+	  }
+
+	  ExpandSubscriber.dispatch = function (arg) {
+	    var subscriber = arg.subscriber,
+	        result = arg.result,
+	        value = arg.value,
+	        index = arg.index;
+	    subscriber.subscribeToProjection(result, value, index);
+	  };
+
+	  ExpandSubscriber.prototype._next = function (value) {
+	    var destination = this.destination;
+
+	    if (destination.closed) {
+	      this._complete();
+
+	      return;
+	    }
+
+	    var index = this.index++;
+
+	    if (this.active < this.concurrent) {
+	      destination.next(value);
+	      var result = tryCatch(this.project)(value, index);
+
+	      if (result === errorObject) {
+	        destination.error(errorObject.e);
+	      } else if (!this.scheduler) {
+	        this.subscribeToProjection(result, value, index);
+	      } else {
+	        var state = {
+	          subscriber: this,
+	          result: result,
+	          value: value,
+	          index: index
+	        };
+	        var destination_1 = this.destination;
+	        destination_1.add(this.scheduler.schedule(ExpandSubscriber.dispatch, 0, state));
+	      }
+	    } else {
+	      this.buffer.push(value);
+	    }
+	  };
+
+	  ExpandSubscriber.prototype.subscribeToProjection = function (result, value, index) {
+	    this.active++;
+	    var destination = this.destination;
+	    destination.add(subscribeToResult(this, result, value, index));
+	  };
+
+	  ExpandSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (this.hasCompleted && this.active === 0) {
+	      this.destination.complete();
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  ExpandSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this._next(innerValue);
+	  };
+
+	  ExpandSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var buffer = this.buffer;
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.active--;
+
+	    if (buffer && buffer.length > 0) {
+	      this._next(buffer.shift());
+	    }
+
+	    if (this.hasCompleted && this.active === 0) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return ExpandSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Subscription PURE_IMPORTS_END */
+
+	var FinallySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(FinallySubscriber, _super);
+
+	  function FinallySubscriber(destination, callback) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.add(new Subscription(callback));
+
+	    return _this;
+	  }
+
+	  return FinallySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var FindValueSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(FindValueSubscriber, _super);
+
+	  function FindValueSubscriber(destination, predicate, source, yieldIndex, thisArg) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.source = source;
+	    _this.yieldIndex = yieldIndex;
+	    _this.thisArg = thisArg;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  FindValueSubscriber.prototype.notifyComplete = function (value) {
+	    var destination = this.destination;
+	    destination.next(value);
+	    destination.complete();
+	    this.unsubscribe();
+	  };
+
+	  FindValueSubscriber.prototype._next = function (value) {
+	    var _a = this,
+	        predicate = _a.predicate,
+	        thisArg = _a.thisArg;
+
+	    var index = this.index++;
+
+	    try {
+	      var result = predicate.call(thisArg || this, value, index, this.source);
+
+	      if (result) {
+	        this.notifyComplete(this.yieldIndex ? index : value);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  FindValueSubscriber.prototype._complete = function () {
+	    this.notifyComplete(this.yieldIndex ? -1 : undefined);
+	  };
+
+	  return FindValueSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _operators_find PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_EmptyError,_filter,_take,_defaultIfEmpty,_throwIfEmpty,_util_identity PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var IgnoreElementsSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(IgnoreElementsSubscriber, _super);
+
+	  function IgnoreElementsSubscriber() {
+	    return _super !== null && _super.apply(this, arguments) || this;
+	  }
+
+	  IgnoreElementsSubscriber.prototype._next = function (unused) {};
+
+	  return IgnoreElementsSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var IsEmptySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(IsEmptySubscriber, _super);
+
+	  function IsEmptySubscriber(destination) {
+	    return _super.call(this, destination) || this;
+	  }
+
+	  IsEmptySubscriber.prototype.notifyComplete = function (isEmpty) {
+	    var destination = this.destination;
+	    destination.next(isEmpty);
+	    destination.complete();
+	  };
+
+	  IsEmptySubscriber.prototype._next = function (value) {
+	    this.notifyComplete(false);
+	  };
+
+	  IsEmptySubscriber.prototype._complete = function () {
+	    this.notifyComplete(true);
+	  };
+
+	  return IsEmptySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError,_observable_empty PURE_IMPORTS_END */
+
+	var TakeLastSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeLastSubscriber, _super);
+
+	  function TakeLastSubscriber(destination, total) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.total = total;
+	    _this.ring = new Array();
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  TakeLastSubscriber.prototype._next = function (value) {
+	    var ring = this.ring;
+	    var total = this.total;
+	    var count = this.count++;
+
+	    if (ring.length < total) {
+	      ring.push(value);
+	    } else {
+	      var index = count % total;
+	      ring[index] = value;
+	    }
+	  };
+
+	  TakeLastSubscriber.prototype._complete = function () {
+	    var destination = this.destination;
+	    var count = this.count;
+
+	    if (count > 0) {
+	      var total = this.count >= this.total ? this.total : this.count;
+	      var ring = this.ring;
+
+	      for (var i = 0; i < total; i++) {
+	        var idx = count++ % total;
+	        destination.next(ring[idx]);
+	      }
+	    }
+
+	    destination.complete();
+	  };
+
+	  return TakeLastSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _util_EmptyError,_filter,_takeLast,_throwIfEmpty,_defaultIfEmpty,_util_identity PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var MapToSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(MapToSubscriber, _super);
+
+	  function MapToSubscriber(destination, value) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.value = value;
+	    return _this;
+	  }
+
+	  MapToSubscriber.prototype._next = function (x) {
+	    this.destination.next(this.value);
+	  };
+
+	  return MapToSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Notification PURE_IMPORTS_END */
+	function materialize() {
+	  return function materializeOperatorFunction(source) {
+	    return source.lift(new MaterializeOperator());
+	  };
+	}
+
+	var MaterializeOperator =
+	/*@__PURE__*/
+	function () {
+	  function MaterializeOperator() {}
+
+	  MaterializeOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new MaterializeSubscriber(subscriber));
+	  };
+
+	  return MaterializeOperator;
+	}();
+
+	var MaterializeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(MaterializeSubscriber, _super);
+
+	  function MaterializeSubscriber(destination) {
+	    return _super.call(this, destination) || this;
+	  }
+
+	  MaterializeSubscriber.prototype._next = function (value) {
+	    this.destination.next(Notification.createNext(value));
+	  };
+
+	  MaterializeSubscriber.prototype._error = function (err) {
+	    var destination = this.destination;
+	    destination.next(Notification.createError(err));
+	    destination.complete();
+	  };
+
+	  MaterializeSubscriber.prototype._complete = function () {
+	    var destination = this.destination;
+	    destination.next(Notification.createComplete());
+	    destination.complete();
+	  };
+
+	  return MaterializeSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var ScanSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ScanSubscriber, _super);
+
+	  function ScanSubscriber(destination, accumulator, _seed, hasSeed) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.accumulator = accumulator;
+	    _this._seed = _seed;
+	    _this.hasSeed = hasSeed;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  Object.defineProperty(ScanSubscriber.prototype, "seed", {
+	    get: function () {
+	      return this._seed;
+	    },
+	    set: function (value) {
+	      this.hasSeed = true;
+	      this._seed = value;
+	    },
+	    enumerable: true,
+	    configurable: true
+	  });
+
+	  ScanSubscriber.prototype._next = function (value) {
+	    if (!this.hasSeed) {
+	      this.seed = value;
+	      this.destination.next(value);
+	    } else {
+	      return this._tryNext(value);
+	    }
+	  };
+
+	  ScanSubscriber.prototype._tryNext = function (value) {
+	    var index = this.index++;
+	    var result;
+
+	    try {
+	      result = this.accumulator(this.seed, value, index);
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+
+	    this.seed = result;
+	    this.destination.next(result);
+	  };
+
+	  return ScanSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _scan,_takeLast,_defaultIfEmpty,_util_pipe PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_merge PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_util_subscribeToResult,_OuterSubscriber,_InnerSubscriber PURE_IMPORTS_END */
+
+	var MergeScanSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(MergeScanSubscriber, _super);
+
+	  function MergeScanSubscriber(destination, accumulator, acc, concurrent) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.accumulator = accumulator;
+	    _this.acc = acc;
+	    _this.concurrent = concurrent;
+	    _this.hasValue = false;
+	    _this.hasCompleted = false;
+	    _this.buffer = [];
+	    _this.active = 0;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  MergeScanSubscriber.prototype._next = function (value) {
+	    if (this.active < this.concurrent) {
+	      var index = this.index++;
+	      var ish = tryCatch(this.accumulator)(this.acc, value);
+	      var destination = this.destination;
+
+	      if (ish === errorObject) {
+	        destination.error(errorObject.e);
+	      } else {
+	        this.active++;
+
+	        this._innerSub(ish, value, index);
+	      }
+	    } else {
+	      this.buffer.push(value);
+	    }
+	  };
+
+	  MergeScanSubscriber.prototype._innerSub = function (ish, value, index) {
+	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	    var destination = this.destination;
+	    destination.add(innerSubscriber);
+	    subscribeToResult(this, ish, value, index, innerSubscriber);
+	  };
+
+	  MergeScanSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (this.active === 0 && this.buffer.length === 0) {
+	      if (this.hasValue === false) {
+	        this.destination.next(this.acc);
+	      }
+
+	      this.destination.complete();
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  MergeScanSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    var destination = this.destination;
+	    this.acc = innerValue;
+	    this.hasValue = true;
+	    destination.next(innerValue);
+	  };
+
+	  MergeScanSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var buffer = this.buffer;
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.active--;
+
+	    if (buffer.length > 0) {
+	      this._next(buffer.shift());
+	    } else if (this.active === 0 && this.hasCompleted) {
+	      if (this.hasValue === false) {
+	        this.destination.next(this.acc);
+	      }
+
+	      this.destination.complete();
+	    }
+	  };
+
+	  return MergeScanSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_ConnectableObservable PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_observable_from,_util_isArray,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var OnErrorResumeNextSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(OnErrorResumeNextSubscriber, _super);
+
+	  function OnErrorResumeNextSubscriber(destination, nextSources) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.nextSources = nextSources;
+	    return _this;
+	  }
+
+	  OnErrorResumeNextSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this.subscribeToNextSource();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.subscribeToNextSource();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype._error = function (err) {
+	    this.subscribeToNextSource();
+	    this.unsubscribe();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype._complete = function () {
+	    this.subscribeToNextSource();
+	    this.unsubscribe();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype.subscribeToNextSource = function () {
+	    var next = this.nextSources.shift();
+
+	    if (next) {
+	      var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	      var destination = this.destination;
+	      destination.add(innerSubscriber);
+	      subscribeToResult(this, next, undefined, undefined, innerSubscriber);
+	    } else {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return OnErrorResumeNextSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var PairwiseSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(PairwiseSubscriber, _super);
+
+	  function PairwiseSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.hasPrev = false;
+	    return _this;
+	  }
+
+	  PairwiseSubscriber.prototype._next = function (value) {
+	    if (this.hasPrev) {
+	      this.destination.next([this.prev, value]);
+	    } else {
+	      this.hasPrev = true;
+	    }
+
+	    this.prev = value;
+	  };
+
+	  return PairwiseSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_not,_filter PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _map PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _Subject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _BehaviorSubject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _AsyncSubject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _ReplaySubject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_isArray,_observable_race PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_observable_empty PURE_IMPORTS_END */
+
+	var RepeatSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RepeatSubscriber, _super);
+
+	  function RepeatSubscriber(destination, count, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.count = count;
+	    _this.source = source;
+	    return _this;
+	  }
+
+	  RepeatSubscriber.prototype.complete = function () {
+	    if (!this.isStopped) {
+	      var _a = this,
+	          source = _a.source,
+	          count = _a.count;
+
+	      if (count === 0) {
+	        return _super.prototype.complete.call(this);
+	      } else if (count > -1) {
+	        this.count = count - 1;
+	      }
+
+	      source.subscribe(this._unsubscribeAndRecycle());
+	    }
+	  };
+
+	  return RepeatSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var RepeatWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RepeatWhenSubscriber, _super);
+
+	  function RepeatWhenSubscriber(destination, notifier, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.notifier = notifier;
+	    _this.source = source;
+	    _this.sourceIsBeingSubscribedTo = true;
+	    return _this;
+	  }
+
+	  RepeatWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.sourceIsBeingSubscribedTo = true;
+	    this.source.subscribe(this);
+	  };
+
+	  RepeatWhenSubscriber.prototype.notifyComplete = function (innerSub) {
+	    if (this.sourceIsBeingSubscribedTo === false) {
+	      return _super.prototype.complete.call(this);
+	    }
+	  };
+
+	  RepeatWhenSubscriber.prototype.complete = function () {
+	    this.sourceIsBeingSubscribedTo = false;
+
+	    if (!this.isStopped) {
+	      if (!this.retries) {
+	        this.subscribeToRetries();
+	      }
+
+	      if (!this.retriesSubscription || this.retriesSubscription.closed) {
+	        return _super.prototype.complete.call(this);
+	      }
+
+	      this._unsubscribeAndRecycle();
+
+	      this.notifications.next();
+	    }
+	  };
+
+	  RepeatWhenSubscriber.prototype._unsubscribe = function () {
+	    var _a = this,
+	        notifications = _a.notifications,
+	        retriesSubscription = _a.retriesSubscription;
+
+	    if (notifications) {
+	      notifications.unsubscribe();
+	      this.notifications = null;
+	    }
+
+	    if (retriesSubscription) {
+	      retriesSubscription.unsubscribe();
+	      this.retriesSubscription = null;
+	    }
+
+	    this.retries = null;
+	  };
+
+	  RepeatWhenSubscriber.prototype._unsubscribeAndRecycle = function () {
+	    var _unsubscribe = this._unsubscribe;
+	    this._unsubscribe = null;
+
+	    _super.prototype._unsubscribeAndRecycle.call(this);
+
+	    this._unsubscribe = _unsubscribe;
+	    return this;
+	  };
+
+	  RepeatWhenSubscriber.prototype.subscribeToRetries = function () {
+	    this.notifications = new Subject();
+	    var retries = tryCatch(this.notifier)(this.notifications);
+
+	    if (retries === errorObject) {
+	      return _super.prototype.complete.call(this);
+	    }
+
+	    this.retries = retries;
+	    this.retriesSubscription = subscribeToResult(this, retries);
+	  };
+
+	  return RepeatWhenSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var RetrySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RetrySubscriber, _super);
+
+	  function RetrySubscriber(destination, count, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.count = count;
+	    _this.source = source;
+	    return _this;
+	  }
+
+	  RetrySubscriber.prototype.error = function (err) {
+	    if (!this.isStopped) {
+	      var _a = this,
+	          source = _a.source,
+	          count = _a.count;
+
+	      if (count === 0) {
+	        return _super.prototype.error.call(this, err);
+	      } else if (count > -1) {
+	        this.count = count - 1;
+	      }
+
+	      source.subscribe(this._unsubscribeAndRecycle());
+	    }
+	  };
+
+	  return RetrySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var RetryWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RetryWhenSubscriber, _super);
+
+	  function RetryWhenSubscriber(destination, notifier, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.notifier = notifier;
+	    _this.source = source;
+	    return _this;
+	  }
+
+	  RetryWhenSubscriber.prototype.error = function (err) {
+	    if (!this.isStopped) {
+	      var errors = this.errors;
+	      var retries = this.retries;
+	      var retriesSubscription = this.retriesSubscription;
+
+	      if (!retries) {
+	        errors = new Subject();
+	        retries = tryCatch(this.notifier)(errors);
+
+	        if (retries === errorObject) {
+	          return _super.prototype.error.call(this, errorObject.e);
+	        }
+
+	        retriesSubscription = subscribeToResult(this, retries);
+	      } else {
+	        this.errors = null;
+	        this.retriesSubscription = null;
+	      }
+
+	      this._unsubscribeAndRecycle();
+
+	      this.errors = errors;
+	      this.retries = retries;
+	      this.retriesSubscription = retriesSubscription;
+	      errors.next(err);
+	    }
+	  };
+
+	  RetryWhenSubscriber.prototype._unsubscribe = function () {
+	    var _a = this,
+	        errors = _a.errors,
+	        retriesSubscription = _a.retriesSubscription;
+
+	    if (errors) {
+	      errors.unsubscribe();
+	      this.errors = null;
+	    }
+
+	    if (retriesSubscription) {
+	      retriesSubscription.unsubscribe();
+	      this.retriesSubscription = null;
+	    }
+
+	    this.retries = null;
+	  };
+
+	  RetryWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    var _unsubscribe = this._unsubscribe;
+	    this._unsubscribe = null;
+
+	    this._unsubscribeAndRecycle();
+
+	    this._unsubscribe = _unsubscribe;
+	    this.source.subscribe(this);
+	  };
+
+	  return RetryWhenSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var SampleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SampleSubscriber, _super);
+
+	  function SampleSubscriber() {
+	    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+	    _this.hasValue = false;
+	    return _this;
+	  }
+
+	  SampleSubscriber.prototype._next = function (value) {
+	    this.value = value;
+	    this.hasValue = true;
+	  };
+
+	  SampleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.emitValue();
+	  };
+
+	  SampleSubscriber.prototype.notifyComplete = function () {
+	    this.emitValue();
+	  };
+
+	  SampleSubscriber.prototype.emitValue = function () {
+	    if (this.hasValue) {
+	      this.hasValue = false;
+	      this.destination.next(this.value);
+	    }
+	  };
+
+	  return SampleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async PURE_IMPORTS_END */
+
+	var SampleTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SampleTimeSubscriber, _super);
+
+	  function SampleTimeSubscriber(destination, period, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.period = period;
+	    _this.scheduler = scheduler;
+	    _this.hasValue = false;
+
+	    _this.add(scheduler.schedule(dispatchNotification, period, {
+	      subscriber: _this,
+	      period: period
+	    }));
+
+	    return _this;
+	  }
+
+	  SampleTimeSubscriber.prototype._next = function (value) {
+	    this.lastValue = value;
+	    this.hasValue = true;
+	  };
+
+	  SampleTimeSubscriber.prototype.notifyNext = function () {
+	    if (this.hasValue) {
+	      this.hasValue = false;
+	      this.destination.next(this.lastValue);
+	    }
+	  };
+
+	  return SampleTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchNotification(state) {
+	  var subscriber = state.subscriber,
+	      period = state.period;
+	  subscriber.notifyNext();
+	  this.schedule(state, period);
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
+
+	var SequenceEqualSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SequenceEqualSubscriber, _super);
+
+	  function SequenceEqualSubscriber(destination, compareTo, comparor) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.compareTo = compareTo;
+	    _this.comparor = comparor;
+	    _this._a = [];
+	    _this._b = [];
+	    _this._oneComplete = false;
+
+	    _this.destination.add(compareTo.subscribe(new SequenceEqualCompareToSubscriber(destination, _this)));
+
+	    return _this;
+	  }
+
+	  SequenceEqualSubscriber.prototype._next = function (value) {
+	    if (this._oneComplete && this._b.length === 0) {
+	      this.emit(false);
+	    } else {
+	      this._a.push(value);
+
+	      this.checkValues();
+	    }
+	  };
+
+	  SequenceEqualSubscriber.prototype._complete = function () {
+	    if (this._oneComplete) {
+	      this.emit(this._a.length === 0 && this._b.length === 0);
+	    } else {
+	      this._oneComplete = true;
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  SequenceEqualSubscriber.prototype.checkValues = function () {
+	    var _c = this,
+	        _a = _c._a,
+	        _b = _c._b,
+	        comparor = _c.comparor;
+
+	    while (_a.length > 0 && _b.length > 0) {
+	      var a = _a.shift();
+
+	      var b = _b.shift();
+
+	      var areEqual = false;
+
+	      if (comparor) {
+	        areEqual = tryCatch(comparor)(a, b);
+
+	        if (areEqual === errorObject) {
+	          this.destination.error(errorObject.e);
+	        }
+	      } else {
+	        areEqual = a === b;
+	      }
+
+	      if (!areEqual) {
+	        this.emit(false);
+	      }
+	    }
+	  };
+
+	  SequenceEqualSubscriber.prototype.emit = function (value) {
+	    var destination = this.destination;
+	    destination.next(value);
+	    destination.complete();
+	  };
+
+	  SequenceEqualSubscriber.prototype.nextB = function (value) {
+	    if (this._oneComplete && this._a.length === 0) {
+	      this.emit(false);
+	    } else {
+	      this._b.push(value);
+
+	      this.checkValues();
+	    }
+	  };
+
+	  SequenceEqualSubscriber.prototype.completeB = function () {
+	    if (this._oneComplete) {
+	      this.emit(this._a.length === 0 && this._b.length === 0);
+	    } else {
+	      this._oneComplete = true;
+	    }
+	  };
+
+	  return SequenceEqualSubscriber;
+	}(Subscriber);
+
+	var SequenceEqualCompareToSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SequenceEqualCompareToSubscriber, _super);
+
+	  function SequenceEqualCompareToSubscriber(destination, parent) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.parent = parent;
+	    return _this;
+	  }
+
+	  SequenceEqualCompareToSubscriber.prototype._next = function (value) {
+	    this.parent.nextB(value);
+	  };
+
+	  SequenceEqualCompareToSubscriber.prototype._error = function (err) {
+	    this.parent.error(err);
+	    this.unsubscribe();
+	  };
+
+	  SequenceEqualCompareToSubscriber.prototype._complete = function () {
+	    this.parent.completeB();
+	    this.unsubscribe();
+	  };
+
+	  return SequenceEqualCompareToSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _multicast,_refCount,_Subject PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _ReplaySubject PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_EmptyError PURE_IMPORTS_END */
+
+	var SingleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SingleSubscriber, _super);
+
+	  function SingleSubscriber(destination, predicate, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.source = source;
+	    _this.seenValue = false;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  SingleSubscriber.prototype.applySingleValue = function (value) {
+	    if (this.seenValue) {
+	      this.destination.error('Sequence contains more than one element');
+	    } else {
+	      this.seenValue = true;
+	      this.singleValue = value;
+	    }
+	  };
+
+	  SingleSubscriber.prototype._next = function (value) {
+	    var index = this.index++;
+
+	    if (this.predicate) {
+	      this.tryNext(value, index);
+	    } else {
+	      this.applySingleValue(value);
+	    }
+	  };
+
+	  SingleSubscriber.prototype.tryNext = function (value, index) {
+	    try {
+	      if (this.predicate(value, index, this.source)) {
+	        this.applySingleValue(value);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  SingleSubscriber.prototype._complete = function () {
+	    var destination = this.destination;
+
+	    if (this.index > 0) {
+	      destination.next(this.seenValue ? this.singleValue : undefined);
+	      destination.complete();
+	    } else {
+	      destination.error(new EmptyError());
+	    }
+	  };
+
+	  return SingleSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var SkipSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipSubscriber, _super);
+
+	  function SkipSubscriber(destination, total) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.total = total;
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  SkipSubscriber.prototype._next = function (x) {
+	    if (++this.count > this.total) {
+	      this.destination.next(x);
+	    }
+	  };
+
+	  return SkipSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError PURE_IMPORTS_END */
+
+	var SkipLastSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipLastSubscriber, _super);
+
+	  function SkipLastSubscriber(destination, _skipCount) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this._skipCount = _skipCount;
+	    _this._count = 0;
+	    _this._ring = new Array(_skipCount);
+	    return _this;
+	  }
+
+	  SkipLastSubscriber.prototype._next = function (value) {
+	    var skipCount = this._skipCount;
+	    var count = this._count++;
+
+	    if (count < skipCount) {
+	      this._ring[count] = value;
+	    } else {
+	      var currentIndex = count % skipCount;
+	      var ring = this._ring;
+	      var oldValue = ring[currentIndex];
+	      ring[currentIndex] = value;
+	      this.destination.next(oldValue);
+	    }
+	  };
+
+	  return SkipLastSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var SkipUntilSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipUntilSubscriber, _super);
+
+	  function SkipUntilSubscriber(destination, notifier) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.hasValue = false;
+	    var innerSubscriber = new InnerSubscriber(_this, undefined, undefined);
+
+	    _this.add(innerSubscriber);
+
+	    _this.innerSubscription = innerSubscriber;
+	    subscribeToResult(_this, notifier, undefined, undefined, innerSubscriber);
+	    return _this;
+	  }
+
+	  SkipUntilSubscriber.prototype._next = function (value) {
+	    if (this.hasValue) {
+	      _super.prototype._next.call(this, value);
+	    }
+	  };
+
+	  SkipUntilSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.hasValue = true;
+
+	    if (this.innerSubscription) {
+	      this.innerSubscription.unsubscribe();
+	    }
+	  };
+
+	  SkipUntilSubscriber.prototype.notifyComplete = function () {};
+
+	  return SkipUntilSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var SkipWhileSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipWhileSubscriber, _super);
+
+	  function SkipWhileSubscriber(destination, predicate) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.skipping = true;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  SkipWhileSubscriber.prototype._next = function (value) {
+	    var destination = this.destination;
+
+	    if (this.skipping) {
+	      this.tryCallPredicate(value);
+	    }
+
+	    if (!this.skipping) {
+	      destination.next(value);
+	    }
+	  };
+
+	  SkipWhileSubscriber.prototype.tryCallPredicate = function (value) {
+	    try {
+	      var result = this.predicate(value, this.index++);
+	      this.skipping = Boolean(result);
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  return SkipWhileSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Observable,_scheduler_asap,_util_isNumeric PURE_IMPORTS_END */
+
+	var SubscribeOnObservable =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SubscribeOnObservable, _super);
+
+	  function SubscribeOnObservable(source, delayTime, scheduler) {
+	    if (delayTime === void 0) {
+	      delayTime = 0;
+	    }
+
+	    if (scheduler === void 0) {
+	      scheduler = asap;
+	    }
+
+	    var _this = _super.call(this) || this;
+
+	    _this.source = source;
+	    _this.delayTime = delayTime;
+	    _this.scheduler = scheduler;
+
+	    if (!isNumeric(delayTime) || delayTime < 0) {
+	      _this.delayTime = 0;
+	    }
+
+	    if (!scheduler || typeof scheduler.schedule !== 'function') {
+	      _this.scheduler = asap;
+	    }
+
+	    return _this;
+	  }
+
+	  SubscribeOnObservable.create = function (source, delay, scheduler) {
+	    if (delay === void 0) {
+	      delay = 0;
+	    }
+
+	    if (scheduler === void 0) {
+	      scheduler = asap;
+	    }
+
+	    return new SubscribeOnObservable(source, delay, scheduler);
+	  };
+
+	  SubscribeOnObservable.dispatch = function (arg) {
+	    var source = arg.source,
+	        subscriber = arg.subscriber;
+	    return this.add(source.subscribe(subscriber));
+	  };
+
+	  SubscribeOnObservable.prototype._subscribe = function (subscriber) {
+	    var delay = this.delayTime;
+	    var source = this.source;
+	    var scheduler = this.scheduler;
+	    return scheduler.schedule(SubscribeOnObservable.dispatch, delay, {
+	      source: source,
+	      subscriber: subscriber
+	    });
+	  };
+
+	  return SubscribeOnObservable;
+	}(Observable);
+
+	/** PURE_IMPORTS_START _observable_SubscribeOnObservable PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult,_map,_observable_from PURE_IMPORTS_END */
+	function switchMap(project, resultSelector) {
+	  if (typeof resultSelector === 'function') {
+	    return function (source) {
+	      return source.pipe(switchMap(function (a, i) {
+	        return from(project(a, i)).pipe(map(function (b, ii) {
+	          return resultSelector(a, b, i, ii);
+	        }));
+	      }));
+	    };
+	  }
+
+	  return function (source) {
+	    return source.lift(new SwitchMapOperator(project));
+	  };
+	}
+
+	var SwitchMapOperator =
+	/*@__PURE__*/
+	function () {
+	  function SwitchMapOperator(project) {
+	    this.project = project;
+	  }
+
+	  SwitchMapOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new SwitchMapSubscriber(subscriber, this.project));
+	  };
+
+	  return SwitchMapOperator;
+	}();
+
+	var SwitchMapSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SwitchMapSubscriber, _super);
+
+	  function SwitchMapSubscriber(destination, project) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.project = project;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  SwitchMapSubscriber.prototype._next = function (value) {
+	    var result;
+	    var index = this.index++;
+
+	    try {
+	      result = this.project(value, index);
+	    } catch (error) {
+	      this.destination.error(error);
+	      return;
+	    }
+
+	    this._innerSub(result, value, index);
+	  };
+
+	  SwitchMapSubscriber.prototype._innerSub = function (result, value, index) {
+	    var innerSubscription = this.innerSubscription;
+
+	    if (innerSubscription) {
+	      innerSubscription.unsubscribe();
+	    }
+
+	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	    var destination = this.destination;
+	    destination.add(innerSubscriber);
+	    this.innerSubscription = subscribeToResult(this, result, value, index, innerSubscriber);
+	  };
+
+	  SwitchMapSubscriber.prototype._complete = function () {
+	    var innerSubscription = this.innerSubscription;
+
+	    if (!innerSubscription || innerSubscription.closed) {
+	      _super.prototype._complete.call(this);
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  SwitchMapSubscriber.prototype._unsubscribe = function () {
+	    this.innerSubscription = null;
+	  };
+
+	  SwitchMapSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.innerSubscription = null;
+
+	    if (this.isStopped) {
+	      _super.prototype._complete.call(this);
+	    }
+	  };
+
+	  SwitchMapSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.destination.next(innerValue);
+	  };
+
+	  return SwitchMapSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _switchMap,_util_identity PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _switchMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var TakeUntilSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeUntilSubscriber, _super);
+
+	  function TakeUntilSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.seenValue = false;
+	    return _this;
+	  }
+
+	  TakeUntilSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.seenValue = true;
+	    this.complete();
+	  };
+
+	  TakeUntilSubscriber.prototype.notifyComplete = function () {};
+
+	  return TakeUntilSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var TakeWhileSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeWhileSubscriber, _super);
+
+	  function TakeWhileSubscriber(destination, predicate) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  TakeWhileSubscriber.prototype._next = function (value) {
+	    var destination = this.destination;
+	    var result;
+
+	    try {
+	      result = this.predicate(value, this.index++);
+	    } catch (err) {
+	      destination.error(err);
+	      return;
+	    }
+
+	    this.nextOrComplete(value, result);
+	  };
+
+	  TakeWhileSubscriber.prototype.nextOrComplete = function (value, predicateResult) {
+	    var destination = this.destination;
+
+	    if (Boolean(predicateResult)) {
+	      destination.next(value);
+	    } else {
+	      destination.complete();
+	    }
+	  };
+
+	  return TakeWhileSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var ThrottleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ThrottleSubscriber, _super);
+
+	  function ThrottleSubscriber(destination, durationSelector, _leading, _trailing) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.durationSelector = durationSelector;
+	    _this._leading = _leading;
+	    _this._trailing = _trailing;
+	    _this._hasValue = false;
+	    return _this;
+	  }
+
+	  ThrottleSubscriber.prototype._next = function (value) {
+	    this._hasValue = true;
+	    this._sendValue = value;
+
+	    if (!this._throttled) {
+	      if (this._leading) {
+	        this.send();
+	      } else {
+	        this.throttle(value);
+	      }
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.send = function () {
+	    var _a = this,
+	        _hasValue = _a._hasValue,
+	        _sendValue = _a._sendValue;
+
+	    if (_hasValue) {
+	      this.destination.next(_sendValue);
+	      this.throttle(_sendValue);
+	    }
+
+	    this._hasValue = false;
+	    this._sendValue = null;
+	  };
+
+	  ThrottleSubscriber.prototype.throttle = function (value) {
+	    var duration = this.tryDurationSelector(value);
+
+	    if (duration) {
+	      this.add(this._throttled = subscribeToResult(this, duration));
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.tryDurationSelector = function (value) {
+	    try {
+	      return this.durationSelector(value);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return null;
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.throttlingDone = function () {
+	    var _a = this,
+	        _throttled = _a._throttled,
+	        _trailing = _a._trailing;
+
+	    if (_throttled) {
+	      _throttled.unsubscribe();
+	    }
+
+	    this._throttled = null;
+
+	    if (_trailing) {
+	      this.send();
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.throttlingDone();
+	  };
+
+	  ThrottleSubscriber.prototype.notifyComplete = function () {
+	    this.throttlingDone();
+	  };
+
+	  return ThrottleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async,_throttle PURE_IMPORTS_END */
+
+	var ThrottleTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ThrottleTimeSubscriber, _super);
+
+	  function ThrottleTimeSubscriber(destination, duration, scheduler, leading, trailing) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.duration = duration;
+	    _this.scheduler = scheduler;
+	    _this.leading = leading;
+	    _this.trailing = trailing;
+	    _this._hasTrailingValue = false;
+	    _this._trailingValue = null;
+	    return _this;
+	  }
+
+	  ThrottleTimeSubscriber.prototype._next = function (value) {
+	    if (this.throttled) {
+	      if (this.trailing) {
+	        this._trailingValue = value;
+	        this._hasTrailingValue = true;
+	      }
+	    } else {
+	      this.add(this.throttled = this.scheduler.schedule(dispatchNext$3, this.duration, {
+	        subscriber: this
+	      }));
+
+	      if (this.leading) {
+	        this.destination.next(value);
+	      }
+	    }
+	  };
+
+	  ThrottleTimeSubscriber.prototype._complete = function () {
+	    if (this._hasTrailingValue) {
+	      this.destination.next(this._trailingValue);
+	      this.destination.complete();
+	    } else {
+	      this.destination.complete();
+	    }
+	  };
+
+	  ThrottleTimeSubscriber.prototype.clearThrottle = function () {
+	    var throttled = this.throttled;
+
+	    if (throttled) {
+	      if (this.trailing && this._hasTrailingValue) {
+	        this.destination.next(this._trailingValue);
+	        this._trailingValue = null;
+	        this._hasTrailingValue = false;
+	      }
+
+	      throttled.unsubscribe();
+	      this.remove(throttled);
+	      this.throttled = null;
+	    }
+	  };
+
+	  return ThrottleTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchNext$3(arg) {
+	  var subscriber = arg.subscriber;
+	  subscriber.clearThrottle();
+	}
+
+	/** PURE_IMPORTS_START _scheduler_async,_scan,_observable_defer,_map PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_scheduler_async,_util_isDate,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var TimeoutWithSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TimeoutWithSubscriber, _super);
+
+	  function TimeoutWithSubscriber(destination, absoluteTimeout, waitFor, withObservable, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.absoluteTimeout = absoluteTimeout;
+	    _this.waitFor = waitFor;
+	    _this.withObservable = withObservable;
+	    _this.scheduler = scheduler;
+	    _this.action = null;
+
+	    _this.scheduleTimeout();
+
+	    return _this;
+	  }
+
+	  TimeoutWithSubscriber.dispatchTimeout = function (subscriber) {
+	    var withObservable = subscriber.withObservable;
+
+	    subscriber._unsubscribeAndRecycle();
+
+	    subscriber.add(subscribeToResult(subscriber, withObservable));
+	  };
+
+	  TimeoutWithSubscriber.prototype.scheduleTimeout = function () {
+	    var action = this.action;
+
+	    if (action) {
+	      this.action = action.schedule(this, this.waitFor);
+	    } else {
+	      this.add(this.action = this.scheduler.schedule(TimeoutWithSubscriber.dispatchTimeout, this.waitFor, this));
+	    }
+	  };
+
+	  TimeoutWithSubscriber.prototype._next = function (value) {
+	    if (!this.absoluteTimeout) {
+	      this.scheduleTimeout();
+	    }
+
+	    _super.prototype._next.call(this, value);
+	  };
+
+	  TimeoutWithSubscriber.prototype._unsubscribe = function () {
+	    this.action = null;
+	    this.scheduler = null;
+	    this.withObservable = null;
+	  };
+
+	  return TimeoutWithSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _scheduler_async,_util_TimeoutError,_timeoutWith,_observable_throwError PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _scheduler_async,_map PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WindowSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowSubscriber, _super);
+
+	  function WindowSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.window = new Subject();
+	    destination.next(_this.window);
+	    return _this;
+	  }
+
+	  WindowSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.openWindow();
+	  };
+
+	  WindowSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  WindowSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this._complete();
+	  };
+
+	  WindowSubscriber.prototype._next = function (value) {
+	    this.window.next(value);
+	  };
+
+	  WindowSubscriber.prototype._error = function (err) {
+	    this.window.error(err);
+	    this.destination.error(err);
+	  };
+
+	  WindowSubscriber.prototype._complete = function () {
+	    this.window.complete();
+	    this.destination.complete();
+	  };
+
+	  WindowSubscriber.prototype._unsubscribe = function () {
+	    this.window = null;
+	  };
+
+	  WindowSubscriber.prototype.openWindow = function () {
+	    var prevWindow = this.window;
+
+	    if (prevWindow) {
+	      prevWindow.complete();
+	    }
+
+	    var destination = this.destination;
+	    var newWindow = this.window = new Subject();
+	    destination.next(newWindow);
+	  };
+
+	  return WindowSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Subject PURE_IMPORTS_END */
+
+	var WindowCountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowCountSubscriber, _super);
+
+	  function WindowCountSubscriber(destination, windowSize, startWindowEvery) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.windowSize = windowSize;
+	    _this.startWindowEvery = startWindowEvery;
+	    _this.windows = [new Subject()];
+	    _this.count = 0;
+	    destination.next(_this.windows[0]);
+	    return _this;
+	  }
+
+	  WindowCountSubscriber.prototype._next = function (value) {
+	    var startWindowEvery = this.startWindowEvery > 0 ? this.startWindowEvery : this.windowSize;
+	    var destination = this.destination;
+	    var windowSize = this.windowSize;
+	    var windows = this.windows;
+	    var len = windows.length;
+
+	    for (var i = 0; i < len && !this.closed; i++) {
+	      windows[i].next(value);
+	    }
+
+	    var c = this.count - windowSize + 1;
+
+	    if (c >= 0 && c % startWindowEvery === 0 && !this.closed) {
+	      windows.shift().complete();
+	    }
+
+	    if (++this.count % startWindowEvery === 0 && !this.closed) {
+	      var window_1 = new Subject();
+	      windows.push(window_1);
+	      destination.next(window_1);
+	    }
+	  };
+
+	  WindowCountSubscriber.prototype._error = function (err) {
+	    var windows = this.windows;
+
+	    if (windows) {
+	      while (windows.length > 0 && !this.closed) {
+	        windows.shift().error(err);
+	      }
+	    }
+
+	    this.destination.error(err);
+	  };
+
+	  WindowCountSubscriber.prototype._complete = function () {
+	    var windows = this.windows;
+
+	    if (windows) {
+	      while (windows.length > 0 && !this.closed) {
+	        windows.shift().complete();
+	      }
+	    }
+
+	    this.destination.complete();
+	  };
+
+	  WindowCountSubscriber.prototype._unsubscribe = function () {
+	    this.count = 0;
+	    this.windows = null;
+	  };
+
+	  return WindowCountSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_scheduler_async,_Subscriber,_util_isNumeric,_util_isScheduler PURE_IMPORTS_END */
+
+	var CountedSubject =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(CountedSubject, _super);
+
+	  function CountedSubject() {
+	    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+	    _this._numberOfNextedValues = 0;
+	    return _this;
+	  }
+
+	  CountedSubject.prototype.next = function (value) {
+	    this._numberOfNextedValues++;
+
+	    _super.prototype.next.call(this, value);
+	  };
+
+	  Object.defineProperty(CountedSubject.prototype, "numberOfNextedValues", {
+	    get: function () {
+	      return this._numberOfNextedValues;
+	    },
+	    enumerable: true,
+	    configurable: true
+	  });
+	  return CountedSubject;
+	}(Subject);
+
+	var WindowTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowTimeSubscriber, _super);
+
+	  function WindowTimeSubscriber(destination, windowTimeSpan, windowCreationInterval, maxWindowSize, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.windowTimeSpan = windowTimeSpan;
+	    _this.windowCreationInterval = windowCreationInterval;
+	    _this.maxWindowSize = maxWindowSize;
+	    _this.scheduler = scheduler;
+	    _this.windows = [];
+
+	    var window = _this.openWindow();
+
+	    if (windowCreationInterval !== null && windowCreationInterval >= 0) {
+	      var closeState = {
+	        subscriber: _this,
+	        window: window,
+	        context: null
+	      };
+	      var creationState = {
+	        windowTimeSpan: windowTimeSpan,
+	        windowCreationInterval: windowCreationInterval,
+	        subscriber: _this,
+	        scheduler: scheduler
+	      };
+
+	      _this.add(scheduler.schedule(dispatchWindowClose, windowTimeSpan, closeState));
+
+	      _this.add(scheduler.schedule(dispatchWindowCreation, windowCreationInterval, creationState));
+	    } else {
+	      var timeSpanOnlyState = {
+	        subscriber: _this,
+	        window: window,
+	        windowTimeSpan: windowTimeSpan
+	      };
+
+	      _this.add(scheduler.schedule(dispatchWindowTimeSpanOnly, windowTimeSpan, timeSpanOnlyState));
+	    }
+
+	    return _this;
+	  }
+
+	  WindowTimeSubscriber.prototype._next = function (value) {
+	    var windows = this.windows;
+	    var len = windows.length;
+
+	    for (var i = 0; i < len; i++) {
+	      var window_1 = windows[i];
+
+	      if (!window_1.closed) {
+	        window_1.next(value);
+
+	        if (window_1.numberOfNextedValues >= this.maxWindowSize) {
+	          this.closeWindow(window_1);
+	        }
+	      }
+	    }
+	  };
+
+	  WindowTimeSubscriber.prototype._error = function (err) {
+	    var windows = this.windows;
+
+	    while (windows.length > 0) {
+	      windows.shift().error(err);
+	    }
+
+	    this.destination.error(err);
+	  };
+
+	  WindowTimeSubscriber.prototype._complete = function () {
+	    var windows = this.windows;
+
+	    while (windows.length > 0) {
+	      var window_2 = windows.shift();
+
+	      if (!window_2.closed) {
+	        window_2.complete();
+	      }
+	    }
+
+	    this.destination.complete();
+	  };
+
+	  WindowTimeSubscriber.prototype.openWindow = function () {
+	    var window = new CountedSubject();
+	    this.windows.push(window);
+	    var destination = this.destination;
+	    destination.next(window);
+	    return window;
+	  };
+
+	  WindowTimeSubscriber.prototype.closeWindow = function (window) {
+	    window.complete();
+	    var windows = this.windows;
+	    windows.splice(windows.indexOf(window), 1);
+	  };
+
+	  return WindowTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchWindowTimeSpanOnly(state) {
+	  var subscriber = state.subscriber,
+	      windowTimeSpan = state.windowTimeSpan,
+	      window = state.window;
+
+	  if (window) {
+	    subscriber.closeWindow(window);
+	  }
+
+	  state.window = subscriber.openWindow();
+	  this.schedule(state, windowTimeSpan);
+	}
+
+	function dispatchWindowCreation(state) {
+	  var windowTimeSpan = state.windowTimeSpan,
+	      subscriber = state.subscriber,
+	      scheduler = state.scheduler,
+	      windowCreationInterval = state.windowCreationInterval;
+	  var window = subscriber.openWindow();
+	  var action = this;
+	  var context = {
+	    action: action,
+	    subscription: null
+	  };
+	  var timeSpanState = {
+	    subscriber: subscriber,
+	    window: window,
+	    context: context
+	  };
+	  context.subscription = scheduler.schedule(dispatchWindowClose, windowTimeSpan, timeSpanState);
+	  action.add(context.subscription);
+	  action.schedule(state, windowCreationInterval);
+	}
+
+	function dispatchWindowClose(state) {
+	  var subscriber = state.subscriber,
+	      window = state.window,
+	      context = state.context;
+
+	  if (context && context.action && context.subscription) {
+	    context.action.remove(context.subscription);
+	  }
+
+	  subscriber.closeWindow(window);
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subject,_Subscription,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WindowToggleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowToggleSubscriber, _super);
+
+	  function WindowToggleSubscriber(destination, openings, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.openings = openings;
+	    _this.closingSelector = closingSelector;
+	    _this.contexts = [];
+
+	    _this.add(_this.openSubscription = subscribeToResult(_this, openings, openings));
+
+	    return _this;
+	  }
+
+	  WindowToggleSubscriber.prototype._next = function (value) {
+	    var contexts = this.contexts;
+
+	    if (contexts) {
+	      var len = contexts.length;
+
+	      for (var i = 0; i < len; i++) {
+	        contexts[i].window.next(value);
+	      }
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype._error = function (err) {
+	    var contexts = this.contexts;
+	    this.contexts = null;
+
+	    if (contexts) {
+	      var len = contexts.length;
+	      var index = -1;
+
+	      while (++index < len) {
+	        var context_1 = contexts[index];
+	        context_1.window.error(err);
+	        context_1.subscription.unsubscribe();
+	      }
+	    }
+
+	    _super.prototype._error.call(this, err);
+	  };
+
+	  WindowToggleSubscriber.prototype._complete = function () {
+	    var contexts = this.contexts;
+	    this.contexts = null;
+
+	    if (contexts) {
+	      var len = contexts.length;
+	      var index = -1;
+
+	      while (++index < len) {
+	        var context_2 = contexts[index];
+	        context_2.window.complete();
+	        context_2.subscription.unsubscribe();
+	      }
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  WindowToggleSubscriber.prototype._unsubscribe = function () {
+	    var contexts = this.contexts;
+	    this.contexts = null;
+
+	    if (contexts) {
+	      var len = contexts.length;
+	      var index = -1;
+
+	      while (++index < len) {
+	        var context_3 = contexts[index];
+	        context_3.window.unsubscribe();
+	        context_3.subscription.unsubscribe();
+	      }
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    if (outerValue === this.openings) {
+	      var closingSelector = this.closingSelector;
+	      var closingNotifier = tryCatch(closingSelector)(innerValue);
+
+	      if (closingNotifier === errorObject) {
+	        return this.error(errorObject.e);
+	      } else {
+	        var window_1 = new Subject();
+	        var subscription = new Subscription();
+	        var context_4 = {
+	          window: window_1,
+	          subscription: subscription
+	        };
+	        this.contexts.push(context_4);
+	        var innerSubscription = subscribeToResult(this, closingNotifier, context_4);
+
+	        if (innerSubscription.closed) {
+	          this.closeWindow(this.contexts.length - 1);
+	        } else {
+	          innerSubscription.context = context_4;
+	          subscription.add(innerSubscription);
+	        }
+
+	        this.destination.next(window_1);
+	      }
+	    } else {
+	      this.closeWindow(this.contexts.indexOf(outerValue));
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype.notifyError = function (err) {
+	    this.error(err);
+	  };
+
+	  WindowToggleSubscriber.prototype.notifyComplete = function (inner) {
+	    if (inner !== this.openSubscription) {
+	      this.closeWindow(this.contexts.indexOf(inner.context));
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype.closeWindow = function (index) {
+	    if (index === -1) {
+	      return;
+	    }
+
+	    var contexts = this.contexts;
+	    var context = contexts[index];
+	    var window = context.window,
+	        subscription = context.subscription;
+	    contexts.splice(index, 1);
+	    window.complete();
+	    subscription.unsubscribe();
+	  };
+
+	  return WindowToggleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WindowSubscriber$1 =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowSubscriber, _super);
+
+	  function WindowSubscriber(destination, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.closingSelector = closingSelector;
+
+	    _this.openWindow();
+
+	    return _this;
+	  }
+
+	  WindowSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.openWindow(innerSub);
+	  };
+
+	  WindowSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  WindowSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.openWindow(innerSub);
+	  };
+
+	  WindowSubscriber.prototype._next = function (value) {
+	    this.window.next(value);
+	  };
+
+	  WindowSubscriber.prototype._error = function (err) {
+	    this.window.error(err);
+	    this.destination.error(err);
+	    this.unsubscribeClosingNotification();
+	  };
+
+	  WindowSubscriber.prototype._complete = function () {
+	    this.window.complete();
+	    this.destination.complete();
+	    this.unsubscribeClosingNotification();
+	  };
+
+	  WindowSubscriber.prototype.unsubscribeClosingNotification = function () {
+	    if (this.closingNotification) {
+	      this.closingNotification.unsubscribe();
+	    }
+	  };
+
+	  WindowSubscriber.prototype.openWindow = function (innerSub) {
+	    if (innerSub === void 0) {
+	      innerSub = null;
+	    }
+
+	    if (innerSub) {
+	      this.remove(innerSub);
+	      innerSub.unsubscribe();
+	    }
+
+	    var prevWindow = this.window;
+
+	    if (prevWindow) {
+	      prevWindow.complete();
+	    }
+
+	    var window = this.window = new Subject();
+	    this.destination.next(window);
+	    var closingNotifier = tryCatch(this.closingSelector)();
+
+	    if (closingNotifier === errorObject) {
+	      var err = errorObject.e;
+	      this.destination.error(err);
+	      this.window.error(err);
+	    } else {
+	      this.add(this.closingNotification = subscribeToResult(this, closingNotifier));
+	    }
+	  };
+
+	  return WindowSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WithLatestFromSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WithLatestFromSubscriber, _super);
+
+	  function WithLatestFromSubscriber(destination, observables, project) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.observables = observables;
+	    _this.project = project;
+	    _this.toRespond = [];
+	    var len = observables.length;
+	    _this.values = new Array(len);
+
+	    for (var i = 0; i < len; i++) {
+	      _this.toRespond.push(i);
+	    }
+
+	    for (var i = 0; i < len; i++) {
+	      var observable = observables[i];
+
+	      _this.add(subscribeToResult(_this, observable, observable, i));
+	    }
+
+	    return _this;
+	  }
+
+	  WithLatestFromSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.values[outerIndex] = innerValue;
+	    var toRespond = this.toRespond;
+
+	    if (toRespond.length > 0) {
+	      var found = toRespond.indexOf(outerIndex);
+
+	      if (found !== -1) {
+	        toRespond.splice(found, 1);
+	      }
+	    }
+	  };
+
+	  WithLatestFromSubscriber.prototype.notifyComplete = function () {};
+
+	  WithLatestFromSubscriber.prototype._next = function (value) {
+	    if (this.toRespond.length === 0) {
+	      var args = [value].concat(this.values);
+
+	      if (this.project) {
+	        this._tryProject(args);
+	      } else {
+	        this.destination.next(args);
+	      }
+	    }
+	  };
+
+	  WithLatestFromSubscriber.prototype._tryProject = function (args) {
+	    var result;
+
+	    try {
+	      result = this.project.apply(this, args);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.destination.next(result);
+	  };
+
+	  return WithLatestFromSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _observable_zip PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_zip PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+
 	class Playhead extends Record({
 	  playbackTime: null
 	}) {}
 
 	const playheadSubject = new BehaviorSubject(new Playhead());
 
-	class PlaybackController {
-	  constructor(audioContext$$1, audioBuffer, start) {
-	    this.raf = null;
-
-	    this.updateTime = () => {
-	      const currentTime = Time.fromSeconds(this.audioContext.currentTime);
-	      const diffMilliseconds = currentTime.milliseconds - this.startAudioContextTime.milliseconds;
-	      const nextTime = new Time(this.startTime.milliseconds + diffMilliseconds);
-	      playheadSubject.next(playheadSubject.value.set('playbackTime', nextTime));
-	      this.raf = requestAnimationFrame(this.updateTime);
-	    };
-
-	    this.audioContext = audioContext$$1;
-	    this.audioBuffer = audioBuffer;
-	    this.startTime = start;
-	    this.startAudioContextTime = null;
+	class PlaybackQueue {
+	  constructor(time, duration, audioTracks$$1, audioSources$$1) {
+	    this.queue = [];
+	    this.popResolve = null;
+	    this.destroyed = false;
+	    this.audioTracks = audioTracks$$1;
+	    this.audioSources = audioSources$$1;
+	    this.time = time;
+	    this.end = new Time(duration.milliseconds + time.milliseconds);
+	    this.splitDuration = Time.fromSeconds(1);
+	    this.finished = false;
 	  }
 
-	  start() {
+	  getBuffer(time, duration) {
 	    const {
-	      audioBuffer,
+	      end,
+	      splitDuration,
+	      audioTracks: audioTracks$$1,
+	      audioSources: audioSources$$1
+	    } = this;
+	    let audioBufferDuration = duration;
+
+	    if (duration.milliseconds + time.milliseconds > end.milliseconds) {
+	      audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
+	    }
+
+	    getAudioBuffer(time, audioBufferDuration, audioTracks$$1, audioSources$$1).then(buffer$$1 => {
+	      if (this.destroyed === true) {
+	        return;
+	      }
+
+	      if (this.popResolve) {
+	        this.popResolve({
+	          done: false,
+	          buffer: buffer$$1
+	        });
+	        this.popResolve = null;
+	      } else {
+	        this.queue.push(buffer$$1);
+	      }
+
+	      if (time.milliseconds + splitDuration.milliseconds === end.milliseconds) {
+	        console.log('done queueing');
+	        return;
+	      }
+
+	      if (time.milliseconds + audioBufferDuration.milliseconds === end.milliseconds) {
+	        console.log('finished buffering');
+	        this.finished = true;
+	        return;
+	      }
+
+	      this.getBuffer(new Time(time.milliseconds + this.splitDuration.milliseconds), this.splitDuration);
+	    });
+	  }
+
+	  beginQueue() {
+	    this.getBuffer(this.time, this.splitDuration);
+	  }
+
+	  pop() {
+	    return new Promise(res => {
+	      const next = this.queue.shift(); // If we aren't done building the queue,
+	      // but we don't have anything yet,
+	      // Its likely that values are being asked before
+	      // Audio buffers have been created
+	      // So we need to store the resolver
+
+	      if (!this.finished && !next) {
+	        this.popResolve = res;
+	        return;
+	      }
+
+	      res({
+	        buffer: next,
+	        done: this.queue.length === 0
+	      });
+	    });
+	  }
+
+	  stopQueue() {
+	    this.destroyed = true;
+	    this.queue = [];
+	  }
+
+	}
+
+	class AudioBufferPlayer {
+	  constructor(audioContext$$1, queue$$1) {
+	    this.updateCurrentTime = previousAudioContextSeconds => {
+	      const currentTime = this.timeSubject.value;
+	      const currentAudioContextSeconds = this.audioContext.currentTime;
+	      const diffSeconds = currentAudioContextSeconds - previousAudioContextSeconds;
+	      const nextTime = Time.fromSeconds(currentTime.seconds + diffSeconds);
+	      this.timeSubject.next(nextTime);
+	      this.raf = requestAnimationFrame(() => {
+	        this.updateCurrentTime(currentAudioContextSeconds);
+	      });
+	    };
+
+	    this.popQueue = () => {
+	      this.queue.pop().then(({
+	        buffer: buffer$$1,
+	        done
+	      }) => {
+	        return this.playBuffer(buffer$$1).then(() => {
+	          if (this.playing === false) {
+	            return;
+	          }
+
+	          if (done === false) {
+	            this.popQueue();
+	          } else {
+	            this.timeSubject.complete();
+	          }
+	        });
+	      });
+	    };
+
+	    this.queue = queue$$1;
+	    this.audioContext = audioContext$$1;
+	    this.timeSubject = new BehaviorSubject(new Time(0));
+	  }
+
+	  playBuffer(audioBuffer) {
+	    const {
 	      audioContext: audioContext$$1
 	    } = this;
-	    this.startAudioContextTime = Time.fromSeconds(audioContext$$1.currentTime);
+	    const source = audioContext$$1.createBufferSource();
+	    source.buffer = audioBuffer;
+	    source.connect(audioContext$$1.destination);
+	    this.currentSource = source;
 	    return new Promise(res => {
-	      const source = audioContext$$1.createBufferSource();
-	      source.buffer = audioBuffer;
-	      source.connect(audioContext$$1.destination);
-	      source.addEventListener('ended', () => {
-	        cancelAnimationFrame(this.raf);
-	        res();
-	      }, {
+	      source.addEventListener('ended', res, {
 	        once: true
 	      });
 	      source.start();
-	      this.updateTime();
 	    });
+	  }
+
+	  get timeStream() {
+	    return this.timeSubject.asObservable();
+	  }
+
+	  start() {
+	    this.updateCurrentTime(this.audioContext.currentTime);
+	    this.popQueue();
+	  }
+
+	  stop() {
+	    this.playing = false;
+	    this.timeSubject.complete();
+	    cancelAnimationFrame(this.raf);
+
+	    if (this.currentSource) {
+	      this.currentSource.stop();
+	    }
+	  }
+
+	}
+
+	class PlaybackController {
+	  constructor(_audioContext, start) {
+	    this.states = {
+	      stop: {
+	        enter() {
+	          console.log('enter stop');
+	        },
+
+	        exit() {
+	          console.log('exit stop');
+	        }
+
+	      },
+	      play: {
+	        enter(playbackController) {
+	          stream$1.pipe(switchMap(audioTracks$$1 => {
+	            return stream.pipe(map(audioSources$$1 => {
+	              return {
+	                audioTracks: audioTracks$$1,
+	                audioSources: audioSources$$1
+	              };
+	            })).pipe(take(1));
+	          })).pipe(switchMap(({
+	            audioTracks: audioTracks$$1,
+	            audioSources: audioSources$$1
+	          }) => {
+	            const timeAnchor = playbackController.currentTime;
+	            return Observable.create(o => {
+	              const queue$$1 = new PlaybackQueue(timeAnchor, new Time(10 * 60 * 1000), audioTracks$$1, audioSources$$1);
+	              queue$$1.beginQueue();
+	              const bufferPlayer = new AudioBufferPlayer(audioContext, queue$$1);
+	              bufferPlayer.start();
+	              bufferPlayer.timeStream.subscribe(o);
+	              return () => {
+	                queue$$1.stopQueue();
+	                bufferPlayer.stop();
+	              };
+	            }).pipe(map(time => {
+	              return new Time(timeAnchor.milliseconds + time.milliseconds);
+	            })).pipe(materialize());
+	          })).pipe(dematerialize()).subscribe(time => {
+	            playbackController.currentTime = time;
+	            playheadSubject.next(playheadSubject.value.set('playbackTime', time));
+	          }, null, () => {
+	            console.log('done?');
+	            playheadSubject.next(playheadSubject.value.set('playbackTime', null));
+	          });
+	        },
+
+	        exit() {
+	          console.log('exit play');
+	        }
+
+	      }
+	    };
+	    this.audioContext = _audioContext;
+	    this.currentTime = this.startTime = start;
+	    this.state = this.states['stop'];
+	  }
+
+	  enter(key) {
+	    this.state.exit(this);
+	    this.state = this.states[key];
+	    this.state.enter(this);
+	  }
+
+	  play() {
+	    this.enter('play');
 	  }
 
 	}
@@ -20088,8 +24317,8 @@
 	  return join(filled);
 	}
 
-	function getAudioBuffer(start, duration, audioTracks, audioSources$$1) {
-	  let audioBuffers = audioTracks.map(audioTrack => {
+	function getAudioBuffer(start, duration, audioTracks$$1, audioSources$$1) {
+	  let audioBuffers = audioTracks$$1.map(audioTrack => {
 	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
 	  }).filter(audioBuffer => {
 	    return audioBuffer !== null;
@@ -20102,23 +24331,9 @@
 	  return mix(audioContext, audioBuffers);
 	}
 
-	const bufferDuration = Time.fromSeconds(1);
-
-	function playSegment(start, audioBuffer, audioTracks, audioSources$$1) {
-	  const bufferDuration = Time.fromSeconds(audioBuffer.duration);
-	  const playbackController = new PlaybackController(audioContext, audioBuffer, start);
-	  return playbackController.start().then(() => {
-	    const nextStart = new Time(start.milliseconds + bufferDuration.milliseconds);
-	    return getAudioBuffer(nextStart, bufferDuration, audioTracks, audioSources$$1).then(nextBuffer => {
-	      return playSegment(nextStart, nextBuffer, audioTracks, audioSources$$1);
-	    });
-	  });
-	}
-
-	function play(start, duration, audioTracks, audioSources$$1) {
-	  getAudioBuffer(start, bufferDuration, audioTracks, audioSources$$1).then(buffer => {
-	    return playSegment(start, buffer, audioTracks, audioSources$$1);
-	  });
+	function play(start) {
+	  const playbackController = new PlaybackController(audioContext, start);
+	  playbackController.play();
 	}
 	const playheadSym = Symbol();
 	wire_2(playheadSym, wireObservable(playheadSubject.asObservable()));

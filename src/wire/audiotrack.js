@@ -7,7 +7,7 @@ import { Time } from './../util/time';
 import { generateId } from './../util/uniqueid';
 
 const tracksSubject = new BehaviorSubject(new ImmutableMap());
-
+export const stream = tracksSubject.asObservable();
 class AudioTrack extends Record({
     id: null,
     segments: new ImmutableMap(),
@@ -129,4 +129,4 @@ export function createTrack(id, segments) {
 
 export const audioTracks = Symbol();
 
-register(audioTracks, wireObservable(tracksSubject.asObservable()));
+register(audioTracks, wireObservable(stream));
