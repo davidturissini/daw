@@ -18,8 +18,8 @@ li {
     top: 0;
     left: 0;
     bottom: 0;
-    width: 1px;
-    background: #f1f1f1;
+    width: 2px;
+    background: rgba(56, 56, 56);
     z-index: 1;
     list-style-type: none;
 }

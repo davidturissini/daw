@@ -47,6 +47,7 @@ export default class Controls extends LightningElement {
     onPlayClick() {
         play(
             this.editor.data.cursor,
+            this.editor.data.duration,
         );
     }
 }

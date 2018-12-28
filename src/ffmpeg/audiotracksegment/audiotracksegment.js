@@ -7,6 +7,7 @@ import rafThrottle from 'raf-throttle';
 export default class AudioTrackSegment extends LightningElement {
     @api segment;
     @api frame;
+    @api track;
 
     @wire(editorSym, {})
     editor;
@@ -80,6 +81,10 @@ export default class AudioTrackSegment extends LightningElement {
 
         this.dispatchEvent(event);
     })
+
+    get containerStyle() {
+        return `background: ${this.track.color.rgb()}`;
+    }
 
     /*
      *

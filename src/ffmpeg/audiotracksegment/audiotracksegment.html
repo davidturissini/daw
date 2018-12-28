@@ -1,11 +1,13 @@
 <template>
     <template if:true={hasSource}>
-        <span class="handle handle--start"></span>
-        <ffmpeg-waveform
-            style={waveformStyle}
-            offset={segment.sourceOffset}
-            source={source}>
-        </ffmpeg-waveform>
-        <span class="handle handle--end"></span>
+        <div class="container" style={containerStyle}>
+            <span class="handle handle--start"></span>
+            <ffmpeg-waveform
+                style={waveformStyle}
+                offset={segment.sourceOffset}
+                source={source}>
+            </ffmpeg-waveform>
+            <span class="handle handle--end"></span>
+        </div>
     </template>
 </template>

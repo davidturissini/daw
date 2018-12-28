@@ -22,15 +22,17 @@
                         ontimelinedragend={onTimelineDragEnd}>
                     </ffmpeg-timeline>
                 </header>
-                <section class="editor" onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave} onclick={handleEditorClick}>
-                    <ffmpeg-grid></ffmpeg-grid>
-                    <section class="waveforms-container" id="tracks">
-                        <template for:each={audioTracksArray} for:item="track">
-                            <article class="track" key={track.id}>
-                                <ffmpeg-audiotrack track={track}></ffmpeg-audiotrack>
-                            </article>
-                        </template>
-                    </section>
+                <section class="editor" onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
+                    <div onclick={handleEditorClick}>
+                        <ffmpeg-grid></ffmpeg-grid>
+                        <section class="waveforms-container" id="tracks">
+                            <template for:each={audioTracksArray} for:item="track">
+                                <article class="track" key={track.id}>
+                                    <ffmpeg-audiotrack track={track}></ffmpeg-audiotrack>
+                                </article>
+                            </template>
+                        </section>
+                    </div>
                     <template if:true={cursorInWindow}>
                         <ffmpeg-cursor time={editor.data.cursor}></ffmpeg-cursor>
                     </template>
@@ -41,7 +43,7 @@
                         <ffmpeg-cursor time={playhead.data.playbackTime} playhead></ffmpeg-cursor>
                     </template>
                     <template if:true={hasDurationCursor}>
-                        <ffmpeg-cursor time={editor.data.duration}></ffmpeg-cursor>
+                        <ffmpeg-cursor oncursordrag={handleEditorEndDrag} time={editor.data.end} user-drag></ffmpeg-cursor>
                     </template>
                 </section>
             </template>

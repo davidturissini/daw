@@ -20,11 +20,16 @@
     top: 0;
     bottom: 0;
     z-index: 5;
-    background: #000;
+    border: 3px solid rgba(0, 0, 0, 1);
+    border-radius: 0.2rem;
     cursor: col-resize;
 }
 
 .handle--end {
     left: auto;
     right: 0;
+}
+
+.container {
+    height: 100%;
 }

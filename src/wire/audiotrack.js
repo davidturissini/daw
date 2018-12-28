@@ -25,7 +25,7 @@ export const stream = tracksSubject.asObservable();
 class AudioTrack extends Record({
     id: null,
     segments: new ImmutableMap(),
-    color: new Color(262, 162, 40)
+    color: new Color(202, 162, 40)
 }) {
 
 }

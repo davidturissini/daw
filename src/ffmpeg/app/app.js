@@ -1,5 +1,5 @@
 import { LightningElement, wire } from 'lwc';
-import { editorSym, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
+import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
 import { Time } from '../../util/time';
 import { audioTracks, createTrackAndSourceFile } from './../../wire/audiotrack';
 import { generateId } from './../../util/uniqueid';
@@ -139,7 +139,7 @@ export default class App extends LightningElement {
     }
 
     get hasDurationCursor() {
-        return this.editor && this.timeInWindow(this.editor.data.duration);
+        return this.editor && this.timeInWindow(this.editor.data.end);
     }
 
     timeInWindow(time) {
@@ -164,6 +164,11 @@ export default class App extends LightningElement {
         }
 
         return false;
+    }
+
+    handleEditorEndDrag(evt) {
+        const time = this.editor.data.pixelToTime(evt.detail.dx);
+        incrementEnd(time);
     }
 
     /*

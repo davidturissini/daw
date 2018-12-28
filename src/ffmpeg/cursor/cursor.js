@@ -1,9 +1,13 @@
 import { LightningElement, wire, api } from 'lwc';
 import { editorSym } from './../../wire/editor';
+import interact from 'interactjs';
 
 export default class Cursor extends LightningElement {
     @api virtual;
     @api playhead;
+    @api userDrag;
+
+    interact;
 
     /*
      *
@@ -15,7 +19,7 @@ export default class Cursor extends LightningElement {
 
     @api time;
 
-    get lineStyle() {
+    get containerStyle() {
         const { editor } = this;
         if (!editor.data.frame) {
             return '';
@@ -34,5 +38,29 @@ export default class Cursor extends LightningElement {
             return `${base} line--playhead`;
         }
         return base;
+    }
+
+    onCaretDrag = (evt) => {
+        const event = new CustomEvent('cursordrag', {
+            bubbles: true,
+            composed: true,
+            detail: {
+                dx: evt.dx,
+            },
+        });
+        this.dispatchEvent(event);
+    }
+
+    /*
+     *
+     * Lifecycle
+     *
+    */
+    renderedCallback() {
+        if (this.userDrag && !this.interact) {
+            this.interact = interact(this.template.querySelector('.drag-triangle')).draggable({
+                onmove: this.onCaretDrag
+            });
+        }
     }
 }

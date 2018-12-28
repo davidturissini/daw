@@ -7,7 +7,6 @@ import { Time } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
 import { stream as audioSourceStream } from './audiosource';
 import { stream as audioTrackStream } from './audiotrack';
-import { incrementVisibleRangeStart } from './editor';
 import { renderAudioBuffer } from './audiorender';
 import { connectMasterOut } from './masterout';
 
@@ -170,10 +169,11 @@ class AudioBufferPlayer {
 }
 
 class PlaybackController {
-    constructor(audioContext, start) {
+    constructor(audioContext, start, duration) {
         this.audioContext = audioContext;
         this.currentTime = start;
         this.state = this.states['stop'];
+        this.duration = duration;
     }
 
     states = {
@@ -202,7 +202,7 @@ class PlaybackController {
                     return Observable.create((o) => {
                         const queue = new PlaybackQueue(
                             timeAnchor,
-                            new Time(10 * 60 * 1000),
+                            playbackController.duration,
                             audioTracks,
                             audioSources
                         );
@@ -225,8 +225,6 @@ class PlaybackController {
                 .pipe(dematerialize())
                 .subscribe(
                     (time) => {
-                        const millisecondsDiff = time.milliseconds - playbackController.currentTime.milliseconds;
-                        incrementVisibleRangeStart(new Time(millisecondsDiff))
                         playbackController.currentTime = time;
                         playheadSubject.next(
                             playheadSubject.value.set('playbackTime', time)
@@ -276,17 +274,19 @@ export function stop() {
     }
 }
 
-export function play(start) {
+export function play(start, duration) {
     if (playbackController) {
         stop();
     }
     playbackController = new PlaybackController(
         audioContext,
         start,
+        duration,
     );
 
     playbackController.play();
 }
 
+export const stream = playheadSubject.asObservable();
 export const playheadSym = Symbol();
-register(playheadSym, wireObservable(playheadSubject.asObservable()));
+register(playheadSym, wireObservable(stream));

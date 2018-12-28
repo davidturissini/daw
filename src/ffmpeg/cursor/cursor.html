@@ -1,3 +1,8 @@
 <template>
-    <span style={lineStyle} class={lineClassName}></span>
+    <div class="container" style={containerStyle}>
+        <template if:true={userDrag}>
+            <span class="drag-triangle"></span>
+        </template>
+        <span class={lineClassName}></span>
+    </div>
 </template>
