@@ -20,3 +20,11 @@ export function sum(first, second) {
 export function invert(time) {
     return new Time(-time.milliseconds);
 }
+
+export function gt(left, right) {
+    return left.milliseconds > right.milliseconds;
+}
+
+export function subtract(first, second) {
+    return sum(first, invert(second));
+}

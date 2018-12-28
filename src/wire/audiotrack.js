@@ -1,5 +1,5 @@
 import { register } from 'wire-service';
-import { Record, Map as ImmutableMap } from 'immutable';
+import { Record, Map as ImmutableMap, List } from 'immutable';
 import { BehaviorSubject } from 'rxjs';
 import { wireObservable } from '../util/wire-observable';
 import { createAudioSourceFromFile } from './audiosource';
@@ -26,7 +26,9 @@ class AudioTrack extends Record({
     title: null,
     id: null,
     segments: new ImmutableMap(),
-    color: new Color(202, 162, 40)
+    selections: new List(),
+    color: new Color(202, 162, 40),
+    frame: null,
 }) {
 
 }
@@ -148,6 +150,12 @@ export function deleteTrack(trackId) {
     );
 }
 
+export function setSelectionRanges(trackId, ranges) {
+    tracksSubject.next(
+        tracksSubject.value.setIn([trackId, 'selections'], ranges)
+    );
+}
+
 export function moveSegmentSourceOffset(trackId, segmentId, time) {
     const track = tracksSubject.value.get(trackId);
     const updatedTrack = track.updateIn(['segments', segmentId], (segment) => {
@@ -182,6 +190,12 @@ export function createTrack(id, segments) {
     );
 
     return audioTrack;
+}
+
+export function setTrackFrame(trackId, frame) {
+    tracksSubject.next(
+        tracksSubject.value.setIn([trackId, 'frame'], frame)
+    );
 }
 
 export const audioTracks = Symbol();

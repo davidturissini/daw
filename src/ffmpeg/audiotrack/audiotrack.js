@@ -6,6 +6,7 @@ import {
     moveSegmentSourceOffset,
     setSegmentDuration,
     deleteSegment,
+    setTrackFrame,
 } from './../../wire/audiotrack';
 
 export default class AudioTrack extends LightningElement {
@@ -16,6 +17,18 @@ export default class AudioTrack extends LightningElement {
 
     @wire(audioSources, {})
     audioSources;
+
+    get trackSelections() {
+        return this.track.selections.toList().map((selection, index) => {
+            const x = this.editor.data.timeToPixel(selection.start);
+            const width = this.editor.data.timeToPixel(selection.duration);
+            const style = `width:${width}px;transform: translateX(${x}px)`
+            return {
+                id: index,
+                style,
+            }
+        })
+    }
 
     get trackSegments() {
         return this.track.segments.filter((segment) => {
@@ -89,6 +102,24 @@ export default class AudioTrack extends LightningElement {
         const { id: segmentId } = evt.target.segment;
         if (evt.which === 8) {
             deleteSegment(this.track.id, segmentId);
+        }
+    }
+
+    /*
+     *
+     * Lifecycle
+     *
+    */
+    renderedCallback() {
+        if (!this.track.frame) {
+            const rect = this.template.host.getBoundingClientRect();
+            const frame = {
+                left: this.template.host.offsetLeft,
+                top: this.template.host.offsetTop,
+                width: rect.width,
+                height: rect.height,
+            };
+            setTrackFrame(this.track.id, frame);
         }
     }
 

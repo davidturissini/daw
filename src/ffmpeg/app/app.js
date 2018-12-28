@@ -1,9 +1,61 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, wire, track } from 'lwc';
 import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
 import { Time } from '../../util/time';
-import { audioTracks, createTrackAndSourceFile, deleteTrack } from './../../wire/audiotrack';
+import { fromEvent as observableFromEvent } from 'rxjs';
+import { repeatWhen, takeUntil,filter, take, switchMap, flatMap, map } from 'rxjs/operators';
+import { audioTracks, createTrackAndSourceFile, deleteTrack, setSelectionRanges } from './../../wire/audiotrack';
 import { generateId } from './../../util/uniqueid';
 import { playheadSym } from './../../wire/playhead';
+import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
+import { segmentInTimeRange } from './../../wire/audiorender';
+
+function userSelection(elm) {
+            const selectionFrame = {
+                left: 0,
+                top: 0,
+                width: 0,
+                height: 0,
+            };
+
+            const rect = elm.getBoundingClientRect();
+            const offsetX = rect.x;
+            const offsetY = rect.y;
+
+            return observableFromEvent(elm, 'mousedown')
+                .pipe(
+                    take(1)
+                )
+                .pipe(
+                    flatMap((evt) => {
+                        selectionFrame.left = evt.offsetX;
+                        selectionFrame.top = evt.offsetY;
+
+                        return observableFromEvent(elm, 'mousemove')
+                            .pipe(
+                                map((evt) => {
+                                    selectionFrame.width = (evt.x - offsetX) - selectionFrame.left;
+                                    selectionFrame.height = (evt.y - offsetY) - selectionFrame.top;
+                                    const frame = { ...selectionFrame };
+
+                                    if (frame.height < 0) {
+                                        frame.top += frame.height;
+                                        frame.height = -frame.height;
+                                    }
+
+                                    if (frame.width < 0) {
+                                        frame.left += frame.width;
+                                        frame.width = -frame.width;
+                                    }
+                                    return frame;
+                                })
+                            )
+                            .pipe(
+                                takeUntil(observableFromEvent(document, 'keyup'))
+                            )
+                    })
+                )
+
+        }
 
 export default class App extends LightningElement {
     frame = null;
@@ -186,6 +238,78 @@ export default class App extends LightningElement {
 
     /*
      *
+     * Selection
+     *
+    */
+    @track selectionFrame = null;
+
+    get isSelecting() {
+        return this.selectionFrame !== null;
+    }
+
+    get editorClassName() {
+        if (this.selectionFrame) {
+            return 'editor editor--selecting';
+        }
+        return 'editor';
+    }
+
+    selectionSubscription;
+    listenForSelection() {
+        this.selectionSubscription = observableFromEvent(document, 'keydown')
+            .pipe(filter((evt) => evt.key === 'Meta'))
+            .pipe(take(1))
+            .pipe(
+                switchMap(() => {
+                    return userSelection(this.template.querySelector('.editor'));
+                })
+            )
+            .subscribe((frame) => {
+                console.log('next')
+                this.selectionFrame = frame;
+            }, null, () => {
+                console.log('done')
+                const frame = this.selectionFrame;
+                const startTime = this.editor.data.absolutePixelToTime(frame.left);
+                const duration = this.editor.data.pixelToTime(frame.width);
+                const range = new AudioRange(startTime, duration);
+                const frameBottom = frame.top + frame.height;
+                this.audioTracks.data.filter((audioTrack) => {
+                    const { frame: audioTrackFrame } = audioTrack;
+                    const bottom = audioTrackFrame.top + audioTrackFrame.height;
+                    const midHeight = audioTrackFrame.height / 2;
+                    return (
+                        frame.top <= (audioTrackFrame.top + midHeight) &&
+                        frameBottom >= (bottom - midHeight)
+                    );
+                })
+                .forEach((audioTrack) => {
+                    const ranges = audioTrack.segments.filter((segment) => {
+                        return segmentInTimeRange(
+                            segment,
+                            range.start,
+                            range.duration,
+                        );
+                    })
+                    .map((segment) => {
+                        return clampAudioRange(
+                            new AudioRange(segment.offset, segment.duration),
+                            range,
+                        );
+                    })
+                    .toList();
+
+                    setSelectionRanges(audioTrack.id, ranges);
+                });
+
+
+                this.selectionFrame = null;
+                this.listenForSelection();
+            })
+    }
+
+    /*
+     *
      * Lifecycle
      *
     */
@@ -194,6 +318,8 @@ export default class App extends LightningElement {
 
         this.addEventListener('dragover', this.onDragOver);
         this.addEventListener('drop', this.onDrop);
+        this.listenForSelection();
+
     }
 
     renderedCallback() {
@@ -204,5 +330,8 @@ export default class App extends LightningElement {
 
     disconnectedCallback() {
         window.removeEventListener('resize', this.updateFrame);
+        if (this.selectionSubscription) {
+            this.selectionSubscription.unsubscribe();
+        }
     }
 }

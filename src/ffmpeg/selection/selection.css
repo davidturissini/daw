@@ -1,0 +1,13 @@
+:host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 10;
+}
+
+.rect {
+    width: 1px;
+    height: 1px;
+    background: rgba(180, 214, 255, 0.4);
+    transform-origin: 0 0;
+}

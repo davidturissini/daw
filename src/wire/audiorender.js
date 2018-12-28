@@ -74,7 +74,7 @@ function fillRenderedSegments(renderedSegments, startTime) {
     }, []);
 }
 
-function segmentInTimeRange(segment, startTime, duration) {
+export function segmentInTimeRange(segment, startTime, duration) {
     const {
         milliseconds: cursorMilliseconds,
     } = startTime;

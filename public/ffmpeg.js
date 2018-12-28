@@ -10292,7 +10292,7 @@
 	var wire_3 = wire.ValueChangedEvent;
 
 	function stylesheet(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;border-bottom: 1px solid rgb(40, 40, 40);}\n.track--summary" + shadowSelector + " {box-sizing: border-box;border-bottom-color: rgb(83, 83, 83);display: flex;align-items: stretch;}\n.track-index" + shadowSelector + " {display: flex;padding: 1rem;align-items: center;border-right: 1px solid rgb(83, 83, 83);}\n.track__title" + shadowSelector + " {display: flex;padding: 0 1rem;align-items: center;}\n.tracks-summary" + shadowSelector + " {background: rgb(96, 96, 96);flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 2rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;background: rgb(46, 46, 46);}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;border-bottom: 1px solid rgb(40, 40, 40);}\n.track--summary" + shadowSelector + " {box-sizing: border-box;border-bottom-color: rgb(83, 83, 83);display: flex;align-items: stretch;}\n.track-index" + shadowSelector + " {display: flex;padding: 1rem;align-items: center;border-right: 1px solid rgb(83, 83, 83);}\n.track__title" + shadowSelector + " {display: flex;padding: 0 1rem;align-items: center;}\n.tracks-summary" + shadowSelector + " {background: rgb(96, 96, 96);flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 2rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;background: rgb(46, 46, 46);}\n.editor--selecting" + shadowSelector + " {cursor: crosshair;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
 	}
 	var _implicitStylesheets = [stylesheet];
 
@@ -10588,14 +10588,6 @@
 	  shadowAttribute: "ffmpeg-controls_controls"
 	};
 
-	class AudioRange {
-	  constructor(start, duration) {
-	    this.start = start;
-	    this.duration = duration;
-	  }
-
-	}
-
 	class Time {
 	  constructor(milliseconds) {
 	    this.milliseconds = milliseconds;
@@ -10615,6 +10607,41 @@
 	}
 	function invert(time) {
 	  return new Time(-time.milliseconds);
+	}
+	function gt(left, right) {
+	  return left.milliseconds > right.milliseconds;
+	}
+	function subtract(first, second) {
+	  return sum(first, invert(second));
+	}
+
+	class AudioRange {
+	  constructor(start, duration) {
+	    this.start = start;
+	    this.duration = duration;
+	  }
+
+	}
+	function clamp(haystack, needle) {
+	  let start = needle.start;
+	  let duration = needle.duration;
+
+	  if (gt(haystack.start, start)) {
+	    const cliped = subtract(haystack.start, start);
+	    start = haystack.start;
+	    duration = subtract(needle.duration, cliped);
+	    console.log(duration);
+	  }
+
+	  const haystackEnd = sum(haystack.start, haystack.duration);
+	  const end = sum(start, duration);
+
+	  if (gt(end, haystackEnd)) {
+	    const cliped = subtract(end, haystackEnd);
+	    duration = subtract(duration, cliped);
+	  }
+
+	  return new AudioRange(start, duration);
 	}
 
 	function wireObservable(observable) {
@@ -13796,6 +13823,46 @@
 	}
 
 	/** PURE_IMPORTS_START tslib,_util_subscribeToResult,_OuterSubscriber,_InnerSubscriber,_map,_observable_from PURE_IMPORTS_END */
+	function mergeMap(project, resultSelector, concurrent) {
+	  if (concurrent === void 0) {
+	    concurrent = Number.POSITIVE_INFINITY;
+	  }
+
+	  if (typeof resultSelector === 'function') {
+	    return function (source) {
+	      return source.pipe(mergeMap(function (a, i) {
+	        return from(project(a, i)).pipe(map(function (b, ii) {
+	          return resultSelector(a, b, i, ii);
+	        }));
+	      }, concurrent));
+	    };
+	  } else if (typeof resultSelector === 'number') {
+	    concurrent = resultSelector;
+	  }
+
+	  return function (source) {
+	    return source.lift(new MergeMapOperator(project, concurrent));
+	  };
+	}
+
+	var MergeMapOperator =
+	/*@__PURE__*/
+	function () {
+	  function MergeMapOperator(project, concurrent) {
+	    if (concurrent === void 0) {
+	      concurrent = Number.POSITIVE_INFINITY;
+	    }
+
+	    this.project = project;
+	    this.concurrent = concurrent;
+	  }
+
+	  MergeMapOperator.prototype.call = function (observer, source) {
+	    return source.subscribe(new MergeMapSubscriber(observer, this.project, this.concurrent));
+	  };
+
+	  return MergeMapOperator;
+	}();
 
 	var MergeMapSubscriber =
 	/*@__PURE__*/
@@ -13953,6 +14020,77 @@
 	}(OuterSubscriber);
 
 	/** PURE_IMPORTS_START _Observable,_util_isArray,_util_isFunction,_operators_map PURE_IMPORTS_END */
+	function fromEvent(target, eventName, options, resultSelector) {
+	  if (isFunction(options)) {
+	    resultSelector = options;
+	    options = undefined;
+	  }
+
+	  if (resultSelector) {
+	    return fromEvent(target, eventName, options).pipe(map(function (args) {
+	      return isArray(args) ? resultSelector.apply(void 0, args) : resultSelector(args);
+	    }));
+	  }
+
+	  return new Observable(function (subscriber) {
+	    function handler(e) {
+	      if (arguments.length > 1) {
+	        subscriber.next(Array.prototype.slice.call(arguments));
+	      } else {
+	        subscriber.next(e);
+	      }
+	    }
+
+	    setupSubscription(target, eventName, handler, subscriber, options);
+	  });
+	}
+
+	function setupSubscription(sourceObj, eventName, handler, subscriber, options) {
+	  var unsubscribe;
+
+	  if (isEventTarget(sourceObj)) {
+	    var source_1 = sourceObj;
+	    sourceObj.addEventListener(eventName, handler, options);
+
+	    unsubscribe = function () {
+	      return source_1.removeEventListener(eventName, handler, options);
+	    };
+	  } else if (isJQueryStyleEventEmitter(sourceObj)) {
+	    var source_2 = sourceObj;
+	    sourceObj.on(eventName, handler);
+
+	    unsubscribe = function () {
+	      return source_2.off(eventName, handler);
+	    };
+	  } else if (isNodeStyleEventEmitter(sourceObj)) {
+	    var source_3 = sourceObj;
+	    sourceObj.addListener(eventName, handler);
+
+	    unsubscribe = function () {
+	      return source_3.removeListener(eventName, handler);
+	    };
+	  } else if (sourceObj && sourceObj.length) {
+	    for (var i = 0, len = sourceObj.length; i < len; i++) {
+	      setupSubscription(sourceObj[i], eventName, handler, subscriber, options);
+	    }
+	  } else {
+	    throw new TypeError('Invalid event target');
+	  }
+
+	  subscriber.add(unsubscribe);
+	}
+
+	function isNodeStyleEventEmitter(sourceObj) {
+	  return sourceObj && typeof sourceObj.addListener === 'function' && typeof sourceObj.removeListener === 'function';
+	}
+
+	function isJQueryStyleEventEmitter(sourceObj) {
+	  return sourceObj && typeof sourceObj.on === 'function' && typeof sourceObj.off === 'function';
+	}
+
+	function isEventTarget(sourceObj) {
+	  return sourceObj && typeof sourceObj.addEventListener === 'function' && typeof sourceObj.removeEventListener === 'function';
+	}
 
 	/** PURE_IMPORTS_START _Observable,_util_isArray,_util_isFunction,_operators_map PURE_IMPORTS_END */
 
@@ -17273,6 +17411,33 @@
 	/** PURE_IMPORTS_START _switchMap PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+	function takeUntil(notifier) {
+	  return function (source) {
+	    return source.lift(new TakeUntilOperator(notifier));
+	  };
+	}
+
+	var TakeUntilOperator =
+	/*@__PURE__*/
+	function () {
+	  function TakeUntilOperator(notifier) {
+	    this.notifier = notifier;
+	  }
+
+	  TakeUntilOperator.prototype.call = function (subscriber, source) {
+	    var takeUntilSubscriber = new TakeUntilSubscriber(subscriber);
+	    var notifierSubscription = subscribeToResult(takeUntilSubscriber, this.notifier);
+
+	    if (notifierSubscription && !takeUntilSubscriber.seenValue) {
+	      takeUntilSubscriber.add(notifierSubscription);
+	      return source.subscribe(takeUntilSubscriber);
+	    }
+
+	    return takeUntilSubscriber;
+	  };
+
+	  return TakeUntilOperator;
+	}();
 
 	var TakeUntilSubscriber =
 	/*@__PURE__*/
@@ -24033,7 +24198,9 @@
 	  title: null,
 	  id: null,
 	  segments: new Map$1(),
-	  color: new Color(202, 162, 40)
+	  selections: new List(),
+	  color: new Color(202, 162, 40),
+	  frame: null
 	}) {}
 
 	class AudioTrackSegment extends Record({
@@ -24137,6 +24304,9 @@
 	function deleteTrack(trackId) {
 	  tracksSubject.next(tracksSubject.value.delete(trackId));
 	}
+	function setSelectionRanges(trackId, ranges) {
+	  tracksSubject.next(tracksSubject.value.setIn([trackId, 'selections'], ranges));
+	}
 	function moveSegmentSourceOffset(trackId, segmentId, time) {
 	  const track = tracksSubject.value.get(trackId);
 	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
@@ -24163,6 +24333,9 @@
 	  });
 	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
 	  return audioTrack;
+	}
+	function setTrackFrame(trackId, frame) {
+	  tracksSubject.next(tracksSubject.value.setIn([trackId, 'frame'], frame));
 	}
 	const audioTracks = Symbol();
 	wire_2(audioTracks, wireObservable(stream$1));
@@ -24351,7 +24524,6 @@
 	 * Renders a track to a playable AudioBuffer
 	 *
 	 */
-
 
 	function renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration) {
 	  const filteredSegments = audioTrack.segments.toList().filter(segment => {
@@ -32453,11 +32625,71 @@
 	});
 
 	function stylesheet$4(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}") : (hostSelector + " {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}")) + "\nul" + shadowSelector + " {margin: 0;padding: 0;}\nli" + shadowSelector + " {position: absolute;top: 0;left: 0;bottom: 0;width: 2px;background: rgba(56, 56, 56);z-index: 1;list-style-type: none;}\n";
+	  return "\n" + (nativeShadow ? (":host {position: absolute;left: 0;top: 0;z-index: 10;}") : (hostSelector + " {position: absolute;left: 0;top: 0;z-index: 10;}")) + "\n.rect" + shadowSelector + " {width: 1px;height: 1px;background: rgba(180, 214, 255, 0.4);transform-origin: 0 0;}\n";
 	}
 	var _implicitStylesheets$4 = [stylesheet$4];
 
 	function tmpl$4($api, $cmp, $slotset, $ctx) {
+	  const {
+	    h: api_element
+	  } = $api;
+	  return [api_element("div", {
+	    classMap: {
+	      "rect": true
+	    },
+	    style: $cmp.rectStyle,
+	    key: 2
+	  }, [])];
+	}
+
+	var _tmpl$5 = engine_8(tmpl$4);
+	tmpl$4.stylesheets = [];
+
+	if (_implicitStylesheets$4) {
+	  tmpl$4.stylesheets.push.apply(tmpl$4.stylesheets, _implicitStylesheets$4);
+	}
+	tmpl$4.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-selection_selection-host",
+	  shadowAttribute: "ffmpeg-selection_selection"
+	};
+
+	class Selection extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.frame = void 0;
+	  }
+
+	  get rectStyle() {
+	    const {
+	      width,
+	      height,
+	      left,
+	      top
+	    } = this.frame;
+	    const translate = `translate(${left}px, ${top}px) scale(${width}, ${height})`;
+	    return `transform: ${translate}`;
+	  }
+
+	}
+
+	engine_11(Selection, {
+	  publicProps: {
+	    frame: {
+	      config: 0
+	    }
+	  }
+	});
+
+	var _ffmpegSelection = engine_10(Selection, {
+	  tmpl: _tmpl$5
+	});
+
+	function stylesheet$5(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}") : (hostSelector + " {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}")) + "\nul" + shadowSelector + " {margin: 0;padding: 0;}\nli" + shadowSelector + " {position: absolute;top: 0;left: 0;bottom: 0;width: 2px;background: rgba(56, 56, 56);z-index: 1;list-style-type: none;}\n";
+	}
+	var _implicitStylesheets$5 = [stylesheet$5];
+
+	function tmpl$5($api, $cmp, $slotset, $ctx) {
 	  const {
 	    k: api_key,
 	    h: api_element,
@@ -32473,13 +32705,13 @@
 	  }))];
 	}
 
-	var _tmpl$5 = engine_8(tmpl$4);
-	tmpl$4.stylesheets = [];
+	var _tmpl$6 = engine_8(tmpl$5);
+	tmpl$5.stylesheets = [];
 
-	if (_implicitStylesheets$4) {
-	  tmpl$4.stylesheets.push.apply(tmpl$4.stylesheets, _implicitStylesheets$4);
+	if (_implicitStylesheets$5) {
+	  tmpl$5.stylesheets.push.apply(tmpl$5.stylesheets, _implicitStylesheets$5);
 	}
-	tmpl$4.stylesheetTokens = {
+	tmpl$5.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-grid_grid-host",
 	  shadowAttribute: "ffmpeg-grid_grid"
 	};
@@ -32551,25 +32783,25 @@
 	});
 
 	var _ffmpegGrid = engine_10(Grid, {
-	  tmpl: _tmpl$5
+	  tmpl: _tmpl$6
 	});
 
-	function stylesheet$5(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n";
-	}
-	var _implicitStylesheets$5 = [stylesheet$5];
-
 	function stylesheet$6(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:focus) {outline: none;}") : (hostSelector + ":focus {outline: none;}")) + "\n\n" + (nativeShadow ? (":host(:focus) .focus-indicator" + shadowSelector + " {display: block;}") : (hostSelector + ":focus .focus-indicator" + shadowSelector + " {display: block;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.focus-indicator" + shadowSelector + " {display: none;position: absolute;left: 0;right: 0;top: 0;bottom: 0;z-index: 10;background: rgba(0, 0, 0, 0.25);}\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;border: 3px solid rgba(0, 0, 0, 1);border-radius: 0.2rem;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n.container" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n.selection" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 4;background: rgba(180, 214, 255, 0.4);}\n";
 	}
 	var _implicitStylesheets$6 = [stylesheet$6];
 
 	function stylesheet$7(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:focus) {outline: none;}") : (hostSelector + ":focus {outline: none;}")) + "\n\n" + (nativeShadow ? (":host(:focus) .focus-indicator" + shadowSelector + " {display: block;}") : (hostSelector + ":focus .focus-indicator" + shadowSelector + " {display: block;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.focus-indicator" + shadowSelector + " {display: none;position: absolute;left: 0;right: 0;top: 0;bottom: 0;z-index: 10;background: rgba(0, 0, 0, 0.25);}\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;border: 3px solid rgba(0, 0, 0, 1);border-radius: 0.2rem;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n.container" + shadowSelector + " {height: 100%;}\n";
 	}
 	var _implicitStylesheets$7 = [stylesheet$7];
 
-	function tmpl$5($api, $cmp, $slotset, $ctx) {
+	function stylesheet$8(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	}
+	var _implicitStylesheets$8 = [stylesheet$8];
+
+	function tmpl$6($api, $cmp, $slotset, $ctx) {
 	  const {
 	    t: api_text,
 	    h: api_element
@@ -32583,13 +32815,13 @@
 	  }, []) : null : null];
 	}
 
-	var _tmpl$6 = engine_8(tmpl$5);
-	tmpl$5.stylesheets = [];
+	var _tmpl$7 = engine_8(tmpl$6);
+	tmpl$6.stylesheets = [];
 
-	if (_implicitStylesheets$7) {
-	  tmpl$5.stylesheets.push.apply(tmpl$5.stylesheets, _implicitStylesheets$7);
+	if (_implicitStylesheets$8) {
+	  tmpl$6.stylesheets.push.apply(tmpl$6.stylesheets, _implicitStylesheets$8);
 	}
-	tmpl$5.stylesheetTokens = {
+	tmpl$6.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-waveform_waveform-host",
 	  shadowAttribute: "ffmpeg-waveform_waveform"
 	};
@@ -34305,10 +34537,10 @@
 	});
 
 	var _ffmpegWaveform = engine_10(Waveform$1, {
-	  tmpl: _tmpl$6
+	  tmpl: _tmpl$7
 	});
 
-	function tmpl$6($api, $cmp, $slotset, $ctx) {
+	function tmpl$7($api, $cmp, $slotset, $ctx) {
 	  const {
 	    h: api_element,
 	    c: api_custom_element
@@ -34346,13 +34578,13 @@
 	  }, [])]) : null];
 	}
 
-	var _tmpl$7 = engine_8(tmpl$6);
-	tmpl$6.stylesheets = [];
+	var _tmpl$8 = engine_8(tmpl$7);
+	tmpl$7.stylesheets = [];
 
-	if (_implicitStylesheets$6) {
-	  tmpl$6.stylesheets.push.apply(tmpl$6.stylesheets, _implicitStylesheets$6);
+	if (_implicitStylesheets$7) {
+	  tmpl$7.stylesheets.push.apply(tmpl$7.stylesheets, _implicitStylesheets$7);
 	}
-	tmpl$6.stylesheetTokens = {
+	tmpl$7.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-audiotracksegment_audiotracksegment-host",
 	  shadowAttribute: "ffmpeg-audiotracksegment_audiotracksegment"
 	};
@@ -34524,15 +34756,17 @@
 	});
 
 	var _ffmpegAudiotracksegment = engine_10(AudioTrackSegment$1, {
-	  tmpl: _tmpl$7
+	  tmpl: _tmpl$8
 	});
 
-	function tmpl$7($api, $cmp, $slotset, $ctx) {
+	function tmpl$8($api, $cmp, $slotset, $ctx) {
 	  const {
 	    k: api_key,
+	    h: api_element,
+	    i: api_iterator,
 	    b: api_bind,
 	    c: api_custom_element,
-	    i: api_iterator
+	    f: api_flatten
 	  } = $api;
 	  const {
 	    _m0,
@@ -34540,7 +34774,15 @@
 	    _m2,
 	    _m3
 	  } = $ctx;
-	  return api_iterator($cmp.trackSegments, function (trackSegment) {
+	  return api_flatten([api_iterator($cmp.trackSelections, function (trackSelection) {
+	    return api_element("div", {
+	      classMap: {
+	        "selection": true
+	      },
+	      style: trackSelection.style,
+	      key: api_key(3, trackSelection.id)
+	    }, []);
+	  }), api_iterator($cmp.trackSegments, function (trackSegment) {
 	    return api_custom_element("ffmpeg-audiotracksegment", _ffmpegAudiotracksegment, {
 	      style: trackSegment.style,
 	      props: {
@@ -34549,7 +34791,7 @@
 	        "frame": trackSegment.frame,
 	        "segment": trackSegment.segment
 	      },
-	      key: api_key(3, trackSegment.key),
+	      key: api_key(5, trackSegment.key),
 	      on: {
 	        "keyup": _m0 || ($ctx._m0 = api_bind($cmp.onSegmentKeyUp)),
 	        "segmentdurationchange": _m1 || ($ctx._m1 = api_bind($cmp.handleSegmentDurationChange)),
@@ -34557,16 +34799,16 @@
 	        "segmentmove": _m3 || ($ctx._m3 = api_bind($cmp.handleSegmentMove))
 	      }
 	    }, []);
-	  });
+	  })]);
 	}
 
-	var _tmpl$8 = engine_8(tmpl$7);
-	tmpl$7.stylesheets = [];
+	var _tmpl$9 = engine_8(tmpl$8);
+	tmpl$8.stylesheets = [];
 
-	if (_implicitStylesheets$5) {
-	  tmpl$7.stylesheets.push.apply(tmpl$7.stylesheets, _implicitStylesheets$5);
+	if (_implicitStylesheets$6) {
+	  tmpl$8.stylesheets.push.apply(tmpl$8.stylesheets, _implicitStylesheets$6);
 	}
-	tmpl$7.stylesheetTokens = {
+	tmpl$8.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-audiotrack_audiotrack-host",
 	  shadowAttribute: "ffmpeg-audiotrack_audiotrack"
 	};
@@ -34577,6 +34819,18 @@
 	    this.track = void 0;
 	    this.editor = void 0;
 	    this.audioSources = void 0;
+	  }
+
+	  get trackSelections() {
+	    return this.track.selections.toList().map((selection, index) => {
+	      const x = this.editor.data.timeToPixel(selection.start);
+	      const width = this.editor.data.timeToPixel(selection.duration);
+	      const style = `width:${width}px;transform: translateX(${x}px)`;
+	      return {
+	        id: index,
+	        style
+	      };
+	    });
 	  }
 
 	  get trackSegments() {
@@ -34648,6 +34902,25 @@
 	      deleteSegment(this.track.id, segmentId);
 	    }
 	  }
+	  /*
+	   *
+	   * Lifecycle
+	   *
+	  */
+
+
+	  renderedCallback() {
+	    if (!this.track.frame) {
+	      const rect = this.template.host.getBoundingClientRect();
+	      const frame = {
+	        left: this.template.host.offsetLeft,
+	        top: this.template.host.offsetTop,
+	        width: rect.width,
+	        height: rect.height
+	      };
+	      setTrackFrame(this.track.id, frame);
+	    }
+	  }
 
 	}
 
@@ -34672,15 +34945,15 @@
 	});
 
 	var _ffmpegAudiotrack = engine_10(AudioTrack$1, {
-	  tmpl: _tmpl$8
+	  tmpl: _tmpl$9
 	});
 
-	function stylesheet$8(hostSelector, shadowSelector, nativeShadow) {
+	function stylesheet$9(hostSelector, shadowSelector, nativeShadow) {
 	  return ".container" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;width: 0;z-index: 5;}\n.line" + shadowSelector + " {display: block;margin-left: -1px;border-right: 1px solid rgb(117, 117, 117);pointer-events: none;height: 100%;}\n.line--virtual" + shadowSelector + " {border-right:1px dashed rgba(117, 117, 117, 1);}\n.drag-triangle" + shadowSelector + " {pointer-events: all;position: absolute;bottom: 100%;left: 50%;transform: translate(-5.5px, 6px);height: 0;width: 0;border: 6px solid transparent;border-top: 10px solid rgb(174, 174, 174);}\n";
 	}
-	var _implicitStylesheets$8 = [stylesheet$8];
+	var _implicitStylesheets$9 = [stylesheet$9];
 
-	function tmpl$8($api, $cmp, $slotset, $ctx) {
+	function tmpl$9($api, $cmp, $slotset, $ctx) {
 	  const {
 	    h: api_element
 	  } = $api;
@@ -34701,13 +34974,13 @@
 	  }, [])])];
 	}
 
-	var _tmpl$9 = engine_8(tmpl$8);
-	tmpl$8.stylesheets = [];
+	var _tmpl$a = engine_8(tmpl$9);
+	tmpl$9.stylesheets = [];
 
-	if (_implicitStylesheets$8) {
-	  tmpl$8.stylesheets.push.apply(tmpl$8.stylesheets, _implicitStylesheets$8);
+	if (_implicitStylesheets$9) {
+	  tmpl$9.stylesheets.push.apply(tmpl$9.stylesheets, _implicitStylesheets$9);
 	}
-	tmpl$8.stylesheetTokens = {
+	tmpl$9.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-cursor_cursor-host",
 	  shadowAttribute: "ffmpeg-cursor_cursor"
 	};
@@ -34801,10 +35074,10 @@
 	});
 
 	var _ffmpegCursor = engine_10(Cursor, {
-	  tmpl: _tmpl$9
+	  tmpl: _tmpl$a
 	});
 
-	function tmpl$9($api, $cmp, $slotset, $ctx) {
+	function tmpl$a($api, $cmp, $slotset, $ctx) {
 	  const {
 	    b: api_bind,
 	    h: api_element
@@ -34826,9 +35099,9 @@
 	  }, [])];
 	}
 
-	var _tmpl$a = engine_8(tmpl$9);
-	tmpl$9.stylesheets = [];
-	tmpl$9.stylesheetTokens = {
+	var _tmpl$b = engine_8(tmpl$a);
+	tmpl$a.stylesheets = [];
+	tmpl$a.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-masterout_masterout-host",
 	  shadowAttribute: "ffmpeg-masterout_masterout"
 	};
@@ -34856,10 +35129,10 @@
 	});
 
 	var _ffmpegMasterout = engine_10(MasterOut$1, {
-	  tmpl: _tmpl$a
+	  tmpl: _tmpl$b
 	});
 
-	function tmpl$a($api, $cmp, $slotset, $ctx) {
+	function tmpl$b($api, $cmp, $slotset, $ctx) {
 	  const {
 	    c: api_custom_element,
 	    h: api_element,
@@ -34943,21 +35216,24 @@
 	      "timelinedragend": _m4 || ($ctx._m4 = api_bind($cmp.onTimelineDragEnd))
 	    }
 	  }, [])]) : null, $cmp.editor.data.frame ? api_element("section", {
-	    classMap: {
-	      "editor": true
-	    },
+	    className: $cmp.editorClassName,
 	    key: 16,
 	    on: {
 	      "mousemove": _m7 || ($ctx._m7 = api_bind($cmp.onEditorMouseMove)),
 	      "mouseleave": _m8 || ($ctx._m8 = api_bind($cmp.onEditorMouseLeave))
 	    }
-	  }, [api_element("div", {
-	    key: 17,
+	  }, [$cmp.isSelecting ? api_custom_element("ffmpeg-selection", _ffmpegSelection, {
+	    props: {
+	      "frame": $cmp.selectionFrame
+	    },
+	    key: 18
+	  }, []) : null, api_element("div", {
+	    key: 19,
 	    on: {
 	      "click": _m5 || ($ctx._m5 = api_bind($cmp.handleEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
-	    key: 18
+	    key: 20
 	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
@@ -34965,62 +35241,100 @@
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 19
+	    key: 21
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(21, track.data.id)
+	      key: api_key(23, track.data.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
 	        "track": track.data
 	      },
-	      key: 22
+	      key: 24
 	    }, [])]);
 	  }))]), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.cursor
 	    },
-	    key: 24
+	    key: 26
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 26
+	    key: 28
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.playbackTime,
 	      "playhead": true
 	    },
-	    key: 28
+	    key: 30
 	  }, []) : null, $cmp.hasDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.end,
 	      "userDrag": true
 	    },
-	    key: 30,
+	    key: 32,
 	    on: {
 	      "cursordrag": _m6 || ($ctx._m6 = api_bind($cmp.handleEditorEndDrag))
 	    }
 	  }, []) : null]) : null])]), api_element("footer", {
-	    key: 31
+	    key: 33
 	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 32
+	    key: 34
 	  }, [])])];
 	}
 
-	var _tmpl$b = engine_8(tmpl$a);
-	tmpl$a.stylesheets = [];
+	var _tmpl$c = engine_8(tmpl$b);
+	tmpl$b.stylesheets = [];
 
 	if (_implicitStylesheets) {
-	  tmpl$a.stylesheets.push.apply(tmpl$a.stylesheets, _implicitStylesheets);
+	  tmpl$b.stylesheets.push.apply(tmpl$b.stylesheets, _implicitStylesheets);
 	}
-	tmpl$a.stylesheetTokens = {
+	tmpl$b.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-app_app-host",
 	  shadowAttribute: "ffmpeg-app_app"
 	};
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	function userSelection(elm) {
+	  const selectionFrame = {
+	    left: 0,
+	    top: 0,
+	    width: 0,
+	    height: 0
+	  };
+	  const rect = elm.getBoundingClientRect();
+	  const offsetX = rect.x;
+	  const offsetY = rect.y;
+	  return fromEvent(elm, 'mousedown').pipe(take(1)).pipe(mergeMap(evt => {
+	    selectionFrame.left = evt.offsetX;
+	    selectionFrame.top = evt.offsetY;
+	    return fromEvent(elm, 'mousemove').pipe(map(evt => {
+	      selectionFrame.width = evt.x - offsetX - selectionFrame.left;
+	      selectionFrame.height = evt.y - offsetY - selectionFrame.top;
+
+	      const frame = _objectSpread({}, selectionFrame);
+
+	      if (frame.height < 0) {
+	        frame.top += frame.height;
+	        frame.height = -frame.height;
+	      }
+
+	      if (frame.width < 0) {
+	        frame.left += frame.width;
+	        frame.width = -frame.width;
+	      }
+
+	      return frame;
+	    })).pipe(takeUntil(fromEvent(document, 'keyup')));
+	  }));
+	}
 
 	class App extends engine_5 {
 	  constructor(...args) {
@@ -35095,6 +35409,9 @@
 	    this.onTimelineMouseLeave = () => {
 	      this.template.host.classList.remove('editor--draggable');
 	    };
+
+	    this.selectionFrame = null;
+	    this.selectionSubscription = void 0;
 	  }
 
 	  get ffmpegLoaded() {
@@ -35187,6 +35504,57 @@
 	  }
 	  /*
 	   *
+	   * Selection
+	   *
+	  */
+
+
+	  get isSelecting() {
+	    return this.selectionFrame !== null;
+	  }
+
+	  get editorClassName() {
+	    if (this.selectionFrame) {
+	      return 'editor editor--selecting';
+	    }
+
+	    return 'editor';
+	  }
+
+	  listenForSelection() {
+	    this.selectionSubscription = fromEvent(document, 'keydown').pipe(filter(evt => evt.key === 'Meta')).pipe(take(1)).pipe(switchMap(() => {
+	      return userSelection(this.template.querySelector('.editor'));
+	    })).subscribe(frame => {
+	      console.log('next');
+	      this.selectionFrame = frame;
+	    }, null, () => {
+	      console.log('done');
+	      const frame = this.selectionFrame;
+	      const startTime = this.editor.data.absolutePixelToTime(frame.left);
+	      const duration = this.editor.data.pixelToTime(frame.width);
+	      const range$$1 = new AudioRange(startTime, duration);
+	      const frameBottom = frame.top + frame.height;
+	      this.audioTracks.data.filter(audioTrack => {
+	        const {
+	          frame: audioTrackFrame
+	        } = audioTrack;
+	        const bottom = audioTrackFrame.top + audioTrackFrame.height;
+	        const midHeight = audioTrackFrame.height / 2;
+	        return frame.top <= audioTrackFrame.top + midHeight && frameBottom >= bottom - midHeight;
+	      }).forEach(audioTrack => {
+	        const ranges = audioTrack.segments.filter(segment => {
+	          return segmentInTimeRange(segment, range$$1.start, range$$1.duration);
+	        }).map(segment => {
+	          return clamp(new AudioRange(segment.offset, segment.duration), range$$1);
+	        }).toList();
+	        setSelectionRanges(audioTrack.id, ranges);
+	      });
+	      this.selectionFrame = null;
+	      this.listenForSelection();
+	    });
+	  }
+	  /*
+	   *
 	   * Lifecycle
 	   *
 	  */
@@ -35196,6 +35564,7 @@
 	    window.addEventListener('resize', this.updateFrame);
 	    this.addEventListener('dragover', this.onDragOver);
 	    this.addEventListener('drop', this.onDrop);
+	    this.listenForSelection();
 	  }
 
 	  renderedCallback() {
@@ -35206,6 +35575,10 @@
 
 	  disconnectedCallback() {
 	    window.removeEventListener('resize', this.updateFrame);
+
+	    if (this.selectionSubscription) {
+	      this.selectionSubscription.unsubscribe();
+	    }
 	  }
 
 	}
@@ -35227,11 +35600,14 @@
 	      params: {},
 	      static: {}
 	    }
+	  },
+	  track: {
+	    selectionFrame: 1
 	  }
 	});
 
 	var App$1 = engine_10(App, {
-	  tmpl: _tmpl$b
+	  tmpl: _tmpl$c
 	});
 
 	wire_1(engine_6);

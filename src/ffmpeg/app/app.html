@@ -23,7 +23,10 @@
                         ontimelinedragend={onTimelineDragEnd}>
                     </ffmpeg-timeline>
                 </header>
-                <section class="editor" onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
+                <section class={editorClassName} onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
+                    <template if:true={isSelecting}>
+                        <ffmpeg-selection frame={selectionFrame}></ffmpeg-selection>
+                    </template>
                     <div onclick={handleEditorClick}>
                         <ffmpeg-grid></ffmpeg-grid>
                         <section class="waveforms-container" id="tracks">

@@ -72,6 +72,10 @@ main {
     background: rgb(46, 46, 46);
 }
 
+.editor--selecting {
+    cursor: crosshair;
+}
+
 .editor-container {
     flex: 1 0 auto;
     display: flex;
