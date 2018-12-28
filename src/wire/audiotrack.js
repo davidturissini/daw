@@ -23,6 +23,7 @@ class Color {
 const tracksSubject = new BehaviorSubject(new ImmutableMap());
 export const stream = tracksSubject.asObservable();
 class AudioTrack extends Record({
+    title: null,
     id: null,
     segments: new ImmutableMap(),
     color: new Color(202, 162, 40)
@@ -132,6 +133,21 @@ export function setSegmentDuration(trackId, segmentId, audioSource, time) {
     );
 }
 
+export function deleteSegment(trackId, segmentId) {
+    const track = tracksSubject.value.get(trackId);
+
+    const updatedTrack = track.deleteIn(['segments', segmentId]);
+    tracksSubject.next(
+        tracksSubject.value.set(trackId, updatedTrack)
+    );
+}
+
+export function deleteTrack(trackId) {
+    tracksSubject.next(
+        tracksSubject.value.delete(trackId)
+    );
+}
+
 export function moveSegmentSourceOffset(trackId, segmentId, time) {
     const track = tracksSubject.value.get(trackId);
     const updatedTrack = track.updateIn(['segments', segmentId], (segment) => {
@@ -155,7 +171,9 @@ export function createTrack(id, segments) {
     const segmentsMap = segments.reduce((seed, segment) => {
         return seed.set(segment.id, segment);
     }, new ImmutableMap());
+    const trackLen = tracksSubject.value.size;
     const audioTrack = new AudioTrack({
+        title: `Track ${trackLen + 1}`,
         id,
         segments: segmentsMap,
     });

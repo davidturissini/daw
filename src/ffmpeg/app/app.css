@@ -36,9 +36,23 @@ main {
 }
 
 .track--summary {
-    padding: 1rem;
     box-sizing: border-box;
     border-bottom-color: rgb(83, 83, 83);
+    display: flex;
+    align-items: stretch;
+}
+
+.track-index {
+    display: flex;
+    padding: 1rem;
+    align-items: center;
+    border-right: 1px solid rgb(83, 83, 83);
+}
+
+.track__title {
+    display: flex;
+    padding: 0 1rem;
+    align-items: center;
 }
 
 .tracks-summary {
@@ -47,7 +61,7 @@ main {
 }
 
 .tracks-summary__header {
-    height: 1.5rem;
+    height: 2rem;
     background: rgb(52, 52, 52);
 }
 

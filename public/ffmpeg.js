@@ -10292,7 +10292,7 @@
 	var wire_3 = wire.ValueChangedEvent;
 
 	function stylesheet(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;border-bottom: 1px solid rgb(40, 40, 40);}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-bottom-color: rgb(83, 83, 83);}\n.tracks-summary" + shadowSelector + " {background: rgb(96, 96, 96);flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 1.5rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;background: rgb(46, 46, 46);}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;border-bottom: 1px solid rgb(40, 40, 40);}\n.track--summary" + shadowSelector + " {box-sizing: border-box;border-bottom-color: rgb(83, 83, 83);display: flex;align-items: stretch;}\n.track-index" + shadowSelector + " {display: flex;padding: 1rem;align-items: center;border-right: 1px solid rgb(83, 83, 83);}\n.track__title" + shadowSelector + " {display: flex;padding: 0 1rem;align-items: center;}\n.tracks-summary" + shadowSelector + " {background: rgb(96, 96, 96);flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 2rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;background: rgb(46, 46, 46);}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
 	}
 	var _implicitStylesheets = [stylesheet];
 
@@ -24030,6 +24030,7 @@
 	const stream$1 = tracksSubject.asObservable();
 
 	class AudioTrack extends Record({
+	  title: null,
 	  id: null,
 	  segments: new Map$1(),
 	  color: new Color(202, 162, 40)
@@ -24128,6 +24129,14 @@
 	  });
 	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
 	}
+	function deleteSegment(trackId, segmentId) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.deleteIn(['segments', segmentId]);
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function deleteTrack(trackId) {
+	  tracksSubject.next(tracksSubject.value.delete(trackId));
+	}
 	function moveSegmentSourceOffset(trackId, segmentId, time) {
 	  const track = tracksSubject.value.get(trackId);
 	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
@@ -24146,7 +24155,9 @@
 	  const segmentsMap = segments.reduce((seed, segment) => {
 	    return seed.set(segment.id, segment);
 	  }, new Map$1());
+	  const trackLen = tracksSubject.value.size;
 	  const audioTrack = new AudioTrack({
+	    title: `Track ${trackLen + 1}`,
 	    id,
 	    segments: segmentsMap
 	  });
@@ -32549,7 +32560,7 @@
 	var _implicitStylesheets$5 = [stylesheet$5];
 
 	function stylesheet$6(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;border: 3px solid rgba(0, 0, 0, 1);border-radius: 0.2rem;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n.container" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:focus) {outline: none;}") : (hostSelector + ":focus {outline: none;}")) + "\n\n" + (nativeShadow ? (":host(:focus) .focus-indicator" + shadowSelector + " {display: block;}") : (hostSelector + ":focus .focus-indicator" + shadowSelector + " {display: block;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.focus-indicator" + shadowSelector + " {display: none;position: absolute;left: 0;right: 0;top: 0;bottom: 0;z-index: 10;background: rgba(0, 0, 0, 0.25);}\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;border: 3px solid rgba(0, 0, 0, 1);border-radius: 0.2rem;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n.container" + shadowSelector + " {height: 100%;}\n";
 	}
 	var _implicitStylesheets$6 = [stylesheet$6];
 
@@ -34302,31 +34313,36 @@
 	    h: api_element,
 	    c: api_custom_element
 	  } = $api;
-	  return [$cmp.hasSource ? api_element("div", {
+	  return [api_element("div", {
+	    classMap: {
+	      "focus-indicator": true
+	    },
+	    key: 2
+	  }, []), $cmp.hasSource ? api_element("div", {
 	    classMap: {
 	      "container": true
 	    },
 	    style: $cmp.containerStyle,
-	    key: 3
+	    key: 4
 	  }, [api_element("span", {
 	    classMap: {
 	      "handle": true,
 	      "handle--start": true
 	    },
-	    key: 4
+	    key: 5
 	  }, []), api_custom_element("ffmpeg-waveform", _ffmpegWaveform, {
 	    style: $cmp.waveformStyle,
 	    props: {
 	      "offset": $cmp.segment.sourceOffset,
 	      "source": $cmp.source
 	    },
-	    key: 5
+	    key: 6
 	  }, []), api_element("span", {
 	    classMap: {
 	      "handle": true,
 	      "handle--end": true
 	    },
-	    key: 6
+	    key: 7
 	  }, [])]) : null];
 	}
 
@@ -34521,21 +34537,24 @@
 	  const {
 	    _m0,
 	    _m1,
-	    _m2
+	    _m2,
+	    _m3
 	  } = $ctx;
 	  return api_iterator($cmp.trackSegments, function (trackSegment) {
 	    return api_custom_element("ffmpeg-audiotracksegment", _ffmpegAudiotracksegment, {
 	      style: trackSegment.style,
 	      props: {
+	        "tabIndex": "0",
 	        "track": $cmp.track,
 	        "frame": trackSegment.frame,
 	        "segment": trackSegment.segment
 	      },
 	      key: api_key(3, trackSegment.key),
 	      on: {
-	        "segmentdurationchange": _m0 || ($ctx._m0 = api_bind($cmp.handleSegmentDurationChange)),
-	        "segmentsourceoffsetchange": _m1 || ($ctx._m1 = api_bind($cmp.handleSegmentSourceOffsetChange)),
-	        "segmentmove": _m2 || ($ctx._m2 = api_bind($cmp.handleSegmentMove))
+	        "keyup": _m0 || ($ctx._m0 = api_bind($cmp.onSegmentKeyUp)),
+	        "segmentdurationchange": _m1 || ($ctx._m1 = api_bind($cmp.handleSegmentDurationChange)),
+	        "segmentsourceoffsetchange": _m2 || ($ctx._m2 = api_bind($cmp.handleSegmentSourceOffsetChange)),
+	        "segmentmove": _m3 || ($ctx._m3 = api_bind($cmp.handleSegmentMove))
 	      }
 	    }, []);
 	  });
@@ -34618,6 +34637,16 @@
 	    const audioSourceId = this.track.segments.getIn([segmentId, 'sourceId']);
 	    const audioSource = this.audioSources.data.get(audioSourceId);
 	    setSegmentDuration(this.track.id, segmentId, audioSource, time);
+	  }
+
+	  onSegmentKeyUp(evt) {
+	    const {
+	      id: segmentId
+	    } = evt.target.segment;
+
+	    if (evt.which === 8) {
+	      deleteSegment(this.track.id, segmentId);
+	    }
 	  }
 
 	}
@@ -34836,9 +34865,9 @@
 	    h: api_element,
 	    d: api_dynamic,
 	    k: api_key,
+	    b: api_bind,
 	    i: api_iterator,
 	    f: api_flatten,
-	    b: api_bind,
 	    gid: api_scoped_id
 	  } = $api;
 	  const {
@@ -34849,7 +34878,8 @@
 	    _m4,
 	    _m5,
 	    _m6,
-	    _m7
+	    _m7,
+	    _m8
 	  } = $ctx;
 	  return [api_element("header", {
 	    classMap: {
@@ -34878,39 +34908,56 @@
 	        "track": true,
 	        "track--summary": true
 	      },
-	      key: api_key(9, track.id)
-	    }, [api_dynamic(track.title)]);
+	      attrs: {
+	        "data-track-id": track.data.id,
+	        "tabindex": "0"
+	      },
+	      key: api_key(9, track.data.id),
+	      on: {
+	        "keyup": _m0 || ($ctx._m0 = api_bind($cmp.onTrackSummaryKeyUp))
+	      }
+	    }, [api_element("span", {
+	      classMap: {
+	        "track-index": true
+	      },
+	      key: 10
+	    }, [api_dynamic(track.index)]), api_element("h4", {
+	      classMap: {
+	        "track__title": true
+	      },
+	      key: 11
+	    }, [api_dynamic(track.data.title)])]);
 	  })])), api_element("div", {
 	    classMap: {
 	      "editor-container": true
 	    },
-	    key: 10
-	  }, [$cmp.editor.data.frame ? api_element("header", {
 	    key: 12
+	  }, [$cmp.editor.data.frame ? api_element("header", {
+	    key: 14
 	  }, [api_custom_element("ffmpeg-timeline", _ffmpegTimeline, {
-	    key: 13,
+	    key: 15,
 	    on: {
-	      "mouseenter": _m0 || ($ctx._m0 = api_bind($cmp.onTimelineMouseEnter)),
-	      "mouseleave": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineMouseLeave)),
-	      "timelinedragstart": _m2 || ($ctx._m2 = api_bind($cmp.onTimelineDragStart)),
-	      "timelinedragend": _m3 || ($ctx._m3 = api_bind($cmp.onTimelineDragEnd))
+	      "mouseenter": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineMouseEnter)),
+	      "mouseleave": _m2 || ($ctx._m2 = api_bind($cmp.onTimelineMouseLeave)),
+	      "timelinedragstart": _m3 || ($ctx._m3 = api_bind($cmp.onTimelineDragStart)),
+	      "timelinedragend": _m4 || ($ctx._m4 = api_bind($cmp.onTimelineDragEnd))
 	    }
 	  }, [])]) : null, $cmp.editor.data.frame ? api_element("section", {
 	    classMap: {
 	      "editor": true
 	    },
-	    key: 14,
+	    key: 16,
 	    on: {
-	      "mousemove": _m6 || ($ctx._m6 = api_bind($cmp.onEditorMouseMove)),
-	      "mouseleave": _m7 || ($ctx._m7 = api_bind($cmp.onEditorMouseLeave))
+	      "mousemove": _m7 || ($ctx._m7 = api_bind($cmp.onEditorMouseMove)),
+	      "mouseleave": _m8 || ($ctx._m8 = api_bind($cmp.onEditorMouseLeave))
 	    }
 	  }, [api_element("div", {
-	    key: 15,
+	    key: 17,
 	    on: {
-	      "click": _m4 || ($ctx._m4 = api_bind($cmp.handleEditorClick))
+	      "click": _m5 || ($ctx._m5 = api_bind($cmp.handleEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
-	    key: 16
+	    key: 18
 	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
@@ -34918,49 +34965,49 @@
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 17
+	    key: 19
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(19, track.id)
+	      key: api_key(21, track.data.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
-	        "track": track
+	        "track": track.data
 	      },
-	      key: 20
+	      key: 22
 	    }, [])]);
 	  }))]), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.cursor
 	    },
-	    key: 22
+	    key: 24
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 24
+	    key: 26
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.playbackTime,
 	      "playhead": true
 	    },
-	    key: 26
+	    key: 28
 	  }, []) : null, $cmp.hasDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.end,
 	      "userDrag": true
 	    },
-	    key: 28,
+	    key: 30,
 	    on: {
-	      "cursordrag": _m5 || ($ctx._m5 = api_bind($cmp.handleEditorEndDrag))
+	      "cursordrag": _m6 || ($ctx._m6 = api_bind($cmp.handleEditorEndDrag))
 	    }
 	  }, []) : null]) : null])]), api_element("footer", {
-	    key: 29
+	    key: 31
 	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 30
+	    key: 32
 	  }, [])])];
 	}
 
@@ -35061,7 +35108,19 @@
 
 
 	  get audioTracksArray() {
-	    return this.audioTracks.data.toList().toArray();
+	    return this.audioTracks.data.toList().toArray().map((track, index) => {
+	      return {
+	        index: index + 1,
+	        data: track
+	      };
+	    });
+	  }
+
+	  onTrackSummaryKeyUp(evt) {
+	    if (evt.which === 8) {
+	      const trackId = evt.target.getAttribute('data-track-id');
+	      deleteTrack(trackId);
+	    }
 	  }
 	  /*
 	   *

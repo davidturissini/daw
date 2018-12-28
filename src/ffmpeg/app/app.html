@@ -7,8 +7,9 @@
         <section class="tracks-summary">
             <header class="tracks-summary__header"></header>
             <template for:each={audioTracksArray} for:item="track">
-                <article class="track track--summary" key={track.id}>
-                    {track.title}
+                <article data-track-id={track.data.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.data.id}>
+                    <span class="track-index">{track.index}</span>
+                    <h4 class="track__title">{track.data.title}</h4>
                 </article>
             </template>
         </section>
@@ -27,8 +28,8 @@
                         <ffmpeg-grid></ffmpeg-grid>
                         <section class="waveforms-container" id="tracks">
                             <template for:each={audioTracksArray} for:item="track">
-                                <article class="track" key={track.id}>
-                                    <ffmpeg-audiotrack track={track}></ffmpeg-audiotrack>
+                                <article class="track" key={track.data.id}>
+                                    <ffmpeg-audiotrack track={track.data}></ffmpeg-audiotrack>
                                 </article>
                             </template>
                         </section>

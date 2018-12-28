@@ -1,7 +1,7 @@
 import { LightningElement, wire } from 'lwc';
 import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
 import { Time } from '../../util/time';
-import { audioTracks, createTrackAndSourceFile } from './../../wire/audiotrack';
+import { audioTracks, createTrackAndSourceFile, deleteTrack } from './../../wire/audiotrack';
 import { generateId } from './../../util/uniqueid';
 import { playheadSym } from './../../wire/playhead';
 
@@ -21,7 +21,20 @@ export default class App extends LightningElement {
     audioTracks;
 
     get audioTracksArray() {
-        return this.audioTracks.data.toList().toArray();
+        return this.audioTracks.data.toList().toArray()
+            .map((track, index) => {
+                return {
+                    index: index + 1,
+                    data: track,
+                };
+            })
+    }
+
+    onTrackSummaryKeyUp(evt) {
+        if (evt.which === 8) {
+            const trackId = evt.target.getAttribute('data-track-id');
+            deleteTrack(trackId);
+        }
     }
 
     /*

@@ -1,6 +1,8 @@
 <template>
     <template for:each={trackSegments} for:item="trackSegment">
         <ffmpeg-audiotracksegment
+            onkeyup={onSegmentKeyUp}
+            tabindex="0"
             track={track}
             onsegmentdurationchange={handleSegmentDurationChange}
             onsegmentsourceoffsetchange={handleSegmentSourceOffsetChange}

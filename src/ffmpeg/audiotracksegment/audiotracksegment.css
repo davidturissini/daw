@@ -6,8 +6,27 @@
     overflow: hidden;
 }
 
+:host(:focus) {
+    outline: none;
+}
+
+:host(:focus) .focus-indicator {
+    display: block;
+}
+
 :host(:hover) .handle {
     opacity: 1;
+}
+
+.focus-indicator {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.25);
 }
 
 .handle {

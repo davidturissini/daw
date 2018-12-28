@@ -5,6 +5,7 @@ import {
     moveSegment,
     moveSegmentSourceOffset,
     setSegmentDuration,
+    deleteSegment,
 } from './../../wire/audiotrack';
 
 export default class AudioTrack extends LightningElement {
@@ -82,6 +83,13 @@ export default class AudioTrack extends LightningElement {
             audioSource,
             time,
         );
+    }
+
+    onSegmentKeyUp(evt) {
+        const { id: segmentId } = evt.target.segment;
+        if (evt.which === 8) {
+            deleteSegment(this.track.id, segmentId);
+        }
     }
 
 }
