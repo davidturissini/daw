@@ -11,6 +11,7 @@ class Editor extends Record({
         new Time(0),
         Time.fromSeconds(10)
     ),
+    duration: Time.fromSeconds(15),
     frame: null,
     cursor: Time.fromSeconds(1),
     virtualCursor: Time.fromSeconds(2),
@@ -63,9 +64,24 @@ export function setCursorTime(time) {
     }
 }
 
+export function setVisibleRange(start, duration) {
+    const range = new AudioRange(start, duration);
+    editorSubject.next(
+        editorSubject.value.set('visibleRange', range)
+    );
+}
+
 export function setVisibleRangeStart(time) {
     const editor = editorSubject.value;
     const range = new AudioRange(time, editor.visibleRange.duration);
+    editorSubject.next(
+        editorSubject.value.set('visibleRange', range)
+    );
+}
+
+export function setVisibleRangeDuration(time) {
+    const editor = editorSubject.value;
+    const range = new AudioRange(editor.visibleRange.start, time);
     editorSubject.next(
         editorSubject.value.set('visibleRange', range)
     );
@@ -75,6 +91,15 @@ export function incrementVisibleRangeStart(incrementTime) {
     const editor = editorSubject.value;
     const time = new Time(incrementTime.milliseconds + editor.visibleRange.start.milliseconds);
     setVisibleRangeStart(time);
+}
+
+export function incrementVisibleRangeDuration(incrementTime) {
+    const editor = editorSubject.value;
+    const duration = new Time(incrementTime.milliseconds + editor.visibleRange.duration.milliseconds);
+    const range = new AudioRange(editor.visibleRange.start, duration);
+    editorSubject.next(
+        editorSubject.value.set('visibleRange', range)
+    );
 }
 
 export function setFrame(frame) {

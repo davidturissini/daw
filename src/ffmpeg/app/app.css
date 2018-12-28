@@ -13,6 +13,17 @@
     cursor: -webkit-grabbing;
 }
 
+.header {
+    background: rgba(163, 163, 163, 1);
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+}
+
+ffmpeg-audioscroll {
+    flex: 1 0 auto;
+}
+
 main {
     display: flex;
     cursor: auto;

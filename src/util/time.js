@@ -12,3 +12,11 @@ export class Time {
         return new Time(seconds * 1000);
     }
 }
+
+export function sum(first, second) {
+    return new Time(first.milliseconds + second.milliseconds);
+}
+
+export function invert(time) {
+    return new Time(-time.milliseconds);
+}

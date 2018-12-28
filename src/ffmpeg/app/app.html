@@ -1,6 +1,7 @@
 <template>
-    <header>
+    <header class="header">
         <ffmpeg-controls></ffmpeg-controls>
+        <ffmpeg-audioscroll></ffmpeg-audioscroll>
     </header>
     <main>
         <section class="tracks-summary">
@@ -38,6 +39,9 @@
                     </template>
                     <template if:true={hasPlaybackCursor}>
                         <ffmpeg-cursor time={playhead.data.playbackTime} playhead></ffmpeg-cursor>
+                    </template>
+                    <template if:true={hasDurationCursor}>
+                        <ffmpeg-cursor time={editor.data.duration}></ffmpeg-cursor>
                     </template>
                 </section>
             </template>

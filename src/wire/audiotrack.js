@@ -5,12 +5,27 @@ import { wireObservable } from '../util/wire-observable';
 import { createAudioSourceFromFile } from './audiosource';
 import { Time } from './../util/time';
 import { generateId } from './../util/uniqueid';
+import { AudioRange } from './../util/audiorange';
+
+class Color {
+    constructor(red, green, blue) {
+        this.red = red;
+        this.green = green;
+        this.blue = blue;
+    }
+
+    rgb() {
+        const { red, green, blue } = this;
+        return `rgb(${red}, ${green}, ${blue})`;
+    }
+}
 
 const tracksSubject = new BehaviorSubject(new ImmutableMap());
 export const stream = tracksSubject.asObservable();
 class AudioTrack extends Record({
     id: null,
     segments: new ImmutableMap(),
+    color: new Color(262, 162, 40)
 }) {
 
 }
@@ -22,6 +37,30 @@ class AudioTrackSegment extends Record({
     offset: null,
     sourceId: null,
 }) {}
+
+export function audioTrackRange(audioTrack) {
+    if (audioTrack.segments.size === 0) {
+        return null;
+    }
+    const [first, ...segments] = audioTrack.segments.toList().toArray();
+
+    let startMilliseconds = first.offset.milliseconds;
+    let endMilliseconds = first.offset.milliseconds + first.duration.milliseconds;
+
+    segments.forEach((segment) => {
+        const { offset, duration } = segment;
+        const segmentEnd = offset.milliseconds + duration.milliseconds;
+        if (offset.milliseconds < startMilliseconds) {
+            startMilliseconds = offset.milliseconds;
+        }
+
+        if (endMilliseconds < segmentEnd) {
+            endMilliseconds = segmentEnd;
+        }
+    });
+
+    return new AudioRange(new Time(startMilliseconds), new Time(endMilliseconds - startMilliseconds));
+}
 
 export function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
     const track = createTrack(trackId, []);

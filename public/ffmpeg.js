@@ -10292,12 +10292,12 @@
 	var wire_3 = wire.ValueChangedEvent;
 
 	function stylesheet(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;background: #f1f1f1;}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-right: 1px solid #d8d8d8;}\n.tracks-summary" + shadowSelector + " {flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 1.5rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;background: #f1f1f1;}\n.track--summary" + shadowSelector + " {padding: 1rem;box-sizing: border-box;border-right: 1px solid #d8d8d8;}\n.tracks-summary" + shadowSelector + " {flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 1.5rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
 	}
 	var _implicitStylesheets = [stylesheet];
 
 	function stylesheet$1(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {padding: 0.4rem;display: flex;justify-content: center;background: rgba(163, 163, 163, 1);}") : (hostSelector + " {padding: 0.4rem;display: flex;justify-content: center;background: rgba(163, 163, 163, 1);}")) + "\n.control" + shadowSelector + " {background: rgb(131, 131, 131);border: 0;display: flex;align-items: center;padding: 0.5rem;cursor: pointer;border-left: 1px inset #f1f1f1;}\n.control:focus" + shadowSelector + " {outline: none;}\n.control--playing" + shadowSelector + " {background: rgb(49, 99, 59);}\n.control:first-child" + shadowSelector + " {border-left: 0;}\n.buttons-container" + shadowSelector + " {display: flex;border-radius: 0.3rem;overflow: hidden;margin: 0 1rem;}\n.control-icon" + shadowSelector + " {display: inline-block;}\n.control-icon--play" + shadowSelector + " {height: 0;width: 0;border: 0.6em solid transparent;border-left: 1.2em solid #fff;margin-right: -0.7em;}\n.control-icon--stop" + shadowSelector + " {width: 1em;height: 1em;background: #fff;}\n.time-container" + shadowSelector + " {color: rgb(52, 52, 52);font-size: 0.8rem;display: flex;align-items: center;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;justify-content: center;margin: 0 0.5rem;}") : (hostSelector + " {display: flex;justify-content: center;margin: 0 0.5rem;}")) + "\n.control" + shadowSelector + " {background: rgb(131, 131, 131);border: 0;display: flex;align-items: center;padding: 0.5rem;cursor: pointer;border-left: 1px inset #f1f1f1;}\n.control:focus" + shadowSelector + " {outline: none;}\n.control--playing" + shadowSelector + " {background: rgb(49, 99, 59);}\n.control:first-child" + shadowSelector + " {border-left: 0;}\n.buttons-container" + shadowSelector + " {display: flex;border-radius: 0.3rem;overflow: hidden;margin: 0 1rem;}\n.control-icon" + shadowSelector + " {display: inline-block;}\n.control-icon--play" + shadowSelector + " {height: 0;width: 0;border: 0.6em solid transparent;border-left: 1.2em solid #fff;margin-right: -0.7em;}\n.control-icon--stop" + shadowSelector + " {width: 1em;height: 1em;background: #fff;}\n.time-container" + shadowSelector + " {color: rgb(52, 52, 52);font-size: 0.8rem;display: flex;align-items: center;}\n";
 	}
 	var _implicitStylesheets$1 = [stylesheet$1];
 
@@ -10609,6 +10609,12 @@
 	    return new Time(seconds * 1000);
 	  }
 
+	}
+	function sum(first, second) {
+	  return new Time(first.milliseconds + second.milliseconds);
+	}
+	function invert(time) {
+	  return new Time(-time.milliseconds);
 	}
 
 	function wireObservable(observable) {
@@ -23982,12 +23988,31 @@
 	  return id + '';
 	}
 
+	class Color {
+	  constructor(red, green, blue) {
+	    this.red = red;
+	    this.green = green;
+	    this.blue = blue;
+	  }
+
+	  rgb() {
+	    const {
+	      red,
+	      green,
+	      blue
+	    } = this;
+	    return `rgb(${red}, ${green}, ${blue})`;
+	  }
+
+	}
+
 	const tracksSubject = new BehaviorSubject(new Map$1());
 	const stream$1 = tracksSubject.asObservable();
 
 	class AudioTrack extends Record({
 	  id: null,
-	  segments: new Map$1()
+	  segments: new Map$1(),
+	  color: new Color(262, 162, 40)
 	}) {}
 
 	class AudioTrackSegment extends Record({
@@ -23998,6 +24023,31 @@
 	  sourceId: null
 	}) {}
 
+	function audioTrackRange(audioTrack) {
+	  if (audioTrack.segments.size === 0) {
+	    return null;
+	  }
+
+	  const [first, ...segments] = audioTrack.segments.toList().toArray();
+	  let startMilliseconds = first.offset.milliseconds;
+	  let endMilliseconds = first.offset.milliseconds + first.duration.milliseconds;
+	  segments.forEach(segment => {
+	    const {
+	      offset,
+	      duration
+	    } = segment;
+	    const segmentEnd = offset.milliseconds + duration.milliseconds;
+
+	    if (offset.milliseconds < startMilliseconds) {
+	      startMilliseconds = offset.milliseconds;
+	    }
+
+	    if (endMilliseconds < segmentEnd) {
+	      endMilliseconds = segmentEnd;
+	    }
+	  });
+	  return new AudioRange(new Time(startMilliseconds), new Time(endMilliseconds - startMilliseconds));
+	}
 	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
 	  const track = createTrack(trackId, []);
 	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
@@ -24567,6 +24617,7 @@
 
 	class Editor extends Record({
 	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
+	  duration: Time.fromSeconds(15),
 	  frame: null,
 	  cursor: Time.fromSeconds(1),
 	  virtualCursor: Time.fromSeconds(2),
@@ -24623,9 +24674,18 @@
 	    play(time);
 	  }
 	}
+	function setVisibleRange(start, duration) {
+	  const range$$1 = new AudioRange(start, duration);
+	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
+	}
 	function setVisibleRangeStart(time) {
 	  const editor = editorSubject.value;
 	  const range$$1 = new AudioRange(time, editor.visibleRange.duration);
+	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
+	}
+	function setVisibleRangeDuration(time) {
+	  const editor = editorSubject.value;
+	  const range$$1 = new AudioRange(editor.visibleRange.start, time);
 	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
 	}
 	function incrementVisibleRangeStart(incrementTime) {
@@ -24712,37 +24772,42 @@
 	});
 
 	function stylesheet$2(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: rgb(52, 52, 52);color: rgb(150, 150, 150);}") : (hostSelector + " {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: rgb(52, 52, 52);color: rgb(150, 150, 150);}")) + "\n.tick" + shadowSelector + " {display: inline-flex;flex-direction: column;position: absolute;left: 0;top: 0.25rem;z-index: 2;font-size: 0.8rem;}\n.tick-label" + shadowSelector + " {transform: translateX(-50%);margin-bottom: 0.5rem;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;height: 20px;background: rgb(96, 96, 96);border-radius: 0.3rem;overflow: hidden;position: relative;z-index: 1;}") : (hostSelector + " {display: block;height: 20px;background: rgb(96, 96, 96);border-radius: 0.3rem;overflow: hidden;position: relative;z-index: 1;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.window" + shadowSelector + " {height: 100%;border-radius: 0.3rem;overflow: hidden;background: rgba(255, 255, 255, 0.3);position: relative;z-index: 5;}\n.handle" + shadowSelector + " {width: 5px;position: absolute;left: 0;top: 0;bottom: 0;background-color: rgba(0, 0, 0, 0.7);cursor: col-resize;opacity: 0;transition: opacity 400ms ease;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\nul" + shadowSelector + " {margin: 0;padding: 0;position: absolute;left: 0;top: 0;right: 0;bottom: 0;z-index: 1;}\nli" + shadowSelector + " {list-style-type: none;height: 1px;}\n";
 	}
 	var _implicitStylesheets$2 = [stylesheet$2];
 
 	function tmpl$2($api, $cmp, $slotset, $ctx) {
 	  const {
-	    c: api_custom_element,
-	    h: api_element,
 	    k: api_key,
+	    h: api_element,
 	    i: api_iterator
 	  } = $api;
-	  return api_iterator($cmp.ticks, function (tick) {
-	    return api_element("span", {
-	      classMap: {
-	        "tick": true
-	      },
-	      style: tick.style,
-	      key: api_key(3, tick.time.milliseconds)
-	    }, [tick.renderLabel ? api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
-	      classMap: {
-	        "tick-label": true
-	      },
-	      props: {
-	        "time": tick.time
-	      },
-	      key: 5
-	    }, []) : null, api_element("span", {
-	      className: tick.indicatorClassName,
-	      key: 6
-	    }, [])]);
-	  });
+	  return [api_element("ul", {
+	    key: 2
+	  }, api_iterator($cmp.tracks, function (track) {
+	    return api_element("li", {
+	      style: track.style,
+	      key: api_key(4, track.id)
+	    }, []);
+	  })), api_element("div", {
+	    classMap: {
+	      "window": true
+	    },
+	    style: $cmp.windowStyle,
+	    key: 5
+	  }, [api_element("span", {
+	    classMap: {
+	      "handle": true,
+	      "handle--start": true
+	    },
+	    key: 6
+	  }, []), api_element("span", {
+	    classMap: {
+	      "handle": true,
+	      "handle--end": true
+	    },
+	    key: 7
+	  }, [])])];
 	}
 
 	var _tmpl$3 = engine_8(tmpl$2);
@@ -24752,8 +24817,8 @@
 	  tmpl$2.stylesheets.push.apply(tmpl$2.stylesheets, _implicitStylesheets$2);
 	}
 	tmpl$2.stylesheetTokens = {
-	  hostAttribute: "ffmpeg-timeline_timeline-host",
-	  shadowAttribute: "ffmpeg-timeline_timeline"
+	  hostAttribute: "ffmpeg-audioscroll_audioscroll-host",
+	  shadowAttribute: "ffmpeg-audioscroll_audioscroll"
 	};
 
 	var interact = createCommonjsModule(function (module, exports) {
@@ -31959,6 +32024,242 @@
 
 	var rafThrottle = unwrapExports(rafThrottle_1);
 
+	function pixelToTime(frame, duration, pixel) {
+	  const {
+	    width
+	  } = frame;
+	  const percent = pixel / width;
+	  const millisecond = percent * duration.milliseconds;
+	  return new Time(millisecond);
+	}
+
+	function timeToPixel(frame, visibleRange, time) {
+	  const {
+	    width
+	  } = frame;
+	  const percent = (time.milliseconds - visibleRange.start.milliseconds) / visibleRange.duration.milliseconds;
+	  return percent * width;
+	}
+
+	function durationToWidth(frame, duration, time) {
+	  const {
+	    width
+	  } = frame;
+	  const pixelsPerMillisecond = width / duration.milliseconds;
+	  return pixelsPerMillisecond * time.milliseconds;
+	}
+
+	class AudioScroll extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.audioTracks = void 0;
+	    this.editor = void 0;
+	    this.frame = null;
+
+	    this.updateFrame = () => {
+	      const rect = this.template.host.getBoundingClientRect();
+	      this.frame = {
+	        left: rect.left,
+	        top: rect.top,
+	        width: rect.width,
+	        height: rect.height
+	      };
+	    };
+
+	    this.onWindowDrag = rafThrottle(evt => {
+	      const {
+	        maxTime,
+	        editor,
+	        frame
+	      } = this;
+	      const time = pixelToTime(frame, maxTime, evt.dx);
+	      let nextTime = sum(time, editor.data.visibleRange.start);
+
+	      if (nextTime.milliseconds < 0) {
+	        nextTime = new Time(0);
+	      } else if (nextTime.milliseconds > maxTime.milliseconds - editor.data.visibleRange.duration.milliseconds) {
+	        nextTime = new Time(maxTime.milliseconds - editor.data.visibleRange.duration.milliseconds);
+	      }
+
+	      setVisibleRangeStart(nextTime);
+	    });
+	    this.onEndHandleDrag = rafThrottle(evt => {
+	      const {
+	        frame,
+	        maxTime,
+	        editor
+	      } = this;
+	      const time = pixelToTime(frame, maxTime, evt.dx);
+	      let nextDuration = sum(time, editor.data.visibleRange.duration);
+
+	      if (nextDuration.milliseconds + editor.data.visibleRange.start.milliseconds > this.maxTime.milliseconds) {
+	        nextDuration = new Time(this.maxTime.milliseconds - editor.data.visibleRange.start.milliseconds);
+	      }
+	      setVisibleRangeDuration(nextDuration);
+	    });
+	    this.onStartHandleDrag = rafThrottle(evt => {
+	      const {
+	        maxTime,
+	        editor,
+	        frame
+	      } = this;
+	      let diff = pixelToTime(frame, maxTime, evt.dx);
+	      let nextStart = sum(editor.data.visibleRange.start, diff);
+
+	      if (nextStart.milliseconds < 0) {
+	        diff = invert(editor.data.visibleRange.start);
+	        nextStart = new Time(0);
+	      }
+
+	      const nextDuration = sum(editor.data.visibleRange.duration, invert(diff));
+	      setVisibleRange(nextStart, nextDuration);
+	    });
+	  }
+
+	  get tracks() {
+	    const {
+	      frame
+	    } = this;
+	    return this.audioTracks.data.toList().filter(track => {
+	      return audioTrackRange(track);
+	    }).map(track => {
+	      const trackRange = audioTrackRange(track);
+	      const color = track.color.rgb();
+	      const width = durationToWidth(frame, this.maxTime, trackRange.duration);
+	      const x = timeToPixel(frame, {
+	        start: this.minTime,
+	        duration: this.maxTime
+	      }, trackRange.start);
+	      return {
+	        id: track.id,
+	        style: `background: ${color}; width: ${width}px; transform: translate(${x}px)`
+	      };
+	    });
+	  }
+	  /*
+	   *
+	   * Frame
+	   *
+	  */
+
+
+	  /*
+	   *
+	   * Window
+	   *
+	  */
+	  get maxTime() {
+	    return new Time(this.editor.data.duration.milliseconds + 2000);
+	  }
+
+	  get minTime() {
+	    return new Time(0);
+	  }
+
+	  get windowStyle() {
+	    if (!this.frame) {
+	      return '';
+	    }
+
+	    const range = {
+	      start: this.minTime,
+	      duration: this.maxTime
+	    };
+	    const px = timeToPixel(this.frame, range, this.editor.data.visibleRange.start);
+	    const translate = `translateX(${px}px)`;
+	    const width = durationToWidth(this.frame, range.duration, this.editor.data.visibleRange.duration);
+	    return `width: ${width}px; transform: ${translate}`;
+	  }
+
+	  /*
+	   *
+	   * Lifecycle
+	   *
+	  */
+	  renderedCallback() {
+	    if (this.frame === null) {
+	      this.updateFrame();
+	      interact(this.template.querySelector('.window')).draggable({
+	        onmove: this.onWindowDrag
+	      });
+	      interact(this.template.querySelector('.handle--end')).draggable({
+	        onmove: this.onEndHandleDrag
+	      });
+	      interact(this.template.querySelector('.handle--start')).draggable({
+	        onmove: this.onStartHandleDrag
+	      });
+	    }
+	  }
+
+	}
+
+	engine_11(AudioScroll, {
+	  wire: {
+	    audioTracks: {
+	      adapter: audioTracks,
+	      params: {},
+	      static: {}
+	    },
+	    editor: {
+	      adapter: editorSym,
+	      params: {},
+	      static: {}
+	    }
+	  },
+	  track: {
+	    frame: 1
+	  }
+	});
+
+	var _ffmpegAudioscroll = engine_10(AudioScroll, {
+	  tmpl: _tmpl$3
+	});
+
+	function stylesheet$3(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: rgb(52, 52, 52);color: rgb(150, 150, 150);}") : (hostSelector + " {display: block;height: 1rem;user-select: none;position: relative;z-index: 1;padding: 0.25rem 0;background: rgb(52, 52, 52);color: rgb(150, 150, 150);}")) + "\n.tick" + shadowSelector + " {display: inline-flex;flex-direction: column;position: absolute;left: 0;top: 0.25rem;z-index: 2;font-size: 0.8rem;}\n.tick-label" + shadowSelector + " {transform: translateX(-50%);margin-bottom: 0.5rem;}\n";
+	}
+	var _implicitStylesheets$3 = [stylesheet$3];
+
+	function tmpl$3($api, $cmp, $slotset, $ctx) {
+	  const {
+	    c: api_custom_element,
+	    h: api_element,
+	    k: api_key,
+	    i: api_iterator
+	  } = $api;
+	  return api_iterator($cmp.ticks, function (tick) {
+	    return api_element("span", {
+	      classMap: {
+	        "tick": true
+	      },
+	      style: tick.style,
+	      key: api_key(3, tick.time.milliseconds)
+	    }, [tick.renderLabel ? api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
+	      classMap: {
+	        "tick-label": true
+	      },
+	      props: {
+	        "time": tick.time
+	      },
+	      key: 5
+	    }, []) : null, api_element("span", {
+	      className: tick.indicatorClassName,
+	      key: 6
+	    }, [])]);
+	  });
+	}
+
+	var _tmpl$4 = engine_8(tmpl$3);
+	tmpl$3.stylesheets = [];
+
+	if (_implicitStylesheets$3) {
+	  tmpl$3.stylesheets.push.apply(tmpl$3.stylesheets, _implicitStylesheets$3);
+	}
+	tmpl$3.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-timeline_timeline-host",
+	  shadowAttribute: "ffmpeg-timeline_timeline"
+	};
+
 	const editor = Symbol();
 
 	class Timeline extends engine_5 {
@@ -32098,15 +32399,15 @@
 	});
 
 	var _ffmpegTimeline = engine_10(Timeline, {
-	  tmpl: _tmpl$3
+	  tmpl: _tmpl$4
 	});
 
-	function stylesheet$3(hostSelector, shadowSelector, nativeShadow) {
+	function stylesheet$4(hostSelector, shadowSelector, nativeShadow) {
 	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}") : (hostSelector + " {display: block;position: absolute;top: 0;left: 0;right: 0;bottom: 0;z-index: 1;}")) + "\nul" + shadowSelector + " {margin: 0;padding: 0;}\nli" + shadowSelector + " {position: absolute;top: 0;left: 0;bottom: 0;width: 1px;background: #f1f1f1;z-index: 1;list-style-type: none;}\n";
 	}
-	var _implicitStylesheets$3 = [stylesheet$3];
+	var _implicitStylesheets$4 = [stylesheet$4];
 
-	function tmpl$3($api, $cmp, $slotset, $ctx) {
+	function tmpl$4($api, $cmp, $slotset, $ctx) {
 	  const {
 	    k: api_key,
 	    h: api_element,
@@ -32122,13 +32423,13 @@
 	  }))];
 	}
 
-	var _tmpl$4 = engine_8(tmpl$3);
-	tmpl$3.stylesheets = [];
+	var _tmpl$5 = engine_8(tmpl$4);
+	tmpl$4.stylesheets = [];
 
-	if (_implicitStylesheets$3) {
-	  tmpl$3.stylesheets.push.apply(tmpl$3.stylesheets, _implicitStylesheets$3);
+	if (_implicitStylesheets$4) {
+	  tmpl$4.stylesheets.push.apply(tmpl$4.stylesheets, _implicitStylesheets$4);
 	}
-	tmpl$3.stylesheetTokens = {
+	tmpl$4.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-grid_grid-host",
 	  shadowAttribute: "ffmpeg-grid_grid"
 	};
@@ -32200,25 +32501,25 @@
 	});
 
 	var _ffmpegGrid = engine_10(Grid, {
-	  tmpl: _tmpl$4
+	  tmpl: _tmpl$5
 	});
 
-	function stylesheet$4(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n";
-	}
-	var _implicitStylesheets$4 = [stylesheet$4];
-
 	function stylesheet$5(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;background: #000;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n";
+	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n";
 	}
 	var _implicitStylesheets$5 = [stylesheet$5];
 
 	function stylesheet$6(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;background: #aaa;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;background: #aaa;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;background: #000;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n";
 	}
 	var _implicitStylesheets$6 = [stylesheet$6];
 
-	function tmpl$4($api, $cmp, $slotset, $ctx) {
+	function stylesheet$7(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: block;background: #aaa;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;background: #aaa;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	}
+	var _implicitStylesheets$7 = [stylesheet$7];
+
+	function tmpl$5($api, $cmp, $slotset, $ctx) {
 	  const {
 	    t: api_text,
 	    h: api_element
@@ -32232,13 +32533,13 @@
 	  }, []) : null : null];
 	}
 
-	var _tmpl$5 = engine_8(tmpl$4);
-	tmpl$4.stylesheets = [];
+	var _tmpl$6 = engine_8(tmpl$5);
+	tmpl$5.stylesheets = [];
 
-	if (_implicitStylesheets$6) {
-	  tmpl$4.stylesheets.push.apply(tmpl$4.stylesheets, _implicitStylesheets$6);
+	if (_implicitStylesheets$7) {
+	  tmpl$5.stylesheets.push.apply(tmpl$5.stylesheets, _implicitStylesheets$7);
 	}
-	tmpl$4.stylesheetTokens = {
+	tmpl$5.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-waveform_waveform-host",
 	  shadowAttribute: "ffmpeg-waveform_waveform"
 	};
@@ -33954,10 +34255,10 @@
 	});
 
 	var _ffmpegWaveform = engine_10(Waveform$1, {
-	  tmpl: _tmpl$5
+	  tmpl: _tmpl$6
 	});
 
-	function tmpl$5($api, $cmp, $slotset, $ctx) {
+	function tmpl$6($api, $cmp, $slotset, $ctx) {
 	  const {
 	    h: api_element,
 	    c: api_custom_element
@@ -33984,13 +34285,13 @@
 	  }, []) : null];
 	}
 
-	var _tmpl$6 = engine_8(tmpl$5);
-	tmpl$5.stylesheets = [];
+	var _tmpl$7 = engine_8(tmpl$6);
+	tmpl$6.stylesheets = [];
 
-	if (_implicitStylesheets$5) {
-	  tmpl$5.stylesheets.push.apply(tmpl$5.stylesheets, _implicitStylesheets$5);
+	if (_implicitStylesheets$6) {
+	  tmpl$6.stylesheets.push.apply(tmpl$6.stylesheets, _implicitStylesheets$6);
 	}
-	tmpl$5.stylesheetTokens = {
+	tmpl$6.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-audiotracksegment_audiotracksegment-host",
 	  shadowAttribute: "ffmpeg-audiotracksegment_audiotracksegment"
 	};
@@ -34153,10 +34454,10 @@
 	});
 
 	var _ffmpegAudiotracksegment = engine_10(AudioTrackSegment$1, {
-	  tmpl: _tmpl$6
+	  tmpl: _tmpl$7
 	});
 
-	function tmpl$6($api, $cmp, $slotset, $ctx) {
+	function tmpl$7($api, $cmp, $slotset, $ctx) {
 	  const {
 	    k: api_key,
 	    b: api_bind,
@@ -34185,13 +34486,13 @@
 	  });
 	}
 
-	var _tmpl$7 = engine_8(tmpl$6);
-	tmpl$6.stylesheets = [];
+	var _tmpl$8 = engine_8(tmpl$7);
+	tmpl$7.stylesheets = [];
 
-	if (_implicitStylesheets$4) {
-	  tmpl$6.stylesheets.push.apply(tmpl$6.stylesheets, _implicitStylesheets$4);
+	if (_implicitStylesheets$5) {
+	  tmpl$7.stylesheets.push.apply(tmpl$7.stylesheets, _implicitStylesheets$5);
 	}
-	tmpl$6.stylesheetTokens = {
+	tmpl$7.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-audiotrack_audiotrack-host",
 	  shadowAttribute: "ffmpeg-audiotrack_audiotrack"
 	};
@@ -34287,15 +34588,15 @@
 	});
 
 	var _ffmpegAudiotrack = engine_10(AudioTrack$1, {
-	  tmpl: _tmpl$7
+	  tmpl: _tmpl$8
 	});
 
-	function stylesheet$7(hostSelector, shadowSelector, nativeShadow) {
+	function stylesheet$8(hostSelector, shadowSelector, nativeShadow) {
 	  return ".line" + shadowSelector + " {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 0;border-right:1px solid #000;z-index: 5;pointer-events: none;}\n.line--virtual" + shadowSelector + " {border-right:1px dashed rgba(0, 0, 0, 0.4);}\n.line--playhead" + shadowSelector + " {border-right:1px solid rgb(200, 200, 200);}\n";
 	}
-	var _implicitStylesheets$7 = [stylesheet$7];
+	var _implicitStylesheets$8 = [stylesheet$8];
 
-	function tmpl$7($api, $cmp, $slotset, $ctx) {
+	function tmpl$8($api, $cmp, $slotset, $ctx) {
 	  const {
 	    h: api_element
 	  } = $api;
@@ -34306,13 +34607,13 @@
 	  }, [])];
 	}
 
-	var _tmpl$8 = engine_8(tmpl$7);
-	tmpl$7.stylesheets = [];
+	var _tmpl$9 = engine_8(tmpl$8);
+	tmpl$8.stylesheets = [];
 
-	if (_implicitStylesheets$7) {
-	  tmpl$7.stylesheets.push.apply(tmpl$7.stylesheets, _implicitStylesheets$7);
+	if (_implicitStylesheets$8) {
+	  tmpl$8.stylesheets.push.apply(tmpl$8.stylesheets, _implicitStylesheets$8);
 	}
-	tmpl$7.stylesheetTokens = {
+	tmpl$8.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-cursor_cursor-host",
 	  shadowAttribute: "ffmpeg-cursor_cursor"
 	};
@@ -34377,10 +34678,10 @@
 	});
 
 	var _ffmpegCursor = engine_10(Cursor, {
-	  tmpl: _tmpl$8
+	  tmpl: _tmpl$9
 	});
 
-	function tmpl$8($api, $cmp, $slotset, $ctx) {
+	function tmpl$9($api, $cmp, $slotset, $ctx) {
 	  const {
 	    b: api_bind,
 	    h: api_element
@@ -34402,9 +34703,9 @@
 	  }, [])];
 	}
 
-	var _tmpl$9 = engine_8(tmpl$8);
-	tmpl$8.stylesheets = [];
-	tmpl$8.stylesheetTokens = {
+	var _tmpl$a = engine_8(tmpl$9);
+	tmpl$9.stylesheets = [];
+	tmpl$9.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-masterout_masterout-host",
 	  shadowAttribute: "ffmpeg-masterout_masterout"
 	};
@@ -34432,10 +34733,10 @@
 	});
 
 	var _ffmpegMasterout = engine_10(MasterOut$1, {
-	  tmpl: _tmpl$9
+	  tmpl: _tmpl$a
 	});
 
-	function tmpl$9($api, $cmp, $slotset, $ctx) {
+	function tmpl$a($api, $cmp, $slotset, $ctx) {
 	  const {
 	    c: api_custom_element,
 	    h: api_element,
@@ -34456,38 +34757,43 @@
 	    _m6
 	  } = $ctx;
 	  return [api_element("header", {
+	    classMap: {
+	      "header": true
+	    },
 	    key: 2
 	  }, [api_custom_element("ffmpeg-controls", _ffmpegControls, {
 	    key: 3
-	  }, [])]), api_element("main", {
+	  }, []), api_custom_element("ffmpeg-audioscroll", _ffmpegAudioscroll, {
 	    key: 4
+	  }, [])]), api_element("main", {
+	    key: 5
 	  }, [api_element("section", {
 	    classMap: {
 	      "tracks-summary": true
 	    },
-	    key: 5
+	    key: 6
 	  }, api_flatten([api_element("header", {
 	    classMap: {
 	      "tracks-summary__header": true
 	    },
-	    key: 6
+	    key: 7
 	  }, []), api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true,
 	        "track--summary": true
 	      },
-	      key: api_key(8, track.id)
+	      key: api_key(9, track.id)
 	    }, [api_dynamic(track.title)]);
 	  })])), api_element("div", {
 	    classMap: {
 	      "editor-container": true
 	    },
-	    key: 9
+	    key: 10
 	  }, [$cmp.editor.data.frame ? api_element("header", {
-	    key: 11
+	    key: 12
 	  }, [api_custom_element("ffmpeg-timeline", _ffmpegTimeline, {
-	    key: 12,
+	    key: 13,
 	    on: {
 	      "mouseenter": _m0 || ($ctx._m0 = api_bind($cmp.onTimelineMouseEnter)),
 	      "mouseleave": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineMouseLeave)),
@@ -34498,14 +34804,14 @@
 	    classMap: {
 	      "editor": true
 	    },
-	    key: 13,
+	    key: 14,
 	    on: {
 	      "mousemove": _m4 || ($ctx._m4 = api_bind($cmp.onEditorMouseMove)),
 	      "mouseleave": _m5 || ($ctx._m5 = api_bind($cmp.onEditorMouseLeave)),
 	      "click": _m6 || ($ctx._m6 = api_bind($cmp.handleEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
-	    key: 14
+	    key: 15
 	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
@@ -34513,50 +34819,55 @@
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 15
+	    key: 16
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(17, track.id)
+	      key: api_key(18, track.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
 	        "track": track
 	      },
-	      key: 18
+	      key: 19
 	    }, [])]);
 	  })), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.cursor
 	    },
-	    key: 20
+	    key: 21
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 22
+	    key: 23
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.playbackTime,
 	      "playhead": true
 	    },
-	    key: 24
-	  }, []) : null]) : null])]), api_element("footer", {
 	    key: 25
+	  }, []) : null, $cmp.hasDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
+	    props: {
+	      "time": $cmp.editor.data.duration
+	    },
+	    key: 27
+	  }, []) : null]) : null])]), api_element("footer", {
+	    key: 28
 	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 26
+	    key: 29
 	  }, [])])];
 	}
 
-	var _tmpl$a = engine_8(tmpl$9);
-	tmpl$9.stylesheets = [];
+	var _tmpl$b = engine_8(tmpl$a);
+	tmpl$a.stylesheets = [];
 
 	if (_implicitStylesheets) {
-	  tmpl$9.stylesheets.push.apply(tmpl$9.stylesheets, _implicitStylesheets);
+	  tmpl$a.stylesheets.push.apply(tmpl$a.stylesheets, _implicitStylesheets);
 	}
-	tmpl$9.stylesheetTokens = {
+	tmpl$a.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-app_app-host",
 	  shadowAttribute: "ffmpeg-app_app"
 	};
@@ -34677,6 +34988,10 @@
 	    return this.playhead.data.playbackTime !== null;
 	  }
 
+	  get hasDurationCursor() {
+	    return this.editor && this.timeInWindow(this.editor.data.duration);
+	  }
+
 	  timeInWindow(time) {
 	    if (this.editor) {
 	      const {
@@ -34749,7 +35064,7 @@
 	});
 
 	var App$1 = engine_10(App, {
-	  tmpl: _tmpl$a
+	  tmpl: _tmpl$b
 	});
 
 	wire_1(engine_6);

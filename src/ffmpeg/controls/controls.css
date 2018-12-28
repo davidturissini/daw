@@ -1,8 +1,7 @@
 :host {
-    padding: 0.4rem;
     display: flex;
     justify-content: center;
-    background: rgba(163, 163, 163, 1);
+    margin: 0 0.5rem;
 }
 
 .control {
