@@ -209,10 +209,6 @@ export default class App extends LightningElement {
         return this.playhead.data.playbackTime !== null;
     }
 
-    get hasDurationCursor() {
-        return this.editor && this.timeInWindow(this.editor.data.end);
-    }
-
     timeInWindow(time) {
         if(this.editor) {
             const { visibleRange } = this.editor.data;

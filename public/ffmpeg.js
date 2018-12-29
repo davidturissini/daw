@@ -24403,13 +24403,46 @@
 	  duration: null,
 	  offset: null,
 	  sourceId: null
-	}) {}
+	}) {
+	  get end() {
+	    return sum(this.offset, this.duration);
+	  }
+
+	  get range() {
+	    return new AudioRange(this.offset, this.duration);
+	  }
+
+	  get sourceRange() {
+	    return new AudioRange(this.sourceOffset, this.duration);
+	  }
+
+	}
 
 	class TimeRangeSelection extends Record({
 	  range: null,
 	  segmentId: null
 	}) {}
 
+	function getTrackDuration(track) {
+	  return track.segments.toList().toArray().reduce((seed, segment) => {
+	    if (gt(segment.end, seed)) {
+	      return segment.end;
+	    }
+
+	    return seed;
+	  }, new Time(0));
+	}
+	function getTracksDuration(tracks) {
+	  return tracks.toList().toArray().reduce((seed, track) => {
+	    const trackDuration = getTrackDuration(track);
+
+	    if (gt(trackDuration, seed)) {
+	      return trackDuration;
+	    }
+
+	    return seed;
+	  }, new Time(0));
+	}
 	function audioTrackRange(audioTrack) {
 	  if (audioTrack.segments.size === 0) {
 	    return null;
@@ -24852,11 +24885,11 @@
 
 	class Editor extends Record({
 	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
-	  end: Time.fromSeconds(9),
+	  end: Time.fromSeconds(30),
 	  frame: null,
 	  cursor: Time.fromSeconds(1),
 	  virtualCursor: Time.fromSeconds(2),
-	  quanitization: 1 / 8
+	  quanitization: 1 / 4
 	}) {
 	  get duration() {
 	    return new Time(this.end.milliseconds - this.cursor.milliseconds);
@@ -24913,19 +24946,30 @@
 	    play(time);
 	  }
 	}
+	const quanitizationValues = [1 / 64, 1 / 32, 1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2, 4, 5, 10, 30, 60];
 	function setVisibleRange(start, duration) {
 	  const range$$1 = new AudioRange(start, duration);
-	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
+	  let next = editorSubject.value.set('visibleRange', range$$1);
+	  const max$$1 = 40;
+	  let value = quanitizationValues[0];
+
+	  for (let i = 0; i < quanitizationValues.length; i += 1) {
+	    const ticks = duration.seconds / quanitizationValues[i];
+
+	    if (ticks <= max$$1) {
+	      value = quanitizationValues[i];
+	      break;
+	    }
+	  }
+
+	  next = next.set('quanitization', value);
+	  editorSubject.next(next);
 	}
 	function setVisibleRangeStart(time) {
-	  const editor = editorSubject.value;
-	  const range$$1 = new AudioRange(time, editor.visibleRange.duration);
-	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
+	  setVisibleRange(time, editorSubject.value.visibleRange.duration);
 	}
 	function setVisibleRangeDuration(time) {
-	  const editor = editorSubject.value;
-	  const range$$1 = new AudioRange(editor.visibleRange.start, time);
-	  editorSubject.next(editorSubject.value.set('visibleRange', range$$1));
+	  setVisibleRange(editorSubject.value.visibleRange.start, time);
 	}
 	function incrementVisibleRangeStart(incrementTime) {
 	  const editor = editorSubject.value;
@@ -24950,6 +24994,17 @@
 
 	  if (playhead.playbackTime.milliseconds > middleTime.milliseconds) {
 	    incrementVisibleRangeStart(new Time(playhead.playbackTime.milliseconds - middleTime.milliseconds));
+	  }
+	});
+	stream$1.subscribe(audioTracks$$1 => {
+	  if (audioTracks$$1.size === 0) {
+	    return;
+	  }
+
+	  const tracksDuration = getTracksDuration(audioTracks$$1);
+
+	  if (gt(tracksDuration, editorSubject.value.end)) {
+	    editorSubject.next(editorSubject.value.set('end', tracksDuration));
 	  }
 	});
 	const editorSym = Symbol();
@@ -32477,8 +32532,8 @@
 	function tmpl$3($api, $cmp, $slotset, $ctx) {
 	  const {
 	    c: api_custom_element,
-	    h: api_element,
 	    k: api_key,
+	    h: api_element,
 	    i: api_iterator
 	  } = $api;
 	  return api_iterator($cmp.ticks, function (tick) {
@@ -32488,17 +32543,14 @@
 	      },
 	      style: tick.style,
 	      key: api_key(3, tick.time.milliseconds)
-	    }, [tick.renderLabel ? api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
+	    }, [api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
 	      classMap: {
 	        "tick-label": true
 	      },
 	      props: {
 	        "time": tick.time
 	      },
-	      key: 5
-	    }, []) : null, api_element("span", {
-	      className: tick.indicatorClassName,
-	      key: 6
+	      key: 4
 	    }, [])]);
 	  });
 	}
@@ -32571,8 +32623,7 @@
 	  */
 
 
-	  getTickValues(range) {
-	    const tickDistanceMs = 1000;
+	  getTickValues(range, tickDistanceMs) {
 	    const remainder = range.start.milliseconds % tickDistanceMs;
 	    const lower = remainder === 0 ? range.start.milliseconds : range.start.milliseconds + (tickDistanceMs - range.start.milliseconds % tickDistanceMs);
 	    const upper = Math.floor(range.start.milliseconds + range.duration.milliseconds);
@@ -32589,28 +32640,18 @@
 	  updateTicks(editor) {
 	    this.ticks = [];
 	    const {
-	      visibleRange
+	      visibleRange,
+	      quanitization
 	    } = editor;
-	    const {
-	      width
-	    } = editor.frame;
-	    const startMS = visibleRange.start.milliseconds;
-	    const tickValues = this.getTickValues(visibleRange);
-	    const tickWidth = width / tickValues.length;
-	    const startOffsetMS = tickValues[0] - startMS;
-	    const offsetPx = tickWidth * (startOffsetMS / 1000);
+	    const tickDistanceMs = quanitization * 4 * 1000;
+	    const tickValues = this.getTickValues(visibleRange, tickDistanceMs);
 
 	    for (let i = 0; i < tickValues.length; i += 1) {
-	      const millisecond = tickValues[i];
-	      const evenHalfSecond = millisecond % 500 === 0;
-	      const evenSecond = millisecond % 1000 === 0;
-	      const indicatorClassName = evenSecond ? 'tick-indicator--second' : '';
-	      const translateX = offsetPx + tickWidth * i;
+	      const time = new Time(tickValues[i]);
+	      const translateX = editor.timeToPixel(time);
 	      this.ticks.push({
-	        renderLabel: evenHalfSecond,
-	        time: new Time(millisecond),
-	        style: `transform: translateX(${translateX}px)`,
-	        indicatorClassName: `tick-indicator ${indicatorClassName}`
+	        time,
+	        style: `transform: translateX(${translateX}px)`
 	      });
 	    }
 	  }
@@ -35186,8 +35227,7 @@
 	    _m4,
 	    _m5,
 	    _m6,
-	    _m7,
-	    _m8
+	    _m7
 	  } = $ctx;
 	  return [api_element("header", {
 	    classMap: {
@@ -35254,8 +35294,8 @@
 	    className: $cmp.editorClassName,
 	    key: 16,
 	    on: {
-	      "mousemove": _m7 || ($ctx._m7 = api_bind($cmp.onEditorMouseMove)),
-	      "mouseleave": _m8 || ($ctx._m8 = api_bind($cmp.onEditorMouseLeave))
+	      "mousemove": _m6 || ($ctx._m6 = api_bind($cmp.onEditorMouseMove)),
+	      "mouseleave": _m7 || ($ctx._m7 = api_bind($cmp.onEditorMouseLeave))
 	    }
 	  }, [$cmp.isSelecting ? api_custom_element("ffmpeg-selection", _ffmpegSelection, {
 	    props: {
@@ -35306,19 +35346,10 @@
 	      "playhead": true
 	    },
 	    key: 30
-	  }, []) : null, $cmp.hasDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
-	    props: {
-	      "time": $cmp.editor.data.end,
-	      "userDrag": true
-	    },
-	    key: 32,
-	    on: {
-	      "cursordrag": _m6 || ($ctx._m6 = api_bind($cmp.handleEditorEndDrag))
-	    }
 	  }, []) : null]) : null])]), api_element("footer", {
-	    key: 33
+	    key: 31
 	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 34
+	    key: 32
 	  }, [])])];
 	}
 
@@ -35500,10 +35531,6 @@
 
 	  get hasPlaybackCursor() {
 	    return this.playhead.data.playbackTime !== null;
-	  }
-
-	  get hasDurationCursor() {
-	    return this.editor && this.timeInWindow(this.editor.data.end);
 	  }
 
 	  timeInWindow(time) {

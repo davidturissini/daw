@@ -1,22 +1,23 @@
 import { register } from 'wire-service';
 import { AudioRange } from './../util/audiorange';
-import { Time } from './../util/time';
+import { Time, gt } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Record } from 'immutable';
 import { play, isPlaying, stream as playheadStream } from './playhead';
+import { stream as audioTrackStream, getTracksDuration } from './audiotrack';
 
 class Editor extends Record({
     visibleRange: new AudioRange(
         new Time(0),
         Time.fromSeconds(10)
     ),
-    end: Time.fromSeconds(9),
+    end: Time.fromSeconds(30),
     frame: null,
     cursor: Time.fromSeconds(1),
     virtualCursor: Time.fromSeconds(2),
-    quanitization: 1 / 8
+    quanitization: 1 / 4
 }) {
     get duration() {
         return new Time(this.end.milliseconds - this.cursor.milliseconds);
@@ -69,27 +70,45 @@ export function setCursorTime(time) {
     }
 }
 
+const quanitizationValues = [
+    1 / 64,
+    1 / 32,
+    1 / 16,
+    1 / 8,
+    1 / 4,
+    1 / 2,
+    1,
+    2,
+    4,
+    5,
+    10,
+    30,
+    60
+];
+
 export function setVisibleRange(start, duration) {
     const range = new AudioRange(start, duration);
-    editorSubject.next(
-        editorSubject.value.set('visibleRange', range)
-    );
+    let next = editorSubject.value.set('visibleRange', range);
+
+    const max = 40;
+    let value = quanitizationValues[0];
+    for(let i = 0; i < quanitizationValues.length; i += 1) {
+        const ticks = duration.seconds / quanitizationValues[i];
+        if (ticks <= max) {
+            value = quanitizationValues[i];
+            break;
+        }
+    }
+    next = next.set('quanitization', value);
+    editorSubject.next(next);
 }
 
 export function setVisibleRangeStart(time) {
-    const editor = editorSubject.value;
-    const range = new AudioRange(time, editor.visibleRange.duration);
-    editorSubject.next(
-        editorSubject.value.set('visibleRange', range)
-    );
+    setVisibleRange(time, editorSubject.value.visibleRange.duration);
 }
 
 export function setVisibleRangeDuration(time) {
-    const editor = editorSubject.value;
-    const range = new AudioRange(editor.visibleRange.start, time);
-    editorSubject.next(
-        editorSubject.value.set('visibleRange', range)
-    );
+    setVisibleRange(editorSubject.value.visibleRange.start, time);
 }
 
 export function incrementVisibleRangeStart(incrementTime) {
@@ -101,10 +120,7 @@ export function incrementVisibleRangeStart(incrementTime) {
 export function incrementVisibleRangeDuration(incrementTime) {
     const editor = editorSubject.value;
     const duration = new Time(incrementTime.milliseconds + editor.visibleRange.duration.milliseconds);
-    const range = new AudioRange(editor.visibleRange.start, duration);
-    editorSubject.next(
-        editorSubject.value.set('visibleRange', range)
-    );
+    setVisibleRange(editor.visibleRange.start, duration);
 }
 
 export function incrementEnd(incrementTime) {
@@ -138,6 +154,18 @@ playheadStream.pipe(
         )
     }
 })
+
+audioTrackStream.subscribe((audioTracks) => {
+    if (audioTracks.size === 0) {
+        return;
+    }
+    const tracksDuration = getTracksDuration(audioTracks);
+    if (gt(tracksDuration, editorSubject.value.end)) {
+        editorSubject.next(
+            editorSubject.value.set('end', tracksDuration)
+        );
+    }
+});
 
 export const editorSym = Symbol();
 

@@ -36,10 +36,9 @@ export default class Timeline extends LightningElement {
     */
     @track ticks = [];
 
-    getTickValues(range) {
-        const tickDistanceMs = 1000;
+    getTickValues(range, tickDistanceMs) {
         const remainder = (range.start.milliseconds % tickDistanceMs);
-        const lower = remainder === 0 ? range.start.milliseconds : range.start.milliseconds + (tickDistanceMs - (range.start.milliseconds  % tickDistanceMs));
+        const lower = remainder === 0 ? range.start.milliseconds : range.start.milliseconds + (tickDistanceMs - (range.start.milliseconds % tickDistanceMs));
         const upper = Math.floor(range.start.milliseconds + range.duration.milliseconds);
         const numberOfTicks = (upper - lower) / tickDistanceMs;
         const values = [];
@@ -51,26 +50,16 @@ export default class Timeline extends LightningElement {
 
     updateTicks(editor) {
         this.ticks = [];
-        const { visibleRange } = editor;
-        const { width } = editor.frame;
-        const startMS = visibleRange.start.milliseconds;
+        const { visibleRange, quanitization } = editor;
+        const tickDistanceMs = (quanitization * 4) * 1000;
 
-        const tickValues = this.getTickValues(visibleRange);
-        const tickWidth = width / tickValues.length;
-        const startOffsetMS = tickValues[0] - startMS;
-        const offsetPx = tickWidth * (startOffsetMS / 1000);
-
+        const tickValues = this.getTickValues(visibleRange, tickDistanceMs);
         for(let i = 0; i < tickValues.length; i += 1) {
-            const millisecond = tickValues[i];
-            const evenHalfSecond = (millisecond % 500) === 0;
-            const evenSecond = (millisecond % 1000) === 0;
-            const indicatorClassName = evenSecond ? 'tick-indicator--second' : '';
-            const translateX = offsetPx + (tickWidth * i);
+            const time = new Time(tickValues[i]);
+            const translateX = editor.timeToPixel(time);
             this.ticks.push({
-                renderLabel: evenHalfSecond,
-                time: new Time(millisecond),
+                time,
                 style: `transform: translateX(${translateX}px)`,
-                indicatorClassName: `tick-indicator ${indicatorClassName}`,
             });
         }
     }

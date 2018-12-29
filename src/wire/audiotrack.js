@@ -3,7 +3,7 @@ import { Record, Map as ImmutableMap, List } from 'immutable';
 import { BehaviorSubject } from 'rxjs';
 import { wireObservable } from '../util/wire-observable';
 import { createAudioSourceFromFile } from './audiosource';
-import { Time, sum as sumTime, subtract as subtractTime } from './../util/time';
+import { Time, sum as sumTime, subtract as subtractTime, gt } from './../util/time';
 import { generateId } from './../util/uniqueid';
 import { AudioRange, split as splitAudioRange, relative as makeRelativeAudioRange } from './../util/audiorange';
 import { segmentInTimeRange } from './audiorender';
@@ -40,21 +40,42 @@ class AudioTrackSegment extends Record({
     duration: null,
     offset: null,
     sourceId: null,
-}) {}
+}) {
+    get end() {
+        return sumTime(this.offset, this.duration);
+    }
+
+    get range() {
+        return new AudioRange(this.offset, this.duration);
+    }
+
+    get sourceRange() {
+        return new AudioRange(this.sourceOffset, this.duration);
+    }
+}
 
 class TimeRangeSelection extends Record({
     range: null,
     segmentId: null,
 }) {}
 
-function segmentAtTimeRange(segments, range) {
-    return segments.filter((segment) => {
-        return segmentInTimeRange(
-            segment,
-            range.start,
-            range.duration,
-        );
-    });
+export function getTrackDuration(track) {
+    return track.segments.toList().toArray().reduce((seed, segment) => {
+        if (gt(segment.end, seed)) {
+            return segment.end;
+        }
+        return seed;
+    }, new Time(0));
+}
+
+export function getTracksDuration(tracks) {
+    return tracks.toList().toArray().reduce((seed, track) => {
+        const trackDuration = getTrackDuration(track);
+        if (gt(trackDuration, seed)) {
+            return trackDuration;
+        }
+        return seed;
+    }, new Time(0));
 }
 
 export function audioTrackRange(audioTrack) {

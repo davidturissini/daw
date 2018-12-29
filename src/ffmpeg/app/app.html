@@ -46,9 +46,6 @@
                     <template if:true={hasPlaybackCursor}>
                         <ffmpeg-cursor time={playhead.data.playbackTime} playhead></ffmpeg-cursor>
                     </template>
-                    <template if:true={hasDurationCursor}>
-                        <ffmpeg-cursor oncursordrag={handleEditorEndDrag} time={editor.data.end} user-drag></ffmpeg-cursor>
-                    </template>
                 </section>
             </template>
         </div>
