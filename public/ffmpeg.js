@@ -10611,6 +10611,9 @@
 	function gt(left, right) {
 	  return left.milliseconds > right.milliseconds;
 	}
+	function lt(left, right) {
+	  return left.milliseconds < right.milliseconds;
+	}
 	function subtract(first, second) {
 	  return sum(first, invert(second));
 	}
@@ -10622,6 +10625,18 @@
 	  }
 
 	}
+	function relative(targetRange, absoluteRange) {
+	  const start = subtract(absoluteRange.start, targetRange.start);
+	  return new AudioRange(start, absoluteRange.duration);
+	}
+	function split(targetRange, relativeRange) {
+	  const firstStart = targetRange.start;
+	  const firstDuration = relativeRange.start;
+	  const splitEnd = sum(firstStart, sum(firstDuration, relativeRange.duration));
+	  const secondStart = splitEnd;
+	  const secondDuration = subtract(targetRange.duration, sum(firstDuration, relativeRange.duration));
+	  return [new AudioRange(firstStart, firstDuration), new AudioRange(secondStart, secondDuration)];
+	}
 	function clamp(haystack, needle) {
 	  let start = needle.start;
 	  let duration = needle.duration;
@@ -10630,7 +10645,6 @@
 	    const cliped = subtract(haystack.start, start);
 	    start = haystack.start;
 	    duration = subtract(needle.duration, cliped);
-	    console.log(duration);
 	  }
 
 	  const haystackEnd = sum(haystack.start, haystack.duration);
@@ -24173,173 +24187,6 @@
 	  return id + '';
 	}
 
-	class Color {
-	  constructor(red, green, blue) {
-	    this.red = red;
-	    this.green = green;
-	    this.blue = blue;
-	  }
-
-	  rgb() {
-	    const {
-	      red,
-	      green,
-	      blue
-	    } = this;
-	    return `rgb(${red}, ${green}, ${blue})`;
-	  }
-
-	}
-
-	const tracksSubject = new BehaviorSubject(new Map$1());
-	const stream$1 = tracksSubject.asObservable();
-
-	class AudioTrack extends Record({
-	  title: null,
-	  id: null,
-	  segments: new Map$1(),
-	  selections: new List(),
-	  color: new Color(202, 162, 40),
-	  frame: null
-	}) {}
-
-	class AudioTrackSegment extends Record({
-	  id: null,
-	  sourceOffset: null,
-	  duration: null,
-	  offset: null,
-	  sourceId: null
-	}) {}
-
-	function audioTrackRange(audioTrack) {
-	  if (audioTrack.segments.size === 0) {
-	    return null;
-	  }
-
-	  const [first, ...segments] = audioTrack.segments.toList().toArray();
-	  let startMilliseconds = first.offset.milliseconds;
-	  let endMilliseconds = first.offset.milliseconds + first.duration.milliseconds;
-	  segments.forEach(segment => {
-	    const {
-	      offset,
-	      duration
-	    } = segment;
-	    const segmentEnd = offset.milliseconds + duration.milliseconds;
-
-	    if (offset.milliseconds < startMilliseconds) {
-	      startMilliseconds = offset.milliseconds;
-	    }
-
-	    if (endMilliseconds < segmentEnd) {
-	      endMilliseconds = segmentEnd;
-	    }
-	  });
-	  return new AudioRange(new Time(startMilliseconds), new Time(endMilliseconds - startMilliseconds));
-	}
-	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
-	  const track = createTrack(trackId, []);
-	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
-	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
-	      const segmentId = generateId();
-	      return segments.set(segmentId, new AudioTrackSegment({
-	        id: segmentId,
-	        sourceOffset: new Time(0),
-	        duration: audioSource.duration,
-	        offset: trackOffset,
-	        sourceId
-	      }));
-	    }));
-	  });
-	}
-	function moveSegment(trackId, segmentId, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const nextOffsetMilliseconds = segment.offset.milliseconds + time.milliseconds < 0 ? 0 : segment.offset.milliseconds + time.milliseconds;
-	    const newOffset = new Time(nextOffsetMilliseconds);
-	    return segment.set('offset', newOffset);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-
-	function getSourceOffsetDiff(time, sourceOffsetMilliseconds, durationMilliseconds) {
-	  const end = durationMilliseconds + sourceOffsetMilliseconds - 250; // dont let segment ever be less than 100 milliseconds
-
-	  if (sourceOffsetMilliseconds + time.milliseconds < 0) {
-	    return -sourceOffsetMilliseconds;
-	  } else if (sourceOffsetMilliseconds + time.milliseconds > end) {
-	    return end - sourceOffsetMilliseconds;
-	  }
-
-	  return time.milliseconds;
-	}
-
-	function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentDurationMilliseconds, sourceDurationMilliseconds) {
-	  const next = time.milliseconds + segmentDurationMilliseconds;
-	  const max = sourceDurationMilliseconds - segmentSourceOffsetMilliseconds;
-	  const min = 250;
-
-	  if (next > max) {
-	    return max;
-	  } else if (next < min) {
-	    return min;
-	  }
-
-	  return next;
-	}
-
-	function setSegmentDuration(trackId, segmentId, audioSource, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
-	    const newDuration = new Time(nextDurationMilliseconds);
-	    return segment.set('duration', newDuration);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-	function deleteSegment(trackId, segmentId) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.deleteIn(['segments', segmentId]);
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-	function deleteTrack(trackId) {
-	  tracksSubject.next(tracksSubject.value.delete(trackId));
-	}
-	function setSelectionRanges(trackId, ranges) {
-	  tracksSubject.next(tracksSubject.value.setIn([trackId, 'selections'], ranges));
-	}
-	function moveSegmentSourceOffset(trackId, segmentId, time) {
-	  const track = tracksSubject.value.get(trackId);
-	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
-	    const {
-	      milliseconds: sourceOffsetMilliseconds
-	    } = segment.sourceOffset;
-	    const diff = getSourceOffsetDiff(time, sourceOffsetMilliseconds, segment.duration.milliseconds);
-	    const newSourceOffset = new Time(sourceOffsetMilliseconds + diff);
-	    const newOffset = new Time(segment.offset.milliseconds + diff);
-	    const newDuration = new Time(segment.duration.milliseconds - diff);
-	    return segment.set('sourceOffset', newSourceOffset).set('offset', newOffset).set('duration', newDuration);
-	  });
-	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
-	}
-	function createTrack(id, segments) {
-	  const segmentsMap = segments.reduce((seed, segment) => {
-	    return seed.set(segment.id, segment);
-	  }, new Map$1());
-	  const trackLen = tracksSubject.value.size;
-	  const audioTrack = new AudioTrack({
-	    title: `Track ${trackLen + 1}`,
-	    id,
-	    segments: segmentsMap
-	  });
-	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
-	  return audioTrack;
-	}
-	function setTrackFrame(trackId, frame) {
-	  tracksSubject.next(tracksSubject.value.setIn([trackId, 'frame'], frame));
-	}
-	const audioTracks = Symbol();
-	wire_2(audioTracks, wireObservable(stream$1));
-
 	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
 	  const {
 	    sampleRate,
@@ -24423,26 +24270,6 @@
 	  return context.startRendering();
 	}
 
-	class MasterOut extends Record({
-	  gain: 5
-	}) {}
-
-	const masterOutSubject = new BehaviorSubject(new MasterOut());
-	const stream$2 = masterOutSubject.asObservable();
-	function connectMasterOut(bufferSource) {
-	  const gainNode = audioContext.createGain();
-	  stream$2.subscribe(masterOut => {
-	    gainNode.gain.value = masterOut.gain;
-	  });
-	  bufferSource.connect(gainNode);
-	  gainNode.connect(audioContext.destination);
-	}
-	function setGain(value) {
-	  masterOutSubject.next(masterOutSubject.value.set('gain', value));
-	}
-	const masterOutSym = Symbol();
-	wire_2(masterOutSym, wireObservable(stream$2));
-
 	/*
 	 *
 	 *
@@ -24457,27 +24284,16 @@
 	/* global duration */
 	) {
 	  const {
-	    milliseconds: cursorMilliseconds
-	  } = startTime;
-	  const {
 	    sourceOffset,
 	    duration: segmentDuration,
 	    offset
 	  } = segment;
-	  const {
-	    milliseconds: offsetMilliseconds
-	  } = offset;
-	  const {
-	    milliseconds: segmentDurationMilliseconds
-	  } = segmentDuration;
-	  const playbackEndMs = duration.milliseconds + startTime.milliseconds;
-	  const segmentEndMilliseconds = offsetMilliseconds + segmentDurationMilliseconds;
-	  const cursorDiff = offsetMilliseconds > cursorMilliseconds ? 0 : cursorMilliseconds - offsetMilliseconds;
-	  const durationDiff = segmentEndMilliseconds < playbackEndMs ? 0 : segmentEndMilliseconds - playbackEndMs;
+	  const range = clamp(new AudioRange(startTime, duration), new AudioRange(offset, segmentDuration));
+	  const diff = subtract(range.start, offset);
 	  return {
-	    audio: subbuffer(audioSource.audio, sourceOffset.milliseconds + cursorDiff, segmentDuration.milliseconds - durationDiff - cursorDiff),
+	    audio: subbuffer(audioSource.audio, sum(diff, sourceOffset).milliseconds, segmentDuration.milliseconds),
 	    offset,
-	    segmentDuration
+	    duration: segmentDuration
 	  };
 	}
 	/*
@@ -24492,7 +24308,7 @@
 	    milliseconds: cursorMilliseconds
 	  } = startTime;
 	  return renderedSegments.reduce((seed, renderedSegment, index) => {
-	    const previous = seed[index - 1];
+	    const previous = renderedSegments[index - 1];
 	    const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
 	    const startMs = renderedSegment.offset.milliseconds;
 	    const diff = startMs - previousEndMs;
@@ -24507,16 +24323,9 @@
 	}
 
 	function segmentInTimeRange(segment, startTime, duration) {
-	  const {
-	    milliseconds: cursorMilliseconds
-	  } = startTime;
-	  const {
-	    milliseconds: playbackDurationMilliseconds
-	  } = duration;
-	  const playbackEndMilliseconds = cursorMilliseconds + playbackDurationMilliseconds;
-	  const startMilliseconds = segment.offset.milliseconds;
-	  const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
-	  return cursorMilliseconds >= startMilliseconds && cursorMilliseconds < endMilliseconds || playbackEndMilliseconds >= startMilliseconds && playbackEndMilliseconds < endMilliseconds;
+	  const segmentEnd = sum(segment.offset, segment.duration);
+	  const end = sum(startTime, duration);
+	  return gt(segment.offset, startTime) && lt(segment.offset, end) || lt(segmentEnd, end) && gt(segmentEnd, startTime) || lt(segment.offset, startTime) && gt(segmentEnd, startTime);
 	}
 	/*
 	 *
@@ -24557,6 +24366,229 @@
 
 	  return mix(audioContext, audioBuffers);
 	}
+
+	class Color {
+	  constructor(red, green, blue) {
+	    this.red = red;
+	    this.green = green;
+	    this.blue = blue;
+	  }
+
+	  rgb() {
+	    const {
+	      red,
+	      green,
+	      blue
+	    } = this;
+	    return `rgb(${red}, ${green}, ${blue})`;
+	  }
+
+	}
+
+	const tracksSubject = new BehaviorSubject(new Map$1());
+	const stream$1 = tracksSubject.asObservable();
+
+	class AudioTrack extends Record({
+	  title: null,
+	  id: null,
+	  segments: new Map$1(),
+	  selections: new List(),
+	  color: new Color(202, 162, 40),
+	  frame: null
+	}) {}
+
+	class AudioTrackSegment extends Record({
+	  id: null,
+	  sourceOffset: null,
+	  duration: null,
+	  offset: null,
+	  sourceId: null
+	}) {}
+
+	class TimeRangeSelection extends Record({
+	  range: null,
+	  segmentId: null
+	}) {}
+
+	function audioTrackRange(audioTrack) {
+	  if (audioTrack.segments.size === 0) {
+	    return null;
+	  }
+
+	  const [first, ...segments] = audioTrack.segments.toList().toArray();
+	  let startMilliseconds = first.offset.milliseconds;
+	  let endMilliseconds = first.offset.milliseconds + first.duration.milliseconds;
+	  segments.forEach(segment => {
+	    const {
+	      offset,
+	      duration
+	    } = segment;
+	    const segmentEnd = offset.milliseconds + duration.milliseconds;
+
+	    if (offset.milliseconds < startMilliseconds) {
+	      startMilliseconds = offset.milliseconds;
+	    }
+
+	    if (endMilliseconds < segmentEnd) {
+	      endMilliseconds = segmentEnd;
+	    }
+	  });
+	  return new AudioRange(new Time(startMilliseconds), new Time(endMilliseconds - startMilliseconds));
+	}
+	function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
+	  createTrack(trackId, []);
+	  createAudioSourceFromFile(sourceId, sourceFile).then(audioSource => {
+	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
+	      const segmentId = generateId();
+	      return segments.set(segmentId, new AudioTrackSegment({
+	        id: segmentId,
+	        sourceOffset: new Time(0),
+	        duration: audioSource.duration,
+	        offset: trackOffset,
+	        sourceId
+	      }));
+	    }));
+	  });
+	}
+	function moveSegment(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const nextOffsetMilliseconds = segment.offset.milliseconds + time.milliseconds < 0 ? 0 : segment.offset.milliseconds + time.milliseconds;
+	    const newOffset = new Time(nextOffsetMilliseconds);
+	    return segment.set('offset', newOffset);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+
+	function getSourceOffsetDiff(time, sourceOffsetMilliseconds, durationMilliseconds) {
+	  const end = durationMilliseconds + sourceOffsetMilliseconds - 250; // dont let segment ever be less than 100 milliseconds
+
+	  if (sourceOffsetMilliseconds + time.milliseconds < 0) {
+	    return -sourceOffsetMilliseconds;
+	  } else if (sourceOffsetMilliseconds + time.milliseconds > end) {
+	    return end - sourceOffsetMilliseconds;
+	  }
+
+	  return time.milliseconds;
+	}
+
+	function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentDurationMilliseconds, sourceDurationMilliseconds) {
+	  const next = time.milliseconds + segmentDurationMilliseconds;
+	  const max = sourceDurationMilliseconds - segmentSourceOffsetMilliseconds;
+	  const min = 250;
+
+	  if (next > max) {
+	    return max;
+	  } else if (next < min) {
+	    return min;
+	  }
+
+	  return next;
+	}
+
+	function setSegmentDuration(trackId, segmentId, audioSource, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
+	    const newDuration = new Time(nextDurationMilliseconds);
+	    return segment.set('duration', newDuration);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function deleteSegment(trackId, segmentId) {
+	  tracksSubject.next(tracksSubject.value.deleteIn([trackId, 'segments', segmentId]));
+	}
+	function deleteTrack(trackId) {
+	  tracksSubject.next(tracksSubject.value.delete(trackId));
+	}
+	function setSegmentSelection(trackId, segmentId, range$$1) {
+	  const selection = new TimeRangeSelection({
+	    segmentId,
+	    range: range$$1
+	  });
+	  tracksSubject.next(tracksSubject.value.updateIn([trackId, 'selections'], selections => {
+	    return selections.push(selection);
+	  }));
+	}
+
+	function splitSegment(segment, range$$1) {
+	  const segmentRange = new AudioRange(segment.offset, segment.duration);
+	  const relative$$1 = relative(segmentRange, range$$1);
+	  return split(segmentRange, relative$$1).map(split$$1 => {
+	    const diff = subtract(split$$1.start, segment.offset);
+	    return segment.set('offset', split$$1.start).set('duration', split$$1.duration).set('id', generateId()).set('sourceOffset', sum(segment.sourceOffset, diff));
+	  });
+	}
+
+	function deleteSelections() {
+	  tracksSubject.value.forEach(track => {
+	    track.selections.forEach(selection => {
+	      const {
+	        range: selectionRange,
+	        segmentId
+	      } = selection;
+	      const segment = track.segments.get(segmentId);
+	      const split$$1 = splitSegment(segment, selectionRange);
+	      tracksSubject.next(tracksSubject.value.updateIn([track.id, 'segments'], segments => {
+	        return split$$1.reduce((seed, seg) => {
+	          return seed.set(seg.id, seg);
+	        }, segments.delete(segment.id));
+	      }));
+	    });
+	  });
+	}
+	function moveSegmentSourceOffset(trackId, segmentId, time) {
+	  const track = tracksSubject.value.get(trackId);
+	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
+	    const {
+	      milliseconds: sourceOffsetMilliseconds
+	    } = segment.sourceOffset;
+	    const diff = getSourceOffsetDiff(time, sourceOffsetMilliseconds, segment.duration.milliseconds);
+	    const newSourceOffset = new Time(sourceOffsetMilliseconds + diff);
+	    const newOffset = new Time(segment.offset.milliseconds + diff);
+	    const newDuration = new Time(segment.duration.milliseconds - diff);
+	    return segment.set('sourceOffset', newSourceOffset).set('offset', newOffset).set('duration', newDuration);
+	  });
+	  tracksSubject.next(tracksSubject.value.set(trackId, updatedTrack));
+	}
+	function createTrack(id, segments) {
+	  const segmentsMap = segments.reduce((seed, segment) => {
+	    return seed.set(segment.id, segment);
+	  }, new Map$1());
+	  const trackLen = tracksSubject.value.size;
+	  const audioTrack = new AudioTrack({
+	    title: `Track ${trackLen + 1}`,
+	    id,
+	    segments: segmentsMap
+	  });
+	  tracksSubject.next(tracksSubject.value.set(id, audioTrack));
+	  return audioTrack;
+	}
+	function setTrackFrame(trackId, frame) {
+	  tracksSubject.next(tracksSubject.value.setIn([trackId, 'frame'], frame));
+	}
+	const audioTracks = Symbol();
+	wire_2(audioTracks, wireObservable(stream$1));
+
+	class MasterOut extends Record({
+	  gain: 5
+	}) {}
+
+	const masterOutSubject = new BehaviorSubject(new MasterOut());
+	const stream$2 = masterOutSubject.asObservable();
+	function connectMasterOut(bufferSource) {
+	  const gainNode = audioContext.createGain();
+	  stream$2.subscribe(masterOut => {
+	    gainNode.gain.value = masterOut.gain;
+	  });
+	  bufferSource.connect(gainNode);
+	  gainNode.connect(audioContext.destination);
+	}
+	function setGain(value) {
+	  masterOutSubject.next(masterOutSubject.value.set('gain', value));
+	}
+	const masterOutSym = Symbol();
+	wire_2(masterOutSym, wireObservable(stream$2));
 
 	class Playhead extends Record({
 	  playbackTime: null
@@ -32625,7 +32657,7 @@
 	});
 
 	function stylesheet$4(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {position: absolute;left: 0;top: 0;z-index: 10;}") : (hostSelector + " {position: absolute;left: 0;top: 0;z-index: 10;}")) + "\n.rect" + shadowSelector + " {width: 1px;height: 1px;background: rgba(180, 214, 255, 0.4);transform-origin: 0 0;}\n";
+	  return "\n" + (nativeShadow ? (":host {position: absolute;left: 0;top: 0;z-index: 10;}") : (hostSelector + " {position: absolute;left: 0;top: 0;z-index: 10;}")) + "\n.rect" + shadowSelector + " {width: 1px;height: 1px;background: rgba(96, 130, 171, 0.4);;transform-origin: 0 0;}\n";
 	}
 	var _implicitStylesheets$4 = [stylesheet$4];
 
@@ -32787,7 +32819,7 @@
 	});
 
 	function stylesheet$6(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n.selection" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 4;background: rgba(180, 214, 255, 0.4);}\n";
+	  return "\n" + (nativeShadow ? (":host {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}") : (hostSelector + " {overflow: hidden;display: block;height: 100%;position: relative;z-index: 1;}")) + "\nffmpeg-audiotracksegment" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 1;}\n.selection" + shadowSelector + " {position: absolute;left: 0;top: 0;bottom: 0;z-index: 4;background: rgba(96, 130, 171, 0.4);}\n";
 	}
 	var _implicitStylesheets$6 = [stylesheet$6];
 
@@ -34823,8 +34855,11 @@
 
 	  get trackSelections() {
 	    return this.track.selections.toList().map((selection, index) => {
-	      const x = this.editor.data.timeToPixel(selection.start);
-	      const width = this.editor.data.timeToPixel(selection.duration);
+	      const {
+	        range
+	      } = selection;
+	      const x = this.editor.data.timeToPixel(range.start);
+	      const width = this.editor.data.timeToPixel(range.duration);
 	      const style = `width:${width}px;transform: translateX(${x}px)`;
 	      return {
 	        id: index,
@@ -35332,7 +35367,7 @@
 	      }
 
 	      return frame;
-	    })).pipe(takeUntil(fromEvent(document, 'keyup')));
+	    })).pipe(takeUntil(fromEvent(document, 'mouseup')));
 	  }));
 	}
 
@@ -35525,10 +35560,8 @@
 	    this.selectionSubscription = fromEvent(document, 'keydown').pipe(filter(evt => evt.key === 'Meta')).pipe(take(1)).pipe(switchMap(() => {
 	      return userSelection(this.template.querySelector('.editor'));
 	    })).subscribe(frame => {
-	      console.log('next');
 	      this.selectionFrame = frame;
 	    }, null, () => {
-	      console.log('done');
 	      const frame = this.selectionFrame;
 	      const startTime = this.editor.data.absolutePixelToTime(frame.left);
 	      const duration = this.editor.data.pixelToTime(frame.width);
@@ -35542,12 +35575,12 @@
 	        const midHeight = audioTrackFrame.height / 2;
 	        return frame.top <= audioTrackFrame.top + midHeight && frameBottom >= bottom - midHeight;
 	      }).forEach(audioTrack => {
-	        const ranges = audioTrack.segments.filter(segment => {
+	        audioTrack.segments.filter(segment => {
 	          return segmentInTimeRange(segment, range$$1.start, range$$1.duration);
-	        }).map(segment => {
-	          return clamp(new AudioRange(segment.offset, segment.duration), range$$1);
-	        }).toList();
-	        setSelectionRanges(audioTrack.id, ranges);
+	        }).forEach(segment => {
+	          const clamped = clamp(new AudioRange(segment.offset, segment.duration), range$$1);
+	          setSegmentSelection(audioTrack.id, segment.id, clamped);
+	        });
 	      });
 	      this.selectionFrame = null;
 	      this.listenForSelection();
@@ -35562,6 +35595,11 @@
 
 	  connectedCallback() {
 	    window.addEventListener('resize', this.updateFrame);
+	    document.addEventListener('keyup', evt => {
+	      if (evt.which === 8) {
+	        deleteSelections();
+	      }
+	    });
 	    this.addEventListener('dragover', this.onDragOver);
 	    this.addEventListener('drop', this.onDrop);
 	    this.listenForSelection();

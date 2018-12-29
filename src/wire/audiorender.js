@@ -1,6 +1,12 @@
 import { subbuffer, mix, join, silence } from './../lib/soundlab';
 import { audioContext } from './audiosource';
-import { stream as masterOutStream } from './masterout';
+import {
+    sum as sumTime,
+    lt,
+    gt,
+    subtract as subtractTime,
+} from './../util/time';
+import { clamp, AudioRange } from './../util/audiorange';
 
 /*
  *
@@ -11,36 +17,25 @@ import { stream as masterOutStream } from './masterout';
  */
 function renderSegment(segment, audioSource, startTime /* global start */, duration /* global duration */) {
     const {
-        milliseconds: cursorMilliseconds,
-    } = startTime;
-    const {
         sourceOffset,
         duration: segmentDuration,
         offset,
     } = segment;
-    const {
-        milliseconds: offsetMilliseconds,
-    } = offset;
 
-    const {
-        milliseconds: segmentDurationMilliseconds,
-    } = segmentDuration;
+    const range = clamp(
+        new AudioRange(startTime, duration),
+        new AudioRange(offset, segmentDuration)
+    );
 
-    const playbackEndMs = duration.milliseconds + startTime.milliseconds;
-
-    const segmentEndMilliseconds = offsetMilliseconds + segmentDurationMilliseconds;
-
-    const cursorDiff = offsetMilliseconds > cursorMilliseconds ? 0 : cursorMilliseconds - offsetMilliseconds;
-    const durationDiff = segmentEndMilliseconds < playbackEndMs ? 0 : segmentEndMilliseconds - playbackEndMs;
-
+    const diff = subtractTime(range.start, offset);
     return {
         audio: subbuffer(
             audioSource.audio,
-            sourceOffset.milliseconds + cursorDiff,
-            (segmentDuration.milliseconds - durationDiff) - cursorDiff,
+            sumTime(diff, sourceOffset).milliseconds,
+            segmentDuration.milliseconds,
         ),
         offset,
-        segmentDuration,
+        duration: segmentDuration,
     };
 }
 
@@ -55,7 +50,7 @@ function fillRenderedSegments(renderedSegments, startTime) {
     } = startTime;
 
     return renderedSegments.reduce((seed, renderedSegment, index) => {
-        const previous = seed[index - 1];
+        const previous = renderedSegments[index - 1];
         const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
         const startMs = renderedSegment.offset.milliseconds;
         const diff = startMs - previousEndMs;
@@ -75,27 +70,22 @@ function fillRenderedSegments(renderedSegments, startTime) {
 }
 
 export function segmentInTimeRange(segment, startTime, duration) {
-    const {
-        milliseconds: cursorMilliseconds,
-    } = startTime;
-
-    const {
-        milliseconds: playbackDurationMilliseconds,
-    } = duration;
-
-    const playbackEndMilliseconds = cursorMilliseconds + playbackDurationMilliseconds;
-    const startMilliseconds = segment.offset.milliseconds;
-    const endMilliseconds = startMilliseconds + segment.duration.milliseconds;
+    const segmentEnd = sumTime(segment.offset, segment.duration);
+    const end = sumTime(startTime, duration);
     return (
         (
-            cursorMilliseconds >= startMilliseconds &&
-            cursorMilliseconds < endMilliseconds
+            gt(segment.offset, startTime) &&
+            lt(segment.offset, end)
         ) ||
         (
-            playbackEndMilliseconds >= startMilliseconds &&
-            playbackEndMilliseconds < endMilliseconds
+            lt(segmentEnd, end) &&
+            gt(segmentEnd, startTime)
+        ) ||
+        (
+            lt(segment.offset, startTime) &&
+            gt(segmentEnd, startTime)
         )
-    );
+    )
 }
 
 /*

@@ -3,9 +3,10 @@ import { Record, Map as ImmutableMap, List } from 'immutable';
 import { BehaviorSubject } from 'rxjs';
 import { wireObservable } from '../util/wire-observable';
 import { createAudioSourceFromFile } from './audiosource';
-import { Time } from './../util/time';
+import { Time, sum as sumTime, subtract as subtractTime } from './../util/time';
 import { generateId } from './../util/uniqueid';
-import { AudioRange } from './../util/audiorange';
+import { AudioRange, split as splitAudioRange, relative as makeRelativeAudioRange } from './../util/audiorange';
+import { segmentInTimeRange } from './audiorender';
 
 class Color {
     constructor(red, green, blue) {
@@ -41,6 +42,21 @@ class AudioTrackSegment extends Record({
     sourceId: null,
 }) {}
 
+class TimeRangeSelection extends Record({
+    range: null,
+    segmentId: null,
+}) {}
+
+function segmentAtTimeRange(segments, range) {
+    return segments.filter((segment) => {
+        return segmentInTimeRange(
+            segment,
+            range.start,
+            range.duration,
+        );
+    });
+}
+
 export function audioTrackRange(audioTrack) {
     if (audioTrack.segments.size === 0) {
         return null;
@@ -66,7 +82,7 @@ export function audioTrackRange(audioTrack) {
 }
 
 export function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOffset) {
-    const track = createTrack(trackId, []);
+    createTrack(trackId, []);
     createAudioSourceFromFile(sourceId, sourceFile)
         .then((audioSource) => {
             tracksSubject.next(
@@ -136,11 +152,8 @@ export function setSegmentDuration(trackId, segmentId, audioSource, time) {
 }
 
 export function deleteSegment(trackId, segmentId) {
-    const track = tracksSubject.value.get(trackId);
-
-    const updatedTrack = track.deleteIn(['segments', segmentId]);
     tracksSubject.next(
-        tracksSubject.value.set(trackId, updatedTrack)
+        tracksSubject.value.deleteIn([trackId, 'segments', segmentId])
     );
 }
 
@@ -150,10 +163,47 @@ export function deleteTrack(trackId) {
     );
 }
 
-export function setSelectionRanges(trackId, ranges) {
+export function setSegmentSelection(trackId, segmentId, range) {
+    const selection = new TimeRangeSelection({
+        segmentId,
+        range,
+    });
     tracksSubject.next(
-        tracksSubject.value.setIn([trackId, 'selections'], ranges)
+        tracksSubject.value.updateIn([trackId, 'selections'], (selections) => {
+            return selections.push(selection)
+        })
     );
+}
+
+function splitSegment(segment, range) {
+    const segmentRange = new AudioRange(segment.offset, segment.duration);
+    const relative = makeRelativeAudioRange(segmentRange, range);
+
+    return splitAudioRange(segmentRange, relative).map((split) => {
+        const diff = subtractTime(split.start, segment.offset);
+        return segment.set('offset', split.start)
+            .set('duration', split.duration)
+            .set('id', generateId())
+            .set('sourceOffset', sumTime(segment.sourceOffset, diff));
+    });
+}
+
+export function deleteSelections() {
+    tracksSubject.value.forEach((track) => {
+        track.selections.forEach((selection) => {
+            const { range: selectionRange, segmentId } = selection;
+            const segment = track.segments.get(segmentId);
+            const split = splitSegment(segment, selectionRange);
+
+            tracksSubject.next(
+                tracksSubject.value.updateIn([track.id, 'segments'], (segments) => {
+                    return split.reduce((seed, seg) => {
+                        return seed.set(seg.id, seg);
+                    }, segments.delete(segment.id))
+                })
+            )
+        })
+    })
 }
 
 export function moveSegmentSourceOffset(trackId, segmentId, time) {

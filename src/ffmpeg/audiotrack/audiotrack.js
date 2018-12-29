@@ -20,8 +20,9 @@ export default class AudioTrack extends LightningElement {
 
     get trackSelections() {
         return this.track.selections.toList().map((selection, index) => {
-            const x = this.editor.data.timeToPixel(selection.start);
-            const width = this.editor.data.timeToPixel(selection.duration);
+            const { range } = selection;
+            const x = this.editor.data.timeToPixel(range.start);
+            const width = this.editor.data.timeToPixel(range.duration);
             const style = `width:${width}px;transform: translateX(${x}px)`
             return {
                 id: index,

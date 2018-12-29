@@ -7,6 +7,31 @@ export class AudioRange {
     }
 }
 
+export function relative(targetRange, absoluteRange) {
+    const start = subtractTime(absoluteRange.start, targetRange.start);
+    return new AudioRange(start, absoluteRange.duration);
+}
+
+export function split(targetRange, relativeRange) {
+    const firstStart = targetRange.start;
+    const firstDuration = relativeRange.start;
+
+    const splitEnd = sumTime(firstStart, sumTime(firstDuration, relativeRange.duration));
+    const secondStart = splitEnd;
+    const secondDuration = subtractTime(targetRange.duration, sumTime(firstDuration, relativeRange.duration));
+
+    return [
+        new AudioRange(
+            firstStart,
+            firstDuration,
+        ),
+        new AudioRange(
+            secondStart,
+            secondDuration,
+        )
+    ];
+}
+
 export function clamp(haystack, needle) {
     let start = needle.start;
     let duration = needle.duration;
@@ -15,7 +40,6 @@ export function clamp(haystack, needle) {
         const cliped = subtractTime(haystack.start, start)
         start = haystack.start;
         duration = subtractTime(needle.duration, cliped);
-        console.log(duration);
     }
 
     const haystackEnd = sumTime(haystack.start, haystack.duration);

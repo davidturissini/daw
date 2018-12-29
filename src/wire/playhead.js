@@ -38,6 +38,7 @@ class PlaybackQueue {
         if (duration.milliseconds + time.milliseconds > end.milliseconds) {
             audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
         }
+
         renderAudioBuffer(
             time,
             audioBufferDuration,

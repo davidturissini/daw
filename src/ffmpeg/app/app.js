@@ -2,60 +2,66 @@ import { LightningElement, wire, track } from 'lwc';
 import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
 import { Time } from '../../util/time';
 import { fromEvent as observableFromEvent } from 'rxjs';
-import { repeatWhen, takeUntil,filter, take, switchMap, flatMap, map } from 'rxjs/operators';
-import { audioTracks, createTrackAndSourceFile, deleteTrack, setSelectionRanges } from './../../wire/audiotrack';
+import { takeUntil,filter, take, switchMap, flatMap, map } from 'rxjs/operators';
+import {
+    audioTracks,
+    createTrackAndSourceFile,
+    deleteTrack,
+    setSegmentSelection,
+    deleteSelections,
+} from './../../wire/audiotrack';
 import { generateId } from './../../util/uniqueid';
 import { playheadSym } from './../../wire/playhead';
 import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
 import { segmentInTimeRange } from './../../wire/audiorender';
 
 function userSelection(elm) {
-            const selectionFrame = {
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0,
-            };
+    const selectionFrame = {
+        left: 0,
+        top: 0,
+        width: 0,
+        height: 0,
+    };
 
-            const rect = elm.getBoundingClientRect();
-            const offsetX = rect.x;
-            const offsetY = rect.y;
+    const rect = elm.getBoundingClientRect();
+    const offsetX = rect.x;
+    const offsetY = rect.y;
 
-            return observableFromEvent(elm, 'mousedown')
-                .pipe(
-                    take(1)
-                )
-                .pipe(
-                    flatMap((evt) => {
-                        selectionFrame.left = evt.offsetX;
-                        selectionFrame.top = evt.offsetY;
+    return observableFromEvent(elm, 'mousedown')
+        .pipe(
+            take(1)
+        )
+        .pipe(
+            flatMap((evt) => {
+                selectionFrame.left = evt.offsetX;
+                selectionFrame.top = evt.offsetY;
 
-                        return observableFromEvent(elm, 'mousemove')
-                            .pipe(
-                                map((evt) => {
-                                    selectionFrame.width = (evt.x - offsetX) - selectionFrame.left;
-                                    selectionFrame.height = (evt.y - offsetY) - selectionFrame.top;
-                                    const frame = { ...selectionFrame };
+                return observableFromEvent(elm, 'mousemove')
+                    .pipe(
+                        map((evt) => {
+                            selectionFrame.width = (evt.x - offsetX) - selectionFrame.left;
+                            selectionFrame.height = (evt.y - offsetY) - selectionFrame.top;
+                            const frame = { ...selectionFrame };
 
-                                    if (frame.height < 0) {
-                                        frame.top += frame.height;
-                                        frame.height = -frame.height;
-                                    }
+                            if (frame.height < 0) {
+                                frame.top += frame.height;
+                                frame.height = -frame.height;
+                            }
 
-                                    if (frame.width < 0) {
-                                        frame.left += frame.width;
-                                        frame.width = -frame.width;
-                                    }
-                                    return frame;
-                                })
-                            )
-                            .pipe(
-                                takeUntil(observableFromEvent(document, 'keyup'))
-                            )
-                    })
-                )
+                            if (frame.width < 0) {
+                                frame.left += frame.width;
+                                frame.width = -frame.width;
+                            }
+                            return frame;
+                        })
+                    )
+                    .pipe(
+                        takeUntil(observableFromEvent(document, 'mouseup'))
+                    )
+            })
+        )
 
-        }
+}
 
 export default class App extends LightningElement {
     frame = null;
@@ -265,10 +271,8 @@ export default class App extends LightningElement {
                 })
             )
             .subscribe((frame) => {
-                console.log('next')
                 this.selectionFrame = frame;
             }, null, () => {
-                console.log('done')
                 const frame = this.selectionFrame;
                 const startTime = this.editor.data.absolutePixelToTime(frame.left);
                 const duration = this.editor.data.pixelToTime(frame.width);
@@ -284,22 +288,21 @@ export default class App extends LightningElement {
                     );
                 })
                 .forEach((audioTrack) => {
-                    const ranges = audioTrack.segments.filter((segment) => {
+                    audioTrack.segments.filter((segment) => {
                         return segmentInTimeRange(
                             segment,
                             range.start,
                             range.duration,
                         );
                     })
-                    .map((segment) => {
-                        return clampAudioRange(
+                    .forEach((segment) => {
+                        const clamped = clampAudioRange(
                             new AudioRange(segment.offset, segment.duration),
                             range,
                         );
-                    })
-                    .toList();
 
-                    setSelectionRanges(audioTrack.id, ranges);
+                        setSegmentSelection(audioTrack.id, segment.id, clamped);
+                    })
                 });
 
 
@@ -315,6 +318,12 @@ export default class App extends LightningElement {
     */
     connectedCallback() {
         window.addEventListener('resize', this.updateFrame);
+
+        document.addEventListener('keyup', (evt) => {
+            if (evt.which === 8) {
+                deleteSelections();
+            }
+        })
 
         this.addEventListener('dragover', this.onDragOver);
         this.addEventListener('drop', this.onDrop);
