@@ -50,7 +50,9 @@ export default class AudioTrack extends LightningElement {
             const x = segmentOffset;
             if (x < 0) {
                 width += x;
-            } else if (width + x > frameWidth) {
+            }
+
+            if (width + x > frameWidth) {
                 const diff = (width + x) - frameWidth;
                 width = width - diff;
             }

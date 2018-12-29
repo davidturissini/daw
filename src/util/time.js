@@ -11,6 +11,26 @@ export class Time {
     static fromSeconds(seconds) {
         return new Time(seconds * 1000);
     }
+
+    add(time) {
+        return sum(this, time);
+    }
+
+    subtract(time) {
+        return subtract(this, time);
+    }
+
+    greaterThan(time) {
+        return gt(this, time);
+    }
+
+    lessThan(time) {
+        return lt(this, time);
+    }
+
+    invert() {
+        return invert(this);
+    }
 }
 
 export function sum(first, second) {

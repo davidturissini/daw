@@ -10601,6 +10601,26 @@
 	    return new Time(seconds * 1000);
 	  }
 
+	  add(time) {
+	    return sum(this, time);
+	  }
+
+	  subtract(time) {
+	    return subtract(this, time);
+	  }
+
+	  greaterThan(time) {
+	    return gt(this, time);
+	  }
+
+	  lessThan(time) {
+	    return lt(this, time);
+	  }
+
+	  invert() {
+	    return invert(this);
+	  }
+
 	}
 	function sum(first, second) {
 	  return new Time(first.milliseconds + second.milliseconds);
@@ -34925,7 +34945,9 @@
 
 	      if (x < 0) {
 	        width += x;
-	      } else if (width + x > frameWidth) {
+	      }
+
+	      if (width + x > frameWidth) {
 	        const diff = width + x - frameWidth;
 	        width = width - diff;
 	      }
