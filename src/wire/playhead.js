@@ -1,5 +1,5 @@
 import { register } from 'wire-service';
-import { BehaviorSubject, Observable, combineLatest, of as observableOf } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, of as observableOf, zip as observableZip } from 'rxjs';
 import { switchMap, concat, flatMap, filter, take, takeUntil, materialize, dematerialize, startWith } from 'rxjs/operators';
 import { Record } from 'immutable';
 import { Time } from './../util/time';
@@ -9,6 +9,8 @@ import { stream as audioTrackStream } from './audiotrack';
 import { renderAudioBuffer, createSilentRenderedAudioSegment } from './audiorender';
 import { connectMasterOut } from './masterout';
 import { AudioRange } from '../util/audiorange';
+import toWav from 'audiobuffer-to-wav';
+import saveAs from 'file-saver';
 
 class Playhead extends Record({
     playbackRange: null,
@@ -39,91 +41,68 @@ function createCurrentTimeStream(audioContext, startAudioContextSeconds, initial
     })
 }
 
-function playStream(audioContext, audioTrackStream, audioSourceStream, currentTimeStream) {
-    return audioTrackStream.pipe(switchMap((audioTracks) => {
-        return combineLatest(
-            currentTimeStream,
-            audioSourceStream,
-            (currentTime, audioSources) => {
-                const playhead = playheadSubject.value;
-                const diff = currentTime.subtract(playhead.playbackRange.start);
-                const currentTimeRange = new AudioRange(
-                    currentTime,
-                    playhead.playbackRange.duration.subtract(diff)
-                );
-                return {
-                    audioTracks,
-                    audioSources,
-                    range: currentTimeRange,
-                };
-            })
-            .pipe(take(1));
-    }))
-    .pipe(switchMap(({ audioTracks, audioSources, range }) => {
-        const timeAnchor = range.start;
-        const rangeDuration = range.duration;
-        const audioContextCurrentTime = Time.fromSeconds(audioContext.currentTime);
+function playStream(audioContext, audioTracks, audioSources, currentTime, range) {
+    const timeAnchor = range.start;
+    const rangeDuration = range.duration;
+    const audioContextCurrentTime = Time.fromSeconds(audioContext.currentTime);
 
-        return Observable.create((o) => {
-            const rendered = renderAudioBuffer(
+    return Observable.create((o) => {
+        const rendered = renderAudioBuffer(
+            audioContext,
+            range,
+            audioTracks,
+            audioSources
+        );
+        let maxDuration = new Time(0);
+        const allRenderedAudioSegments = rendered.reduce((seed, renderedAudioSegments) => {
+            return seed.concat(renderedAudioSegments);
+        }, []);
+
+        // Handle if the playback duration is
+        // greater than track durations
+        if (rangeDuration.greaterThan(maxDuration)) {
+            const silence = createSilentRenderedAudioSegment(
                 audioContext,
                 range,
-                audioTracks,
-                audioSources
+                rangeDuration.subtract(maxDuration),
             );
-            let maxDuration = new Time(0);
-            const allRenderedAudioSegments = rendered.reduce((seed, renderedAudioSegments) => {
-                return seed.concat(renderedAudioSegments);
-            }, []);
 
-            // Handle if the playback duration is
-            // greater than track durations
-            if (rangeDuration.greaterThan(maxDuration)) {
-                const silence = createSilentRenderedAudioSegment(
-                    audioContext,
-                    range,
-                    rangeDuration.subtract(maxDuration),
-                );
+            allRenderedAudioSegments.push(silence);
+        }
 
-                allRenderedAudioSegments.push(silence);
-            }
+        connectMasterOut(audioContext, allRenderedAudioSegments);
 
-            connectMasterOut(audioContext, allRenderedAudioSegments);
+        const promises = allRenderedAudioSegments.map((renderedAudioSegment) => {
+            return renderedAudioSegment.start(
+                audioContextCurrentTime,
+                timeAnchor
+            );
+        });
 
-            const promises = allRenderedAudioSegments.map((renderedAudioSegment) => {
-                return renderedAudioSegment.start(
-                    audioContextCurrentTime,
-                    timeAnchor
-                );
+        o.next(Promise.all(promises));
+
+        return function() {
+            allRenderedAudioSegments.forEach((renderedAudioSegment) => {
+                renderedAudioSegment.stop();
             });
-
-            o.next(Promise.all(promises));
-
-            return function() {
-                allRenderedAudioSegments.forEach((renderedAudioSegment) => {
-                    renderedAudioSegment.stop();
-                });
-            }
-        })
-        .pipe(
-            flatMap((completedPromise) => {
-                const shared = createCurrentTimeStream(
-                    audioContext,
-                    audioContextCurrentTime,
-                    timeAnchor
-                );
-                return shared.pipe(takeUntil(completedPromise))
-                    .pipe(
-                        concat(
-                            observableOf(range.start.plus(range.duration))
-                        )
+        }
+    })
+    .pipe(
+        flatMap((completedPromise) => {
+            const shared = createCurrentTimeStream(
+                audioContext,
+                audioContextCurrentTime,
+                timeAnchor
+            );
+            return shared.pipe(takeUntil(completedPromise))
+                .pipe(
+                    concat(
+                        observableOf(range.start.plus(range.duration))
                     )
-                    .pipe(materialize());
-            })
-        )
-        .pipe(dematerialize())
-        .pipe(materialize());
-    }))
+                )
+                .pipe(materialize());
+        })
+    )
     .pipe(dematerialize());
 }
 
@@ -166,11 +145,22 @@ export function rasterize(startTime) {
     console.log(duration)
     const offline = new OfflineAudioContext(2, length, sampleRate)
 
-    playStream(
-        offline,
+    observableZip(
         audioTrackStream,
-        audioSourceStream,
-        Observable.create((o) => o.next(startTime))
+        audioSourceStream
+    ).pipe(
+        flatMap(([audioTracks, audioSources]) => {
+            return playStream(
+                offline,
+                audioTracks,
+                audioSources,
+                startTime,
+                new AudioRange(
+                    startTime,
+                    duration
+                )
+            )
+        })
     )
     .subscribe(
         (time) => {
@@ -183,12 +173,9 @@ export function rasterize(startTime) {
     );
 
     offline.startRendering().then((audioBuffer) => {
-        console.log('ok', audioBuffer)
-        const source = defaultAudioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(defaultAudioContext.destination);
-        source.start();
-        console.log('start?')
+        const wav = toWav(audioBuffer);
+        const blob = new Blob([wav]);
+        saveAs(blob, 'output.wav');
     })
 }
 
@@ -196,28 +183,50 @@ export function play(startTime) {
     if (playSubscription) {
         playSubscription.unsubscribe();
     }
-    playSubscription = playStream(
-            defaultAudioContext,
-            audioTrackStream,
-            audioSourceStream,
-            stream.pipe(filter((playhead) => playhead.currentTime !== null)).pipe(take(1))
-        )
-        .pipe(startWith(startTime))
-        .subscribe(
-            (time) => {
-                playheadSubject.next(
-                    playheadSubject.value.set('currentTime', time)
-                );
 
-            },
-            null,
-            () => {
-                console.log('done')
-                playheadSubject.next(
-                    playheadSubject.value.set('currentTime', null)
+    playSubscription = audioTrackStream.pipe(switchMap((audioTracks) => {
+        return combineLatest(
+            stream.pipe(filter((playhead) => playhead.currentTime !== null)).pipe(take(1)),
+            audioSourceStream,
+            (playhead, audioSources) => {
+                const { currentTime } = playhead;
+                const diff = currentTime.subtract(playhead.playbackRange.start);
+                const currentTimeRange = new AudioRange(
+                    currentTime,
+                    playhead.playbackRange.duration.subtract(diff)
                 );
-            }
-        );
+                return {
+                    audioTracks,
+                    audioSources,
+                    range: currentTimeRange,
+                };
+            })
+            .pipe(take(1));
+    }))
+    .pipe(switchMap(({ audioTracks, audioSources, range }) => {
+        return playStream(
+            defaultAudioContext,
+            audioTracks,
+            audioSources,
+            range.start,
+            range
+        )
+    }))
+    .pipe(startWith(startTime))
+    .subscribe(
+        (time) => {
+            playheadSubject.next(
+                playheadSubject.value.set('currentTime', time)
+            );
+        },
+        null,
+        () => {
+            console.log('done')
+            playheadSubject.next(
+                playheadSubject.value.set('currentTime', null)
+            );
+        }
+    );
 }
 
 export const stream = playheadSubject.asObservable();
