@@ -9,9 +9,10 @@ import {
     deleteTrack,
     setSegmentSelection,
     deleteSelections,
+    getTracksDuration,
 } from './../../wire/audiotrack';
 import { generateId } from './../../util/uniqueid';
-import { playheadSym } from './../../wire/playhead';
+import { playheadSym, incrementPlaybackDuration, setPlaybackDuration } from './../../wire/playhead';
 import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
 import { segmentInTimeRange } from './../../wire/audiorender';
 
@@ -137,6 +138,17 @@ export default class App extends LightningElement {
      * Events
      *
     */
+    segmentDrag = false;
+    onSegmentDragStart() {
+        this.segmentDrag = true;
+    }
+
+    onSegmentDragEnd() {
+        requestAnimationFrame(() => {
+            this.segmentDrag = false;
+        });
+    }
+
     onEditorMouseMove = (evt) => {
         const { offsetX } = evt;
         const time = this.editor.data.pixelToTime(offsetX);
@@ -148,7 +160,10 @@ export default class App extends LightningElement {
         setVirtualCursorTime(null);
     }
 
-    handleEditorClick = (evt) => {
+    onEditorClick = (evt) => {
+        if (this.segmentDrag) {
+            return;
+        }
         const next = this.editor.data.absolutePixelToTime(evt.offsetX);
         setCursorTime(next);
     }
@@ -193,6 +208,19 @@ export default class App extends LightningElement {
         this.template.host.classList.remove('editor--draggable');
     }
 
+    onPlaybackDurationCursorDrag(evt) {
+        const { dx } = evt.detail;
+        const time = this.editor.data.pixelToTime(dx);
+        incrementPlaybackDuration(time);
+    }
+
+    onPlaybackDurationCursorDoubleTap(evt) {
+        const duration = getTracksDuration(this.audioTracks.data);
+        if (duration.greaterThan(this.playhead.data.playbackRange.duration)) {
+            setPlaybackDuration(duration);
+        }
+    }
+
     /*
      *
      * Template
@@ -206,7 +234,11 @@ export default class App extends LightningElement {
     }
 
     get hasPlaybackCursor() {
-        return this.playhead.data.playbackTime !== null;
+        return this.playhead.data.currentTime !== null;
+    }
+
+    get hasPlaybackDurationCursor() {
+        return this.timeInWindow(this.playhead.data.playbackRange.duration);
     }
 
     timeInWindow(time) {

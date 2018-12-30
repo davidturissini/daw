@@ -2,7 +2,6 @@ import { register } from 'wire-service';
 import { BehaviorSubject } from 'rxjs';
 import { wireObservable } from './../util/wire-observable';
 import { Record } from 'immutable';
-import { audioContext } from './audiosource';
 
 class MasterOut extends Record({
     gain: 5
@@ -11,14 +10,18 @@ class MasterOut extends Record({
 const masterOutSubject = new BehaviorSubject(new MasterOut());
 export const stream = masterOutSubject.asObservable();
 
-export function connectMasterOut(bufferSource) {
+export function connectMasterOut(audioContext, renderedAudioSegments) {
     const gainNode = audioContext.createGain();
+    console.log('audioContext', audioContext)
 
     stream.subscribe((masterOut) => {
         gainNode.gain.value = masterOut.gain;
     });
 
-    bufferSource.connect(gainNode);
+    renderedAudioSegments.forEach((renderedAudioSegment) => {
+        renderedAudioSegment.source.connect(gainNode);
+    });
+
     gainNode.connect(audioContext.destination);
 }
 

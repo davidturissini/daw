@@ -34,17 +34,35 @@ export default class AudioTrackSegment extends LightningElement {
         return `transform: translateX(-${diff}px); width: ${frame.width + diff}px`;
     }
 
+    onStartDrag = (evt) => {
+        const event = new CustomEvent('segmentdragstart', {
+            composed: true,
+            bubbles: true,
+        });
+
+        this.dispatchEvent(event);
+    }
+
     onDrag = (evt) => {
         const { editor, segment } = this;
         const { dx } = evt;
         const time = editor.data.pixelToTime(dx);
         const event = new CustomEvent('segmentmove', {
-            composed: false,
+            composed: true,
             bubbles: true,
             detail: {
                 time,
                 segmentId: segment.id,
             }
+        });
+
+        this.dispatchEvent(event);
+    }
+
+    onEndDrag = (evt) => {
+        const event = new CustomEvent('segmentdragend', {
+            composed: true,
+            bubbles: true,
         });
 
         this.dispatchEvent(event);
@@ -98,6 +116,8 @@ export default class AudioTrackSegment extends LightningElement {
             inertia: false,
             axis: 'y',
             onmove: this.onDrag,
+            onstart: this.onStartDrag,
+            onend: this.onEndDrag,
         })
     }
 

@@ -10605,8 +10605,16 @@
 	    return sum(this, time);
 	  }
 
+	  plus(time) {
+	    return this.add(time);
+	  }
+
 	  subtract(time) {
 	    return subtract(this, time);
+	  }
+
+	  minus(time) {
+	    return this.subtract(time);
 	  }
 
 	  greaterThan(time) {
@@ -10640,6 +10648,14 @@
 
 	class AudioRange {
 	  constructor(start, duration) {
+	    if (!(start instanceof Time)) {
+	      throw new Error(`Invalid start time for AudioRange. "${start}" is not a valid instance of Time`);
+	    }
+
+	    if (!(duration instanceof Time)) {
+	      throw new Error(`Invalid duration time for AudioRange. "${duration}" is not a valid instance of Time`);
+	    }
+
 	    this.start = start;
 	    this.duration = duration;
 	  }
@@ -13364,6 +13380,9 @@
 	}(AsyncAction);
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+	function identity(x) {
+	  return x;
+	}
 
 	/** PURE_IMPORTS_START _Observable PURE_IMPORTS_END */
 
@@ -13639,6 +13658,44 @@
 
 	/** PURE_IMPORTS_START tslib,_util_isScheduler,_util_isArray,_OuterSubscriber,_util_subscribeToResult,_fromArray PURE_IMPORTS_END */
 	var NONE = {};
+	function combineLatest() {
+	  var observables = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    observables[_i] = arguments[_i];
+	  }
+
+	  var resultSelector = null;
+	  var scheduler = null;
+
+	  if (isScheduler(observables[observables.length - 1])) {
+	    scheduler = observables.pop();
+	  }
+
+	  if (typeof observables[observables.length - 1] === 'function') {
+	    resultSelector = observables.pop();
+	  }
+
+	  if (observables.length === 1 && isArray(observables[0])) {
+	    observables = observables[0];
+	  }
+
+	  return fromArray(observables, scheduler).lift(new CombineLatestOperator(resultSelector));
+	}
+
+	var CombineLatestOperator =
+	/*@__PURE__*/
+	function () {
+	  function CombineLatestOperator(resultSelector) {
+	    this.resultSelector = resultSelector;
+	  }
+
+	  CombineLatestOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new CombineLatestSubscriber(subscriber, this.resultSelector));
+	  };
+
+	  return CombineLatestOperator;
+	}();
 
 	var CombineLatestSubscriber =
 	/*@__PURE__*/
@@ -13980,10 +14037,33 @@
 	}(OuterSubscriber);
 
 	/** PURE_IMPORTS_START _mergeMap,_util_identity PURE_IMPORTS_END */
+	function mergeAll(concurrent) {
+	  if (concurrent === void 0) {
+	    concurrent = Number.POSITIVE_INFINITY;
+	  }
+
+	  return mergeMap(identity, concurrent);
+	}
 
 	/** PURE_IMPORTS_START _mergeAll PURE_IMPORTS_END */
+	function concatAll() {
+	  return mergeAll(1);
+	}
 
 	/** PURE_IMPORTS_START _util_isScheduler,_of,_from,_operators_concatAll PURE_IMPORTS_END */
+	function concat() {
+	  var observables = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    observables[_i] = arguments[_i];
+	  }
+
+	  if (observables.length === 1 || observables.length === 2 && isScheduler(observables[1])) {
+	    return from(observables[0]);
+	  }
+
+	  return concatAll()(of.apply(void 0, observables));
+	}
 
 	/** PURE_IMPORTS_START _Observable,_from,_empty PURE_IMPORTS_END */
 
@@ -15082,6 +15162,17 @@
 	/** PURE_IMPORTS_START _util_isArray,_observable_combineLatest,_observable_from PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START _observable_concat PURE_IMPORTS_END */
+	function concat$1() {
+	  var observables = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    observables[_i] = arguments[_i];
+	  }
+
+	  return function (source) {
+	    return source.lift.call(concat.apply(void 0, [source].concat(observables)));
+	  };
+	}
 
 	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
 
@@ -17271,6 +17362,33 @@
 	}(Subscriber);
 
 	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
+	function startWith() {
+	  var array = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    array[_i] = arguments[_i];
+	  }
+
+	  return function (source) {
+	    var scheduler = array[array.length - 1];
+
+	    if (isScheduler(scheduler)) {
+	      array.pop();
+	    } else {
+	      scheduler = null;
+	    }
+
+	    var len = array.length;
+
+	    if (len === 1 && !scheduler) {
+	      return concat(scalar(array[0]), source);
+	    } else if (len > 0) {
+	      return concat(fromArray(array, scheduler), source);
+	    } else {
+	      return concat(empty$1(scheduler), source);
+	    }
+	  };
+	}
 
 	/** PURE_IMPORTS_START tslib,_Observable,_scheduler_asap,_util_isNumeric PURE_IMPORTS_END */
 
@@ -24207,51 +24325,6 @@
 	  return id + '';
 	}
 
-	function subbuffer(audioBuffer, startMilliseconds, durationMilliseconds) {
-	  const {
-	    sampleRate,
-	    numberOfChannels
-	  } = audioBuffer;
-	  const durationSeconds = durationMilliseconds / 1000;
-	  const startSeconds = startMilliseconds / 1000;
-	  const sub = new AudioBuffer({
-	    length: Math.ceil(durationSeconds * sampleRate),
-	    numberOfChannels,
-	    sampleRate
-	  });
-	  const startByte = startSeconds * sampleRate;
-	  const durationBytes = durationSeconds * sampleRate;
-	  const endBytes = startByte + durationBytes;
-
-	  for (let i = 0; i < numberOfChannels; i += 1) {
-	    const channelData = sub.getChannelData(i);
-	    const subset = audioBuffer.getChannelData(i).slice(startByte, endBytes);
-	    channelData.set(subset, 0);
-	  }
-
-	  return sub;
-	}
-	function join(audioBuffers) {
-	  const [first, ...rest] = audioBuffers;
-	  return rest.reduce((seed, audioBuffer) => {
-	    const {
-	      numberOfChannels
-	    } = seed;
-	    const buffer = new AudioBuffer({
-	      length: seed.length + audioBuffer.length,
-	      sampleRate: seed.sampleRate,
-	      numberOfChannels
-	    });
-
-	    for (let i = 0; i < numberOfChannels; i += 1) {
-	      const channelData = buffer.getChannelData(i);
-	      channelData.set(seed.getChannelData(i), 0);
-	      channelData.set(audioBuffer.getChannelData(i), seed.length);
-	    }
-
-	    return buffer;
-	  }, first);
-	}
 	function silence(sampleRate, numberOfChannels, milliseconds) {
 	  const seconds = milliseconds / 1000;
 	  return new AudioBuffer({
@@ -24260,86 +24333,76 @@
 	    numberOfChannels
 	  });
 	}
-	function mix(audioContext, audioBuffers) {
-	  const data = audioBuffers.reduce((seed, audioBuffer) => {
-	    if (seed.length < audioBuffer.length) {
-	      seed.length = audioBuffer.length;
-	    }
 
-	    if (seed.numberOfChannels < audioBuffer.numberOfChannels) {
-	      seed.numberOfChannels = audioBuffer.numberOfChannels;
-	    }
-
-	    if (seed.sampleRate === null) {
-	      seed.sampleRate = audioBuffer.sampleRate;
-	    }
-
-	    return seed;
-	  }, {
-	    length: 0,
-	    numberOfChannels: 1,
-	    sampleRate: audioContext.sampleRate
-	  });
-	  const context = new OfflineAudioContext(data.numberOfChannels, data.length, data.sampleRate);
-	  audioBuffers.forEach(audioBuffer => {
-	    const source = context.createBufferSource();
-	    source.buffer = audioBuffer;
-	    source.connect(context.destination);
-	    source.start();
-	  });
-	  return context.startRendering();
+	function createSilentRenderedAudioSegment(audioContext, playbackRange, duration) {
+	  const silence$$1 = silence(audioContext.sampleRate, 1, duration.milliseconds);
+	  return new RenderedAudioSegment(audioContext, silence$$1, playbackRange, new Time(0), playbackRange);
 	}
 
-	/*
-	 *
-	 *
-	 * Renders audio data from an audio source to a segment
-	 * Property offsets underlying audio based on cursor position
-	 *
-	 */
+	class RenderedAudioSegment {
+	  constructor(audioContext, audio, playbackRange, segmentSourceOffset, segmentRange) {
+	    this.playbackRange = playbackRange;
+	    this.segmentSourceOffset = segmentSourceOffset;
+	    this.segmentRange = segmentRange;
+	    const source = this.source = audioContext.createBufferSource();
+	    source.buffer = audio;
+	  }
 
-	function renderSegment(segment, audioSource, startTime
-	/* global start */
-	, duration
-	/* global duration */
-	) {
-	  const {
-	    sourceOffset,
-	    duration: segmentDuration,
-	    offset
-	  } = segment;
-	  const range = clamp(new AudioRange(startTime, duration), new AudioRange(offset, segmentDuration));
-	  const diff = subtract(range.start, offset);
-	  return {
-	    audio: subbuffer(audioSource.audio, sum(diff, sourceOffset).milliseconds, segmentDuration.milliseconds),
-	    offset,
-	    duration: segmentDuration
-	  };
-	}
-	/*
-	 *
-	 * Adds silent audio buffers between rendered segments
-	 *
-	 */
+	  getPlaybackData(audioContextCurrentTime, currentTime) {
+	    const {
+	      playbackRange,
+	      segmentRange,
+	      segmentSourceOffset
+	    } = this;
+	    const clamped = clamp(playbackRange, segmentRange);
+	    let startOffset = segmentRange.start.subtract(currentTime);
+	    let offset = segmentSourceOffset;
 
-
-	function fillRenderedSegments(renderedSegments, startTime) {
-	  const {
-	    milliseconds: cursorMilliseconds
-	  } = startTime;
-	  return renderedSegments.reduce((seed, renderedSegment, index) => {
-	    const previous = renderedSegments[index - 1];
-	    const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
-	    const startMs = renderedSegment.offset.milliseconds;
-	    const diff = startMs - previousEndMs;
-
-	    if (diff > 0) {
-	      seed.push(silence(renderedSegment.audio.sampleRate, renderedSegment.audio.numberOfChannels, diff));
+	    if (startOffset.milliseconds < 0) {
+	      offset = offset.subtract(startOffset);
+	      startOffset = new Time(0);
 	    }
 
-	    seed.push(renderedSegment.audio);
-	    return seed;
-	  }, []);
+	    return {
+	      when: startOffset.add(audioContextCurrentTime).seconds,
+	      offset: offset.seconds,
+	      duration: clamped.duration.seconds
+	    };
+	  }
+
+	  start(audioContextCurrentTime, currentTime) {
+	    if (!audioContextCurrentTime) {
+	      throw new Error(`Cannot start RenderedAudioSegment playback. "${audioContextCurrentTime}" not a valid AudioContext.currentTime value`);
+	    }
+
+	    if (!currentTime) {
+	      throw new Error(`Cannot start RenderedAudioSegment playback. "${currentTime}" not a valid Playhead.currentTime value`);
+	    }
+
+	    const {
+	      source
+	    } = this;
+	    const {
+	      when,
+	      offset,
+	      duration
+	    } = this.getPlaybackData(audioContextCurrentTime, currentTime);
+	    source.start(when, offset, duration);
+	    return new Promise(res => {
+	      source.addEventListener('ended', res, {
+	        once: true
+	      });
+	    });
+	  }
+
+	  stop() {
+	    if (!this.source) {
+	      throw new Error('Trying to stop RenderedAudioSegment that has not been started');
+	    }
+
+	    this.source.stop();
+	  }
+
 	}
 
 	function segmentInTimeRange(segment, startTime, duration) {
@@ -24350,41 +24413,31 @@
 	/*
 	 *
 	 *
-	 * Renders a track to a playable AudioBuffer
+	 * Renders segments in a track
 	 *
 	 */
 
-	function renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration) {
-	  const filteredSegments = audioTrack.segments.toList().filter(segment => {
-	    return segmentInTimeRange(segment, start, duration);
+	function renderTrackSegments(audioContext, range, audioTrack, audioSources) {
+	  const segments = audioTrack.segments.toList().filter(segment => {
+	    return segmentInTimeRange(segment, range.start, range.duration);
 	  });
 
-	  if (filteredSegments.size === 0) {
+	  if (segments.size === 0) {
 	    return null;
 	  }
 
-	  const renderedSegments = audioTrack.segments.toList().map(segment => {
-	    const {
-	      sourceId
-	    } = segment;
-	    return renderSegment(segment, audioSources$$1.get(sourceId), start, duration);
+	  return audioTrack.segments.toList().map(segment => {
+	    const audio = audioSources.getIn([segment.sourceId, 'audio']);
+	    return new RenderedAudioSegment(audioContext, audio, range, segment.sourceOffset, segment.range);
 	  }).toArray();
-	  const filled = fillRenderedSegments(renderedSegments, start);
-	  return join(filled);
 	}
 
-	function renderAudioBuffer(start, duration, audioTracks, audioSources$$1) {
-	  let audioBuffers = audioTracks.map(audioTrack => {
-	    return renderTrackToAudioBuffer(audioTrack, audioSources$$1, start, duration);
-	  }).filter(audioBuffer => {
-	    return audioBuffer !== null;
+	function renderAudioBuffer(audioContext, range, audioTracks, audioSources) {
+	  return audioTracks.map(audioTrack => {
+	    return renderTrackSegments(audioContext, range, audioTrack, audioSources);
+	  }).filter(buffer => {
+	    return buffer !== null;
 	  }).toList().toJS();
-
-	  if (audioBuffers.length === 0) {
-	    audioBuffers = [silence(audioContext.sampleRate, 2, duration.milliseconds)];
-	  }
-
-	  return mix(audioContext, audioBuffers);
 	}
 
 	class Color {
@@ -24629,12 +24682,15 @@
 
 	const masterOutSubject = new BehaviorSubject(new MasterOut());
 	const stream$2 = masterOutSubject.asObservable();
-	function connectMasterOut(bufferSource) {
+	function connectMasterOut(audioContext, renderedAudioSegments) {
 	  const gainNode = audioContext.createGain();
+	  console.log('audioContext', audioContext);
 	  stream$2.subscribe(masterOut => {
 	    gainNode.gain.value = masterOut.gain;
 	  });
-	  bufferSource.connect(gainNode);
+	  renderedAudioSegments.forEach(renderedAudioSegment => {
+	    renderedAudioSegment.source.connect(gainNode);
+	  });
 	  gainNode.connect(audioContext.destination);
 	}
 	function setGain(value) {
@@ -24644,260 +24700,134 @@
 	wire_2(masterOutSym, wireObservable(stream$2));
 
 	class Playhead extends Record({
-	  playbackTime: null
+	  playbackRange: null,
+	  currentTime: null
 	}) {}
 
-	const playheadSubject = new BehaviorSubject(new Playhead());
+	const playheadSubject = new BehaviorSubject(new Playhead({
+	  playbackRange: new AudioRange(new Time(0), new Time(30000))
+	}));
 
-	class PlaybackQueue {
-	  constructor(time, duration, audioTracks$$1, audioSources$$1) {
-	    this.queue = [];
-	    this.popResolve = null;
-	    this.destroyed = false;
-	    this.audioTracks = audioTracks$$1;
-	    this.audioSources = audioSources$$1;
-	    this.time = time;
-	    this.end = new Time(duration.milliseconds + time.milliseconds);
-	    this.splitDuration = Time.fromSeconds(5);
-	    this.finished = false;
-	  }
+	function createCurrentTimeStream(audioContext$$1, startAudioContextSeconds, initialTime) {
+	  return Observable.create(o => {
+	    let raf;
 
-	  getBuffer(time, duration) {
-	    const {
-	      end,
-	      splitDuration,
-	      audioTracks: audioTracks$$1,
-	      audioSources: audioSources$$1
-	    } = this;
-	    let audioBufferDuration = duration;
-
-	    if (duration.milliseconds + time.milliseconds > end.milliseconds) {
-	      audioBufferDuration = new Time(end.milliseconds - time.milliseconds);
+	    function rafCallback() {
+	      const currentAudioContextTime = Time.fromSeconds(audioContext$$1.currentTime);
+	      const diff = currentAudioContextTime.subtract(startAudioContextSeconds);
+	      const currentTime = initialTime.add(diff);
+	      o.next(currentTime);
+	      raf = requestAnimationFrame(rafCallback);
 	    }
 
-	    renderAudioBuffer(time, audioBufferDuration, audioTracks$$1, audioSources$$1).then(buffer$$1 => {
-	      if (this.destroyed === true) {
-	        return;
+	    rafCallback();
+	    return () => cancelAnimationFrame(raf);
+	  });
+	}
+
+	function playStream(audioContext$$1, audioTrackStream, audioSourceStream, currentTimeStream) {
+	  return audioTrackStream.pipe(switchMap(audioTracks$$1 => {
+	    return combineLatest(currentTimeStream, audioSourceStream, (currentTime, audioSources$$1) => {
+	      const playhead = playheadSubject.value;
+	      const diff = currentTime.subtract(playhead.playbackRange.start);
+	      const currentTimeRange = new AudioRange(currentTime, playhead.playbackRange.duration.subtract(diff));
+	      return {
+	        audioTracks: audioTracks$$1,
+	        audioSources: audioSources$$1,
+	        range: currentTimeRange
+	      };
+	    }).pipe(take(1));
+	  })).pipe(switchMap(({
+	    audioTracks: audioTracks$$1,
+	    audioSources: audioSources$$1,
+	    range: range$$1
+	  }) => {
+	    const timeAnchor = range$$1.start;
+	    const rangeDuration = range$$1.duration;
+	    const audioContextCurrentTime = Time.fromSeconds(audioContext$$1.currentTime);
+	    return Observable.create(o => {
+	      const rendered = renderAudioBuffer(audioContext$$1, range$$1, audioTracks$$1, audioSources$$1);
+	      let maxDuration = new Time(0);
+	      const allRenderedAudioSegments = rendered.reduce((seed, renderedAudioSegments) => {
+	        return seed.concat(renderedAudioSegments);
+	      }, []); // Handle if the playback duration is
+	      // greater than track durations
+
+	      if (rangeDuration.greaterThan(maxDuration)) {
+	        const silence = createSilentRenderedAudioSegment(audioContext$$1, range$$1, rangeDuration.subtract(maxDuration));
+	        allRenderedAudioSegments.push(silence);
 	      }
 
-	      if (this.popResolve) {
-	        this.popResolve({
-	          done: false,
-	          buffer: buffer$$1
+	      connectMasterOut(audioContext$$1, allRenderedAudioSegments);
+	      const promises = allRenderedAudioSegments.map(renderedAudioSegment => {
+	        return renderedAudioSegment.start(audioContextCurrentTime, timeAnchor);
+	      });
+	      o.next(Promise.all(promises));
+	      return function () {
+	        allRenderedAudioSegments.forEach(renderedAudioSegment => {
+	          renderedAudioSegment.stop();
 	        });
-	        this.popResolve = null;
-	      } else {
-	        this.queue.push(buffer$$1);
-	      }
-
-	      if (time.milliseconds + splitDuration.milliseconds === end.milliseconds) {
-	        return;
-	      }
-
-	      if (time.milliseconds + audioBufferDuration.milliseconds === end.milliseconds) {
-	        this.finished = true;
-	        return;
-	      }
-
-	      this.getBuffer(new Time(time.milliseconds + this.splitDuration.milliseconds), this.splitDuration);
-	    });
-	  }
-
-	  beginQueue() {
-	    this.getBuffer(this.time, this.splitDuration);
-	  }
-
-	  pop() {
-	    return new Promise(res => {
-	      const next = this.queue.shift(); // If we aren't done building the queue,
-	      // but we don't have anything yet,
-	      // Its likely that values are being asked before
-	      // Audio buffers have been created
-	      // So we need to store the resolver
-
-	      if (!this.finished && !next) {
-	        this.popResolve = res;
-	        return;
-	      }
-
-	      res({
-	        buffer: next,
-	        done: this.queue.length === 0
-	      });
-	    });
-	  }
-
-	  stopQueue() {
-	    this.destroyed = true;
-	    this.queue = [];
-	  }
-
+	      };
+	    }).pipe(mergeMap(completedPromise => {
+	      const shared = createCurrentTimeStream(audioContext$$1, audioContextCurrentTime, timeAnchor);
+	      return shared.pipe(takeUntil(completedPromise)).pipe(concat$1(of(range$$1.start.plus(range$$1.duration)))).pipe(materialize());
+	    })).pipe(dematerialize()).pipe(materialize());
+	  })).pipe(dematerialize());
 	}
 
-	class AudioBufferPlayer {
-	  constructor(audioContext$$1, queue$$1) {
-	    this.updateCurrentTime = previousAudioContextSeconds => {
-	      const currentTime = this.timeSubject.value;
-	      const currentAudioContextSeconds = this.audioContext.currentTime;
-	      const diffSeconds = currentAudioContextSeconds - previousAudioContextSeconds;
-	      const nextTime = Time.fromSeconds(currentTime.seconds + diffSeconds);
-	      this.timeSubject.next(nextTime);
-	      this.raf = requestAnimationFrame(() => {
-	        this.updateCurrentTime(currentAudioContextSeconds);
-	      });
-	    };
-
-	    this.popQueue = () => {
-	      this.queue.pop().then(({
-	        buffer: buffer$$1,
-	        done
-	      }) => {
-	        return this.playBuffer(buffer$$1).then(() => {
-	          if (this.playing === false) {
-	            return;
-	          }
-
-	          if (done === false) {
-	            this.popQueue();
-	          } else {
-	            this.timeSubject.complete();
-	          }
-	        });
-	      });
-	    };
-
-	    this.queue = queue$$1;
-	    this.audioContext = audioContext$$1;
-	    this.timeSubject = new BehaviorSubject(new Time(0));
-	  }
-
-	  playBuffer(audioBuffer) {
-	    const {
-	      audioContext: audioContext$$1
-	    } = this;
-	    const source = audioContext$$1.createBufferSource();
-	    source.buffer = audioBuffer;
-	    connectMasterOut(source);
-	    this.currentSource = source;
-	    return new Promise(res => {
-	      source.addEventListener('ended', res, {
-	        once: true
-	      });
-	      source.start();
-	    });
-	  }
-
-	  get timeStream() {
-	    return this.timeSubject.asObservable();
-	  }
-
-	  start() {
-	    this.updateCurrentTime(this.audioContext.currentTime);
-	    this.popQueue();
-	  }
-
-	  stop() {
-	    this.playing = false;
-	    this.timeSubject.complete();
-	    cancelAnimationFrame(this.raf);
-
-	    if (this.currentSource) {
-	      this.currentSource.stop();
-	    }
-	  }
-
-	}
-
-	class PlaybackController {
-	  constructor(_audioContext, start, duration) {
-	    this.states = {
-	      stop: {
-	        enter() {
-	          playheadSubject.next(playheadSubject.value.set('playbackTime', null));
-	        },
-
-	        exit() {}
-
-	      },
-	      play: {
-	        enter(playbackController) {
-	          this.subscription = stream$1.pipe(switchMap(audioTracks$$1 => {
-	            return stream.pipe(map(audioSources$$1 => {
-	              return {
-	                audioTracks: audioTracks$$1,
-	                audioSources: audioSources$$1
-	              };
-	            })).pipe(take(1));
-	          })).pipe(switchMap(({
-	            audioTracks: audioTracks$$1,
-	            audioSources: audioSources$$1
-	          }) => {
-	            const timeAnchor = playbackController.currentTime;
-	            return Observable.create(o => {
-	              const queue$$1 = new PlaybackQueue(timeAnchor, playbackController.duration, audioTracks$$1, audioSources$$1);
-	              queue$$1.beginQueue();
-	              const bufferPlayer = new AudioBufferPlayer(audioContext, queue$$1);
-	              bufferPlayer.start();
-	              bufferPlayer.timeStream.subscribe(o);
-	              return () => {
-	                queue$$1.stopQueue();
-	                bufferPlayer.stop();
-	              };
-	            }).pipe(map(time => {
-	              return new Time(timeAnchor.milliseconds + time.milliseconds);
-	            })).pipe(materialize());
-	          })).pipe(dematerialize()).subscribe(time => {
-	            playbackController.currentTime = time;
-	            playheadSubject.next(playheadSubject.value.set('playbackTime', time));
-	          }, null, () => {
-	            playheadSubject.next(playheadSubject.value.set('playbackTime', null));
-	          });
-	        },
-
-	        exit() {
-	          this.subscription.unsubscribe();
-	        }
-
-	      }
-	    };
-	    this.audioContext = _audioContext;
-	    this.currentTime = start;
-	    this.state = this.states['stop'];
-	    this.duration = duration;
-	  }
-
-	  enter(key) {
-	    this.state.exit(this);
-	    this.state = this.states[key];
-	    this.state.enter(this);
-	  }
-
-	  play() {
-	    this.enter('play');
-	  }
-
-	  stop() {
-	    this.enter('stop');
-	  }
-
-	}
-
-	let playbackController = null;
 	function isPlaying() {
-	  return playheadSubject.value.playbackTime !== null;
+	  return playheadSubject.value.currentTime !== null;
+	}
+	let playSubscription = null;
+	function setPlaybackDuration(duration) {
+	  const current = playheadSubject.value;
+	  const nextRange = new AudioRange(current.playbackRange.start, duration);
+	  playheadSubject.next(playheadSubject.value.set('playbackRange', nextRange));
+	}
+	function incrementPlaybackDuration(time) {
+	  const current = playheadSubject.value;
+	  setPlaybackDuration(current.playbackRange.duration.plus(time));
 	}
 	function stop() {
-	  if (playbackController) {
-	    playbackController.stop();
+	  if (playSubscription) {
+	    playSubscription.unsubscribe();
+	    playSubscription = null;
+	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
 	  }
 	}
-	function play(start, duration) {
-	  if (playbackController) {
-	    stop();
+	function rasterize(startTime) {
+	  const {
+	    sampleRate
+	  } = audioContext;
+	  const duration = playheadSubject.value.playbackRange.duration.minus(startTime);
+	  const length = sampleRate * duration.seconds;
+	  console.log(duration);
+	  const offline = new OfflineAudioContext(2, length, sampleRate);
+	  playStream(offline, stream$1, stream, Observable.create(o => o.next(startTime))).subscribe(time => {
+	    console.log('ok');
+	  }, null, () => {
+	    console.log('done');
+	  });
+	  offline.startRendering().then(audioBuffer => {
+	    console.log('ok', audioBuffer);
+	    const source = audioContext.createBufferSource();
+	    source.buffer = audioBuffer;
+	    source.connect(audioContext.destination);
+	    source.start();
+	    console.log('start?');
+	  });
+	}
+	function play(startTime) {
+	  if (playSubscription) {
+	    playSubscription.unsubscribe();
 	  }
 
-	  playbackController = new PlaybackController(audioContext, start, duration);
-	  playbackController.play();
+	  playSubscription = playStream(audioContext, stream$1, stream, stream$3.pipe(filter(playhead => playhead.currentTime !== null)).pipe(take(1))).pipe(startWith(startTime)).subscribe(time => {
+	    playheadSubject.next(playheadSubject.value.set('currentTime', time));
+	  }, null, () => {
+	    console.log('done');
+	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
+	  });
 	}
 	const stream$3 = playheadSubject.asObservable();
 	const playheadSym = Symbol();
@@ -25040,11 +24970,11 @@
 	  }
 
 	  get isPlaying() {
-	    return this.playhead.data.playbackTime !== null;
+	    return this.playhead.data.currentTime !== null;
 	  }
 
 	  get displayTime() {
-	    return this.isPlaying ? this.playhead.data.playbackTime : this.editor.data.cursor;
+	    return this.isPlaying ? this.playhead.data.currentTime : this.editor.data.cursor;
 	  }
 
 	  get playButtonClass() {
@@ -25066,7 +24996,14 @@
 	  }
 
 	  onPlayClick() {
-	    play(this.editor.data.cursor, this.editor.data.duration);
+	    // play(
+	    //     new AudioRange(
+	    //         this.editor.data.cursor,
+	    //         new Time(2000),
+	    //     ),
+	    // );
+	    // play(this.editor.data.cursor)
+	    rasterize(this.editor.data.cursor);
 	  }
 
 	}
@@ -32383,6 +32320,7 @@
 	    super(...args);
 	    this.audioTracks = void 0;
 	    this.editor = void 0;
+	    this.playhead = void 0;
 	    this.frame = null;
 
 	    this.updateFrame = () => {
@@ -32478,7 +32416,7 @@
 	   *
 	  */
 	  get maxTime() {
-	    return new Time(this.editor.data.duration.milliseconds + 2000);
+	    return this.playhead.data.playbackRange.duration.add(new Time(5000));
 	  }
 
 	  get minTime() {
@@ -32496,7 +32434,13 @@
 	    };
 	    const px = timeToPixel(this.frame, range, this.editor.data.visibleRange.start);
 	    const translate = `translateX(${px}px)`;
-	    const width = durationToWidth(this.frame, range.duration, this.editor.data.visibleRange.duration);
+	    let timeWidth = this.editor.data.visibleRange.duration;
+
+	    if (this.editor.data.visibleRange.start.add(this.editor.data.visibleRange.duration).greaterThan(this.maxTime)) {
+	      timeWidth = this.maxTime.subtract(this.editor.data.visibleRange.start);
+	    }
+
+	    const width = durationToWidth(this.frame, range.duration, timeWidth);
 	    return `width: ${width}px; transform: ${translate}`;
 	  }
 
@@ -32531,6 +32475,11 @@
 	    },
 	    editor: {
 	      adapter: editorSym,
+	      params: {},
+	      static: {}
+	    },
+	    playhead: {
+	      adapter: playheadSym,
 	      params: {},
 	      static: {}
 	    }
@@ -34694,6 +34643,14 @@
 	    this.startHandleIneract = void 0;
 	    this.endHandleInteract = void 0;
 
+	    this.onStartDrag = evt => {
+	      const event = new CustomEvent('segmentdragstart', {
+	        composed: true,
+	        bubbles: true
+	      });
+	      this.dispatchEvent(event);
+	    };
+
 	    this.onDrag = evt => {
 	      const {
 	        editor,
@@ -34704,12 +34661,20 @@
 	      } = evt;
 	      const time = editor.data.pixelToTime(dx);
 	      const event = new CustomEvent('segmentmove', {
-	        composed: false,
+	        composed: true,
 	        bubbles: true,
 	        detail: {
 	          time,
 	          segmentId: segment.id
 	        }
+	      });
+	      this.dispatchEvent(event);
+	    };
+
+	    this.onEndDrag = evt => {
+	      const event = new CustomEvent('segmentdragend', {
+	        composed: true,
+	        bubbles: true
 	      });
 	      this.dispatchEvent(event);
 	    };
@@ -34789,7 +34754,9 @@
 	    this.moveInteract = interact(this.template.host).draggable({
 	      inertia: false,
 	      axis: 'y',
-	      onmove: this.onDrag
+	      onmove: this.onDrag,
+	      onstart: this.onStartDrag,
+	      onend: this.onEndDrag
 	    });
 	  }
 
@@ -35103,6 +35070,14 @@
 	      });
 	      this.dispatchEvent(event);
 	    };
+
+	    this.onCaretDoubleTap = evt => {
+	      const event = new CustomEvent('cursordoubletap', {
+	        bubbles: true,
+	        composed: true
+	      });
+	      this.dispatchEvent(event);
+	    };
 	  }
 
 	  get containerStyle() {
@@ -35139,9 +35114,18 @@
 	  */
 	  renderedCallback() {
 	    if (this.userDrag && !this.interact) {
-	      this.interact = interact(this.template.querySelector('.drag-triangle')).draggable({
+	      this.interact = interact(this.template.querySelector('.drag-triangle'));
+	      this.interact.draggable({
 	        onmove: this.onCaretDrag
 	      });
+	      this.interact.on('doubletap', this.onCaretDoubleTap);
+	    }
+	  }
+
+	  disconnectedCallback() {
+	    if (this.interact) {
+	      this.interact.unset();
+	      this.interact.off('doubletap', this.onCaretDoubleTap);
 	    }
 	  }
 
@@ -35249,7 +35233,11 @@
 	    _m4,
 	    _m5,
 	    _m6,
-	    _m7
+	    _m7,
+	    _m8,
+	    _m9,
+	    _m10,
+	    _m11
 	  } = $ctx;
 	  return [api_element("header", {
 	    classMap: {
@@ -35316,8 +35304,8 @@
 	    className: $cmp.editorClassName,
 	    key: 16,
 	    on: {
-	      "mousemove": _m6 || ($ctx._m6 = api_bind($cmp.onEditorMouseMove)),
-	      "mouseleave": _m7 || ($ctx._m7 = api_bind($cmp.onEditorMouseLeave))
+	      "mousemove": _m10 || ($ctx._m10 = api_bind($cmp.onEditorMouseMove)),
+	      "mouseleave": _m11 || ($ctx._m11 = api_bind($cmp.onEditorMouseLeave))
 	    }
 	  }, [$cmp.isSelecting ? api_custom_element("ffmpeg-selection", _ffmpegSelection, {
 	    props: {
@@ -35327,7 +35315,7 @@
 	  }, []) : null, api_element("div", {
 	    key: 19,
 	    on: {
-	      "click": _m5 || ($ctx._m5 = api_bind($cmp.handleEditorClick))
+	      "click": _m7 || ($ctx._m7 = api_bind($cmp.onEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
 	    key: 20
@@ -35349,7 +35337,11 @@
 	      props: {
 	        "track": track.data
 	      },
-	      key: 24
+	      key: 24,
+	      on: {
+	        "segmentdragend": _m5 || ($ctx._m5 = api_bind($cmp.onSegmentDragEnd)),
+	        "segmentdragstart": _m6 || ($ctx._m6 = api_bind($cmp.onSegmentDragStart))
+	      }
 	    }, [])]);
 	  }))]), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
@@ -35364,14 +35356,24 @@
 	    key: 28
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
-	      "time": $cmp.playhead.data.playbackTime,
+	      "time": $cmp.playhead.data.currentTime,
 	      "playhead": true
 	    },
 	    key: 30
+	  }, []) : null, $cmp.hasPlaybackDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
+	    props: {
+	      "time": $cmp.playhead.data.playbackRange.duration,
+	      "userDrag": true
+	    },
+	    key: 32,
+	    on: {
+	      "cursordoubletap": _m8 || ($ctx._m8 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
+	      "cursordrag": _m9 || ($ctx._m9 = api_bind($cmp.onPlaybackDurationCursorDrag))
+	    }
 	  }, []) : null]) : null])]), api_element("footer", {
-	    key: 31
+	    key: 33
 	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 32
+	    key: 34
 	  }, [])])];
 	}
 
@@ -35448,6 +35450,8 @@
 	      });
 	    };
 
+	    this.segmentDrag = false;
+
 	    this.onEditorMouseMove = evt => {
 	      const {
 	        offsetX
@@ -35461,7 +35465,11 @@
 	      setVirtualCursorTime(null);
 	    };
 
-	    this.handleEditorClick = evt => {
+	    this.onEditorClick = evt => {
+	      if (this.segmentDrag) {
+	        return;
+	      }
+
 	      const next = this.editor.data.absolutePixelToTime(evt.offsetX);
 	      setCursorTime(next);
 	    };
@@ -35534,6 +35542,16 @@
 	  */
 
 
+	  onSegmentDragStart() {
+	    this.segmentDrag = true;
+	  }
+
+	  onSegmentDragEnd() {
+	    requestAnimationFrame(() => {
+	      this.segmentDrag = false;
+	    });
+	  }
+
 	  onTimelineDragStart() {
 	    this.template.host.classList.add('editor--drag');
 	  }
@@ -35542,17 +35560,38 @@
 	    this.template.host.classList.remove('editor--drag');
 	  }
 
+	  onPlaybackDurationCursorDrag(evt) {
+	    const {
+	      dx
+	    } = evt.detail;
+	    const time = this.editor.data.pixelToTime(dx);
+	    incrementPlaybackDuration(time);
+	  }
+
+	  onPlaybackDurationCursorDoubleTap(evt) {
+	    const duration = getTracksDuration(this.audioTracks.data);
+
+	    if (duration.greaterThan(this.playhead.data.playbackRange.duration)) {
+	      setPlaybackDuration(duration);
+	    }
+	  }
 	  /*
 	   *
 	   * Template
 	   *
 	  */
+
+
 	  get hasVirtualCursor() {
 	    return this.editor && this.editor.data.virtualCursor !== null && this.timeInWindow(this.editor.data.virtualCursor);
 	  }
 
 	  get hasPlaybackCursor() {
-	    return this.playhead.data.playbackTime !== null;
+	    return this.playhead.data.currentTime !== null;
+	  }
+
+	  get hasPlaybackDurationCursor() {
+	    return this.timeInWindow(this.playhead.data.playbackRange.duration);
 	  }
 
 	  timeInWindow(time) {

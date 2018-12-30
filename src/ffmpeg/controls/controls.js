@@ -2,8 +2,9 @@ import { LightningElement, wire } from 'lwc';
 import { editorSym } from './../../wire/editor';
 import { audioTracks } from './../../wire/audiotrack';
 import { audioSources } from './../../wire/audiosource';
-import { playheadSym, play, stop } from './../../wire/playhead';
+import { playheadSym, play, stop, rasterize } from './../../wire/playhead';
 import { Time } from './../../util/time';
+import { AudioRange } from './../../util/audiorange';
 
 export default class Controls extends LightningElement {
     @wire(editorSym, {})
@@ -19,11 +20,11 @@ export default class Controls extends LightningElement {
     playhead
 
     get isPlaying() {
-        return this.playhead.data.playbackTime !== null;
+        return this.playhead.data.currentTime !== null;
     }
 
     get displayTime() {
-        return this.isPlaying ? this.playhead.data.playbackTime : this.editor.data.cursor;
+        return this.isPlaying ? this.playhead.data.currentTime : this.editor.data.cursor;
     }
 
     get playButtonClass() {
@@ -45,9 +46,13 @@ export default class Controls extends LightningElement {
     }
 
     onPlayClick() {
-        play(
-            this.editor.data.cursor,
-            this.editor.data.duration,
-        );
+        // play(
+        //     new AudioRange(
+        //         this.editor.data.cursor,
+        //         new Time(2000),
+        //     ),
+        // );
+        // play(this.editor.data.cursor)
+        rasterize(this.editor.data.cursor);
     }
 }

@@ -1,72 +1,80 @@
-import { subbuffer, mix, join, silence } from './../lib/soundlab';
-import { audioContext } from './audiosource';
 import {
+    Time,
     sum as sumTime,
     lt,
     gt,
-    subtract as subtractTime,
 } from './../util/time';
-import { clamp, AudioRange } from './../util/audiorange';
+import { clamp } from './../util/audiorange';
+import { silence as createSilence } from './../lib/soundlab';
 
-/*
- *
- *
- * Renders audio data from an audio source to a segment
- * Property offsets underlying audio based on cursor position
- *
- */
-function renderSegment(segment, audioSource, startTime /* global start */, duration /* global duration */) {
-    const {
-        sourceOffset,
-        duration: segmentDuration,
-        offset,
-    } = segment;
-
-    const range = clamp(
-        new AudioRange(startTime, duration),
-        new AudioRange(offset, segmentDuration)
+export function createSilentRenderedAudioSegment(audioContext, playbackRange, duration) {
+    const silence = createSilence(
+        audioContext.sampleRate,
+        1,
+        duration.milliseconds
     );
-
-    const diff = subtractTime(range.start, offset);
-    return {
-        audio: subbuffer(
-            audioSource.audio,
-            sumTime(diff, sourceOffset).milliseconds,
-            segmentDuration.milliseconds,
-        ),
-        offset,
-        duration: segmentDuration,
-    };
+    return new RenderedAudioSegment(
+        audioContext,
+        silence,
+        playbackRange,
+        new Time(0),
+        playbackRange
+    );
 }
 
-/*
- *
- * Adds silent audio buffers between rendered segments
- *
- */
-function fillRenderedSegments(renderedSegments, startTime) {
-    const {
-        milliseconds: cursorMilliseconds,
-    } = startTime;
+class RenderedAudioSegment {
+    constructor(audioContext, audio, playbackRange, segmentSourceOffset, segmentRange) {
+        this.playbackRange = playbackRange;
+        this.segmentSourceOffset = segmentSourceOffset;
+        this.segmentRange = segmentRange;
 
-    return renderedSegments.reduce((seed, renderedSegment, index) => {
-        const previous = renderedSegments[index - 1];
-        const previousEndMs = index === 0 ? cursorMilliseconds : previous.offset.milliseconds + previous.duration.milliseconds;
-        const startMs = renderedSegment.offset.milliseconds;
-        const diff = startMs - previousEndMs;
-        if (diff > 0) {
-            seed.push(
-                silence(
-                    renderedSegment.audio.sampleRate,
-                    renderedSegment.audio.numberOfChannels,
-                    diff
-                )
-            );
+        const source = this.source = audioContext.createBufferSource();
+        source.buffer = audio;
+    }
+
+    getPlaybackData(audioContextCurrentTime, currentTime) {
+        const { playbackRange, segmentRange, segmentSourceOffset } = this;
+        const clamped = clamp(playbackRange, segmentRange);
+        let startOffset = segmentRange.start.subtract(currentTime);
+        let offset = segmentSourceOffset;
+        if (startOffset.milliseconds < 0) {
+            offset = offset.subtract(startOffset);
+            startOffset = new Time(0);
         }
 
-        seed.push(renderedSegment.audio);
-        return seed;
-    }, []);
+        return {
+            when: startOffset.add(audioContextCurrentTime).seconds,
+            offset: offset.seconds,
+            duration: clamped.duration.seconds,
+        };
+    }
+
+    start(audioContextCurrentTime, currentTime) {
+        if (!audioContextCurrentTime) {
+            throw new Error(`Cannot start RenderedAudioSegment playback. "${audioContextCurrentTime}" not a valid AudioContext.currentTime value`);
+        }
+        if (!currentTime) {
+            throw new Error(`Cannot start RenderedAudioSegment playback. "${currentTime}" not a valid Playhead.currentTime value`);
+        }
+        const { source } = this;
+        const { when, offset, duration } = this.getPlaybackData(audioContextCurrentTime, currentTime);
+        source.start(
+            when,
+            offset,
+            duration,
+        );
+
+        return new Promise((res) => {
+            source.addEventListener('ended', res, { once: true })
+        });
+    }
+
+    stop() {
+        if (!this.source) {
+            throw new Error('Trying to stop RenderedAudioSegment that has not been started');
+        }
+        this.source.stop();
+    }
 }
 
 export function segmentInTimeRange(segment, startTime, duration) {
@@ -91,62 +99,44 @@ export function segmentInTimeRange(segment, startTime, duration) {
 /*
  *
  *
- * Renders a track to a playable AudioBuffer
+ * Renders segments in a track
  *
  */
-function renderTrackToAudioBuffer(audioTrack, audioSources, start, duration) {
-    const filteredSegments = audioTrack.segments.toList().filter((segment) => {
-        return segmentInTimeRange(
-            segment,
-            start,
-            duration,
-        );
-    });
+function renderTrackSegments(audioContext, range, audioTrack, audioSources) {
+    const segments = audioTrack.segments.toList().filter((segment) => {
+        return segmentInTimeRange(segment, range.start, range.duration);
+    })
 
-    if (filteredSegments.size === 0) {
+    if (segments.size === 0) {
         return null;
     }
 
-    const renderedSegments = audioTrack.segments.toList().map((segment) => {
-        const { sourceId } = segment;
-        return renderSegment(
-            segment,
-            audioSources.get(sourceId),
-            start,
-            duration,
+    return audioTrack.segments.toList().map((segment) => {
+        const audio = audioSources.getIn([segment.sourceId, 'audio']);
+
+        return new RenderedAudioSegment(
+            audioContext,
+            audio,
+            range,
+            segment.sourceOffset,
+            segment.range,
         );
     })
     .toArray();
-
-    const filled = fillRenderedSegments(renderedSegments, start)
-
-    return join(filled);
 }
 
-export function renderAudioBuffer(start, duration, audioTracks, audioSources) {
-    let audioBuffers = audioTracks.map((audioTrack) => {
-        return renderTrackToAudioBuffer(
+export function renderAudioBuffer(audioContext, range, audioTracks, audioSources) {
+    return audioTracks.map((audioTrack) => {
+        return renderTrackSegments(
+            audioContext,
+            range,
             audioTrack,
             audioSources,
-            start,
-            duration,
         );
     })
-    .filter((audioBuffer) => {
-        return audioBuffer !== null;
+    .filter((buffer) => {
+        return buffer !== null;
     })
     .toList()
     .toJS();
-
-    if (audioBuffers.length === 0) {
-        audioBuffers = [
-            silence(
-                audioContext.sampleRate,
-                2,
-                duration.milliseconds,
-            )
-        ];
-    }
-
-    return mix(audioContext, audioBuffers);
 }

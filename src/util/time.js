@@ -16,8 +16,16 @@ export class Time {
         return sum(this, time);
     }
 
+    plus(time) {
+        return this.add(time);
+    }
+
     subtract(time) {
         return subtract(this, time);
+    }
+
+    minus(time) {
+        return this.subtract(time);
     }
 
     greaterThan(time) {

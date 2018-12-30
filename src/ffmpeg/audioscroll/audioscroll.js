@@ -8,6 +8,7 @@ import {
     setVisibleRange,
 } from './../../wire/editor';
 import { audioTracks, audioTrackRange } from './../../wire/audiotrack';
+import { playheadSym } from './../../wire/playhead';
 import rafThrottle from 'raf-throttle';
 
 function pixelToTime(frame, duration, pixel) {
@@ -38,6 +39,9 @@ export default class AudioScroll extends LightningElement {
 
     @wire(editorSym, {})
     editor;
+
+    @wire(playheadSym, {})
+    playhead;
 
     get tracks() {
         const { frame } = this;
@@ -81,7 +85,7 @@ export default class AudioScroll extends LightningElement {
      *
     */
     get maxTime() {
-        return new Time(this.editor.data.duration.milliseconds + 2000);
+        return this.playhead.data.playbackRange.duration.add(new Time(5000));
     }
 
     get minTime() {
@@ -98,7 +102,11 @@ export default class AudioScroll extends LightningElement {
         };
         const px = timeToPixel(this.frame, range, this.editor.data.visibleRange.start);
         const translate = `translateX(${px}px)`;
-        const width = durationToWidth(this.frame, range.duration, this.editor.data.visibleRange.duration);
+        let timeWidth = this.editor.data.visibleRange.duration
+        if (this.editor.data.visibleRange.start.add(this.editor.data.visibleRange.duration).greaterThan(this.maxTime)) {
+            timeWidth = this.maxTime.subtract(this.editor.data.visibleRange.start);
+        }
+        const width = durationToWidth(this.frame, range.duration, timeWidth);
         return `width: ${width}px; transform: ${translate}`
     }
 

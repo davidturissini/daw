@@ -1,7 +1,14 @@
-import { sum as sumTime, gt, subtract as subtractTime } from './time';
+import { Time, sum as sumTime, gt, subtract as subtractTime } from './time';
 
 export class AudioRange {
     constructor(start, duration) {
+        if (!(start instanceof Time)) {
+            throw new Error(`Invalid start time for AudioRange. "${start}" is not a valid instance of Time`);
+        }
+
+        if (!(duration instanceof Time)) {
+            throw new Error(`Invalid duration time for AudioRange. "${duration}" is not a valid instance of Time`);
+        }
         this.start = start;
         this.duration = duration;
     }
