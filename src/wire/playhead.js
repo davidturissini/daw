@@ -1,20 +1,48 @@
 import { register } from 'wire-service';
-import { BehaviorSubject, Observable, combineLatest, of as observableOf, zip as observableZip } from 'rxjs';
-import { switchMap, concat, flatMap, filter, take, takeUntil, materialize, dematerialize, startWith } from 'rxjs/operators';
-import { Record } from 'immutable';
+import {
+    BehaviorSubject,
+    Observable,
+    combineLatest,
+    of as observableOf,
+    zip as observableZip,
+} from 'rxjs';
+import {
+    switchMap,
+    concat,
+    map,
+    flatMap,
+    filter,
+    take,
+    takeUntil,
+    materialize,
+    dematerialize,
+    startWith,
+    repeat,
+    distinctUntilChanged,
+    pairwise,
+} from 'rxjs/operators';
+import { Record, Map as ImmutableMap } from 'immutable';
 import { Time } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
-import { stream as audioSourceStream, audioContext as defaultAudioContext } from './audiosource';
-import { stream as audioTrackStream } from './audiotrack';
-import { renderAudioBuffer, createSilentRenderedAudioSegment } from './audiorender';
+import {
+    stream as audioSourceStream,
+    audioContext as defaultAudioContext,
+} from './audiosource';
+import {
+    stream as audioTrackStream,
+    segmentInTimeRange,
+} from './audiotrack';
 import { connectMasterOut } from './masterout';
-import { AudioRange } from '../util/audiorange';
+import { AudioRange, clamp } from '../util/audiorange';
 import toWav from 'audiobuffer-to-wav';
 import saveAs from 'file-saver';
+import { AuroraSourceNode } from './../player/AudioDevice';
+import { stream as editorStream } from './editor';
 
 class Playhead extends Record({
     playbackRange: null,
     currentTime: null,
+    auroraNodes: new ImmutableMap(),
 }) {
 
 }
@@ -24,6 +52,118 @@ const playheadSubject = new BehaviorSubject(new Playhead({
         new Time(30000)
     )
 }));
+
+export const stream = playheadSubject.asObservable();
+
+function getPlaybackData(currentTime, playbackRange, segmentRange, segmentSourceOffset) {
+    let startOffset = segmentRange.start.subtract(currentTime);
+    let offset = segmentSourceOffset;
+    if (startOffset.milliseconds < 0) {
+        offset = offset.subtract(startOffset);
+        startOffset = new Time(0);
+    }
+
+    return {
+        when: startOffset,
+        offset: offset,
+        duration: clamp(playbackRange, segmentRange).duration,
+    };
+}
+
+const playbackEndedStream = stream.pipe(
+    pairwise(),
+    filter(([last, current]) => {
+        return (
+            last.currentTime !== null &&
+            current.currentTime === null
+        );
+    })
+);
+
+const playbackRangeStartStream = editorStream.pipe(map((editor) => {
+        return editor.cursor;
+    }))
+    .pipe(
+        distinctUntilChanged(),
+        takeUntil(playbackEndedStream),
+        repeat(),
+    );
+
+const playbackRangeStream = audioTrackStream.pipe(
+    switchMap((audioTracks) => {
+        return combineLatest(
+            playbackRangeStartStream,
+            audioSourceStream.pipe(take(1)),
+            (currentTime, audioSources) => {
+                const playhead = playheadSubject.value;
+                const diff = currentTime.subtract(playhead.playbackRange.start);
+                const currentTimeRange = new AudioRange(
+                    currentTime,
+                    playhead.playbackRange.duration.subtract(diff)
+                );
+                return {
+                    audioTracks,
+                    audioSources,
+                    range: currentTimeRange,
+                };
+            })
+
+    })
+);
+
+function makeSourceNodesStream(audioContext) {
+    return playbackRangeStream.pipe(
+        map(({ audioTracks, audioSources, range }) => {
+            let sourceNodes = new ImmutableMap();
+            audioTracks.forEach((track) => {
+                track.segments
+                    .filter((segment) => {
+                        return segmentInTimeRange(
+                            segment,
+                            range.start,
+                            range.duration,
+                        );
+                    })
+                    .forEach((segment) => {
+                        const audioSource = audioSources.get(segment.sourceId);
+                        const asset = window.AV.Asset.fromBuffer(audioSource.data);
+                        const playbackData = getPlaybackData(
+                            range.start,
+                            range,
+                            segment.range,
+                            segment.sourceOffset,
+                        );
+
+                        const auroraNode = new AuroraSourceNode(
+                            asset,
+                            audioContext,
+                            audioSource.channelsCount,
+                            audioSource.sampleRate,
+                            audioSource.duration.seconds,
+                            {
+                                when: playbackData.when.seconds,
+                                offset: playbackData.offset.seconds,
+                                duration: playbackData.duration.seconds,
+                            }
+                        );
+
+                        sourceNodes = sourceNodes.set(segment.id, auroraNode);
+                    });
+            });
+
+            return { sourceNodes, range };
+        })
+    )
+}
+
+makeSourceNodesStream(defaultAudioContext)
+    .subscribe(({ sourceNodes }) => {
+        const playhead = playheadSubject.value;
+        playheadSubject.next(
+            playhead.set('auroraNodes', sourceNodes)
+        );
+    })
+
 
 function createCurrentTimeStream(audioContext, startAudioContextSeconds, initialTime) {
     return Observable.create((o) => {
@@ -41,50 +181,25 @@ function createCurrentTimeStream(audioContext, startAudioContextSeconds, initial
     })
 }
 
-function playStream(audioContext, audioTracks, audioSources, currentTime, range) {
+function playStream(audioContext, auroraNodes, range) {
     const timeAnchor = range.start;
-    const rangeDuration = range.duration;
     const audioContextCurrentTime = Time.fromSeconds(audioContext.currentTime);
 
     return Observable.create((o) => {
-        const rendered = renderAudioBuffer(
-            audioContext,
-            range,
-            audioTracks,
-            audioSources
-        );
-        let maxDuration = new Time(0);
-        const allRenderedAudioSegments = rendered.reduce((seed, renderedAudioSegments) => {
-            return seed.concat(renderedAudioSegments);
-        }, []);
-
-        // Handle if the playback duration is
-        // greater than track durations
-        if (rangeDuration.greaterThan(maxDuration)) {
-            const silence = createSilentRenderedAudioSegment(
-                audioContext,
-                range,
-                rangeDuration.subtract(maxDuration),
-            );
-
-            allRenderedAudioSegments.push(silence);
-        }
-
-        connectMasterOut(audioContext, allRenderedAudioSegments);
-
-        const promises = allRenderedAudioSegments.map((renderedAudioSegment) => {
-            return renderedAudioSegment.start(
-                audioContextCurrentTime,
-                timeAnchor
-            );
-        });
+        //if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        //}
+        const promises = auroraNodes.map((node) => {
+            node.node.connect(audioContext.destination);
+            return node.start();
+        })
+        .toList()
+        .toArray();
 
         o.next(Promise.all(promises));
 
-        return function() {
-            allRenderedAudioSegments.forEach((renderedAudioSegment) => {
-                renderedAudioSegment.stop();
-            });
+        return () => {
+            auroraNodes.forEach((node) => node.stop());
         }
     })
     .pipe(
@@ -142,35 +257,33 @@ export function rasterize(startTime) {
     const { sampleRate } = defaultAudioContext;
     const duration = playheadSubject.value.playbackRange.duration.minus(startTime);
     const length = sampleRate * duration.seconds;
-    console.log(duration)
     const offline = new OfflineAudioContext(2, length, sampleRate)
 
-    observableZip(
-        audioTrackStream,
-        audioSourceStream
-    ).pipe(
-        flatMap(([audioTracks, audioSources]) => {
+    makeSourceNodesStream(offline)
+        .pipe(switchMap(({ sourceNodes, range }) => {
             return playStream(
                 offline,
-                audioTracks,
-                audioSources,
-                startTime,
-                new AudioRange(
-                    startTime,
-                    duration
-                )
+                sourceNodes,
+                range
             )
-        })
-    )
-    .subscribe(
-        (time) => {
-            console.log('ok')
-        },
-        null,
-        () => {
-            console.log('done')
-        }
-    );
+            .pipe(startWith(range.start))
+            .pipe(materialize())
+        }))
+        .pipe(dematerialize())
+        .subscribe(
+            (time) => {
+                playheadSubject.next(
+                    playheadSubject.value.set('currentTime', time)
+                );
+            },
+            null,
+            () => {
+                console.log('done')
+                playheadSubject.next(
+                    playheadSubject.value.set('currentTime', null)
+                );
+            }
+        );
 
     offline.startRendering().then((audioBuffer) => {
         const wav = toWav(audioBuffer);
@@ -179,56 +292,38 @@ export function rasterize(startTime) {
     })
 }
 
-export function play(startTime) {
+export function play() {
     if (playSubscription) {
         playSubscription.unsubscribe();
     }
 
-    playSubscription = audioTrackStream.pipe(switchMap((audioTracks) => {
-        return combineLatest(
-            stream.pipe(filter((playhead) => playhead.currentTime !== null)).pipe(take(1)),
-            audioSourceStream,
-            (playhead, audioSources) => {
-                const { currentTime } = playhead;
-                const diff = currentTime.subtract(playhead.playbackRange.start);
-                const currentTimeRange = new AudioRange(
-                    currentTime,
-                    playhead.playbackRange.duration.subtract(diff)
+    playSubscription = playbackRangeStream
+        .pipe(switchMap(({ range }) => {
+            return playStream(
+                defaultAudioContext,
+                playheadSubject.value.auroraNodes,
+                range
+            )
+            .pipe(startWith(range.start))
+            .pipe(materialize())
+        }))
+        .pipe(dematerialize())
+        .subscribe(
+            (time) => {
+                playheadSubject.next(
+                    playheadSubject.value.set('currentTime', time)
                 );
-                return {
-                    audioTracks,
-                    audioSources,
-                    range: currentTimeRange,
-                };
-            })
-            .pipe(take(1));
-    }))
-    .pipe(switchMap(({ audioTracks, audioSources, range }) => {
-        return playStream(
-            defaultAudioContext,
-            audioTracks,
-            audioSources,
-            range.start,
-            range
-        )
-    }))
-    .pipe(startWith(startTime))
-    .subscribe(
-        (time) => {
-            playheadSubject.next(
-                playheadSubject.value.set('currentTime', time)
-            );
-        },
-        null,
-        () => {
-            console.log('done')
-            playheadSubject.next(
-                playheadSubject.value.set('currentTime', null)
-            );
-        }
-    );
+            },
+            null,
+            () => {
+                console.log('done')
+                playheadSubject.next(
+                    playheadSubject.value.set('currentTime', null)
+                );
+            }
+        );
 }
 
-export const stream = playheadSubject.asObservable();
+
 export const playheadSym = Symbol();
 register(playheadSym, wireObservable(stream));

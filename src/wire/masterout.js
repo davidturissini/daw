@@ -12,7 +12,6 @@ export const stream = masterOutSubject.asObservable();
 
 export function connectMasterOut(audioContext, renderedAudioSegments) {
     const gainNode = audioContext.createGain();
-    console.log('audioContext', audioContext)
 
     stream.subscribe((masterOut) => {
         gainNode.gain.value = masterOut.gain;

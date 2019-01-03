@@ -5,9 +5,7 @@ import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Record } from 'immutable';
-import { play, isPlaying, stream as playheadStream } from './playhead';
 import { stream as audioTrackStream, getTracksDuration } from './audiotrack';
-
 class Editor extends Record({
     visibleRange: new AudioRange(
         new Time(0),
@@ -62,12 +60,10 @@ export function setVirtualCursorTime(time) {
 }
 
 export function setCursorTime(time) {
+    console.log('ok', time.milliseconds)
     editorSubject.next(
         editorSubject.value.set('cursor', time)
     );
-    if (isPlaying()) {
-        play(time);
-    }
 }
 
 const quanitizationValues = [
@@ -83,7 +79,9 @@ const quanitizationValues = [
     5,
     10,
     30,
-    60
+    60,
+    120,
+    240,
 ];
 
 export function setVisibleRange(start, duration) {
@@ -91,13 +89,16 @@ export function setVisibleRange(start, duration) {
     let next = editorSubject.value.set('visibleRange', range);
 
     const max = 40;
-    let value = quanitizationValues[0];
+    let value = null;
     for(let i = 0; i < quanitizationValues.length; i += 1) {
         const ticks = duration.seconds / quanitizationValues[i];
         if (ticks <= max) {
             value = quanitizationValues[i];
             break;
         }
+    }
+    if (value === null) {
+        value = quanitizationValues[quanitizationValues.length - 1];
     }
     next = next.set('quanitization', value);
     editorSubject.next(next);
@@ -140,20 +141,6 @@ export function setFrame(frame) {
 
 const editorSubject = new BehaviorSubject(new Editor());
 export const stream = editorSubject.asObservable();
-
-
-playheadStream.pipe(
-    filter((playhead) => playhead.playbackTime)
-)
-.subscribe((playhead) => {
-    const { visibleRange } = editorSubject.value;
-    const middleTime = new Time(visibleRange.start.milliseconds + (visibleRange.duration.milliseconds / 2));
-    if (playhead.playbackTime.milliseconds > middleTime.milliseconds) {
-        incrementVisibleRangeStart(
-            new Time(playhead.playbackTime.milliseconds - middleTime.milliseconds)
-        )
-    }
-})
 
 audioTrackStream.subscribe((audioTracks) => {
     if (audioTracks.size === 0) {

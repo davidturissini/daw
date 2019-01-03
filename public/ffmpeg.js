@@ -14300,35 +14300,6 @@
 	/** PURE_IMPORTS_START _Observable,_from,_empty PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START tslib,_fromArray,_util_isArray,_Subscriber,_OuterSubscriber,_util_subscribeToResult,_.._internal_symbol_iterator PURE_IMPORTS_END */
-	function zip() {
-	  var observables = [];
-
-	  for (var _i = 0; _i < arguments.length; _i++) {
-	    observables[_i] = arguments[_i];
-	  }
-
-	  var resultSelector = observables[observables.length - 1];
-
-	  if (typeof resultSelector === 'function') {
-	    observables.pop();
-	  }
-
-	  return fromArray(observables, undefined).lift(new ZipOperator(resultSelector));
-	}
-
-	var ZipOperator =
-	/*@__PURE__*/
-	function () {
-	  function ZipOperator(resultSelector) {
-	    this.resultSelector = resultSelector;
-	  }
-
-	  ZipOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new ZipSubscriber(subscriber, this.resultSelector));
-	  };
-
-	  return ZipOperator;
-	}();
 
 	var ZipSubscriber =
 	/*@__PURE__*/
@@ -15760,6 +15731,26 @@
 	}(OuterSubscriber);
 
 	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
+	function distinctUntilChanged(compare, keySelector) {
+	  return function (source) {
+	    return source.lift(new DistinctUntilChangedOperator(compare, keySelector));
+	  };
+	}
+
+	var DistinctUntilChangedOperator =
+	/*@__PURE__*/
+	function () {
+	  function DistinctUntilChangedOperator(compare, keySelector) {
+	    this.compare = compare;
+	    this.keySelector = keySelector;
+	  }
+
+	  DistinctUntilChangedOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new DistinctUntilChangedSubscriber(subscriber, this.compare, this.keySelector));
+	  };
+
+	  return DistinctUntilChangedOperator;
+	}();
 
 	var DistinctUntilChangedSubscriber =
 	/*@__PURE__*/
@@ -16709,6 +16700,23 @@
 	}(OuterSubscriber);
 
 	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+	function pairwise() {
+	  return function (source) {
+	    return source.lift(new PairwiseOperator());
+	  };
+	}
+
+	var PairwiseOperator =
+	/*@__PURE__*/
+	function () {
+	  function PairwiseOperator() {}
+
+	  PairwiseOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new PairwiseSubscriber(subscriber));
+	  };
+
+	  return PairwiseOperator;
+	}();
 
 	var PairwiseSubscriber =
 	/*@__PURE__*/
@@ -16752,6 +16760,36 @@
 	/** PURE_IMPORTS_START _util_isArray,_observable_race PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START tslib,_Subscriber,_observable_empty PURE_IMPORTS_END */
+	function repeat(count) {
+	  if (count === void 0) {
+	    count = -1;
+	  }
+
+	  return function (source) {
+	    if (count === 0) {
+	      return empty$1();
+	    } else if (count < 0) {
+	      return source.lift(new RepeatOperator(-1, source));
+	    } else {
+	      return source.lift(new RepeatOperator(count - 1, source));
+	    }
+	  };
+	}
+
+	var RepeatOperator =
+	/*@__PURE__*/
+	function () {
+	  function RepeatOperator(count, source) {
+	    this.count = count;
+	    this.source = source;
+	  }
+
+	  RepeatOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new RepeatSubscriber(subscriber, this.count, this.source));
+	  };
+
+	  return RepeatOperator;
+	}();
 
 	var RepeatSubscriber =
 	/*@__PURE__*/
@@ -24312,10 +24350,23 @@
 	  title: null,
 	  id: null,
 	  data: null,
-	  audio: null,
 	  duration: null,
-	  state: null
+	  state: null,
+	  sampleRate: null,
+	  channelsCount: null
 	}) {}
+
+	function readFile(file) {
+	  return new Promise(res => {
+	    const reader = new FileReader();
+
+	    reader.onload = () => {
+	      res(reader.result);
+	    };
+
+	    reader.readAsArrayBuffer(file);
+	  });
+	}
 
 	function createAudioSourceFromFile(id, file) {
 	  const source = new AudioSource({
@@ -24324,25 +24375,49 @@
 	    state: AudioSourceState.LOADING
 	  });
 	  audioSourcesSubject.next(audioSourcesSubject.value.set(id, source));
-	  return new Promise(res => {
-	    const reader = new FileReader();
+	  return readFile(file).then(arraybuffer => {
+	    return new Promise(res => {
+	      const asset = AV.Asset.fromBuffer(arraybuffer);
+	      let duration = null;
+	      let sampleRate = null;
+	      let channels = null;
 
-	    reader.onload = () => {
-	      const clone = reader.result.slice(0);
-	      audioContext.decodeAudioData(reader.result, audioBuffer => {
-	        const duration = Time.fromSeconds(audioBuffer.duration);
-	        const ready = audioSourcesSubject.value.mergeIn([id], {
-	          duration,
-	          data: clone,
-	          audio: audioBuffer,
-	          state: AudioSourceState.READY
-	        });
-	        audioSourcesSubject.next(ready);
-	        res(ready.get(id));
+	      function checkResolve() {
+	        if (duration !== null && sampleRate !== null && channels !== null) {
+	          res({
+	            duration,
+	            sampleRate,
+	            channels,
+	            arraybuffer
+	          });
+	        }
+	      }
+
+	      asset.get('duration', d => {
+	        duration = new Time(d);
+	        checkResolve();
 	      });
-	    };
-
-	    reader.readAsArrayBuffer(file);
+	      asset.get('format', format => {
+	        sampleRate = format.sampleRate;
+	        channels = format.channelsPerFrame;
+	        checkResolve();
+	      });
+	    });
+	  }).then(({
+	    arraybuffer,
+	    duration,
+	    sampleRate,
+	    channels
+	  }) => {
+	    const ready = audioSourcesSubject.value.mergeIn([id], {
+	      duration,
+	      data: arraybuffer,
+	      state: AudioSourceState.READY,
+	      sampleRate,
+	      channelsCount: channels
+	    });
+	    audioSourcesSubject.next(ready);
+	    return ready.get(id);
 	  });
 	}
 	const audioSources = Symbol();
@@ -24352,121 +24427,6 @@
 	function generateId() {
 	  id += 1;
 	  return id + '';
-	}
-
-	function silence(sampleRate, numberOfChannels, milliseconds) {
-	  const seconds = milliseconds / 1000;
-	  return new AudioBuffer({
-	    length: Math.ceil(sampleRate * seconds),
-	    sampleRate,
-	    numberOfChannels
-	  });
-	}
-
-	function createSilentRenderedAudioSegment(audioContext, playbackRange, duration) {
-	  const silence$$1 = silence(audioContext.sampleRate, 1, duration.milliseconds);
-	  return new RenderedAudioSegment(audioContext, silence$$1, playbackRange, new Time(0), playbackRange);
-	}
-
-	class RenderedAudioSegment {
-	  constructor(audioContext, audio, playbackRange, segmentSourceOffset, segmentRange) {
-	    this.playbackRange = playbackRange;
-	    this.segmentSourceOffset = segmentSourceOffset;
-	    this.segmentRange = segmentRange;
-	    const source = this.source = audioContext.createBufferSource();
-	    source.buffer = audio;
-	  }
-
-	  getPlaybackData(audioContextCurrentTime, currentTime) {
-	    const {
-	      playbackRange,
-	      segmentRange,
-	      segmentSourceOffset
-	    } = this;
-	    const clamped = clamp(playbackRange, segmentRange);
-	    let startOffset = segmentRange.start.subtract(currentTime);
-	    let offset = segmentSourceOffset;
-
-	    if (startOffset.milliseconds < 0) {
-	      offset = offset.subtract(startOffset);
-	      startOffset = new Time(0);
-	    }
-
-	    return {
-	      when: startOffset.add(audioContextCurrentTime).seconds,
-	      offset: offset.seconds,
-	      duration: clamped.duration.seconds
-	    };
-	  }
-
-	  start(audioContextCurrentTime, currentTime) {
-	    if (!audioContextCurrentTime) {
-	      throw new Error(`Cannot start RenderedAudioSegment playback. "${audioContextCurrentTime}" not a valid AudioContext.currentTime value`);
-	    }
-
-	    if (!currentTime) {
-	      throw new Error(`Cannot start RenderedAudioSegment playback. "${currentTime}" not a valid Playhead.currentTime value`);
-	    }
-
-	    const {
-	      source
-	    } = this;
-	    const {
-	      when,
-	      offset,
-	      duration
-	    } = this.getPlaybackData(audioContextCurrentTime, currentTime);
-	    source.start(when, offset, duration);
-	    return new Promise(res => {
-	      source.addEventListener('ended', res, {
-	        once: true
-	      });
-	    });
-	  }
-
-	  stop() {
-	    if (!this.source) {
-	      throw new Error('Trying to stop RenderedAudioSegment that has not been started');
-	    }
-
-	    this.source.stop();
-	  }
-
-	}
-
-	function segmentInTimeRange(segment, startTime, duration) {
-	  const segmentEnd = sum(segment.offset, segment.duration);
-	  const end = sum(startTime, duration);
-	  return gt(segment.offset, startTime) && lt(segment.offset, end) || lt(segmentEnd, end) && gt(segmentEnd, startTime) || lt(segment.offset, startTime) && gt(segmentEnd, startTime);
-	}
-	/*
-	 *
-	 *
-	 * Renders segments in a track
-	 *
-	 */
-
-	function renderTrackSegments(audioContext, range, audioTrack, audioSources) {
-	  const segments = audioTrack.segments.toList().filter(segment => {
-	    return segmentInTimeRange(segment, range.start, range.duration);
-	  });
-
-	  if (segments.size === 0) {
-	    return null;
-	  }
-
-	  return audioTrack.segments.toList().map(segment => {
-	    const audio = audioSources.getIn([segment.sourceId, 'audio']);
-	    return new RenderedAudioSegment(audioContext, audio, range, segment.sourceOffset, segment.range);
-	  }).toArray();
-	}
-
-	function renderAudioBuffer(audioContext, range, audioTracks, audioSources) {
-	  return audioTracks.map(audioTrack => {
-	    return renderTrackSegments(audioContext, range, audioTrack, audioSources);
-	  }).filter(buffer => {
-	    return buffer !== null;
-	  }).toList().toJS();
 	}
 
 	class Color {
@@ -24502,6 +24462,7 @@
 	class AudioTrackSegment extends Record({
 	  id: null,
 	  sourceOffset: null,
+	  audioTag: null,
 	  duration: null,
 	  offset: null,
 	  sourceId: null
@@ -24525,6 +24486,11 @@
 	  segmentId: null
 	}) {}
 
+	function segmentInTimeRange(segment, startTime, duration) {
+	  const segmentEnd = sum(segment.offset, segment.duration);
+	  const end = sum(startTime, duration);
+	  return gt(segment.offset, startTime) && lt(segment.offset, end) || lt(segmentEnd, end) && gt(segmentEnd, startTime) || lt(segment.offset, startTime) && gt(segmentEnd, startTime);
+	}
 	function getTrackDuration(track) {
 	  return track.segments.toList().toArray().reduce((seed, segment) => {
 	    if (gt(segment.end, seed)) {
@@ -24576,6 +24542,7 @@
 	    tracksSubject.next(tracksSubject.value.updateIn([trackId, 'segments'], segments => {
 	      const segmentId = generateId();
 	      return segments.set(segmentId, new AudioTrackSegment({
+	        audioTag: document.createElement('audio'),
 	        id: segmentId,
 	        sourceOffset: new Time(0),
 	        duration: audioSource.duration,
@@ -24651,7 +24618,7 @@
 	  const relative$$1 = relative(segmentRange, range$$1);
 	  return split(segmentRange, relative$$1).map(split$$1 => {
 	    const diff = subtract(split$$1.start, segment.offset);
-	    return segment.set('offset', split$$1.start).set('duration', split$$1.duration).set('id', generateId()).set('sourceOffset', sum(segment.sourceOffset, diff));
+	    return segment.set('offset', split$$1.start).set('duration', split$$1.duration).set('id', generateId()).set('sourceOffset', sum(segment.sourceOffset, diff)).set('audioTag', document.createElement('audio'));
 	  });
 	}
 
@@ -24705,136 +24672,130 @@
 	const audioTracks = Symbol();
 	wire_2(audioTracks, wireObservable(stream$1));
 
+	class Editor extends Record({
+	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
+	  end: Time.fromSeconds(30),
+	  frame: null,
+	  cursor: Time.fromSeconds(1),
+	  virtualCursor: Time.fromSeconds(2),
+	  quanitization: 1 / 4
+	}) {
+	  get duration() {
+	    return new Time(this.end.milliseconds - this.cursor.milliseconds);
+	  }
+
+	  pixelToTime(pixel) {
+	    const {
+	      width
+	    } = this.frame;
+	    const {
+	      visibleRange
+	    } = this;
+	    const percent = pixel / width;
+	    const millisecond = percent * visibleRange.duration.milliseconds;
+	    return new Time(millisecond);
+	  }
+
+	  absolutePixelToTime(pixel) {
+	    const time = this.pixelToTime(pixel);
+	    return new Time(time.milliseconds + this.visibleRange.start.milliseconds);
+	  }
+
+	  timeToPixel(time) {
+	    const {
+	      width
+	    } = this.frame;
+	    const {
+	      visibleRange
+	    } = this;
+	    const percent = (time.milliseconds - visibleRange.start.milliseconds) / visibleRange.duration.milliseconds;
+	    return percent * width;
+	  }
+
+	  durationToWidth(time) {
+	    const {
+	      width
+	    } = this.frame;
+	    const {
+	      visibleRange
+	    } = this;
+	    const pixelsPerMillisecond = width / visibleRange.duration.milliseconds;
+	    return pixelsPerMillisecond * time.milliseconds;
+	  }
+
+	}
+
+	function setVirtualCursorTime(time) {
+	  editorSubject.next(editorSubject.value.set('virtualCursor', time));
+	}
+	function setCursorTime(time) {
+	  console.log('ok', time.milliseconds);
+	  editorSubject.next(editorSubject.value.set('cursor', time));
+	}
+	const quanitizationValues = [1 / 64, 1 / 32, 1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2, 4, 5, 10, 30, 60, 120, 240];
+	function setVisibleRange(start, duration) {
+	  const range$$1 = new AudioRange(start, duration);
+	  let next = editorSubject.value.set('visibleRange', range$$1);
+	  const max$$1 = 40;
+	  let value = null;
+
+	  for (let i = 0; i < quanitizationValues.length; i += 1) {
+	    const ticks = duration.seconds / quanitizationValues[i];
+
+	    if (ticks <= max$$1) {
+	      value = quanitizationValues[i];
+	      break;
+	    }
+	  }
+
+	  if (value === null) {
+	    value = quanitizationValues[quanitizationValues.length - 1];
+	  }
+
+	  next = next.set('quanitization', value);
+	  editorSubject.next(next);
+	}
+	function setVisibleRangeStart(time) {
+	  setVisibleRange(time, editorSubject.value.visibleRange.duration);
+	}
+	function setVisibleRangeDuration(time) {
+	  setVisibleRange(editorSubject.value.visibleRange.start, time);
+	}
+	function incrementEnd(incrementTime) {
+	  const editor = editorSubject.value;
+	  const time = new Time(incrementTime.milliseconds + editor.end.milliseconds);
+	  editorSubject.next(editorSubject.value.set('end', time));
+	}
+	function setFrame(frame) {
+	  editorSubject.next(editorSubject.value.set('frame', frame));
+	}
+	const editorSubject = new BehaviorSubject(new Editor());
+	const stream$2 = editorSubject.asObservable();
+	stream$1.subscribe(audioTracks$$1 => {
+	  if (audioTracks$$1.size === 0) {
+	    return;
+	  }
+
+	  const tracksDuration = getTracksDuration(audioTracks$$1);
+
+	  if (gt(tracksDuration, editorSubject.value.end)) {
+	    editorSubject.next(editorSubject.value.set('end', tracksDuration));
+	  }
+	});
+	const editorSym = Symbol();
+	wire_2(editorSym, wireObservable(stream$2));
+
 	class MasterOut extends Record({
 	  gain: 5
 	}) {}
 
 	const masterOutSubject = new BehaviorSubject(new MasterOut());
-	const stream$2 = masterOutSubject.asObservable();
-	function connectMasterOut(audioContext, renderedAudioSegments) {
-	  const gainNode = audioContext.createGain();
-	  console.log('audioContext', audioContext);
-	  stream$2.subscribe(masterOut => {
-	    gainNode.gain.value = masterOut.gain;
-	  });
-	  renderedAudioSegments.forEach(renderedAudioSegment => {
-	    renderedAudioSegment.source.connect(gainNode);
-	  });
-	  gainNode.connect(audioContext.destination);
-	}
+	const stream$3 = masterOutSubject.asObservable();
 	function setGain(value) {
 	  masterOutSubject.next(masterOutSubject.value.set('gain', value));
 	}
 	const masterOutSym = Symbol();
-	wire_2(masterOutSym, wireObservable(stream$2));
-
-	var audiobufferToWav = audioBufferToWav;
-
-	function audioBufferToWav(buffer, opt) {
-	  opt = opt || {};
-	  var numChannels = buffer.numberOfChannels;
-	  var sampleRate = buffer.sampleRate;
-	  var format = opt.float32 ? 3 : 1;
-	  var bitDepth = format === 3 ? 32 : 16;
-	  var result;
-
-	  if (numChannels === 2) {
-	    result = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
-	  } else {
-	    result = buffer.getChannelData(0);
-	  }
-
-	  return encodeWAV(result, format, sampleRate, numChannels, bitDepth);
-	}
-
-	function encodeWAV(samples, format, sampleRate, numChannels, bitDepth) {
-	  var bytesPerSample = bitDepth / 8;
-	  var blockAlign = numChannels * bytesPerSample;
-	  var buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
-	  var view = new DataView(buffer);
-	  /* RIFF identifier */
-
-	  writeString(view, 0, 'RIFF');
-	  /* RIFF chunk length */
-
-	  view.setUint32(4, 36 + samples.length * bytesPerSample, true);
-	  /* RIFF type */
-
-	  writeString(view, 8, 'WAVE');
-	  /* format chunk identifier */
-
-	  writeString(view, 12, 'fmt ');
-	  /* format chunk length */
-
-	  view.setUint32(16, 16, true);
-	  /* sample format (raw) */
-
-	  view.setUint16(20, format, true);
-	  /* channel count */
-
-	  view.setUint16(22, numChannels, true);
-	  /* sample rate */
-
-	  view.setUint32(24, sampleRate, true);
-	  /* byte rate (sample rate * block align) */
-
-	  view.setUint32(28, sampleRate * blockAlign, true);
-	  /* block align (channel count * bytes per sample) */
-
-	  view.setUint16(32, blockAlign, true);
-	  /* bits per sample */
-
-	  view.setUint16(34, bitDepth, true);
-	  /* data chunk identifier */
-
-	  writeString(view, 36, 'data');
-	  /* data chunk length */
-
-	  view.setUint32(40, samples.length * bytesPerSample, true);
-
-	  if (format === 1) {
-	    // Raw PCM
-	    floatTo16BitPCM(view, 44, samples);
-	  } else {
-	    writeFloat32(view, 44, samples);
-	  }
-
-	  return buffer;
-	}
-
-	function interleave(inputL, inputR) {
-	  var length = inputL.length + inputR.length;
-	  var result = new Float32Array(length);
-	  var index = 0;
-	  var inputIndex = 0;
-
-	  while (index < length) {
-	    result[index++] = inputL[inputIndex];
-	    result[index++] = inputR[inputIndex];
-	    inputIndex++;
-	  }
-
-	  return result;
-	}
-
-	function writeFloat32(output, offset, input) {
-	  for (var i = 0; i < input.length; i++, offset += 4) {
-	    output.setFloat32(offset, input[i], true);
-	  }
-	}
-
-	function floatTo16BitPCM(output, offset, input) {
-	  for (var i = 0; i < input.length; i++, offset += 2) {
-	    var s = Math.max(-1, Math.min(1, input[i]));
-	    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-	  }
-	}
-
-	function writeString(view, offset, string) {
-	  for (var i = 0; i < string.length; i++) {
-	    view.setUint8(offset + i, string.charCodeAt(i));
-	  }
-	}
+	wire_2(masterOutSym, wireObservable(stream$3));
 
 	var FileSaver_min = createCommonjsModule(function (module, exports) {
 	(function (a, b) {
@@ -24914,14 +24875,493 @@
 	});
 	});
 
+	//JavaScript Audio Resampler
+	//Copyright (C) 2011-2015 Grant Galitz
+	//Released to Public Domain
+	function Resampler(fromSampleRate, toSampleRate, channels, inputBufferLength) {
+	  this.fromSampleRate = +fromSampleRate;
+	  this.toSampleRate = +toSampleRate;
+	  this.channels = channels | 0;
+	  this.inputBufferLength = inputBufferLength;
+	  this.initialize();
+	}
+
+	Resampler.prototype.initialize = function () {
+	  //Perform some checks:
+	  if (this.fromSampleRate > 0 && this.toSampleRate > 0 && this.channels > 0) {
+	    if (this.fromSampleRate == this.toSampleRate) {
+	      //Setup a resampler bypass:
+	      this.resampler = this.bypassResampler; //Resampler just returns what was passed through.
+
+	      this.ratioWeight = 1;
+	    } else {
+	      this.ratioWeight = this.fromSampleRate / this.toSampleRate;
+
+	      if (this.fromSampleRate < this.toSampleRate) {
+	        /*
+	          Use generic linear interpolation if upsampling,
+	          as linear interpolation produces a gradient that we want
+	          and works fine with two input sample points per output in this case.
+	        */
+	        this.compileLinearInterpolationFunction();
+	        this.lastWeight = 1;
+	      } else {
+	        /*
+	          Custom resampler I wrote that doesn't skip samples
+	          like standard linear interpolation in high downsampling.
+	          This is more accurate than linear interpolation on downsampling.
+	        */
+	        this.compileMultiTapFunction();
+	        this.tailExists = false;
+	        this.lastWeight = 0;
+	      }
+
+	      var outputBufferSize = Math.ceil(this.inputBufferLength * this.toSampleRate / this.fromSampleRate / this.channels * 1.01) * this.channels + this.channels;
+	      this.outputBuffer = new Float32Array(outputBufferSize);
+	      this.lastOutput = new Float32Array(this.channels);
+	    }
+	  } else {
+	    throw new Error("Invalid settings specified for the resampler.");
+	  }
+	};
+
+	Resampler.prototype.compileLinearInterpolationFunction = function () {
+	  var toCompile = "var outputOffset = 0;\
+      var bufferLength = buffer.length;\
+      if (bufferLength > 0) {\
+        var weight = this.lastWeight;\
+        var firstWeight = 0;\
+        var secondWeight = 0;\
+        var sourceOffset = 0;\
+        var outputOffset = 0;\
+        var outputBuffer = this.outputBuffer;\
+        for (; weight < 1; weight += " + this.ratioWeight + ") {\
+          secondWeight = weight % 1;\
+          firstWeight = 1 - secondWeight;";
+
+	  for (var channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "outputBuffer[outputOffset++] = (this.lastOutput[" + channel + "] * firstWeight) + (buffer[" + channel + "] * secondWeight);";
+	  }
+
+	  toCompile += "}\
+        weight -= 1;\
+        for (bufferLength -= " + this.channels + ", sourceOffset = Math.floor(weight) * " + this.channels + "; sourceOffset < bufferLength;) {\
+          secondWeight = weight % 1;\
+          firstWeight = 1 - secondWeight;";
+
+	  for (var channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "outputBuffer[outputOffset++] = (buffer[sourceOffset" + (channel > 0 ? " + " + channel : "") + "] * firstWeight) + (buffer[sourceOffset + " + (this.channels + channel) + "] * secondWeight);";
+	  }
+
+	  toCompile += "weight += " + this.ratioWeight + ";\
+          sourceOffset = Math.floor(weight) * " + this.channels + ";\
+        }";
+
+	  for (var channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "this.lastOutput[" + channel + "] = buffer[sourceOffset++];";
+	  }
+
+	  toCompile += "this.lastWeight = weight % 1;\
+      }\
+      return this.outputBuffer;";
+	  this.resampler = Function("buffer", toCompile);
+	};
+
+	Resampler.prototype.compileMultiTapFunction = function () {
+	  var toCompile = "var outputOffset = 0;\
+      var bufferLength = buffer.length;\
+      if (bufferLength > 0) {\
+        var weight = 0;";
+
+	  for (var channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "var output" + channel + " = 0;";
+	  }
+
+	  toCompile += "var actualPosition = 0;\
+        var amountToNext = 0;\
+        var alreadyProcessedTail = !this.tailExists;\
+        this.tailExists = false;\
+        var outputBuffer = this.outputBuffer;\
+        var currentPosition = 0;\
+        do {\
+          if (alreadyProcessedTail) {\
+            weight = " + this.ratioWeight + ";";
+
+	  for (channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "output" + channel + " = 0;";
+	  }
+
+	  toCompile += "}\
+          else {\
+            weight = this.lastWeight;";
+
+	  for (channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "output" + channel + " = this.lastOutput[" + channel + "];";
+	  }
+
+	  toCompile += "alreadyProcessedTail = true;\
+          }\
+          while (weight > 0 && actualPosition < bufferLength) {\
+            amountToNext = 1 + actualPosition - currentPosition;\
+            if (weight >= amountToNext) {";
+
+	  for (channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "output" + channel + " += buffer[actualPosition++] * amountToNext;";
+	  }
+
+	  toCompile += "currentPosition = actualPosition;\
+              weight -= amountToNext;\
+            }\
+            else {";
+
+	  for (channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "output" + channel + " += buffer[actualPosition" + (channel > 0 ? " + " + channel : "") + "] * weight;";
+	  }
+
+	  toCompile += "currentPosition += weight;\
+              weight = 0;\
+              break;\
+            }\
+          }\
+          if (weight <= 0) {";
+
+	  for (channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "outputBuffer[outputOffset++] = output" + channel + " / " + this.ratioWeight + ";";
+	  }
+
+	  toCompile += "}\
+          else {\
+            this.lastWeight = weight;";
+
+	  for (channel = 0; channel < this.channels; ++channel) {
+	    toCompile += "this.lastOutput[" + channel + "] = output" + channel + ";";
+	  }
+
+	  toCompile += "this.tailExists = true;\
+            break;\
+          }\
+        } while (actualPosition < bufferLength);\
+      }\
+      return this.outputBuffer;";
+	  this.resampler = Function("buffer", toCompile);
+	};
+
+	Resampler.prototype.bypassResampler = function (inputBuffer) {
+	  return inputBuffer;
+	};
+
+	class Queue {
+	  constructor(asset, onReady) {
+	    this.write = buffer => {
+	      if (buffer) {
+	        this.buffers.push(buffer);
+	      }
+
+	      if (this.buffering) {
+	        if (this.buffers.length >= this.readyMark || this.ended) {
+	          this.buffering = false;
+	          return this.onReady(this);
+	        } else {
+	          this.decodePacket();
+	        }
+	      }
+	    };
+
+	    this.asset = asset;
+	    this.readyMark = 16;
+	    this.finished = false;
+	    this.buffering = true;
+	    this.ended = false;
+	    this.buffers = [];
+	    this.onReady = onReady;
+	    this.asset.on('data', this.write);
+	    this.asset.on('end', () => this.ended = true);
+	    this.decodePacket();
+	  }
+
+	  decodePacket() {
+	    this.asset.decodePacket();
+	  }
+
+	  destroy() {
+	    this.asset.off('data');
+	    this.asset.off('end');
+	  }
+
+	  read() {
+	    if (this.buffers.length === 0) {
+	      return null;
+	    }
+
+	    this.decodePacket();
+	    return this.buffers.shift();
+	  }
+
+	  reset() {
+	    this.buffers.length = 0;
+	    this.buffering = true;
+	    this.decodePacket();
+	  }
+
+	}
+
+	function round(number) {
+	  return Math.round(number * 100) / 100;
+	}
+
+	class AuroraSourceNode {
+	  constructor(_asset, audioContext, numChannels, _sampleRate, duration, playbackOptions = {}) {
+	    this.frame = null;
+	    this.frameOffset = null;
+	    this.readyState = 0;
+	    this.sampleRate = null;
+	    this.channels = null;
+	    this.bufferSize = null;
+
+	    this.onAssetDecoder = () => {
+	      const {
+	        asset,
+	        sourceOffset,
+	        sampleRate
+	      } = this;
+	      this.readyState = 1;
+	      this.queue = new Queue(asset, () => {
+	        this.readyState = 2;
+
+	        this.queue.onReady = () => {};
+
+	        if (this.playOnQueueReady === true) {
+	          this.attachScriptNode();
+	        }
+
+	        if (sourceOffset === 0) {
+	          return;
+	        }
+
+	        const timestamp = round(sourceOffset) * sampleRate;
+	        asset.decoder.seek(timestamp);
+	        this.queue.reset();
+	      });
+	      this.refillHandler = this.handleRefill(this.queue);
+	    };
+
+	    this.onAudioProcess = event => {
+	      const currentTime = this.context.currentTime - this.startTime;
+
+	      if (currentTime < this.playbackWhen) {
+	        return;
+	      }
+
+	      if (currentTime > this.playbackWhen + this.playbackDuration) {
+	        this.stop();
+	        return;
+	      }
+
+	      var channelCount, channels, data, i, j, k, l, n, outputBuffer, ref, ref1, ref2;
+	      outputBuffer = event.outputBuffer;
+	      channelCount = outputBuffer.numberOfChannels;
+	      channels = new Array(channelCount);
+
+	      for (i = j = 0, ref = channelCount; j < ref; i = j += 1) {
+	        channels[i] = outputBuffer.getChannelData(i);
+	      }
+
+	      data = new Float32Array(this.bufferSize);
+	      this.refillHandler(data);
+
+	      if (this.resampler) {
+	        data = this.resampler.resampler(data);
+	      }
+
+	      for (i = k = 0, ref1 = outputBuffer.length; k < ref1; i = k += 1) {
+	        for (n = l = 0, ref2 = channelCount; l < ref2; n = l += 1) {
+	          channels[n][i] = data[i * channelCount + n];
+	        }
+	      }
+	    };
+
+	    if (!audioContext) {
+	      throw new Error('Audio Context not specified for Node');
+	    }
+
+	    if (typeof numChannels !== 'number') {
+	      throw new Error('Invalid number of channels passed to AuroraSourceNode');
+	    }
+
+	    if (typeof _sampleRate !== 'number') {
+	      throw new Error('Invalid sampleRate passed to AuroraSourceNode');
+	    }
+
+	    const deviceSampleRate = audioContext.sampleRate;
+	    this.asset = _asset;
+	    this.context = audioContext;
+	    this.sampleRate = _sampleRate;
+	    this.playbackWhen = playbackOptions.when || 0;
+	    this.sourceOffset = playbackOptions.offset || 0;
+	    this.playbackDuration = playbackOptions.duration || duration;
+	    this.bufferSize = Math.ceil(4096 / (deviceSampleRate / _sampleRate) * numChannels);
+	    this.bufferSize += this.bufferSize % numChannels;
+	    this.node = this.context.createScriptProcessor(4096, numChannels, numChannels);
+
+	    if (deviceSampleRate !== _sampleRate) {
+	      this.resampler = new Resampler(_sampleRate, deviceSampleRate, numChannels, this.bufferSize);
+	    }
+
+	    if (!_asset.decoder) {
+	      _asset.once('decodeStart', this.onAssetDecoder);
+	    } else {
+	      this.onAssetDecoder();
+	    }
+
+	    _asset.start(false);
+	  }
+
+	  attachScriptNode() {
+	    this.playOnQueueReady = undefined;
+	    this.startTime = this.context.currentTime;
+	    this.node.onaudioprocess = this.onAudioProcess;
+	  }
+
+	  start() {
+	    if (this.readyState === 3) {
+	      throw new Error('Cannot play. Node has already been played');
+	    }
+
+	    return new Promise(res => {
+	      console.log(this.readyState);
+
+	      if (this.readyState < 2) {
+	        this.playOnQueueReady = true;
+	      } else {
+	        this.attachScriptNode();
+	      }
+
+	      this.resolveStart = res;
+	    });
+	  }
+
+	  stop() {
+	    this.startTime = null;
+	    this.node.disconnect();
+	    this.node.onaudioprocess = null;
+	    this.readyState = 3;
+
+	    if (this.resolveStart) {
+	      this.resolveStart();
+	    }
+	  }
+
+	  handleRefill(queue) {
+	    let frame = null;
+	    let frameOffset = null;
+	    return function (buffer) {
+	      var bufferOffset, j, i, max, ref;
+
+	      if (!frame) {
+	        frame = queue.read();
+	        frameOffset = 0;
+	      }
+
+	      bufferOffset = 0;
+
+	      while (frame && bufferOffset < buffer.length) {
+	        max = Math.min(frame.length - frameOffset, buffer.length - bufferOffset);
+
+	        for (i = j = 0, ref = max; j < ref; i = j += 1) {
+	          buffer[bufferOffset++] = frame[frameOffset++];
+	        }
+
+	        if (frameOffset === frame.length) {
+	          frame = queue.read();
+	          frameOffset = 0;
+	        }
+	      }
+	    };
+	  }
+
+	}
+
 	class Playhead extends Record({
 	  playbackRange: null,
-	  currentTime: null
+	  currentTime: null,
+	  auroraNodes: new Map$1()
 	}) {}
 
 	const playheadSubject = new BehaviorSubject(new Playhead({
 	  playbackRange: new AudioRange(new Time(0), new Time(30000))
 	}));
+	const stream$4 = playheadSubject.asObservable();
+
+	function getPlaybackData(currentTime, playbackRange, segmentRange, segmentSourceOffset) {
+	  let startOffset = segmentRange.start.subtract(currentTime);
+	  let offset = segmentSourceOffset;
+
+	  if (startOffset.milliseconds < 0) {
+	    offset = offset.subtract(startOffset);
+	    startOffset = new Time(0);
+	  }
+
+	  return {
+	    when: startOffset,
+	    offset: offset,
+	    duration: clamp(playbackRange, segmentRange).duration
+	  };
+	}
+
+	const playbackEndedStream = stream$4.pipe(pairwise(), filter(([last$$1, current]) => {
+	  return last$$1.currentTime !== null && current.currentTime === null;
+	}));
+	const playbackRangeStartStream = stream$2.pipe(map(editor => {
+	  return editor.cursor;
+	})).pipe(distinctUntilChanged(), takeUntil(playbackEndedStream), repeat());
+	const playbackRangeStream = stream$1.pipe(switchMap(audioTracks$$1 => {
+	  return combineLatest(playbackRangeStartStream, stream.pipe(take(1)), (currentTime, audioSources$$1) => {
+	    const playhead = playheadSubject.value;
+	    const diff = currentTime.subtract(playhead.playbackRange.start);
+	    const currentTimeRange = new AudioRange(currentTime, playhead.playbackRange.duration.subtract(diff));
+	    return {
+	      audioTracks: audioTracks$$1,
+	      audioSources: audioSources$$1,
+	      range: currentTimeRange
+	    };
+	  });
+	}));
+
+	function makeSourceNodesStream(audioContext$$1) {
+	  return playbackRangeStream.pipe(map(({
+	    audioTracks: audioTracks$$1,
+	    audioSources: audioSources$$1,
+	    range: range$$1
+	  }) => {
+	    let sourceNodes = new Map$1();
+	    audioTracks$$1.forEach(track => {
+	      track.segments.filter(segment => {
+	        return segmentInTimeRange(segment, range$$1.start, range$$1.duration);
+	      }).forEach(segment => {
+	        const audioSource = audioSources$$1.get(segment.sourceId);
+	        const asset = window.AV.Asset.fromBuffer(audioSource.data);
+	        const playbackData = getPlaybackData(range$$1.start, range$$1, segment.range, segment.sourceOffset);
+	        const auroraNode = new AuroraSourceNode(asset, audioContext$$1, audioSource.channelsCount, audioSource.sampleRate, audioSource.duration.seconds, {
+	          when: playbackData.when.seconds,
+	          offset: playbackData.offset.seconds,
+	          duration: playbackData.duration.seconds
+	        });
+	        sourceNodes = sourceNodes.set(segment.id, auroraNode);
+	      });
+	    });
+	    return {
+	      sourceNodes,
+	      range: range$$1
+	    };
+	  }));
+	}
+
+	makeSourceNodesStream(audioContext).subscribe(({
+	  sourceNodes
+	}) => {
+	  const playhead = playheadSubject.value;
+	  playheadSubject.next(playhead.set('auroraNodes', sourceNodes));
+	});
 
 	function createCurrentTimeStream(audioContext$$1, startAudioContextSeconds, initialTime) {
 	  return Observable.create(o => {
@@ -24940,41 +25380,25 @@
 	  });
 	}
 
-	function playStream(audioContext$$1, audioTracks$$1, audioSources$$1, currentTime, range$$1) {
+	function playStream(audioContext$$1, auroraNodes, range$$1) {
 	  const timeAnchor = range$$1.start;
-	  const rangeDuration = range$$1.duration;
 	  const audioContextCurrentTime = Time.fromSeconds(audioContext$$1.currentTime);
 	  return Observable.create(o => {
-	    const rendered = renderAudioBuffer(audioContext$$1, range$$1, audioTracks$$1, audioSources$$1);
-	    let maxDuration = new Time(0);
-	    const allRenderedAudioSegments = rendered.reduce((seed, renderedAudioSegments) => {
-	      return seed.concat(renderedAudioSegments);
-	    }, []); // Handle if the playback duration is
-	    // greater than track durations
+	    //if (audioContext.state === 'suspended') {
+	    audioContext$$1.resume(); //}
 
-	    if (rangeDuration.greaterThan(maxDuration)) {
-	      const silence = createSilentRenderedAudioSegment(audioContext$$1, range$$1, rangeDuration.subtract(maxDuration));
-	      allRenderedAudioSegments.push(silence);
-	    }
-
-	    connectMasterOut(audioContext$$1, allRenderedAudioSegments);
-	    const promises = allRenderedAudioSegments.map(renderedAudioSegment => {
-	      return renderedAudioSegment.start(audioContextCurrentTime, timeAnchor);
-	    });
+	    const promises = auroraNodes.map(node => {
+	      node.node.connect(audioContext$$1.destination);
+	      return node.start();
+	    }).toList().toArray();
 	    o.next(Promise.all(promises));
-	    return function () {
-	      allRenderedAudioSegments.forEach(renderedAudioSegment => {
-	        renderedAudioSegment.stop();
-	      });
+	    return () => {
+	      auroraNodes.forEach(node => node.stop());
 	    };
 	  }).pipe(mergeMap(completedPromise => {
 	    const shared = createCurrentTimeStream(audioContext$$1, audioContextCurrentTime, timeAnchor);
 	    return shared.pipe(takeUntil(completedPromise)).pipe(concat$1(of(range$$1.start.plus(range$$1.duration)))).pipe(materialize());
 	  })).pipe(dematerialize());
-	}
-
-	function isPlaying() {
-	  return playheadSubject.value.currentTime !== null;
 	}
 	let playSubscription = null;
 	function setPlaybackDuration(duration) {
@@ -24993,188 +25417,24 @@
 	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
 	  }
 	}
-	function rasterize(startTime) {
-	  const {
-	    sampleRate
-	  } = audioContext;
-	  const duration = playheadSubject.value.playbackRange.duration.minus(startTime);
-	  const length = sampleRate * duration.seconds;
-	  console.log(duration);
-	  const offline = new OfflineAudioContext(2, length, sampleRate);
-	  zip(stream$1, stream).pipe(mergeMap(([audioTracks$$1, audioSources$$1]) => {
-	    return playStream(offline, audioTracks$$1, audioSources$$1, startTime, new AudioRange(startTime, duration));
-	  })).subscribe(time => {
-	    console.log('ok');
-	  }, null, () => {
-	    console.log('done');
-	  });
-	  offline.startRendering().then(audioBuffer => {
-	    const wav = audiobufferToWav(audioBuffer);
-	    const blob = new Blob([wav]);
-	    FileSaver_min(blob, 'output.wav');
-	  });
-	}
-	function play(startTime) {
+	function play() {
 	  if (playSubscription) {
 	    playSubscription.unsubscribe();
 	  }
 
-	  playSubscription = stream$1.pipe(switchMap(audioTracks$$1 => {
-	    return combineLatest(stream$3.pipe(filter(playhead => playhead.currentTime !== null)).pipe(take(1)), stream, (playhead, audioSources$$1) => {
-	      const {
-	        currentTime
-	      } = playhead;
-	      const diff = currentTime.subtract(playhead.playbackRange.start);
-	      const currentTimeRange = new AudioRange(currentTime, playhead.playbackRange.duration.subtract(diff));
-	      return {
-	        audioTracks: audioTracks$$1,
-	        audioSources: audioSources$$1,
-	        range: currentTimeRange
-	      };
-	    }).pipe(take(1));
-	  })).pipe(switchMap(({
-	    audioTracks: audioTracks$$1,
-	    audioSources: audioSources$$1,
+	  playSubscription = playbackRangeStream.pipe(switchMap(({
 	    range: range$$1
 	  }) => {
-	    return playStream(audioContext, audioTracks$$1, audioSources$$1, range$$1.start, range$$1);
-	  })).pipe(startWith(startTime)).subscribe(time => {
+	    return playStream(audioContext, playheadSubject.value.auroraNodes, range$$1).pipe(startWith(range$$1.start)).pipe(materialize());
+	  })).pipe(dematerialize()).subscribe(time => {
 	    playheadSubject.next(playheadSubject.value.set('currentTime', time));
 	  }, null, () => {
 	    console.log('done');
 	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
 	  });
 	}
-	const stream$3 = playheadSubject.asObservable();
 	const playheadSym = Symbol();
-	wire_2(playheadSym, wireObservable(stream$3));
-
-	class Editor extends Record({
-	  visibleRange: new AudioRange(new Time(0), Time.fromSeconds(10)),
-	  end: Time.fromSeconds(30),
-	  frame: null,
-	  cursor: Time.fromSeconds(1),
-	  virtualCursor: Time.fromSeconds(2),
-	  quanitization: 1 / 4
-	}) {
-	  get duration() {
-	    return new Time(this.end.milliseconds - this.cursor.milliseconds);
-	  }
-
-	  pixelToTime(pixel) {
-	    const {
-	      width
-	    } = this.frame;
-	    const {
-	      visibleRange
-	    } = this;
-	    const percent = pixel / width;
-	    const millisecond = percent * visibleRange.duration.milliseconds;
-	    return new Time(millisecond);
-	  }
-
-	  absolutePixelToTime(pixel) {
-	    const time = this.pixelToTime(pixel);
-	    return new Time(time.milliseconds + this.visibleRange.start.milliseconds);
-	  }
-
-	  timeToPixel(time) {
-	    const {
-	      width
-	    } = this.frame;
-	    const {
-	      visibleRange
-	    } = this;
-	    const percent = (time.milliseconds - visibleRange.start.milliseconds) / visibleRange.duration.milliseconds;
-	    return percent * width;
-	  }
-
-	  durationToWidth(time) {
-	    const {
-	      width
-	    } = this.frame;
-	    const {
-	      visibleRange
-	    } = this;
-	    const pixelsPerMillisecond = width / visibleRange.duration.milliseconds;
-	    return pixelsPerMillisecond * time.milliseconds;
-	  }
-
-	}
-
-	function setVirtualCursorTime(time) {
-	  editorSubject.next(editorSubject.value.set('virtualCursor', time));
-	}
-	function setCursorTime(time) {
-	  editorSubject.next(editorSubject.value.set('cursor', time));
-
-	  if (isPlaying()) {
-	    play(time);
-	  }
-	}
-	const quanitizationValues = [1 / 64, 1 / 32, 1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2, 4, 5, 10, 30, 60];
-	function setVisibleRange(start, duration) {
-	  const range$$1 = new AudioRange(start, duration);
-	  let next = editorSubject.value.set('visibleRange', range$$1);
-	  const max$$1 = 40;
-	  let value = quanitizationValues[0];
-
-	  for (let i = 0; i < quanitizationValues.length; i += 1) {
-	    const ticks = duration.seconds / quanitizationValues[i];
-
-	    if (ticks <= max$$1) {
-	      value = quanitizationValues[i];
-	      break;
-	    }
-	  }
-
-	  next = next.set('quanitization', value);
-	  editorSubject.next(next);
-	}
-	function setVisibleRangeStart(time) {
-	  setVisibleRange(time, editorSubject.value.visibleRange.duration);
-	}
-	function setVisibleRangeDuration(time) {
-	  setVisibleRange(editorSubject.value.visibleRange.start, time);
-	}
-	function incrementVisibleRangeStart(incrementTime) {
-	  const editor = editorSubject.value;
-	  const time = new Time(incrementTime.milliseconds + editor.visibleRange.start.milliseconds);
-	  setVisibleRangeStart(time);
-	}
-	function incrementEnd(incrementTime) {
-	  const editor = editorSubject.value;
-	  const time = new Time(incrementTime.milliseconds + editor.end.milliseconds);
-	  editorSubject.next(editorSubject.value.set('end', time));
-	}
-	function setFrame(frame) {
-	  editorSubject.next(editorSubject.value.set('frame', frame));
-	}
-	const editorSubject = new BehaviorSubject(new Editor());
-	const stream$4 = editorSubject.asObservable();
-	stream$3.pipe(filter(playhead => playhead.playbackTime)).subscribe(playhead => {
-	  const {
-	    visibleRange
-	  } = editorSubject.value;
-	  const middleTime = new Time(visibleRange.start.milliseconds + visibleRange.duration.milliseconds / 2);
-
-	  if (playhead.playbackTime.milliseconds > middleTime.milliseconds) {
-	    incrementVisibleRangeStart(new Time(playhead.playbackTime.milliseconds - middleTime.milliseconds));
-	  }
-	});
-	stream$1.subscribe(audioTracks$$1 => {
-	  if (audioTracks$$1.size === 0) {
-	    return;
-	  }
-
-	  const tracksDuration = getTracksDuration(audioTracks$$1);
-
-	  if (gt(tracksDuration, editorSubject.value.end)) {
-	    editorSubject.next(editorSubject.value.set('end', tracksDuration));
-	  }
-	});
-	const editorSym = Symbol();
-	wire_2(editorSym, wireObservable(stream$4));
+	wire_2(playheadSym, wireObservable(stream$4));
 
 	class Controls extends engine_5 {
 	  constructor(...args) {
@@ -25212,14 +25472,7 @@
 	  }
 
 	  onPlayClick() {
-	    // play(
-	    //     new AudioRange(
-	    //         this.editor.data.cursor,
-	    //         new Time(2000),
-	    //     ),
-	    // );
-	    // play(this.editor.data.cursor)
-	    rasterize(this.editor.data.cursor);
+	    play(this.editor.data.cursor); // rasterize(this.editor.data.cursor);
 	  }
 
 	}
@@ -33084,1562 +33337,7 @@
 	  shadowAttribute: "ffmpeg-waveform_waveform"
 	};
 
-	/**
-	 * Segments are an easy way to keep track of portions of the described
-	 * audio file.
-	 *
-	 * They return values based on the actual offset. Which means if you change your
-	 * offset and:
-	 *
-	 * * a segment becomes **out of scope**, no data will be returned;
-	 * * a segment is only **partially included in the offset**, only the visible
-	 *   parts will be returned;
-	 * * a segment is **fully included in the offset**, its whole content will be
-	 *   returned.
-	 *
-	 * Segments are created with the `WaveformData.set_segment(from, to, name?)`
-	 * method.
-	 *
-	 * @see WaveformData.prototype.set_segment
-	 * @param {WaveformData} context WaveformData instance
-	 * @param {Integer} start Initial start index
-	 * @param {Integer} end Initial end index
-	 * @constructor
-	 */
-
-	function WaveformDataSegment(context, start, end) {
-	  this.context = context;
-	  /**
-	   * Start index.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.start);  // -> 10
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.start);  // -> 10
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.start);  // -> 10
-	   * ```
-	   * @type {Integer} Initial starting point of the segment.
-	   */
-
-	  this.start = start;
-	  /**
-	   * End index.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.end);  // -> 50
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.end);  // -> 50
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.end);  // -> 50
-	   * ```
-	   * @type {Integer} Initial ending point of the segment.
-	   */
-
-	  this.end = end;
-	}
-	/**
-	 * @namespace WaveformDataSegment
-	 */
-
-
-	WaveformDataSegment.prototype = {
-	  /**
-	   * Dynamic starting point based on the WaveformData instance offset.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.offset_start);  // -> 10
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.offset_start);  // -> 20
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.offset_start);  // -> null
-	   * ```
-	   *
-	   * @return {number} Starting point of the segment within the waveform offset. (inclusive)
-	   */
-	  get offset_start() {
-	    if (this.start < this.context.offset_start && this.end > this.context.offset_start) {
-	      return this.context.offset_start;
-	    }
-
-	    if (this.start >= this.context.offset_start && this.start < this.context.offset_end) {
-	      return this.start;
-	    }
-
-	    return null;
-	  },
-
-	  /**
-	   * Dynamic ending point based on the WaveformData instance offset.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.offset_end);  // -> 50
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.offset_end);  // -> 50
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.offset_end);  // -> null
-	   * ```
-	   *
-	   * @return {number} Ending point of the segment within the waveform offset. (exclusive)
-	   */
-	  get offset_end() {
-	    if (this.end > this.context.offset_start && this.end <= this.context.offset_end) {
-	      return this.end;
-	    }
-
-	    if (this.end > this.context.offset_end && this.start < this.context.offset_end) {
-	      return this.context.offset_end;
-	    }
-
-	    return null;
-	  },
-
-	  /**
-	   * Dynamic segment length based on the WaveformData instance offset.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.offset_length);  // -> 40
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.offset_length);  // -> 30
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.offset_length);  // -> 0
-	   * ```
-	   *
-	   * @return {number} Visible length of the segment within the waveform offset.
-	   */
-	  get offset_length() {
-	    return this.offset_end - this.offset_start;
-	  },
-
-	  /**
-	   * Initial length of the segment.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.length);  // -> 40
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.length);  // -> 40
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.length);  // -> 40
-	   * ```
-	   *
-	   * @return {number} Initial length of the segment.
-	   */
-	  get length() {
-	    return this.end - this.start;
-	  },
-
-	  /**
-	   * Indicates if the segment has some visible part in the actual WaveformData offset.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.visible);        // -> true
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.segments.example.visible);        // -> true
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.segments.example.visible);        // -> false
-	   * ```
-	   *
-	   * @return {Boolean} True if at least partly visible, false otherwise.
-	   */
-	  get visible() {
-	    return this.context.in_offset(this.start) || this.context.in_offset(this.end) || this.context.offset_start > this.start && this.context.offset_start < this.end;
-	  },
-
-	  /**
-	   * Return the minimum values for the segment.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.min.length);        // -> 40
-	   * console.log(waveform.segments.example.min.offset_length); // -> 40
-	   * console.log(waveform.segments.example.min[0]);            // -> -12
-	   *
-	   * waveform.offset(20, 50);
-	   *
-	   * console.log(waveform.segments.example.min.length);        // -> 40
-	   * console.log(waveform.segments.example.min.offset_length); // -> 30
-	   * console.log(waveform.segments.example.min[0]);            // -> -5
-	   * ```
-	   *
-	   * @return {Array.<Integer>} Min values of the segment.
-	   */
-	  get min() {
-	    return this.visible ? this.context.offsetValues(this.offset_start, this.offset_length, 0) : [];
-	  },
-
-	  /**
-	   * Return the maximum values for the segment.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_segment(10, 50, "example");
-	   *
-	   * console.log(waveform.segments.example.max.length);        // -> 40
-	   * console.log(waveform.segments.example.max.offset_length); // -> 40
-	   * console.log(waveform.segments.example.max[0]);            // -> 5
-	   *
-	   * waveform.offset(20, 50);
-	   *
-	   * console.log(waveform.segments.example.max.length);        // -> 40
-	   * console.log(waveform.segments.example.max.offset_length); // -> 30
-	   * console.log(waveform.segments.example.max[0]);            // -> 11
-	   * ```
-	   *
-	   * @return {Array.<Integer>} Max values of the segment.
-	   */
-	  get max() {
-	    return this.visible ? this.context.offsetValues(this.offset_start, this.offset_length, 1) : [];
-	  }
-
-	};
-	var segment = WaveformDataSegment;
-
-	/**
-	 * Points are an easy way to keep track bookmarks of the described audio file.
-	 *
-	 * They return values based on the actual offset. Which means if you change your offset and:
-	 *
-	 * * a point becomes **out of scope**, no data will be returned;
-	 * * a point is **fully included in the offset**, its whole content will be returned.
-	 *
-	 * Points are created with the `WaveformData.set_point(timeStamp, name?)` method.
-	 *
-	 * @see WaveformData.prototype.set_point
-	 * @param {WaveformData} context WaveformData instance
-	 * @param {Integer} start Initial start index
-	 * @param {Integer} end Initial end index
-	 * @constructor
-	 */
-
-	function WaveformDataPoint(context, timeStamp) {
-	  this.context = context;
-	  /**
-	   * Start index.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_point(10, "example");
-	   *
-	   * console.log(waveform.points.example.timeStamp);  // -> 10
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.points.example.timeStamp);  // -> 10
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.points.example.timeStamp);  // -> 10
-	   * ```
-	   * @type {Integer} Time Stamp of the point
-	   */
-
-	  this.timeStamp = timeStamp;
-	}
-	/**
-	 * @namespace WaveformDataPoint
-	 */
-
-
-	WaveformDataPoint.prototype = {
-	  /**
-	   * Indicates if the point has some visible part in the actual WaveformData offset.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   * waveform.set_point(10, "example");
-	   *
-	   * console.log(waveform.points.example.visible);        // -> true
-	   *
-	   * waveform.offset(0, 50);
-	   * console.log(waveform.points.example.visible);        // -> true
-	   *
-	   * waveform.offset(70, 100);
-	   * console.log(waveform.points.example.visible);        // -> false
-	   * ```
-	   *
-	   * @return {Boolean} True if visible, false otherwise.
-	   */
-	  get visible() {
-	    return this.context.in_offset(this.timeStamp);
-	  }
-
-	};
-	var point = WaveformDataPoint;
-
-	/**
-	 * Facade to iterate on audio waveform response.
-	 *
-	 * ```javascript
-	 * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	 *
-	 * var json_waveform = new WaveformData(xhr.responseText, WaveformData.adapters.object);
-	 *
-	 * var arraybuff_waveform = new WaveformData(
-	 *   getArrayBufferData(),
-	 *   WaveformData.adapters.arraybuffer
-	 * );
-	 * ```
-	 *
-	 * ## Offsets
-	 *
-	 * An **offset** is a non-destructive way to iterate on a subset of data.
-	 *
-	 * It is the easiest way to **navigate** through data without having to deal
-	 * with complex calculations. Simply iterate over the data to display them.
-	 *
-	 * *Notice*: the default offset is the entire set of data.
-	 *
-	 * @param {String|ArrayBuffer|Mixed} response_data Waveform data,
-	 *   to be consumed by the related adapter.
-	 * @param {WaveformData.adapter|Function} adapter Backend adapter used to manage
-	 *   access to the data.
-	 * @constructor
-	 */
-
-
-	function WaveformData(response_data, adapter) {
-	  /**
-	   * Backend adapter used to manage access to the data.
-	   *
-	   * @type {Object}
-	   */
-	  this.adapter = adapter.fromResponseData(response_data);
-	  /**
-	   * Defined segments.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   *
-	   * console.log(waveform.segments.speakerA); // -> undefined
-	   *
-	   * waveform.set_segment(30, 90, "speakerA");
-	   *
-	   * console.log(waveform.segments.speakerA.start); // -> 30
-	   * ```
-	   *
-	   * @type {Object} A hash of `WaveformDataSegment` objects.
-	   */
-
-	  this.segments = {};
-	  /**
-	   * Defined points.
-	   *
-	   * ```javascript
-	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
-	   *
-	   * console.log(waveform.points.speakerA); // -> undefined
-	   *
-	   * waveform.set_point(30, "speakerA");
-	   *
-	   * console.log(waveform.points.speakerA.timeStamp); // -> 30
-	   * ```
-	   *
-	   * @type {Object} A hash of `WaveformDataPoint` objects.
-	   */
-
-	  this.points = {};
-	  this.offset(0, this.adapter.length);
-	}
-	/**
-	 * Creates an instance of WaveformData by guessing the adapter from the
-	 * data type. It can also accept an XMLHttpRequest response.
-	 *
-	 * ```javascript
-	 * var xhr = new XMLHttpRequest();
-	 * xhr.open("GET", "http://example.com/waveforms/track.dat");
-	 * xhr.responseType = "arraybuffer";
-	 *
-	 * xhr.addEventListener("load", function onResponse(progressEvent) {
-	 *   var waveform = WaveformData.create(progressEvent.target);
-	 *
-	 *   console.log(waveform.duration);
-	 * });
-	 *
-	 * xhr.send();
-	 * ```
-	 *
-	 * @static
-	 * @throws TypeError
-	 * @param {XMLHttpRequest|Mixed} data
-	 * @return {WaveformData}
-	 */
-
-
-	WaveformData.create = function createFromResponseData(data) {
-	  var adapter = null;
-	  var xhrData = null;
-
-	  if (data && typeof data === "object" && ("responseText" in data || "response" in data)) {
-	    xhrData = "responseType" in data ? data.response : data.responseText || data.response;
-	  }
-
-	  Object.keys(WaveformData.adapters).some(function (adapter_id) {
-	    if (WaveformData.adapters[adapter_id].isCompatible(xhrData || data)) {
-	      adapter = WaveformData.adapters[adapter_id];
-	      return true;
-	    }
-	  });
-
-	  if (adapter === null) {
-	    throw new TypeError("Could not detect a WaveformData adapter from the input.");
-	  }
-
-	  return new WaveformData(xhrData || data, adapter);
-	};
-	/**
-	 * Public API for the Waveform Data manager.
-	 *
-	 * @namespace WaveformData
-	 */
-
-
-	WaveformData.prototype = {
-	  /**
-	   * Clamp an offset of data upon the whole response body.
-	   * Pros: it's just a reference, not a new array. So it's fast.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.offset_length);   // -> 150
-	   * console.log(waveform.min[0]);          // -> -12
-	   *
-	   * waveform.offset(20, 50);
-	   *
-	   * console.log(waveform.min.length);      // -> 30
-	   * console.log(waveform.min[0]);          // -> -9
-	   * ```
-	   *
-	   * @param {Integer} start New beginning of the offset. (inclusive)
-	   * @param {Integer} end New ending of the offset (exclusive)
-	   */
-	  offset: function (start, end) {
-	    var data_length = this.adapter.length;
-
-	    if (end < 0) {
-	      throw new RangeError("End point must be non-negative [" + Number(end) + " < 0]");
-	    }
-
-	    if (end < start) {
-	      throw new RangeError("End point must not be before the start point [" + Number(end) + " < " + Number(start) + "]");
-	    }
-
-	    if (start < 0) {
-	      throw new RangeError("Start point must be non-negative [" + Number(start) + " < 0]");
-	    }
-
-	    if (start >= data_length) {
-	      throw new RangeError("Start point must be within range [" + Number(start) + " >= " + data_length + "]");
-	    }
-
-	    if (end > data_length) {
-	      end = data_length;
-	    }
-
-	    this.offset_start = start;
-	    this.offset_end = end;
-	    this.offset_length = end - start;
-	  },
-
-	  /**
-	   * Creates a new segment of data.
-	   * Pretty handy if you need to bookmark a duration and display it according
-	   * to the current offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(Object.keys(waveform.segments));          // -> []
-	   *
-	   * waveform.set_segment(10, 120);
-	   * waveform.set_segment(30, 90, "speakerA");
-	   *
-	   * console.log(Object.keys(waveform.segments));          // -> ['default', 'speakerA']
-	   * console.log(waveform.segments.default.min.length);    // -> 110
-	   * console.log(waveform.segments.speakerA.min.length);   // -> 60
-	   * ```
-	   *
-	   * @param {Integer} start Beginning of the segment (inclusive)
-	   * @param {Integer} end Ending of the segment (exclusive)
-	   * @param {String*} identifier Unique identifier. If nothing is specified,
-	   *   *default* will be used as a value.
-	   * @return {WaveformDataSegment}
-	   */
-	  set_segment: function setSegment(start, end, identifier) {
-	    if (identifier === undefined || identifier === null || identifier.length === 0) {
-	      identifier = "default";
-	    }
-
-	    this.segments[identifier] = new segment(this, start, end);
-	    return this.segments[identifier];
-	  },
-
-	  /**
-	   * Creates a new point of data.
-	   * Pretty handy if you need to bookmark a specific point and display it
-	   * according to the current offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(Object.keys(waveform.points)); // -> []
-	   *
-	   * waveform.set_point(10);
-	   * waveform.set_point(30, "speakerA");
-	   *
-	   * console.log(Object.keys(waveform.points)); // -> ['default', 'speakerA']
-	   * ```
-	   *
-	   * @param {Integer} timeStamp the time to place the bookmark
-	   * @param {String*} identifier Unique identifier. If nothing is specified,
-	   *   *default* will be used as a value.
-	   * @return {WaveformDataPoint}
-	   */
-	  set_point: function setPoint(timeStamp, identifier) {
-	    if (identifier === undefined || identifier === null || identifier.length === 0) {
-	      identifier = "default";
-	    }
-
-	    this.points[identifier] = new point(this, timeStamp);
-	    return this.points[identifier];
-	  },
-
-	  /**
-	   * Removes a point of data.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(Object.keys(waveform.points));          // -> []
-	   *
-	   * waveform.set_point(30, "speakerA");
-	   * console.log(Object.keys(waveform.points));          // -> ['speakerA']
-	   * waveform.remove_point("speakerA");
-	   * console.log(Object.keys(waveform.points));          // -> []
-	   * ```
-	   *
-	   * @param {String*} identifier Unique identifier. If nothing is specified,
-	   *   *default* will be used as a value.
-	   * @return null
-	   */
-	  remove_point: function removePoint(identifier) {
-	    if (this.points[identifier]) {
-	      delete this.points[identifier];
-	    }
-	  },
-
-	  /**
-	   * Creates a new WaveformData object with resampled data.
-	   * Returns a rescaled waveform, to either fit the waveform to a specific
-	   * width, or to a specific zoom level.
-	   *
-	   * **Note**: You may specify either the *width* or the *scale*, but not both.
-	   * The `scale` will be deduced from the `width` you want to fit the data into.
-	   *
-	   * Adapted from Sequence::GetWaveDisplay in Audacity, with permission.
-	   *
-	   * ```javascript
-	   * // ...
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * // fitting the data in a 500px wide canvas
-	   * var resampled_waveform = waveform.resample({ width: 500 });
-	   *
-	   * console.log(resampled_waveform.min.length);   // -> 500
-	   *
-	   * // zooming out on a 3 times less precise scale
-	   * var resampled_waveform = waveform.resample({ scale: waveform.adapter.scale * 3 });
-	   *
-	   * // partial resampling (to perform fast animations involving a resampling
-	   * // per animation frame)
-	   * var partially_resampled_waveform = waveform.resample({ width: 500, from: 0, to: 500 });
-	   *
-	   * // ...
-	   * ```
-	   *
-	   * @see https://code.google.com/p/audacity/source/browse/audacity-src/trunk/src/Sequence.cpp
-	   * @param {Number|{width: Number, scale: Number}} options Either a constraint width or a constraint sample rate
-	   * @return {WaveformData} New resampled object
-	   */
-	  resample: function (options) {
-	    if (typeof options === "number") {
-	      options = {
-	        width: options
-	      };
-	    }
-
-	    options.input_index = typeof options.input_index === "number" ? options.input_index : null;
-	    options.output_index = typeof options.output_index === "number" ? options.output_index : null;
-	    options.scale = typeof options.scale === "number" ? options.scale : null;
-	    options.width = typeof options.width === "number" ? options.width : null;
-	    var is_partial_resampling = Boolean(options.input_index) || Boolean(options.output_index);
-
-	    if (options.input_index != null && options.input_index < 0) {
-	      throw new RangeError("options.input_index should be a positive integer value. [" + options.input_index + "]");
-	    }
-
-	    if (options.output_index != null && options.output_index < 0) {
-	      throw new RangeError("options.output_index should be a positive integer value. [" + options.output_index + "]");
-	    }
-
-	    if (options.width != null && options.width <= 0) {
-	      throw new RangeError("options.width should be a strictly positive integer value. [" + options.width + "]");
-	    }
-
-	    if (options.scale != null && options.scale <= 0) {
-	      throw new RangeError("options.scale should be a strictly positive integer value. [" + options.scale + "]");
-	    }
-
-	    if (!options.scale && !options.width) {
-	      throw new RangeError("You should provide either a resampling scale or a width in pixel the data should fit in.");
-	    }
-
-	    var definedPartialOptionsCount = ["width", "scale", "output_index", "input_index"].reduce(function (count, key) {
-	      return count + (options[key] === null ? 0 : 1);
-	    }, 0);
-
-	    if (is_partial_resampling && definedPartialOptionsCount !== 4) {
-	      throw new Error("Some partial resampling options are missing. You provided " + definedPartialOptionsCount + " of them over 4.");
-	    }
-
-	    var output_data = [];
-	    var samples_per_pixel = options.scale || Math.floor(this.duration * this.adapter.sample_rate / options.width); // scale we want to reach
-
-	    var scale = this.adapter.scale; // scale we are coming from
-
-	    var channel_count = 2;
-	    var input_buffer_size = this.adapter.length; // the amount of data we want to resample i.e. final zoom want to resample all data but for intermediate zoom we want to resample subset
-
-	    var input_index = options.input_index || 0; // is this start point? or is this the index at current scale
-
-	    var output_index = options.output_index || 0; // is this end point? or is this the index at scale we want to be?
-
-	    var min = input_buffer_size ? this.min_sample(input_index) : 0; // min value for peak in waveform
-
-	    var max = input_buffer_size ? this.max_sample(input_index) : 0; // max value for peak in waveform
-
-	    var min_value = -128;
-	    var max_value = 127;
-
-	    if (samples_per_pixel < scale) {
-	      throw new Error("Zoom level " + samples_per_pixel + " too low, minimum: " + scale);
-	    }
-
-	    var where, prev_where, stop, value, last_input_index;
-
-	    function sample_at_pixel(x) {
-	      return Math.floor(x * samples_per_pixel);
-	    }
-
-	    function add_sample(min, max) {
-	      output_data.push(min, max);
-	    }
-
-	    while (input_index < input_buffer_size) {
-	      while (Math.floor(sample_at_pixel(output_index) / scale) <= input_index) {
-	        if (output_index) {
-	          add_sample(min, max);
-	        }
-
-	        last_input_index = input_index;
-	        output_index++;
-	        where = sample_at_pixel(output_index);
-	        prev_where = sample_at_pixel(output_index - 1);
-
-	        if (where !== prev_where) {
-	          min = max_value;
-	          max = min_value;
-	        }
-	      }
-
-	      where = sample_at_pixel(output_index);
-	      stop = Math.floor(where / scale);
-
-	      if (stop > input_buffer_size) {
-	        stop = input_buffer_size;
-	      }
-
-	      while (input_index < stop) {
-	        value = this.min_sample(input_index);
-
-	        if (value < min) {
-	          min = value;
-	        }
-
-	        value = this.max_sample(input_index);
-
-	        if (value > max) {
-	          max = value;
-	        }
-
-	        input_index++;
-	      }
-
-	      if (is_partial_resampling && output_data.length / channel_count >= options.width) {
-	        break;
-	      }
-	    }
-
-	    if (is_partial_resampling) {
-	      if (output_data.length / channel_count > options.width && input_index !== last_input_index) {
-	        add_sample(min, max);
-	      }
-	    } else if (input_index !== last_input_index) {
-	      add_sample(min, max);
-	    }
-
-	    return new WaveformData({
-	      version: this.adapter.version,
-	      samples_per_pixel: samples_per_pixel,
-	      length: output_data.length / channel_count,
-	      data: output_data,
-	      sample_rate: this.adapter.sample_rate
-	    }, WaveformData.adapters.object);
-	  },
-
-	  /**
-	   * Returns all the min peaks values.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.min.length);      // -> 150
-	   * console.log(waveform.min[0]);          // -> -12
-	   *
-	   * waveform.offset(20, 50);
-	   *
-	   * console.log(waveform.min.length);      // -> 30
-	   * console.log(waveform.min[0]);          // -> -9
-	   * ```
-	   *
-	   * @api
-	   * @return {Array.<Integer>} Min values contained in the offset.
-	   */
-	  get min() {
-	    return this.offsetValues(this.offset_start, this.offset_length, 0);
-	  },
-
-	  /**
-	   * Returns all the max peaks values.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.max.length);      // -> 150
-	   * console.log(waveform.max[0]);          // -> 12
-	   *
-	   * waveform.offset(20, 50);
-	   *
-	   * console.log(waveform.max.length);      // -> 30
-	   * console.log(waveform.max[0]);          // -> 5
-	   * ```
-	   *
-	   * @api
-	   * @return {Array.<Integer>} Max values contained in the offset.
-	   */
-	  get max() {
-	    return this.offsetValues(this.offset_start, this.offset_length, 1);
-	  },
-
-	  /**
-	   * Return the unpacked values for a particular offset.
-	   *
-	   * @param {Integer} start
-	   * @param {Integer} length
-	   * @param {Integer} correction The step to skip for each iteration
-	   *   (as the response body is [min, max, min, max...])
-	   * @return {Array.<Integer>}
-	   */
-	  offsetValues: function getOffsetValues(start, length, correction) {
-	    var adapter = this.adapter;
-	    var values = [];
-	    correction += start * 2; // offset the positioning query
-
-	    for (var i = 0; i < length; i++) {
-	      values.push(adapter.at(i * 2 + correction));
-	    }
-
-	    return values;
-	  },
-
-	  /**
-	   * Compute the duration in seconds of the audio file.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   * console.log(waveform.duration);    // -> 10.33333333333
-	   *
-	   * waveform.offset(20, 50);
-	   * console.log(waveform.duration);    // -> 10.33333333333
-	   * ```
-	   *
-	   * @api
-	   * @return {number} Duration of the audio waveform, in seconds.
-	   */
-	  get duration() {
-	    return this.adapter.length * this.adapter.scale / this.adapter.sample_rate;
-	  },
-
-	  /**
-	   * Return the duration in seconds of the current offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.offset_duration);    // -> 10.33333333333
-	   *
-	   * waveform.offset(20, 50);
-	   *
-	   * console.log(waveform.offset_duration);    // -> 2.666666666667
-	   * ```
-	   *
-	   * @api
-	   * @return {number} Duration of the offset, in seconds.
-	   */
-	  get offset_duration() {
-	    return this.offset_length * this.adapter.scale / this.adapter.sample_rate;
-	  },
-
-	  /**
-	   * Return the number of pixels per second.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.pixels_per_second);       // -> 93.75
-	   * ```
-	   *
-	   * @api
-	   * @return {number} Number of pixels per second.
-	   */
-	  get pixels_per_second() {
-	    return this.adapter.sample_rate / this.adapter.scale;
-	  },
-
-	  /**
-	   * Return the amount of time represented by a single pixel.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.seconds_per_pixel);       // -> 0.010666666666666666
-	   * ```
-	   *
-	   * @return {number} Amount of time (in seconds) contained in a pixel.
-	   */
-	  get seconds_per_pixel() {
-	    return this.adapter.scale / this.adapter.sample_rate;
-	  },
-
-	  /**
-	   * Returns a value at a specific offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.at(20));              // -> -7
-	   * console.log(waveform.at(21));              // -> 12
-	   * ```
-	   *
-	   * @proxy
-	   * @param {Integer} index
-	   * @return {number} Offset value
-	   */
-	  at: function at_sample_proxy(index) {
-	    return this.adapter.at(index);
-	  },
-
-	  /**
-	   * Return the pixel location for a certain time.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.at_time(0.0000000023));       // -> 10
-	   * ```
-	   * @param {number} time
-	   * @return {integer} Index location for a specific time.
-	   */
-	  at_time: function at_time(time) {
-	    return Math.floor(time * this.adapter.sample_rate / this.adapter.scale);
-	  },
-
-	  /**
-	   * Returns the time in seconds for a particular index
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.time(10));                    // -> 0.0000000023
-	   * ```
-	   *
-	   * @param {Integer} index
-	   * @return {number}
-	   */
-	  time: function time(index) {
-	    return index * this.adapter.scale / this.adapter.sample_rate;
-	  },
-
-	  /**
-	   * Return if a pixel lies within the current offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.in_offset(50));      // -> true
-	   * console.log(waveform.in_offset(120));     // -> true
-	   *
-	   * waveform.offset(100, 150);
-	   *
-	   * console.log(waveform.in_offset(50));      // -> false
-	   * console.log(waveform.in_offset(120));     // -> true
-	   * ```
-	   *
-	   * @param {number} pixel
-	   * @return {boolean} True if the pixel lies in the current offset, false otherwise.
-	   */
-	  in_offset: function isInOffset(pixel) {
-	    return pixel >= this.offset_start && pixel < this.offset_end;
-	  },
-
-	  /**
-	   * Returns a min value for a specific offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.min_sample(10));      // -> -7
-	   * ```
-	   *
-	   * @param {Integer} offset
-	   * @return {Number} Offset min value
-	   */
-	  min_sample: function getMinValue(offset) {
-	    return this.adapter.at(offset * 2);
-	  },
-
-	  /**
-	   * Returns a max value for a specific offset.
-	   *
-	   * ```javascript
-	   * var waveform = WaveformData.create({ ... });
-	   *
-	   * console.log(waveform.max_sample(10));      // -> 12
-	   * ```
-	   *
-	   * @param {Integer} offset
-	   * @return {Number} Offset max value
-	   */
-	  max_sample: function getMaxValue(offset) {
-	    return this.adapter.at(offset * 2 + 1);
-	  }
-	};
-	/**
-	 * Available adapters to manage the data backends.
-	 *
-	 * @type {Object}
-	 */
-
-	WaveformData.adapters = {};
-	/**
-	 * WaveformData Adapter Structure
-	 *
-	 * @typedef {{from: Number, to: Number, platforms: {}}}
-	 */
-
-	WaveformData.adapter = function WaveformDataAdapter(response_data) {
-	  this.data = response_data;
-	};
-
-	var core = WaveformData;
-
-	/**
-	 * ArrayBuffer adapter consumes binary waveform data (data format version 1).
-	 * It is used as a data abstraction layer by `WaveformData`.
-	 *
-	 * This is supposed to be the fastest adapter ever:
-	 * * **Pros**: working directly in memory, everything is done by reference
-	 *   (including the offsetting)
-	 * * **Cons**: binary data are hardly readable without data format knowledge
-	 *   (and this is why this adapter exists).
-	 *
-	 * Also, it is recommended to use the `fromResponseData` factory.
-	 *
-	 * @see WaveformDataArrayBufferAdapter.fromResponseData
-	 * @param {DataView} response_data
-	 * @constructor
-	 */
-
-	function WaveformDataArrayBufferAdapter(response_data) {
-	  this.data = response_data;
-	}
-	/**
-	 * Detects if a set of data is suitable for the ArrayBuffer adapter.
-	 * It is used internally by `WaveformData.create` so you should not bother using it.
-	 *
-	 * @static
-	 * @param {Mixed} data
-	 * @returns {boolean}
-	 */
-
-
-	WaveformDataArrayBufferAdapter.isCompatible = function isCompatible(data) {
-	  return data && typeof data === "object" && "byteLength" in data;
-	};
-	/**
-	 * Setup factory to create an adapter based on heterogeneous input formats.
-	 *
-	 * It is the preferred way to build an adapter instance.
-	 *
-	 * ```javascript
-	 * var arrayBufferAdapter = WaveformData.adapters.arraybuffer;
-	 * var xhr = new XMLHttpRequest();
-	 *
-	 * // .dat file generated by audiowaveform program
-	 * xhr.open("GET", "http://example.com/waveforms/track.dat");
-	 * xhr.responseType = "arraybuffer";
-	 * xhr.addEventListener("load", function onResponse(progressEvent){
-	 *  var responseData = progressEvent.target.response;
-	 *
-	 *  // doing stuff with the raw data ...
-	 *  // you only have access to WaveformDataArrayBufferAdapter API
-	 *  var adapter = arrayBufferAdapter.fromResponseData(responseData);
-	 *
-	 *  // or making things easy by using WaveformData ...
-	 *  // you have access WaveformData API
-	 *  var waveform = new WaveformData(responseData, arrayBufferAdapter);
-	 * });
-	 *
-	 * xhr.send();
-	 * ```
-
-	 * @static
-	 * @param {ArrayBuffer} response_data
-	 * @return {WaveformDataArrayBufferAdapter}
-	 */
-
-
-	WaveformDataArrayBufferAdapter.fromResponseData = function fromArrayBufferResponseData(response_data) {
-	  return new WaveformDataArrayBufferAdapter(new DataView(response_data));
-	};
-	/**
-	 * @namespace WaveformDataArrayBufferAdapter
-	 */
-
-
-	WaveformDataArrayBufferAdapter.prototype = {
-	  /**
-	   * Returns the data format version number.
-	   *
-	   * @return {Integer} Version number of the consumed data format.
-	   */
-	  get version() {
-	    return this.data.getInt32(0, true);
-	  },
-
-	  /**
-	   * Indicates if the response body is encoded in 8bits.
-	   *
-	   * **Notice**: currently the adapter only deals with 8bits encoded data.
-	   * You should favor that too because of the smaller data network fingerprint.
-	   *
-	   * @return {boolean} True if data are declared to be 8bits encoded.
-	   */
-	  get is_8_bit() {
-	    return Boolean(this.data.getUint32(4, true));
-	  },
-
-	  /**
-	   * Indicates if the response body is encoded in 16bits.
-	   *
-	   * @return {boolean} True if data are declared to be 16bits encoded.
-	   */
-	  get is_16_bit() {
-	    return !this.is_8_bit;
-	  },
-
-	  /**
-	   * Returns the number of samples per second.
-	   *
-	   * @return {Integer} Number of samples per second.
-	   */
-	  get sample_rate() {
-	    return this.data.getInt32(8, true);
-	  },
-
-	  /**
-	   * Returns the scale (number of samples per pixel).
-	   *
-	   * @return {Integer} Number of samples per pixel.
-	   */
-	  get scale() {
-	    return this.data.getInt32(12, true);
-	  },
-
-	  /**
-	   * Returns the length of the waveform data (number of data points).
-	   *
-	   * @return {Integer} Length of the waveform data.
-	   */
-	  get length() {
-	    return this.data.getUint32(16, true);
-	  },
-
-	  /**
-	   * Returns a value at a specific offset.
-	   *
-	   * @param {Integer} index
-	   * @return {number} waveform value
-	   */
-	  at: function at_sample(index) {
-	    return this.data.getInt8(20 + index);
-	  }
-	};
-	var arraybuffer = WaveformDataArrayBufferAdapter;
-
-	/**
-	 * Object adapter consumes stringified JSON or JSON waveform data (data format version 1).
-	 * It is used as a data abstraction layer by `WaveformData`.
-	 *
-	 * This is supposed to be a fallback for browsers not supporting ArrayBuffer:
-	 * * **Pros**: easy to debug response_data and quite self describing.
-	 * * **Cons**: slower than ArrayBuffer, more memory consumption.
-	 *
-	 * Also, it is recommended to use the `fromResponseData` factory.
-	 *
-	 * @see WaveformDataObjectAdapter.fromResponseData
-	 * @param {String|Object} response_data JSON or stringified JSON
-	 * @constructor
-	 */
-
-	function WaveformDataObjectAdapter(response_data) {
-	  this.data = response_data;
-	}
-	/**
-	 * Detects if a set of data is suitable for the Object adapter.
-	 * It is used internally by `WaveformData.create` so you should not bother using it.
-	 *
-	 * @static
-	 * @param {Mixed} data
-	 * @returns {boolean}
-	 */
-
-
-	WaveformDataObjectAdapter.isCompatible = function isCompatible(data) {
-	  return data && (typeof data === "object" && "sample_rate" in data || typeof data === "string" && "sample_rate" in JSON.parse(data));
-	};
-	/**
-	 * Setup factory to create an adapter based on heterogeneous input formats.
-	 *
-	 * It is the preferred way to build an adapter instance.
-	 *
-	 * ```javascript
-	 * var objectAdapter = WaveformData.adapters.object;
-	 * var xhr = new XMLHttpRequest();
-	 *
-	 * // .dat file generated by audiowaveform program
-	 * xhr.open("GET", "http://example.com/waveforms/track.json");
-	 * xhr.responseType = "json";
-	 * xhr.addEventListener("load", function onResponse(progressEvent){
-	 *  var responseData = progressEvent.target.response;
-	 *
-	 *  // doing stuff with the raw data ...
-	 *  // you only have access to WaveformDataObjectAdapter API
-	 *  var adapter = objectAdapter.fromResponseData(responseData);
-	 *
-	 *  // or making things easy by using WaveformData ...
-	 *  // you have access WaveformData API
-	 *  var waveform = new WaveformData(responseData, objectAdapter);
-	 * });
-	 *
-	 * xhr.send();
-	 * ```
-
-	 * @static
-	 * @param {String|Object} response_data JSON or stringified JSON
-	 * @return {WaveformDataObjectAdapter}
-	 */
-
-
-	WaveformDataObjectAdapter.fromResponseData = function fromJSONResponseData(response_data) {
-	  if (typeof response_data === "string") {
-	    return new WaveformDataObjectAdapter(JSON.parse(response_data));
-	  } else {
-	    return new WaveformDataObjectAdapter(response_data);
-	  }
-	};
-	/**
-	 * @namespace WaveformDataObjectAdapter
-	 */
-
-
-	WaveformDataObjectAdapter.prototype = {
-	  /**
-	   * Returns the data format version number.
-	   *
-	   * @return {Integer} Version number of the consumed data format.
-	   */
-	  get version() {
-	    return this.data.version || 1;
-	  },
-
-	  /**
-	   * Indicates if the response body is encoded in 8bits.
-	   *
-	   * **Notice**: currently the adapter only deals with 8bits encoded data.
-	   * You should favor that too because of the smaller data network fingerprint.
-	   *
-	   * @return {boolean} True if data are declared to be 8bits encoded.
-	   */
-	  get is_8_bit() {
-	    return this.data.bits === 8;
-	  },
-
-	  /**
-	   * Indicates if the response body is encoded in 16bits.
-	   *
-	   * @return {boolean} True if data are declared to be 16bits encoded.
-	   */
-	  get is_16_bit() {
-	    return !this.is_8_bit;
-	  },
-
-	  /**
-	   * Returns the number of samples per second.
-	   *
-	   * @return {Integer} Number of samples per second.
-	   */
-	  get sample_rate() {
-	    return this.data.sample_rate;
-	  },
-
-	  /**
-	   * Returns the scale (number of samples per pixel).
-	   *
-	   * @return {Integer} Number of samples per pixel.
-	   */
-	  get scale() {
-	    return this.data.samples_per_pixel;
-	  },
-
-	  /**
-	   * Returns the length of the waveform data (number of data points).
-	   *
-	   * @return {Integer} Length of the waveform data.
-	   */
-	  get length() {
-	    return this.data.length;
-	  },
-
-	  /**
-	   * Returns a value at a specific offset.
-	   *
-	   * @param {Integer} index
-	   * @return {number} waveform value
-	   */
-	  at: function at_sample(index) {
-	    return this.data.data[index];
-	  }
-	};
-	var object = WaveformDataObjectAdapter;
-
-	var adapters = {
-	  arraybuffer: arraybuffer,
-	  object: object
-	};
-
-	core.adapters = adapters;
-	var waveformData = core;
-
 	var WORKER_ENABLED = !!(commonjsGlobal === commonjsGlobal.window && commonjsGlobal.URL && commonjsGlobal.Blob && commonjsGlobal.Worker);
-
-	function InlineWorker(func, self) {
-	  var _this = this;
-
-	  var functionBody;
-	  self = self || {};
-
-	  if (WORKER_ENABLED) {
-	    functionBody = func.toString().trim().match(/^function\s*\w*\s*\([\w\s,]*\)\s*{([\w\W]*?)}$/)[1];
-	    return new commonjsGlobal.Worker(commonjsGlobal.URL.createObjectURL(new commonjsGlobal.Blob([functionBody], {
-	      type: "text/javascript"
-	    })));
-	  }
-
-	  function postMessage(data) {
-	    setTimeout(function () {
-	      _this.onmessage({
-	        data: data
-	      });
-	    }, 0);
-	  }
-
-	  this.self = self;
-	  this.self.postMessage = postMessage;
-	  setTimeout(func.bind(self, self), 0);
-	}
-
-	InlineWorker.prototype.postMessage = function postMessage(data) {
-	  var _this = this;
-
-	  setTimeout(function () {
-	    _this.self.onmessage({
-	      data: data
-	    });
-	  }, 0);
-	};
-
-	var inlineWorker = InlineWorker;
-
-	/**
-	 * This callback is executed once the audio has been decoded by the browser and
-	 * resampled by waveform-data.
-	 *
-	 * @callback onAudioResampled
-	 * @param {WaveformData} waveform_data Waveform instance of the browser decoded audio
-	 * @param {AudioBuffer} audio_buffer Decoded audio buffer
-	 */
-
-	/**
-	 * AudioBuffer-based WaveformData generator
-	 *
-	 * Adapted from BlockFile::CalcSummary in Audacity, with permission.
-	 * @see https://code.google.com/p/audacity/source/browse/audacity-src/trunk/src/BlockFile.cpp
-	 *
-	 * @param {Object.<{scale: Number, amplitude_scale: Number}>} options
-	 * @param {onAudioResampled} callback
-	 * @returns {Function.<AudioBuffer>}
-	 */
-
-
-	function getAudioDecoder(options, callback) {
-	  return function onAudioDecoded(audio_buffer) {
-	    var worker = new inlineWorker(function () {
-	      var INT8_MAX = 127;
-	      var INT8_MIN = -128;
-
-	      function calculateWaveformDataLength(audio_sample_count, scale) {
-	        var data_length = Math.floor(audio_sample_count / scale);
-	        var samples_remaining = audio_sample_count - data_length * scale;
-
-	        if (samples_remaining > 0) {
-	          data_length++;
-	        }
-
-	        return data_length;
-	      }
-
-	      this.addEventListener("message", function (evt) {
-	        var scale = evt.data.scale;
-	        var amplitude_scale = evt.data.amplitude_scale;
-	        var audio_buffer = evt.data.audio_buffer;
-	        var data_length = calculateWaveformDataLength(audio_buffer.length, scale);
-	        var header_size = 20;
-	        var data_object = new DataView(new ArrayBuffer(header_size + data_length * 2));
-	        var channels = audio_buffer.channels;
-	        var channel;
-	        var min_value = Infinity,
-	            max_value = -Infinity,
-	            scale_counter = 0;
-	        var buffer_length = audio_buffer.length;
-	        var offset = header_size;
-	        var i;
-	        data_object.setInt32(0, 1, true); // Version
-
-	        data_object.setUint32(4, 1, true); // Is 8 bit?
-
-	        data_object.setInt32(8, audio_buffer.sampleRate, true); // Sample rate
-
-	        data_object.setInt32(12, scale, true); // Scale
-
-	        data_object.setInt32(16, data_length, true); // Length
-
-	        for (i = 0; i < buffer_length; i++) {
-	          var sample = 0;
-
-	          for (channel = 0; channel < channels.length; ++channel) {
-	            sample += channels[channel][i];
-	          }
-
-	          sample = Math.floor(INT8_MAX * sample * amplitude_scale / channels.length);
-
-	          if (sample < min_value) {
-	            min_value = sample;
-
-	            if (min_value < INT8_MIN) {
-	              min_value = INT8_MIN;
-	            }
-	          }
-
-	          if (sample > max_value) {
-	            max_value = sample;
-
-	            if (max_value > INT8_MAX) {
-	              max_value = INT8_MAX;
-	            }
-	          }
-
-	          if (++scale_counter === scale) {
-	            data_object.setInt8(offset++, Math.floor(min_value));
-	            data_object.setInt8(offset++, Math.floor(max_value));
-	            min_value = Infinity;
-	            max_value = -Infinity;
-	            scale_counter = 0;
-	          }
-	        }
-
-	        if (scale_counter > 0) {
-	          data_object.setInt8(offset++, Math.floor(min_value));
-	          data_object.setInt8(offset++, Math.floor(max_value));
-	        }
-
-	        this.postMessage(data_object);
-	      });
-	    });
-	    worker.addEventListener("message", function (evt) {
-	      var data_object = evt.data;
-	      callback(null, new waveformData(data_object.buffer, waveformData.adapters.arraybuffer), audio_buffer);
-	    }); // Construct a simple object with the necessary AudioBuffer data,
-	    // as we cannot send an AudioBuffer to a Web Worker.
-
-	    var audio_buffer_obj = {
-	      length: audio_buffer.length,
-	      sampleRate: audio_buffer.sampleRate,
-	      channels: []
-	    }; // Fill in the channels data.
-
-	    for (var channel = 0; channel < audio_buffer.numberOfChannels; ++channel) {
-	      audio_buffer_obj.channels[channel] = audio_buffer.getChannelData(channel);
-	    }
-
-	    worker.postMessage({
-	      scale: options.scale,
-	      amplitude_scale: options.amplitude_scale,
-	      audio_buffer: audio_buffer_obj
-	    });
-	  };
-	}
-
-	var audiodecoder = getAudioDecoder;
-
-	/**
-	 * Creates a working WaveformData based on binary audio data.
-	 *
-	 * This is still quite experimental and the result will mostly depend on the
-	 * level of browser support.
-	 *
-	 * ```javascript
-	 * const xhr = new XMLHttpRequest();
-	 * const audioContext = new AudioContext();
-	 *
-	 * // URL of a CORS MP3/Ogg file
-	 * xhr.open('GET', 'https://example.com/audio/track.ogg');
-	 * xhr.responseType = 'arraybuffer';
-	 *
-	 * xhr.addEventListener('load', function(progressEvent) {
-	 *   WaveformData.builders.webaudio(audioContext, progressEvent.target.response,
-	 *     function(err, waveform) {
-	 *     if (err) {
-	 *       console.error(err);
-	 *       return;
-	 *     }
-	 *
-	 *     console.log(waveform.duration);
-	 *   });
-	 * });
-	 *
-	 * xhr.send();
-	 * ```
-	 *
-	 * @todo use a Web Worker to offload processing of the binary data
-	 * @todo or use `SourceBuffer.appendBuffer` and `ProgressEvent` to stream the decoding
-	 * @todo abstract the number of channels, because it is assumed the audio file is stereo
-	 * @param {AudioContext|webkitAudioContext} audio_context
-	 * @param {ArrayBuffer} raw_response
-	 * @param {callback} what to do once the decoding is done
-	 * @constructor
-	 */
-
-
-	function fromAudioObjectBuilder(audio_context, raw_response, options, callback) {
-	  var audioContext = window.AudioContext || window.webkitAudioContext;
-	  var defaultOptions = {
-	    scale: 512,
-	    amplitude_scale: 1.0
-	  };
-
-	  if (!(audio_context instanceof audioContext)) {
-	    throw new TypeError("First argument should be an AudioContext instance");
-	  } // fromAudioObjectBuilder(audioContext, data, callback) form
-
-
-	  if (typeof options === "function") {
-	    callback = options;
-	    options = {};
-	  } else {
-	    options = options || {};
-	  }
-
-	  options.scale = options.scale || defaultOptions.scale;
-	  options.amplitude_scale = options.amplitude_scale || defaultOptions.amplitude_scale;
-
-	  if (options.hasOwnProperty("scale_adjuster")) {
-	    throw new Error("Please rename the 'scale_adjuster' option to 'amplitude_scale'");
-	  } // The following function is a workaround for a Webkit bug where decodeAudioData
-	  // invokes the errorCallback with null instead of a DOMException.
-	  // See https://webaudio.github.io/web-audio-api/#dom-baseaudiocontext-decodeaudiodata
-	  // and http://stackoverflow.com/q/10365335/103396
-
-
-	  function errorCallback(error) {
-	    if (!error) {
-	      error = new DOMException("EncodingError");
-	    }
-
-	    callback(error);
-	  }
-
-	  return audio_context.decodeAudioData(raw_response, audiodecoder(options, callback), errorCallback);
-	}
-
-	var webaudio = fromAudioObjectBuilder;
-
-	var webaudio$1 = webaudio;
 
 	const waveformSubject = new BehaviorSubject(new Map$1());
 	const WaveformState = {
@@ -34653,58 +33351,6 @@
 	  url: null,
 	  state: null
 	}) {}
-
-	function drawWaveformImage(waveform) {
-	  const canvas = document.createElement('canvas');
-	  canvas.width = waveform.pixels_per_second * waveform.duration;
-
-	  if (canvas.width > 10000) {
-	    canvas.width = 10000;
-	  }
-
-	  const interpolateHeight = total_height => {
-	    const amplitude = 256;
-	    return size => total_height - (size + 128) * total_height / amplitude;
-	  };
-
-	  const y = interpolateHeight(canvas.height);
-	  const ctx = canvas.getContext('2d');
-	  ctx.beginPath(); // from 0 to 100
-
-	  waveform.min.forEach((val, x) => {
-	    ctx.lineTo(x + 0.5, y(val) + 0.5);
-	  }); // then looping back from 100 to 0
-
-	  waveform.max.reverse().forEach((val, x) => {
-	    ctx.lineTo(waveform.offset_length - x + 0.5, y(val) + 0.5);
-	  });
-	  ctx.closePath();
-	  ctx.stroke();
-	  ctx.fill();
-	  return new Promise(res => {
-	    canvas.toBlob(function (blob) {
-	      res(blob);
-	    });
-	  });
-	}
-
-	function generateWaveform(source) {
-	  webaudio$1(audioContext, source.data, (err, waveform) => {
-	    if (err) {
-	      console.error(err);
-	      return;
-	    }
-
-	    drawWaveformImage(waveform).then(blob => {
-	      const url = URL.createObjectURL(blob);
-	      waveformSubject.next(waveformSubject.value.mergeIn([source.id], {
-	        state: WaveformState.READY,
-	        blob,
-	        url
-	      }));
-	    });
-	  });
-	}
 
 	function loadWaveform(source) {
 	  const {
@@ -34720,7 +33366,6 @@
 	    state: WaveformState.LOADING
 	  });
 	  waveformSubject.next(waveformSubject.value.set(sourceId, waveform));
-	  generateWaveform(source);
 	}
 	const waveformSym = Symbol();
 	wire_2(waveformSym, wireObservable(waveformSubject.asObservable()));

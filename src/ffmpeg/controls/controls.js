@@ -46,13 +46,7 @@ export default class Controls extends LightningElement {
     }
 
     onPlayClick() {
-        // play(
-        //     new AudioRange(
-        //         this.editor.data.cursor,
-        //         new Time(2000),
-        //     ),
-        // );
-        // play(this.editor.data.cursor)
-        rasterize(this.editor.data.cursor);
+        play(this.editor.data.cursor)
+        // rasterize(this.editor.data.cursor);
     }
 }

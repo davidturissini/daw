@@ -10,11 +10,11 @@ import {
     setSegmentSelection,
     deleteSelections,
     getTracksDuration,
+    segmentInTimeRange,
 } from './../../wire/audiotrack';
 import { generateId } from './../../util/uniqueid';
 import { playheadSym, incrementPlaybackDuration, setPlaybackDuration } from './../../wire/playhead';
 import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
-import { segmentInTimeRange } from './../../wire/audiorender';
 
 function userSelection(elm) {
     const selectionFrame = {

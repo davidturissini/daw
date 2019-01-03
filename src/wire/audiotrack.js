@@ -3,10 +3,9 @@ import { Record, Map as ImmutableMap, List } from 'immutable';
 import { BehaviorSubject } from 'rxjs';
 import { wireObservable } from '../util/wire-observable';
 import { createAudioSourceFromFile } from './audiosource';
-import { Time, sum as sumTime, subtract as subtractTime, gt } from './../util/time';
+import { Time, sum as sumTime, subtract as subtractTime, gt, lt } from './../util/time';
 import { generateId } from './../util/uniqueid';
 import { AudioRange, split as splitAudioRange, relative as makeRelativeAudioRange } from './../util/audiorange';
-import { segmentInTimeRange } from './audiorender';
 
 class Color {
     constructor(red, green, blue) {
@@ -37,6 +36,7 @@ class AudioTrack extends Record({
 class AudioTrackSegment extends Record({
     id: null,
     sourceOffset: null,
+    audioTag: null,
     duration: null,
     offset: null,
     sourceId: null,
@@ -58,6 +58,25 @@ class TimeRangeSelection extends Record({
     range: null,
     segmentId: null,
 }) {}
+
+export function segmentInTimeRange(segment, startTime, duration) {
+    const segmentEnd = sumTime(segment.offset, segment.duration);
+    const end = sumTime(startTime, duration);
+    return (
+        (
+            gt(segment.offset, startTime) &&
+            lt(segment.offset, end)
+        ) ||
+        (
+            lt(segmentEnd, end) &&
+            gt(segmentEnd, startTime)
+        ) ||
+        (
+            lt(segment.offset, startTime) &&
+            gt(segmentEnd, startTime)
+        )
+    )
+}
 
 export function getTrackDuration(track) {
     return track.segments.toList().toArray().reduce((seed, segment) => {
@@ -109,7 +128,9 @@ export function createTrackAndSourceFile(trackId, sourceId, sourceFile, trackOff
             tracksSubject.next(
                 tracksSubject.value.updateIn([trackId, 'segments'], (segments) => {
                     const segmentId = generateId();
+
                     return segments.set(segmentId, new AudioTrackSegment({
+                        audioTag: document.createElement('audio'),
                         id: segmentId,
                         sourceOffset: new Time(0),
                         duration: audioSource.duration,
@@ -205,7 +226,8 @@ function splitSegment(segment, range) {
         return segment.set('offset', split.start)
             .set('duration', split.duration)
             .set('id', generateId())
-            .set('sourceOffset', sumTime(segment.sourceOffset, diff));
+            .set('sourceOffset', sumTime(segment.sourceOffset, diff))
+            .set('audioTag', document.createElement('audio'));
     });
 }
 

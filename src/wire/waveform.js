@@ -2,7 +2,6 @@ import { register } from 'wire-service';
 import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
 import { Map as ImmutableMap, Record } from 'immutable';
-import { audioContext } from './audiosource';
 import webAudioBuilder from 'waveform-data/webaudio';
 
 const waveformSubject = new BehaviorSubject(new ImmutableMap());
@@ -58,23 +57,29 @@ function drawWaveformImage(waveform) {
 }
 
 function generateWaveform(source) {
-    webAudioBuilder(audioContext, source.data, (err, waveform) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
+    // source.audio.subscribe((audioBuffer) => {
+    //     console.log(audioBuffer)
+    //     webAudioBuilder.fromAudioBuffer(audioBuffer, { scale: audioBuffer.sampleRate / 1000 }, (err, waveform) => {
+    //         console.log('waveform', waveform);
+    //     });
+    // })
+    // webAudioBuilder(audioContext, source.data, (err, waveform) => {
+    //     if (err) {
+    //       console.error(err);
+    //       return;
+    //     }
 
-        drawWaveformImage(waveform).then((blob) => {
-            const url = URL.createObjectURL(blob);
-            waveformSubject.next(
-                waveformSubject.value.mergeIn([source.id], {
-                    state: WaveformState.READY,
-                    blob,
-                    url,
-                })
-            )
-        });
-      });
+    //     drawWaveformImage(waveform).then((blob) => {
+    //         const url = URL.createObjectURL(blob);
+    //         waveformSubject.next(
+    //             waveformSubject.value.mergeIn([source.id], {
+    //                 state: WaveformState.READY,
+    //                 blob,
+    //                 url,
+    //             })
+    //         )
+    //     });
+    //   });
 }
 
 export function loadWaveform(source) {
