@@ -133,7 +133,6 @@ function makeSourceNodesStream(audioContext) {
                             segment.range,
                             segment.sourceOffset,
                         );
-
                         const auroraNode = new AuroraSourceNode(
                             asset,
                             audioContext,

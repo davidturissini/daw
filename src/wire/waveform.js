@@ -67,25 +67,23 @@ function generateWaveform(source) {
     waveformNode.node.connect(offline.destination);
     waveformNode.beginRender();
     sourceNode.start();
-    offline.startRendering().then((buffer) => {
-        console.log('result buffer', buffer)
-    });
+    offline.startRendering();
 
 }
 
 function loadWaveform(source) {
-    // const { id: sourceId } = source;
-    // const waveform = new Waveform({
-    //     id: generateId(),
-    //     sourceId,
-    //     state: WaveformState.LOADING,
-    // });
+    const { id: sourceId } = source;
+    const waveform = new Waveform({
+        id: generateId(),
+        sourceId,
+        state: WaveformState.LOADING,
+    });
 
-    // waveformSubject.next(
-    //     waveformSubject.value.set(sourceId, waveform)
-    // );
+    waveformSubject.next(
+        waveformSubject.value.set(sourceId, waveform)
+    );
 
-    // generateWaveform(source);
+    generateWaveform(source);
 
 }
 

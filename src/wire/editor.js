@@ -65,7 +65,6 @@ export function setVirtualCursorTime(time) {
 }
 
 export function setCursorTime(time) {
-    console.log('ok', time.milliseconds)
     editorSubject.next(
         editorSubject.value.set('cursor', time)
     );

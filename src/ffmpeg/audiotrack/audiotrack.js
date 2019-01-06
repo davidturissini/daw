@@ -8,6 +8,7 @@ import {
     deleteSegment,
     setTrackFrame,
 } from './../../wire/audiotrack';
+import { Time } from '../../util/time';
 
 export default class AudioTrack extends LightningElement {
     @api track;
@@ -60,11 +61,17 @@ export default class AudioTrack extends LightningElement {
                 x: Math.max(x, 0),
                 width,
             };
+
+            const visibleDuration = this.editor.data.pixelToTime(width);
+            const visibleOffset = segment.offset.greaterThan(this.editor.data.visibleRange.start) ? new Time(0) : this.editor.data.visibleRange.start.minus(segment.offset);
+            console.log(visibleOffset);
             return {
                 key: index,
                 frame,
                 style: `transform: translateX(${frame.x}px); width:${width}px`,
                 segment,
+                visibleDuration,
+                visibleOffset,
             };
         })
         .toList()

@@ -24734,7 +24734,6 @@
 	  editorSubject.next(editorSubject.value.set('virtualCursor', time));
 	}
 	function setCursorTime(time) {
-	  console.log('ok', time.milliseconds);
 	  editorSubject.next(editorSubject.value.set('cursor', time));
 	}
 	const quanitizationValues = [1 / 64, 1 / 32, 1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2, 4, 5, 10, 30, 60, 120, 240];
@@ -25138,9 +25137,7 @@
 	        if (sourceOffset === 0) {
 	          return;
 	        }
-
-	        const timestamp = sourceOffset * sampleRate;
-	        asset.decoder.seek(timestamp);
+	        asset.decoder.seek(sourceOffset);
 	        this.queue.reset();
 	      });
 	      this.refillHandler = this.handleRefill(this.queue);
@@ -33311,7 +33308,7 @@
 	var _implicitStylesheets$6 = [stylesheet$6];
 
 	function stylesheet$7(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:focus) {outline: none;}") : (hostSelector + ":focus {outline: none;}")) + "\n\n" + (nativeShadow ? (":host(:focus) .focus-indicator" + shadowSelector + " {display: block;}") : (hostSelector + ":focus .focus-indicator" + shadowSelector + " {display: block;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.focus-indicator" + shadowSelector + " {display: none;position: absolute;left: 0;right: 0;top: 0;bottom: 0;z-index: 10;background: rgba(0, 0, 0, 0.25);}\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;border: 3px solid rgba(0, 0, 0, 1);border-radius: 0.2rem;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n.container" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}") : (hostSelector + " {display: block;position: relative;z-index: 1;border-radius: 0.2rem;overflow: hidden;}")) + "\n\n" + (nativeShadow ? (":host(:focus) {outline: none;}") : (hostSelector + ":focus {outline: none;}")) + "\n\n" + (nativeShadow ? (":host(:focus) .focus-indicator" + shadowSelector + " {display: block;}") : (hostSelector + ":focus .focus-indicator" + shadowSelector + " {display: block;}")) + "\n\n" + (nativeShadow ? (":host(:hover) .handle" + shadowSelector + " {opacity: 1;}") : (hostSelector + ":hover .handle" + shadowSelector + " {opacity: 1;}")) + "\n.handle" + shadowSelector + " {transition: opacity 400ms ease;opacity: 0;display: block;position: absolute;width: 4px;left: 0;top: 0;bottom: 0;z-index: 5;border: 3px solid rgba(0, 0, 0, 1);border-radius: 0.2rem;cursor: col-resize;}\n.handle--end" + shadowSelector + " {left: auto;right: 0;}\n.container" + shadowSelector + " {height: 100%;}\n";
 	}
 	var _implicitStylesheets$7 = [stylesheet$7];
 
@@ -33367,6 +33364,1277 @@
 	 * @param {Integer} end Initial end index
 	 * @constructor
 	 */
+	function WaveformDataSegment(context, start, end) {
+	  this.context = context;
+	  /**
+	   * Start index.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.start);  // -> 10
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.start);  // -> 10
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.start);  // -> 10
+	   * ```
+	   * @type {Integer} Initial starting point of the segment.
+	   */
+
+	  this.start = start;
+	  /**
+	   * End index.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.end);  // -> 50
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.end);  // -> 50
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.end);  // -> 50
+	   * ```
+	   * @type {Integer} Initial ending point of the segment.
+	   */
+
+	  this.end = end;
+	}
+	/**
+	 * @namespace WaveformDataSegment
+	 */
+
+
+	WaveformDataSegment.prototype = {
+	  /**
+	   * Dynamic starting point based on the WaveformData instance offset.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.offset_start);  // -> 10
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.offset_start);  // -> 20
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.offset_start);  // -> null
+	   * ```
+	   *
+	   * @return {number} Starting point of the segment within the waveform offset. (inclusive)
+	   */
+	  get offset_start() {
+	    if (this.start < this.context.offset_start && this.end > this.context.offset_start) {
+	      return this.context.offset_start;
+	    }
+
+	    if (this.start >= this.context.offset_start && this.start < this.context.offset_end) {
+	      return this.start;
+	    }
+
+	    return null;
+	  },
+
+	  /**
+	   * Dynamic ending point based on the WaveformData instance offset.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.offset_end);  // -> 50
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.offset_end);  // -> 50
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.offset_end);  // -> null
+	   * ```
+	   *
+	   * @return {number} Ending point of the segment within the waveform offset. (exclusive)
+	   */
+	  get offset_end() {
+	    if (this.end > this.context.offset_start && this.end <= this.context.offset_end) {
+	      return this.end;
+	    }
+
+	    if (this.end > this.context.offset_end && this.start < this.context.offset_end) {
+	      return this.context.offset_end;
+	    }
+
+	    return null;
+	  },
+
+	  /**
+	   * Dynamic segment length based on the WaveformData instance offset.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.offset_length);  // -> 40
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.offset_length);  // -> 30
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.offset_length);  // -> 0
+	   * ```
+	   *
+	   * @return {number} Visible length of the segment within the waveform offset.
+	   */
+	  get offset_length() {
+	    return this.offset_end - this.offset_start;
+	  },
+
+	  /**
+	   * Initial length of the segment.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.length);  // -> 40
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.length);  // -> 40
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.length);  // -> 40
+	   * ```
+	   *
+	   * @return {number} Initial length of the segment.
+	   */
+	  get length() {
+	    return this.end - this.start;
+	  },
+
+	  /**
+	   * Indicates if the segment has some visible part in the actual WaveformData offset.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.visible);        // -> true
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.segments.example.visible);        // -> true
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.segments.example.visible);        // -> false
+	   * ```
+	   *
+	   * @return {Boolean} True if at least partly visible, false otherwise.
+	   */
+	  get visible() {
+	    return this.context.in_offset(this.start) || this.context.in_offset(this.end) || this.context.offset_start > this.start && this.context.offset_start < this.end;
+	  },
+
+	  /**
+	   * Return the minimum values for the segment.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.min.length);        // -> 40
+	   * console.log(waveform.segments.example.min.offset_length); // -> 40
+	   * console.log(waveform.segments.example.min[0]);            // -> -12
+	   *
+	   * waveform.offset(20, 50);
+	   *
+	   * console.log(waveform.segments.example.min.length);        // -> 40
+	   * console.log(waveform.segments.example.min.offset_length); // -> 30
+	   * console.log(waveform.segments.example.min[0]);            // -> -5
+	   * ```
+	   *
+	   * @return {Array.<Integer>} Min values of the segment.
+	   */
+	  get min() {
+	    return this.visible ? this.context.offsetValues(this.offset_start, this.offset_length, 0) : [];
+	  },
+
+	  /**
+	   * Return the maximum values for the segment.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_segment(10, 50, "example");
+	   *
+	   * console.log(waveform.segments.example.max.length);        // -> 40
+	   * console.log(waveform.segments.example.max.offset_length); // -> 40
+	   * console.log(waveform.segments.example.max[0]);            // -> 5
+	   *
+	   * waveform.offset(20, 50);
+	   *
+	   * console.log(waveform.segments.example.max.length);        // -> 40
+	   * console.log(waveform.segments.example.max.offset_length); // -> 30
+	   * console.log(waveform.segments.example.max[0]);            // -> 11
+	   * ```
+	   *
+	   * @return {Array.<Integer>} Max values of the segment.
+	   */
+	  get max() {
+	    return this.visible ? this.context.offsetValues(this.offset_start, this.offset_length, 1) : [];
+	  }
+
+	};
+	var segment = WaveformDataSegment;
+	/**
+	 * Points are an easy way to keep track bookmarks of the described audio file.
+	 *
+	 * They return values based on the actual offset. Which means if you change your offset and:
+	 *
+	 * * a point becomes **out of scope**, no data will be returned;
+	 * * a point is **fully included in the offset**, its whole content will be returned.
+	 *
+	 * Points are created with the `WaveformData.set_point(timeStamp, name?)` method.
+	 *
+	 * @see WaveformData.prototype.set_point
+	 * @param {WaveformData} context WaveformData instance
+	 * @param {Integer} start Initial start index
+	 * @param {Integer} end Initial end index
+	 * @constructor
+	 */
+
+	function WaveformDataPoint(context, timeStamp) {
+	  this.context = context;
+	  /**
+	   * Start index.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_point(10, "example");
+	   *
+	   * console.log(waveform.points.example.timeStamp);  // -> 10
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.points.example.timeStamp);  // -> 10
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.points.example.timeStamp);  // -> 10
+	   * ```
+	   * @type {Integer} Time Stamp of the point
+	   */
+
+	  this.timeStamp = timeStamp;
+	}
+	/**
+	 * @namespace WaveformDataPoint
+	 */
+
+
+	WaveformDataPoint.prototype = {
+	  /**
+	   * Indicates if the point has some visible part in the actual WaveformData offset.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   * waveform.set_point(10, "example");
+	   *
+	   * console.log(waveform.points.example.visible);        // -> true
+	   *
+	   * waveform.offset(0, 50);
+	   * console.log(waveform.points.example.visible);        // -> true
+	   *
+	   * waveform.offset(70, 100);
+	   * console.log(waveform.points.example.visible);        // -> false
+	   * ```
+	   *
+	   * @return {Boolean} True if visible, false otherwise.
+	   */
+	  get visible() {
+	    return this.context.in_offset(this.timeStamp);
+	  }
+
+	};
+	var point = WaveformDataPoint;
+	/**
+	 * Facade to iterate on audio waveform response.
+	 *
+	 * ```javascript
+	 * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	 *
+	 * var json_waveform = new WaveformData(xhr.responseText, WaveformData.adapters.object);
+	 *
+	 * var arraybuff_waveform = new WaveformData(
+	 *   getArrayBufferData(),
+	 *   WaveformData.adapters.arraybuffer
+	 * );
+	 * ```
+	 *
+	 * ## Offsets
+	 *
+	 * An **offset** is a non-destructive way to iterate on a subset of data.
+	 *
+	 * It is the easiest way to **navigate** through data without having to deal
+	 * with complex calculations. Simply iterate over the data to display them.
+	 *
+	 * *Notice*: the default offset is the entire set of data.
+	 *
+	 * @param {String|ArrayBuffer|Mixed} response_data Waveform data,
+	 *   to be consumed by the related adapter.
+	 * @param {WaveformData.adapter|Function} adapter Backend adapter used to manage
+	 *   access to the data.
+	 * @constructor
+	 */
+
+	function WaveformData(response_data, adapter) {
+	  /**
+	   * Backend adapter used to manage access to the data.
+	   *
+	   * @type {Object}
+	   */
+	  this.adapter = adapter.fromResponseData(response_data);
+	  /**
+	   * Defined segments.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   *
+	   * console.log(waveform.segments.speakerA); // -> undefined
+	   *
+	   * waveform.set_segment(30, 90, "speakerA");
+	   *
+	   * console.log(waveform.segments.speakerA.start); // -> 30
+	   * ```
+	   *
+	   * @type {Object} A hash of `WaveformDataSegment` objects.
+	   */
+
+	  this.segments = {};
+	  /**
+	   * Defined points.
+	   *
+	   * ```javascript
+	   * var waveform = new WaveformData({ ... }, WaveformData.adapters.object);
+	   *
+	   * console.log(waveform.points.speakerA); // -> undefined
+	   *
+	   * waveform.set_point(30, "speakerA");
+	   *
+	   * console.log(waveform.points.speakerA.timeStamp); // -> 30
+	   * ```
+	   *
+	   * @type {Object} A hash of `WaveformDataPoint` objects.
+	   */
+
+	  this.points = {};
+	  this.offset(0, this.adapter.length);
+	}
+	/**
+	 * Creates an instance of WaveformData by guessing the adapter from the
+	 * data type. It can also accept an XMLHttpRequest response.
+	 *
+	 * ```javascript
+	 * var xhr = new XMLHttpRequest();
+	 * xhr.open("GET", "http://example.com/waveforms/track.dat");
+	 * xhr.responseType = "arraybuffer";
+	 *
+	 * xhr.addEventListener("load", function onResponse(progressEvent) {
+	 *   var waveform = WaveformData.create(progressEvent.target);
+	 *
+	 *   console.log(waveform.duration);
+	 * });
+	 *
+	 * xhr.send();
+	 * ```
+	 *
+	 * @static
+	 * @throws TypeError
+	 * @param {XMLHttpRequest|Mixed} data
+	 * @return {WaveformData}
+	 */
+
+
+	WaveformData.create = function createFromResponseData(data) {
+	  var adapter = null;
+	  var xhrData = null;
+
+	  if (data && typeof data === "object" && ("responseText" in data || "response" in data)) {
+	    xhrData = "responseType" in data ? data.response : data.responseText || data.response;
+	  }
+
+	  Object.keys(WaveformData.adapters).some(function (adapter_id) {
+	    if (WaveformData.adapters[adapter_id].isCompatible(xhrData || data)) {
+	      adapter = WaveformData.adapters[adapter_id];
+	      return true;
+	    }
+	  });
+
+	  if (adapter === null) {
+	    throw new TypeError("Could not detect a WaveformData adapter from the input.");
+	  }
+
+	  return new WaveformData(xhrData || data, adapter);
+	};
+	/**
+	 * Public API for the Waveform Data manager.
+	 *
+	 * @namespace WaveformData
+	 */
+
+
+	WaveformData.prototype = {
+	  /**
+	   * Clamp an offset of data upon the whole response body.
+	   * Pros: it's just a reference, not a new array. So it's fast.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.offset_length);   // -> 150
+	   * console.log(waveform.min[0]);          // -> -12
+	   *
+	   * waveform.offset(20, 50);
+	   *
+	   * console.log(waveform.min.length);      // -> 30
+	   * console.log(waveform.min[0]);          // -> -9
+	   * ```
+	   *
+	   * @param {Integer} start New beginning of the offset. (inclusive)
+	   * @param {Integer} end New ending of the offset (exclusive)
+	   */
+	  offset: function (start, end) {
+	    var data_length = this.adapter.length;
+
+	    if (end < 0) {
+	      throw new RangeError("End point must be non-negative [" + Number(end) + " < 0]");
+	    }
+
+	    if (end < start) {
+	      throw new RangeError("End point must not be before the start point [" + Number(end) + " < " + Number(start) + "]");
+	    }
+
+	    if (start < 0) {
+	      throw new RangeError("Start point must be non-negative [" + Number(start) + " < 0]");
+	    }
+
+	    if (start >= data_length) {
+	      throw new RangeError("Start point must be within range [" + Number(start) + " >= " + data_length + "]");
+	    }
+
+	    if (end > data_length) {
+	      end = data_length;
+	    }
+
+	    this.offset_start = start;
+	    this.offset_end = end;
+	    this.offset_length = end - start;
+	  },
+
+	  /**
+	   * Creates a new segment of data.
+	   * Pretty handy if you need to bookmark a duration and display it according
+	   * to the current offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(Object.keys(waveform.segments));          // -> []
+	   *
+	   * waveform.set_segment(10, 120);
+	   * waveform.set_segment(30, 90, "speakerA");
+	   *
+	   * console.log(Object.keys(waveform.segments));          // -> ['default', 'speakerA']
+	   * console.log(waveform.segments.default.min.length);    // -> 110
+	   * console.log(waveform.segments.speakerA.min.length);   // -> 60
+	   * ```
+	   *
+	   * @param {Integer} start Beginning of the segment (inclusive)
+	   * @param {Integer} end Ending of the segment (exclusive)
+	   * @param {String*} identifier Unique identifier. If nothing is specified,
+	   *   *default* will be used as a value.
+	   * @return {WaveformDataSegment}
+	   */
+	  set_segment: function setSegment(start, end, identifier) {
+	    if (identifier === undefined || identifier === null || identifier.length === 0) {
+	      identifier = "default";
+	    }
+
+	    this.segments[identifier] = new segment(this, start, end);
+	    return this.segments[identifier];
+	  },
+
+	  /**
+	   * Creates a new point of data.
+	   * Pretty handy if you need to bookmark a specific point and display it
+	   * according to the current offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(Object.keys(waveform.points)); // -> []
+	   *
+	   * waveform.set_point(10);
+	   * waveform.set_point(30, "speakerA");
+	   *
+	   * console.log(Object.keys(waveform.points)); // -> ['default', 'speakerA']
+	   * ```
+	   *
+	   * @param {Integer} timeStamp the time to place the bookmark
+	   * @param {String*} identifier Unique identifier. If nothing is specified,
+	   *   *default* will be used as a value.
+	   * @return {WaveformDataPoint}
+	   */
+	  set_point: function setPoint(timeStamp, identifier) {
+	    if (identifier === undefined || identifier === null || identifier.length === 0) {
+	      identifier = "default";
+	    }
+
+	    this.points[identifier] = new point(this, timeStamp);
+	    return this.points[identifier];
+	  },
+
+	  /**
+	   * Removes a point of data.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(Object.keys(waveform.points));          // -> []
+	   *
+	   * waveform.set_point(30, "speakerA");
+	   * console.log(Object.keys(waveform.points));          // -> ['speakerA']
+	   * waveform.remove_point("speakerA");
+	   * console.log(Object.keys(waveform.points));          // -> []
+	   * ```
+	   *
+	   * @param {String*} identifier Unique identifier. If nothing is specified,
+	   *   *default* will be used as a value.
+	   * @return null
+	   */
+	  remove_point: function removePoint(identifier) {
+	    if (this.points[identifier]) {
+	      delete this.points[identifier];
+	    }
+	  },
+
+	  /**
+	   * Creates a new WaveformData object with resampled data.
+	   * Returns a rescaled waveform, to either fit the waveform to a specific
+	   * width, or to a specific zoom level.
+	   *
+	   * **Note**: You may specify either the *width* or the *scale*, but not both.
+	   * The `scale` will be deduced from the `width` you want to fit the data into.
+	   *
+	   * Adapted from Sequence::GetWaveDisplay in Audacity, with permission.
+	   *
+	   * ```javascript
+	   * // ...
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * // fitting the data in a 500px wide canvas
+	   * var resampled_waveform = waveform.resample({ width: 500 });
+	   *
+	   * console.log(resampled_waveform.min.length);   // -> 500
+	   *
+	   * // zooming out on a 3 times less precise scale
+	   * var resampled_waveform = waveform.resample({ scale: waveform.adapter.scale * 3 });
+	   *
+	   * // partial resampling (to perform fast animations involving a resampling
+	   * // per animation frame)
+	   * var partially_resampled_waveform = waveform.resample({ width: 500, from: 0, to: 500 });
+	   *
+	   * // ...
+	   * ```
+	   *
+	   * @see https://code.google.com/p/audacity/source/browse/audacity-src/trunk/src/Sequence.cpp
+	   * @param {Number|{width: Number, scale: Number}} options Either a constraint width or a constraint sample rate
+	   * @return {WaveformData} New resampled object
+	   */
+	  resample: function (options) {
+	    if (typeof options === "number") {
+	      options = {
+	        width: options
+	      };
+	    }
+
+	    options.input_index = typeof options.input_index === "number" ? options.input_index : null;
+	    options.output_index = typeof options.output_index === "number" ? options.output_index : null;
+	    options.scale = typeof options.scale === "number" ? options.scale : null;
+	    options.width = typeof options.width === "number" ? options.width : null;
+	    var is_partial_resampling = Boolean(options.input_index) || Boolean(options.output_index);
+
+	    if (options.input_index != null && options.input_index < 0) {
+	      throw new RangeError("options.input_index should be a positive integer value. [" + options.input_index + "]");
+	    }
+
+	    if (options.output_index != null && options.output_index < 0) {
+	      throw new RangeError("options.output_index should be a positive integer value. [" + options.output_index + "]");
+	    }
+
+	    if (options.width != null && options.width <= 0) {
+	      throw new RangeError("options.width should be a strictly positive integer value. [" + options.width + "]");
+	    }
+
+	    if (options.scale != null && options.scale <= 0) {
+	      throw new RangeError("options.scale should be a strictly positive integer value. [" + options.scale + "]");
+	    }
+
+	    if (!options.scale && !options.width) {
+	      throw new RangeError("You should provide either a resampling scale or a width in pixel the data should fit in.");
+	    }
+
+	    var definedPartialOptionsCount = ["width", "scale", "output_index", "input_index"].reduce(function (count, key) {
+	      return count + (options[key] === null ? 0 : 1);
+	    }, 0);
+
+	    if (is_partial_resampling && definedPartialOptionsCount !== 4) {
+	      throw new Error("Some partial resampling options are missing. You provided " + definedPartialOptionsCount + " of them over 4.");
+	    }
+
+	    var output_data = [];
+	    var samples_per_pixel = options.scale || Math.floor(this.duration * this.adapter.sample_rate / options.width); // scale we want to reach
+
+	    var scale = this.adapter.scale; // scale we are coming from
+
+	    var channel_count = 2;
+	    var input_buffer_size = this.adapter.length; // the amount of data we want to resample i.e. final zoom want to resample all data but for intermediate zoom we want to resample subset
+
+	    var input_index = options.input_index || 0; // is this start point? or is this the index at current scale
+
+	    var output_index = options.output_index || 0; // is this end point? or is this the index at scale we want to be?
+
+	    var min = input_buffer_size ? this.min_sample(input_index) : 0; // min value for peak in waveform
+
+	    var max = input_buffer_size ? this.max_sample(input_index) : 0; // max value for peak in waveform
+
+	    var min_value = -128;
+	    var max_value = 127;
+
+	    if (samples_per_pixel < scale) {
+	      throw new Error("Zoom level " + samples_per_pixel + " too low, minimum: " + scale);
+	    }
+
+	    var where, prev_where, stop, value, last_input_index;
+
+	    function sample_at_pixel(x) {
+	      return Math.floor(x * samples_per_pixel);
+	    }
+
+	    function add_sample(min, max) {
+	      output_data.push(min, max);
+	    }
+
+	    while (input_index < input_buffer_size) {
+	      while (Math.floor(sample_at_pixel(output_index) / scale) <= input_index) {
+	        if (output_index) {
+	          add_sample(min, max);
+	        }
+
+	        last_input_index = input_index;
+	        output_index++;
+	        where = sample_at_pixel(output_index);
+	        prev_where = sample_at_pixel(output_index - 1);
+
+	        if (where !== prev_where) {
+	          min = max_value;
+	          max = min_value;
+	        }
+	      }
+
+	      where = sample_at_pixel(output_index);
+	      stop = Math.floor(where / scale);
+
+	      if (stop > input_buffer_size) {
+	        stop = input_buffer_size;
+	      }
+
+	      while (input_index < stop) {
+	        value = this.min_sample(input_index);
+
+	        if (value < min) {
+	          min = value;
+	        }
+
+	        value = this.max_sample(input_index);
+
+	        if (value > max) {
+	          max = value;
+	        }
+
+	        input_index++;
+	      }
+
+	      if (is_partial_resampling && output_data.length / channel_count >= options.width) {
+	        break;
+	      }
+	    }
+
+	    if (is_partial_resampling) {
+	      if (output_data.length / channel_count > options.width && input_index !== last_input_index) {
+	        add_sample(min, max);
+	      }
+	    } else if (input_index !== last_input_index) {
+	      add_sample(min, max);
+	    }
+
+	    return new WaveformData({
+	      version: this.adapter.version,
+	      samples_per_pixel: samples_per_pixel,
+	      length: output_data.length / channel_count,
+	      data: output_data,
+	      sample_rate: this.adapter.sample_rate
+	    }, WaveformData.adapters.object);
+	  },
+
+	  /**
+	   * Returns all the min peaks values.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.min.length);      // -> 150
+	   * console.log(waveform.min[0]);          // -> -12
+	   *
+	   * waveform.offset(20, 50);
+	   *
+	   * console.log(waveform.min.length);      // -> 30
+	   * console.log(waveform.min[0]);          // -> -9
+	   * ```
+	   *
+	   * @api
+	   * @return {Array.<Integer>} Min values contained in the offset.
+	   */
+	  get min() {
+	    return this.offsetValues(this.offset_start, this.offset_length, 0);
+	  },
+
+	  /**
+	   * Returns all the max peaks values.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.max.length);      // -> 150
+	   * console.log(waveform.max[0]);          // -> 12
+	   *
+	   * waveform.offset(20, 50);
+	   *
+	   * console.log(waveform.max.length);      // -> 30
+	   * console.log(waveform.max[0]);          // -> 5
+	   * ```
+	   *
+	   * @api
+	   * @return {Array.<Integer>} Max values contained in the offset.
+	   */
+	  get max() {
+	    return this.offsetValues(this.offset_start, this.offset_length, 1);
+	  },
+
+	  /**
+	   * Return the unpacked values for a particular offset.
+	   *
+	   * @param {Integer} start
+	   * @param {Integer} length
+	   * @param {Integer} correction The step to skip for each iteration
+	   *   (as the response body is [min, max, min, max...])
+	   * @return {Array.<Integer>}
+	   */
+	  offsetValues: function getOffsetValues(start, length, correction) {
+	    var adapter = this.adapter;
+	    var values = [];
+	    correction += start * 2; // offset the positioning query
+
+	    for (var i = 0; i < length; i++) {
+	      values.push(adapter.at(i * 2 + correction));
+	    }
+
+	    return values;
+	  },
+
+	  /**
+	   * Compute the duration in seconds of the audio file.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   * console.log(waveform.duration);    // -> 10.33333333333
+	   *
+	   * waveform.offset(20, 50);
+	   * console.log(waveform.duration);    // -> 10.33333333333
+	   * ```
+	   *
+	   * @api
+	   * @return {number} Duration of the audio waveform, in seconds.
+	   */
+	  get duration() {
+	    return this.adapter.length * this.adapter.scale / this.adapter.sample_rate;
+	  },
+
+	  /**
+	   * Return the duration in seconds of the current offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.offset_duration);    // -> 10.33333333333
+	   *
+	   * waveform.offset(20, 50);
+	   *
+	   * console.log(waveform.offset_duration);    // -> 2.666666666667
+	   * ```
+	   *
+	   * @api
+	   * @return {number} Duration of the offset, in seconds.
+	   */
+	  get offset_duration() {
+	    return this.offset_length * this.adapter.scale / this.adapter.sample_rate;
+	  },
+
+	  /**
+	   * Return the number of pixels per second.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.pixels_per_second);       // -> 93.75
+	   * ```
+	   *
+	   * @api
+	   * @return {number} Number of pixels per second.
+	   */
+	  get pixels_per_second() {
+	    return this.adapter.sample_rate / this.adapter.scale;
+	  },
+
+	  /**
+	   * Return the amount of time represented by a single pixel.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.seconds_per_pixel);       // -> 0.010666666666666666
+	   * ```
+	   *
+	   * @return {number} Amount of time (in seconds) contained in a pixel.
+	   */
+	  get seconds_per_pixel() {
+	    return this.adapter.scale / this.adapter.sample_rate;
+	  },
+
+	  /**
+	   * Returns a value at a specific offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.at(20));              // -> -7
+	   * console.log(waveform.at(21));              // -> 12
+	   * ```
+	   *
+	   * @proxy
+	   * @param {Integer} index
+	   * @return {number} Offset value
+	   */
+	  at: function at_sample_proxy(index) {
+	    return this.adapter.at(index);
+	  },
+
+	  /**
+	   * Return the pixel location for a certain time.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.at_time(0.0000000023));       // -> 10
+	   * ```
+	   * @param {number} time
+	   * @return {integer} Index location for a specific time.
+	   */
+	  at_time: function at_time(time) {
+	    return Math.floor(time * this.adapter.sample_rate / this.adapter.scale);
+	  },
+
+	  /**
+	   * Returns the time in seconds for a particular index
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.time(10));                    // -> 0.0000000023
+	   * ```
+	   *
+	   * @param {Integer} index
+	   * @return {number}
+	   */
+	  time: function time(index) {
+	    return index * this.adapter.scale / this.adapter.sample_rate;
+	  },
+
+	  /**
+	   * Return if a pixel lies within the current offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.in_offset(50));      // -> true
+	   * console.log(waveform.in_offset(120));     // -> true
+	   *
+	   * waveform.offset(100, 150);
+	   *
+	   * console.log(waveform.in_offset(50));      // -> false
+	   * console.log(waveform.in_offset(120));     // -> true
+	   * ```
+	   *
+	   * @param {number} pixel
+	   * @return {boolean} True if the pixel lies in the current offset, false otherwise.
+	   */
+	  in_offset: function isInOffset(pixel) {
+	    return pixel >= this.offset_start && pixel < this.offset_end;
+	  },
+
+	  /**
+	   * Returns a min value for a specific offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.min_sample(10));      // -> -7
+	   * ```
+	   *
+	   * @param {Integer} offset
+	   * @return {Number} Offset min value
+	   */
+	  min_sample: function getMinValue(offset) {
+	    return this.adapter.at(offset * 2);
+	  },
+
+	  /**
+	   * Returns a max value for a specific offset.
+	   *
+	   * ```javascript
+	   * var waveform = WaveformData.create({ ... });
+	   *
+	   * console.log(waveform.max_sample(10));      // -> 12
+	   * ```
+	   *
+	   * @param {Integer} offset
+	   * @return {Number} Offset max value
+	   */
+	  max_sample: function getMaxValue(offset) {
+	    return this.adapter.at(offset * 2 + 1);
+	  }
+	};
+	/**
+	 * Available adapters to manage the data backends.
+	 *
+	 * @type {Object}
+	 */
+
+	WaveformData.adapters = {};
+	/**
+	 * WaveformData Adapter Structure
+	 *
+	 * @typedef {{from: Number, to: Number, platforms: {}}}
+	 */
+
+	WaveformData.adapter = function WaveformDataAdapter(response_data) {
+	  this.data = response_data;
+	};
+
+	var core = WaveformData;
+	/**
+	 * ArrayBuffer adapter consumes binary waveform data (data format version 1).
+	 * It is used as a data abstraction layer by `WaveformData`.
+	 *
+	 * This is supposed to be the fastest adapter ever:
+	 * * **Pros**: working directly in memory, everything is done by reference
+	 *   (including the offsetting)
+	 * * **Cons**: binary data are hardly readable without data format knowledge
+	 *   (and this is why this adapter exists).
+	 *
+	 * Also, it is recommended to use the `fromResponseData` factory.
+	 *
+	 * @see WaveformDataArrayBufferAdapter.fromResponseData
+	 * @param {DataView} response_data
+	 * @constructor
+	 */
+
+	function WaveformDataArrayBufferAdapter(response_data) {
+	  this.data = response_data;
+	}
+	/**
+	 * Detects if a set of data is suitable for the ArrayBuffer adapter.
+	 * It is used internally by `WaveformData.create` so you should not bother using it.
+	 *
+	 * @static
+	 * @param {Mixed} data
+	 * @returns {boolean}
+	 */
+
+
+	WaveformDataArrayBufferAdapter.isCompatible = function isCompatible(data) {
+	  return data && typeof data === "object" && "byteLength" in data;
+	};
+	/**
+	 * Setup factory to create an adapter based on heterogeneous input formats.
+	 *
+	 * It is the preferred way to build an adapter instance.
+	 *
+	 * ```javascript
+	 * var arrayBufferAdapter = WaveformData.adapters.arraybuffer;
+	 * var xhr = new XMLHttpRequest();
+	 *
+	 * // .dat file generated by audiowaveform program
+	 * xhr.open("GET", "http://example.com/waveforms/track.dat");
+	 * xhr.responseType = "arraybuffer";
+	 * xhr.addEventListener("load", function onResponse(progressEvent){
+	 *  var responseData = progressEvent.target.response;
+	 *
+	 *  // doing stuff with the raw data ...
+	 *  // you only have access to WaveformDataArrayBufferAdapter API
+	 *  var adapter = arrayBufferAdapter.fromResponseData(responseData);
+	 *
+	 *  // or making things easy by using WaveformData ...
+	 *  // you have access WaveformData API
+	 *  var waveform = new WaveformData(responseData, arrayBufferAdapter);
+	 * });
+	 *
+	 * xhr.send();
+	 * ```
+
+	 * @static
+	 * @param {ArrayBuffer} response_data
+	 * @return {WaveformDataArrayBufferAdapter}
+	 */
+
+
+	WaveformDataArrayBufferAdapter.fromResponseData = function fromArrayBufferResponseData(response_data) {
+	  return new WaveformDataArrayBufferAdapter(new DataView(response_data));
+	};
+	/**
+	 * @namespace WaveformDataArrayBufferAdapter
+	 */
+
+
+	WaveformDataArrayBufferAdapter.prototype = {
+	  /**
+	   * Returns the data format version number.
+	   *
+	   * @return {Integer} Version number of the consumed data format.
+	   */
+	  get version() {
+	    return this.data.getInt32(0, true);
+	  },
+
+	  /**
+	   * Indicates if the response body is encoded in 8bits.
+	   *
+	   * **Notice**: currently the adapter only deals with 8bits encoded data.
+	   * You should favor that too because of the smaller data network fingerprint.
+	   *
+	   * @return {boolean} True if data are declared to be 8bits encoded.
+	   */
+	  get is_8_bit() {
+	    return Boolean(this.data.getUint32(4, true));
+	  },
+
+	  /**
+	   * Indicates if the response body is encoded in 16bits.
+	   *
+	   * @return {boolean} True if data are declared to be 16bits encoded.
+	   */
+	  get is_16_bit() {
+	    return !this.is_8_bit;
+	  },
+
+	  /**
+	   * Returns the number of samples per second.
+	   *
+	   * @return {Integer} Number of samples per second.
+	   */
+	  get sample_rate() {
+	    return this.data.getInt32(8, true);
+	  },
+
+	  /**
+	   * Returns the scale (number of samples per pixel).
+	   *
+	   * @return {Integer} Number of samples per pixel.
+	   */
+	  get scale() {
+	    return this.data.getInt32(12, true);
+	  },
+
+	  /**
+	   * Returns the length of the waveform data (number of data points).
+	   *
+	   * @return {Integer} Length of the waveform data.
+	   */
+	  get length() {
+	    return this.data.getUint32(16, true);
+	  },
+
+	  /**
+	   * Returns a value at a specific offset.
+	   *
+	   * @param {Integer} index
+	   * @return {number} waveform value
+	   */
+	  at: function at_sample(index) {
+	    return this.data.getInt8(20 + index);
+	  }
+	};
+	var arraybuffer = WaveformDataArrayBufferAdapter;
+	/**
+	 * Object adapter consumes stringified JSON or JSON waveform data (data format version 1).
+	 * It is used as a data abstraction layer by `WaveformData`.
+	 *
+	 * This is supposed to be a fallback for browsers not supporting ArrayBuffer:
+	 * * **Pros**: easy to debug response_data and quite self describing.
+	 * * **Cons**: slower than ArrayBuffer, more memory consumption.
+	 *
+	 * Also, it is recommended to use the `fromResponseData` factory.
+	 *
+	 * @see WaveformDataObjectAdapter.fromResponseData
+	 * @param {String|Object} response_data JSON or stringified JSON
+	 * @constructor
+	 */
+
+	function WaveformDataObjectAdapter(response_data) {
+	  this.data = response_data;
+	}
+	/**
+	 * Detects if a set of data is suitable for the Object adapter.
+	 * It is used internally by `WaveformData.create` so you should not bother using it.
+	 *
+	 * @static
+	 * @param {Mixed} data
+	 * @returns {boolean}
+	 */
+
+
+	WaveformDataObjectAdapter.isCompatible = function isCompatible(data) {
+	  return data && (typeof data === "object" && "sample_rate" in data || typeof data === "string" && "sample_rate" in JSON.parse(data));
+	};
+	/**
+	 * Setup factory to create an adapter based on heterogeneous input formats.
+	 *
+	 * It is the preferred way to build an adapter instance.
+	 *
+	 * ```javascript
+	 * var objectAdapter = WaveformData.adapters.object;
+	 * var xhr = new XMLHttpRequest();
+	 *
+	 * // .dat file generated by audiowaveform program
+	 * xhr.open("GET", "http://example.com/waveforms/track.json");
+	 * xhr.responseType = "json";
+	 * xhr.addEventListener("load", function onResponse(progressEvent){
+	 *  var responseData = progressEvent.target.response;
+	 *
+	 *  // doing stuff with the raw data ...
+	 *  // you only have access to WaveformDataObjectAdapter API
+	 *  var adapter = objectAdapter.fromResponseData(responseData);
+	 *
+	 *  // or making things easy by using WaveformData ...
+	 *  // you have access WaveformData API
+	 *  var waveform = new WaveformData(responseData, objectAdapter);
+	 * });
+	 *
+	 * xhr.send();
+	 * ```
+
+	 * @static
+	 * @param {String|Object} response_data JSON or stringified JSON
+	 * @return {WaveformDataObjectAdapter}
+	 */
+
+
+	WaveformDataObjectAdapter.fromResponseData = function fromJSONResponseData(response_data) {
+	  if (typeof response_data === "string") {
+	    return new WaveformDataObjectAdapter(JSON.parse(response_data));
+	  } else {
+	    return new WaveformDataObjectAdapter(response_data);
+	  }
+	};
+	/**
+	 * @namespace WaveformDataObjectAdapter
+	 */
+
+
+	WaveformDataObjectAdapter.prototype = {
+	  /**
+	   * Returns the data format version number.
+	   *
+	   * @return {Integer} Version number of the consumed data format.
+	   */
+	  get version() {
+	    return this.data.version || 1;
+	  },
+
+	  /**
+	   * Indicates if the response body is encoded in 8bits.
+	   *
+	   * **Notice**: currently the adapter only deals with 8bits encoded data.
+	   * You should favor that too because of the smaller data network fingerprint.
+	   *
+	   * @return {boolean} True if data are declared to be 8bits encoded.
+	   */
+	  get is_8_bit() {
+	    return this.data.bits === 8;
+	  },
+
+	  /**
+	   * Indicates if the response body is encoded in 16bits.
+	   *
+	   * @return {boolean} True if data are declared to be 16bits encoded.
+	   */
+	  get is_16_bit() {
+	    return !this.is_8_bit;
+	  },
+
+	  /**
+	   * Returns the number of samples per second.
+	   *
+	   * @return {Integer} Number of samples per second.
+	   */
+	  get sample_rate() {
+	    return this.data.sample_rate;
+	  },
+
+	  /**
+	   * Returns the scale (number of samples per pixel).
+	   *
+	   * @return {Integer} Number of samples per pixel.
+	   */
+	  get scale() {
+	    return this.data.samples_per_pixel;
+	  },
+
+	  /**
+	   * Returns the length of the waveform data (number of data points).
+	   *
+	   * @return {Integer} Length of the waveform data.
+	   */
+	  get length() {
+	    return this.data.length;
+	  },
+
+	  /**
+	   * Returns a value at a specific offset.
+	   *
+	   * @param {Integer} index
+	   * @return {number} waveform value
+	   */
+	  at: function at_sample(index) {
+	    return this.data.data[index];
+	  }
+	};
+	var object = WaveformDataObjectAdapter;
+	var adapters = {
+	  arraybuffer: arraybuffer,
+	  object: object
+	};
+	core.adapters = adapters;
+	var waveformData = core;
 
 	var ContainerAdapter =
 	/** @class */
@@ -33420,6 +34688,374 @@
 	var commonjsGlobal$1 = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 	var WORKER_ENABLED = !!(commonjsGlobal$1 === commonjsGlobal$1.window && commonjsGlobal$1.URL && commonjsGlobal$1.Blob && commonjsGlobal$1.Worker);
 
+	function InlineWorker(func, self) {
+	  var _this = this;
+
+	  var functionBody;
+	  self = self || {};
+
+	  if (WORKER_ENABLED) {
+	    functionBody = func.toString().trim().match(/^function\s*\w*\s*\([\w\s,]*\)\s*{([\w\W]*?)}$/)[1];
+	    return new commonjsGlobal$1.Worker(commonjsGlobal$1.URL.createObjectURL(new commonjsGlobal$1.Blob([functionBody], {
+	      type: "text/javascript"
+	    })));
+	  }
+
+	  function postMessage(data) {
+	    setTimeout(function () {
+	      _this.onmessage({
+	        data: data
+	      });
+	    }, 0);
+	  }
+
+	  this.self = self;
+	  this.self.postMessage = postMessage;
+	  setTimeout(func.bind(self, self), 0);
+	}
+
+	InlineWorker.prototype.postMessage = function postMessage(data) {
+	  var _this = this;
+
+	  setTimeout(function () {
+	    _this.self.onmessage({
+	      data: data
+	    });
+	  }, 0);
+	};
+
+	var inlineWorker = InlineWorker;
+	/**
+	 * This callback is executed once the audio has been decoded by the browser and
+	 * resampled by waveform-data.
+	 *
+	 * @callback onAudioResampled
+	 * @param {WaveformData} waveform_data Waveform instance of the browser decoded audio
+	 * @param {AudioBuffer} audio_buffer Decoded audio buffer
+	 */
+
+	/**
+	 * AudioBuffer-based WaveformData generator
+	 *
+	 * Adapted from BlockFile::CalcSummary in Audacity, with permission.
+	 * @see https://code.google.com/p/audacity/source/browse/audacity-src/trunk/src/BlockFile.cpp
+	 *
+	 * @param {Object.<{scale: Number, amplitude_scale: Number}>} options
+	 * @param {onAudioResampled} callback
+	 * @returns {Function.<AudioBuffer>}
+	 */
+
+	function getAudioDecoder(options, callback) {
+	  return function onAudioDecoded(audio_buffer) {
+	    var worker = new inlineWorker(function () {
+	      var INT8_MAX = 127;
+	      var INT8_MIN = -128;
+
+	      function calculateWaveformDataLength(audio_sample_count, scale) {
+	        var data_length = Math.floor(audio_sample_count / scale);
+	        var samples_remaining = audio_sample_count - data_length * scale;
+
+	        if (samples_remaining > 0) {
+	          data_length++;
+	        }
+
+	        return data_length;
+	      }
+
+	      this.addEventListener("message", function (evt) {
+	        var scale = evt.data.scale;
+	        var amplitude_scale = evt.data.amplitude_scale;
+	        var audio_buffer = evt.data.audio_buffer;
+	        var data_length = calculateWaveformDataLength(audio_buffer.length, scale);
+	        var header_size = 20;
+	        var data_object = new DataView(new ArrayBuffer(header_size + data_length * 2));
+	        var channels = audio_buffer.channels;
+	        var channel;
+	        var min_value = Infinity,
+	            max_value = -Infinity,
+	            scale_counter = 0;
+	        var buffer_length = audio_buffer.length;
+	        var offset = header_size;
+	        var i;
+	        data_object.setInt32(0, 1, true); // Version
+
+	        data_object.setUint32(4, 1, true); // Is 8 bit?
+
+	        data_object.setInt32(8, audio_buffer.sampleRate, true); // Sample rate
+
+	        data_object.setInt32(12, scale, true); // Scale
+
+	        data_object.setInt32(16, data_length, true); // Length
+
+	        for (i = 0; i < buffer_length; i++) {
+	          var sample = 0;
+
+	          for (channel = 0; channel < channels.length; ++channel) {
+	            sample += channels[channel][i];
+	          }
+
+	          sample = Math.floor(INT8_MAX * sample * amplitude_scale / channels.length);
+
+	          if (sample < min_value) {
+	            min_value = sample;
+
+	            if (min_value < INT8_MIN) {
+	              min_value = INT8_MIN;
+	            }
+	          }
+
+	          if (sample > max_value) {
+	            max_value = sample;
+
+	            if (max_value > INT8_MAX) {
+	              max_value = INT8_MAX;
+	            }
+	          }
+
+	          if (++scale_counter === scale) {
+	            data_object.setInt8(offset++, Math.floor(min_value));
+	            data_object.setInt8(offset++, Math.floor(max_value));
+	            min_value = Infinity;
+	            max_value = -Infinity;
+	            scale_counter = 0;
+	          }
+	        }
+
+	        if (scale_counter > 0) {
+	          data_object.setInt8(offset++, Math.floor(min_value));
+	          data_object.setInt8(offset++, Math.floor(max_value));
+	        }
+
+	        this.postMessage(data_object);
+	      });
+	    });
+	    worker.addEventListener("message", function (evt) {
+	      var data_object = evt.data;
+	      callback(null, new waveformData(data_object.buffer, waveformData.adapters.arraybuffer), audio_buffer);
+	    }); // Construct a simple object with the necessary AudioBuffer data,
+	    // as we cannot send an AudioBuffer to a Web Worker.
+
+	    var audio_buffer_obj = {
+	      length: audio_buffer.length,
+	      sampleRate: audio_buffer.sampleRate,
+	      channels: []
+	    }; // Fill in the channels data.
+
+	    for (var channel = 0; channel < audio_buffer.numberOfChannels; ++channel) {
+	      audio_buffer_obj.channels[channel] = audio_buffer.getChannelData(channel).slice(0);
+	    }
+
+	    worker.postMessage({
+	      scale: options.scale,
+	      amplitude_scale: options.amplitude_scale,
+	      audio_buffer: audio_buffer_obj
+	    });
+	  };
+	}
+
+	var audiodecoder = getAudioDecoder;
+
+	function getOptions(options, callback) {
+	  var defaultOptions = {
+	    scale: 512,
+	    amplitude_scale: 1.0
+	  }; // fromAudioObjectBuilder(audioContext, data, callback) form
+
+	  if (typeof options === "function") {
+	    callback = options;
+	    options = {};
+	  } else {
+	    options = options || {};
+	  }
+
+	  options.scale = options.scale || defaultOptions.scale;
+	  options.amplitude_scale = options.amplitude_scale || defaultOptions.amplitude_scale;
+
+	  if (options.hasOwnProperty("scale_adjuster")) {
+	    throw new Error("Please rename the 'scale_adjuster' option to 'amplitude_scale'");
+	  }
+
+	  return {
+	    options: options,
+	    callback: callback
+	  };
+	}
+
+	var options = getOptions;
+	/**
+	 * Creates a working WaveformData based on binary audio data.
+	 *
+	 * This is still quite experimental and the result will mostly depend on the
+	 * level of browser support.
+	 *
+	 * ```javascript
+	 * const xhr = new XMLHttpRequest();
+	 * const audioContext = new AudioContext();
+	 *
+	 * // URL of a CORS MP3/Ogg file
+	 * xhr.open('GET', 'https://example.com/audio/track.ogg');
+	 * xhr.responseType = 'arraybuffer';
+	 *
+	 * xhr.addEventListener('load', function(progressEvent) {
+	 *   WaveformData.builders.webaudio(audioContext, progressEvent.target.response,
+	 *     function(err, waveform) {
+	 *     if (err) {
+	 *       console.error(err);
+	 *       return;
+	 *     }
+	 *
+	 *     console.log(waveform.duration);
+	 *   });
+	 * });
+	 *
+	 * xhr.send();
+	 * ```
+	 *
+	 * @todo use a Web Worker to offload processing of the binary data
+	 * @todo or use `SourceBuffer.appendBuffer` and `ProgressEvent` to stream the decoding
+	 * @todo abstract the number of channels, because it is assumed the audio file is stereo
+	 * @param {AudioContext|webkitAudioContext} audio_context
+	 * @param {ArrayBuffer} raw_response
+	 * @param {callback} what to do once the decoding is done
+	 * @constructor
+	 */
+
+	function fromAudioObjectBuilder(audio_context, raw_response, options$$1, callback) {
+	  var audioContext = window.AudioContext || window.webkitAudioContext;
+
+	  if (!(audio_context instanceof audioContext)) {
+	    throw new TypeError("First argument should be an AudioContext instance");
+	  }
+
+	  var opts = options(options$$1, callback);
+	  callback = opts.callback;
+	  options$$1 = opts.options; // The following function is a workaround for a Webkit bug where decodeAudioData
+	  // invokes the errorCallback with null instead of a DOMException.
+	  // See https://webaudio.github.io/web-audio-api/#dom-baseaudiocontext-decodeaudiodata
+	  // and http://stackoverflow.com/q/10365335/103396
+
+	  function errorCallback(error) {
+	    if (!error) {
+	      error = new DOMException("EncodingError");
+	    }
+
+	    callback(error);
+	  }
+
+	  return audio_context.decodeAudioData(raw_response, audiodecoder(options$$1, callback), errorCallback);
+	}
+
+	var webaudio = fromAudioObjectBuilder;
+
+	function fromAudioBuffer(audioBuffer, options$$1, callback) {
+	  var opts = options(options$$1, callback);
+	  return audiodecoder(opts.options, opts.callback)(audioBuffer);
+	}
+
+	var audiobuffer = fromAudioBuffer;
+	webaudio.fromAudioBuffer = audiobuffer;
+	var webaudio$1 = webaudio;
+	var fromAudioBuffer$1 = webaudio$1.fromAudioBuffer;
+
+	var WaveformBuffer =
+	/** @class */
+	function () {
+	  function WaveformBuffer(onDecode, decoderOpts) {
+	    var _this = this;
+
+	    this.audioDecoderCallback = function (err, waveform) {
+	      if (err) {
+	        throw new Error("Could not decode waveform: " + err);
+	      }
+
+	      _this.onDecode(waveform);
+
+	      if (_this.audioBuffers.length > 0) {
+	        _this.next();
+	      } else {
+	        _this.done();
+	      }
+	    };
+
+	    this.audioBuffers = [];
+	    this.decoding = false;
+	    this.decoderOpts = decoderOpts;
+	    this.onDecode = onDecode;
+	  }
+
+	  WaveformBuffer.prototype.push = function (audioBuffer) {
+	    this.audioBuffers.push(audioBuffer);
+
+	    if (this.decoding === false) {
+	      this.start();
+	    }
+	  };
+
+	  WaveformBuffer.prototype.start = function () {
+	    this.decoding = true;
+	    this.next();
+	  };
+
+	  WaveformBuffer.prototype.done = function () {
+	    this.decoding = false;
+	  };
+
+	  WaveformBuffer.prototype.next = function () {
+	    var audioBuffer = this.audioBuffers.shift();
+	    fromAudioBuffer$1(audioBuffer, this.decoderOpts, this.audioDecoderCallback);
+	  };
+
+	  return WaveformBuffer;
+	}();
+
+	var WaveNode =
+	/** @class */
+	function () {
+	  function WaveNode(audioContext, dest, options, callback) {
+	    var _this = this;
+
+	    this.onAudioProcess = function (evt) {
+	      var buffer = _this.buffer;
+	      var inputBuffer = evt.inputBuffer,
+	          outputBuffer = evt.outputBuffer;
+	      var clone = new AudioBuffer({
+	        numberOfChannels: inputBuffer.numberOfChannels,
+	        length: inputBuffer.length,
+	        sampleRate: inputBuffer.sampleRate
+	      });
+
+	      for (var i = 0; i < inputBuffer.numberOfChannels; i += 1) {
+	        var channel = clone.getChannelData(i);
+	        var inputBufferChannel = inputBuffer.getChannelData(i);
+	        channel.set(inputBufferChannel);
+	        outputBuffer.getChannelData(i).set(inputBufferChannel);
+	      }
+
+	      buffer.push(clone);
+	    };
+
+	    var adapters = [];
+	    this.buffer = new WaveformBuffer(function (waveform) {
+	      adapters.push(waveform.adapter);
+	      var compound = new waveformData(adapters, ContainerAdapter);
+	      callback(compound);
+	    }, options);
+	    this.node = audioContext.createScriptProcessor(4096, 2, 2);
+	    dest.connect(this.node);
+	  }
+
+	  WaveNode.prototype.beginRender = function () {
+	    this.node.onaudioprocess = this.onAudioProcess;
+	  };
+
+	  WaveNode.prototype.stopRender = function () {
+	    this.node.onaudioprocess = null;
+	    this.node.disconnect();
+	  };
+
+	  return WaveNode;
+	}();
+
 	const waveformSubject = new BehaviorSubject(new Map$1());
 	const WaveformState = {
 	  LOADING: 'Loading',
@@ -33433,16 +35069,48 @@
 	  id: null
 	}) {}
 
-	function loadWaveform(source) {// const { id: sourceId } = source;
-	  // const waveform = new Waveform({
-	  //     id: generateId(),
-	  //     sourceId,
-	  //     state: WaveformState.LOADING,
-	  // });
-	  // waveformSubject.next(
-	  //     waveformSubject.value.set(sourceId, waveform)
-	  // );
-	  // generateWaveform(source);
+	function generateWaveform(source) {
+	  const {
+	    sampleRate,
+	    duration,
+	    channelsCount
+	  } = source;
+	  const {
+	    seconds: durationSeconds
+	  } = duration;
+	  const asset = AV.Asset.fromBuffer(source.data);
+	  const length = sampleRate * durationSeconds;
+	  const offline = new OfflineAudioContext(channelsCount, length, sampleRate);
+	  const secondsPerPixel = 10 / 679;
+	  const scale = Math.floor(sampleRate * secondsPerPixel);
+	  const sourceNode = new AuroraSourceNode(asset, offline, channelsCount, sampleRate, durationSeconds, {
+	    bufferSize: 256
+	  });
+	  const waveformNode = new WaveNode(offline, sourceNode.node, {
+	    scale
+	  }, function (waveform) {
+	    waveformSubject.next(waveformSubject.value.mergeIn([source.id], {
+	      data: waveform,
+	      state: WaveformState.READY
+	    }));
+	  });
+	  waveformNode.node.connect(offline.destination);
+	  waveformNode.beginRender();
+	  sourceNode.start();
+	  offline.startRendering();
+	}
+
+	function loadWaveform(source) {
+	  const {
+	    id: sourceId
+	  } = source;
+	  const waveform = new Waveform({
+	    id: generateId(),
+	    sourceId,
+	    state: WaveformState.LOADING
+	  });
+	  waveformSubject.next(waveformSubject.value.set(sourceId, waveform));
+	  generateWaveform(source);
 	}
 
 	stream.pipe(mergeMap(sources => sources.toList().toArray()), filter(source => {
@@ -33452,6 +35120,8 @@
 	wire_2(waveformSym, wireObservable(waveformSubject.asObservable()));
 
 	const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
+	  const canvasWidth = canvas.width;
+
 	  const interpolateHeight = total_height => {
 	    const amplitude = 256;
 	    return size => total_height - (size + 128) * total_height / amplitude;
@@ -33461,17 +35131,18 @@
 	  const ctx = canvas.getContext('2d');
 	  ctx.clearRect(0, 0, canvas.width, canvas.height);
 	  ctx.beginPath();
+	  const equal = canvasWidth / len;
 
 	  for (let i = start; i < start + len; i += 1) {
 	    const min = waveform.min[i];
 	    const x = i - start;
-	    ctx.lineTo(x + 0.5, y(min) + 0.5);
+	    ctx.lineTo(x * equal, y(min) + 0.5);
 	  }
 
 	  for (let i = start + len - 1; i >= start; i -= 1) {
 	    const max = waveform.max[i];
 	    const x = i - start;
-	    ctx.lineTo(x + 0.5, y(max) + 0.5);
+	    ctx.lineTo(x * equal, y(max) + 0.5);
 	  }
 
 	  ctx.closePath();
@@ -33485,6 +35156,7 @@
 	    this.offset = void 0;
 	    this.duration = void 0;
 	    this.source = void 0;
+	    this.sourceOffset = void 0;
 	    this.previousWaveform = null;
 	    this.waveforms = void 0;
 	  }
@@ -33511,7 +35183,7 @@
 
 	  getWaveformBounds() {
 	    const numberOfTicks = this.waveform.data.min.length;
-	    const percentOffset = this.offset.milliseconds / this.source.duration.milliseconds;
+	    const percentOffset = (this.offset.milliseconds + this.sourceOffset.milliseconds) / this.source.duration.milliseconds;
 	    const durationPercent = this.duration.milliseconds / this.source.duration.milliseconds;
 	    const start = Math.floor(percentOffset * numberOfTicks);
 	    const length = Math.floor(durationPercent * numberOfTicks);
@@ -33547,6 +35219,9 @@
 	    },
 	    source: {
 	      config: 0
+	    },
+	    sourceOffset: {
+	      config: 0
 	    }
 	  },
 	  wire: {
@@ -33567,37 +35242,33 @@
 	    h: api_element,
 	    c: api_custom_element
 	  } = $api;
-	  return [api_element("div", {
-	    classMap: {
-	      "focus-indicator": true
-	    },
-	    key: 2
-	  }, []), $cmp.hasSource ? api_element("div", {
+	  return [$cmp.hasSource ? api_element("div", {
 	    classMap: {
 	      "container": true
 	    },
 	    style: $cmp.containerStyle,
-	    key: 4
+	    key: 3
 	  }, [api_element("span", {
 	    classMap: {
 	      "handle": true,
 	      "handle--start": true
 	    },
-	    key: 5
+	    key: 4
 	  }, []), api_custom_element("ffmpeg-waveform", _ffmpegWaveform, {
 	    style: $cmp.waveformStyle,
 	    props: {
-	      "offset": $cmp.segment.sourceOffset,
-	      "duration": $cmp.segment.duration,
+	      "sourceOffset": $cmp.segment.sourceOffset,
+	      "offset": $cmp.visibleOffset,
+	      "duration": $cmp.visibleDuration,
 	      "source": $cmp.source
 	    },
-	    key: 6
+	    key: 5
 	  }, []), api_element("span", {
 	    classMap: {
 	      "handle": true,
 	      "handle--end": true
 	    },
-	    key: 7
+	    key: 6
 	  }, [])]) : null];
 	}
 
@@ -33618,6 +35289,8 @@
 	    this.segment = void 0;
 	    this.frame = void 0;
 	    this.track = void 0;
+	    this.visibleDuration = void 0;
+	    this.visibleOffset = void 0;
 	    this.editor = void 0;
 	    this.sources = void 0;
 	    this.moveInteract = void 0;
@@ -33710,13 +35383,11 @@
 
 	  get waveformStyle() {
 	    const {
-	      frame,
 	      editor,
-	      segment
+	      visibleDuration
 	    } = this;
-	    const segmentOffset = editor.data.timeToPixel(segment.offset);
-	    const diff = frame.x - segmentOffset;
-	    return `transform: translateX(-${diff}px); width: ${frame.width + diff}px`;
+	    const width = editor.data.durationToWidth(visibleDuration);
+	    return `width: ${width}px`;
 	  }
 
 	  get containerStyle() {
@@ -33780,6 +35451,12 @@
 	    },
 	    track: {
 	      config: 0
+	    },
+	    visibleDuration: {
+	      config: 0
+	    },
+	    visibleOffset: {
+	      config: 0
 	    }
 	  },
 	  wire: {
@@ -33829,6 +35506,8 @@
 	      props: {
 	        "tabIndex": "0",
 	        "track": $cmp.track,
+	        "visibleDuration": trackSegment.visibleDuration,
+	        "visibleOffset": trackSegment.visibleOffset,
 	        "frame": trackSegment.frame,
 	        "segment": trackSegment.segment
 	      },
@@ -33904,11 +35583,16 @@
 	        x: Math.max(x, 0),
 	        width
 	      };
+	      const visibleDuration = this.editor.data.pixelToTime(width);
+	      const visibleOffset = segment.offset.greaterThan(this.editor.data.visibleRange.start) ? new Time(0) : this.editor.data.visibleRange.start.minus(segment.offset);
+	      console.log(visibleOffset);
 	      return {
 	        key: index,
 	        frame,
 	        style: `transform: translateX(${frame.x}px); width:${width}px`,
-	        segment
+	        segment,
+	        visibleDuration,
+	        visibleOffset
 	      };
 	    }).toList().toJS();
 	  }

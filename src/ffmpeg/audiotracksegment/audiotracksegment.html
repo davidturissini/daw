@@ -1,12 +1,12 @@
 <template>
-    <div class="focus-indicator"></div>
     <template if:true={hasSource}>
         <div class="container" style={containerStyle}>
             <span class="handle handle--start"></span>
             <ffmpeg-waveform
                 style={waveformStyle}
-                offset={segment.sourceOffset}
-                duration={segment.duration}
+                source-offset={segment.sourceOffset}
+                offset={visibleOffset}
+                duration={visibleDuration}
                 source={source}>
             </ffmpeg-waveform>
             <span class="handle handle--end"></span>

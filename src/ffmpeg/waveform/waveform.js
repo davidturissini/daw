@@ -4,6 +4,7 @@ import { editorSym } from './../../wire/editor';
 import rafThrottle from 'raf-throttle';
 
 const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
+    const canvasWidth = canvas.width;
     const interpolateHeight = (total_height) => {
         const amplitude = 256;
         return (size) => total_height - ((size + 128) * total_height) / amplitude;
@@ -14,16 +15,17 @@ const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
 
+    const equal = canvasWidth / len;
     for(let i = start; i < start + len; i += 1) {
         const min = waveform.min[i];
         const x = i - start;
-        ctx.lineTo(x + 0.5, y(min) + 0.5);
+        ctx.lineTo(x * equal, y(min) + 0.5);
     }
 
     for(let i = start + len - 1; i >= start; i -= 1) {
         const max = waveform.max[i];
         const x = i - start;
-        ctx.lineTo(x + 0.5, y(max) + 0.5);
+        ctx.lineTo(x * equal, y(max) + 0.5);
     }
 
     ctx.closePath();
@@ -35,6 +37,7 @@ export default class Waveform extends LightningElement {
     @api offset;
     @api duration;
     @api source;
+    @api sourceOffset;
 
     previousWaveform = null;
 
@@ -66,11 +69,10 @@ export default class Waveform extends LightningElement {
 
     getWaveformBounds() {
         const numberOfTicks = this.waveform.data.min.length;
-        const percentOffset = this.offset.milliseconds / this.source.duration.milliseconds;
+        const percentOffset = (this.offset.milliseconds + this.sourceOffset.milliseconds) / this.source.duration.milliseconds;
         const durationPercent = this.duration.milliseconds / this.source.duration.milliseconds;
         const start = Math.floor(percentOffset * numberOfTicks);
         const length = Math.floor(durationPercent * numberOfTicks);
-
         return {
             start,
             length,

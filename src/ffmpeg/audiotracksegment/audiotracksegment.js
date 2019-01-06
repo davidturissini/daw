@@ -8,6 +8,8 @@ export default class AudioTrackSegment extends LightningElement {
     @api segment;
     @api frame;
     @api track;
+    @api visibleDuration;
+    @api visibleOffset;
 
     @wire(editorSym, {})
     editor;
@@ -28,10 +30,9 @@ export default class AudioTrackSegment extends LightningElement {
     }
 
     get waveformStyle() {
-        const { frame, editor, segment } = this;
-        const segmentOffset = editor.data.timeToPixel(segment.offset);
-        const diff = frame.x - segmentOffset;
-        return `transform: translateX(-${diff}px); width: ${frame.width + diff}px`;
+        const { editor, visibleDuration } = this;
+        const width = editor.data.durationToWidth(visibleDuration);
+        return `width: ${width}px`;
     }
 
     onStartDrag = (evt) => {

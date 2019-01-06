@@ -275,8 +275,8 @@ export class AuroraSourceNode {
                 return;
             }
 
-            const timestamp = sourceOffset * sampleRate;
-            asset.decoder.seek(timestamp);
+            const timestamp = round(sourceOffset) * sampleRate;
+            asset.decoder.seek(sourceOffset);
             this.queue.reset();
         });
         this.refillHandler = this.handleRefill(this.queue);
