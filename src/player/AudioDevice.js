@@ -243,9 +243,10 @@ export class AuroraSourceNode {
         this.sourceOffset = playbackOptions.offset || 0;
         this.playbackDuration = playbackOptions.duration || duration;
 
-        this.bufferSize = Math.ceil(4096 / (deviceSampleRate / sampleRate) * numChannels);
+        const baseBufferSize = playbackOptions.bufferSize || 512;
+        this.bufferSize = Math.ceil(baseBufferSize / (deviceSampleRate / sampleRate) * numChannels);
         this.bufferSize += this.bufferSize % numChannels;
-        this.node = this.context.createScriptProcessor(4096, numChannels, numChannels);
+        this.node = this.context.createScriptProcessor(baseBufferSize, numChannels, numChannels);
 
         if (deviceSampleRate !== sampleRate) {
             this.resampler = new Resampler(sampleRate, deviceSampleRate, numChannels, this.bufferSize);
@@ -274,7 +275,7 @@ export class AuroraSourceNode {
                 return;
             }
 
-            const timestamp = round(sourceOffset) * sampleRate;
+            const timestamp = sourceOffset * sampleRate;
             asset.decoder.seek(timestamp);
             this.queue.reset();
         });
@@ -292,21 +293,19 @@ export class AuroraSourceNode {
             throw new Error('Cannot play. Node has already been played');
         }
 
+        if (this.readyState < 2) {
+            this.playOnQueueReady = true;
+        } else {
+            this.attachScriptNode();
+        }
         return new Promise((res) => {
-            console.log(this.readyState)
-            if (this.readyState < 2) {
-                this.playOnQueueReady = true;
-            } else {
-                this.attachScriptNode();
-            }
             this.resolveStart = res;
         });
     }
 
     stop() {
         this.startTime = null;
-        this.node.disconnect();
-        this.node.onaudioprocess = null;
+        this.disconnect();
         this.readyState = 3;
         if (this.resolveStart) {
             this.resolveStart();
@@ -364,6 +363,15 @@ export class AuroraSourceNode {
                 channels[n][i] = data[i * channelCount + n];
             }
         }
+    }
+
+    connect(outputNode) {
+        this.node.connect(outputNode);
+    }
+
+    disconnect() {
+        this.node.disconnect();
+        this.node.onaudioprocess = null;
     }
 };
 

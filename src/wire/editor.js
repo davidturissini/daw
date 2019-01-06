@@ -21,6 +21,11 @@ class Editor extends Record({
         return new Time(this.end.milliseconds - this.cursor.milliseconds);
     }
 
+    get secondsPerPixel() {
+        const seconds = this.visibleRange.duration.seconds;
+        return seconds / this.frame.width;
+    }
+
     pixelToTime(pixel) {
         const { width } = this.frame;
         const { visibleRange } = this;

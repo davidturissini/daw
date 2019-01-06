@@ -126,7 +126,7 @@ function makeSourceNodesStream(audioContext) {
                     })
                     .forEach((segment) => {
                         const audioSource = audioSources.get(segment.sourceId);
-                        const asset = window.AV.Asset.fromBuffer(audioSource.data);
+                        const asset = AV.Asset.fromBuffer(audioSource.data);
                         const playbackData = getPlaybackData(
                             range.start,
                             range,

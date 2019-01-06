@@ -38,7 +38,6 @@
     "ogg.js": "^0.1.0",
     "parse-ms": "^2.0.0",
     "raf-throttle": "^2.0.3",
-    "rxjs": "^6.3.3",
-    "waveform-data": "^2.1.2"
+    "rxjs": "^6.3.3"
   }
 }

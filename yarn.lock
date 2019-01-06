@@ -1788,11 +1788,7 @@ inline-source-map@~0.6.0:
   dependencies:
     source-map "~0.5.3"
 
-inline-web-worker@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/inline-web-worker/-/inline-web-worker-1.1.0.tgz#8eea054b41c1424ef964a07f28ea214ca4fe827c"
-
-inline-worker@^1.1.0, inline-worker@~1.1.0:
+inline-worker@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/inline-worker/-/inline-worker-1.1.0.tgz#55e96f54915a642b00872a2daa6fe832b424c98d"
 
@@ -3186,12 +3182,6 @@ vendors@^1.0.0:
 vm-browserify@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.0.tgz#bd76d6a23323e2ca8ffa12028dc04559c75f9019"
-
-waveform-data@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/waveform-data/-/waveform-data-2.1.2.tgz#0c5f2a50beb6d6c9056b51b0c02a5b347fe6792f"
-  dependencies:
-    inline-worker "~1.1.0"
 
 whet.extend@~0.9.9:
   version "0.9.9"

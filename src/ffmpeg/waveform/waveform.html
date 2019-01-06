@@ -4,7 +4,7 @@
          Loading Waveform
       </template>
       <template if:true={waveformReady}>
-         <img style={waveformStyle} src={waveform.url} />
+         <canvas height="150" width={canvasWidth}></canvas>
       </template>
    </template>
 </template>

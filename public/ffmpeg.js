@@ -24684,6 +24684,11 @@
 	    return new Time(this.end.milliseconds - this.cursor.milliseconds);
 	  }
 
+	  get secondsPerPixel() {
+	    const seconds = this.visibleRange.duration.seconds;
+	    return seconds / this.frame.width;
+	  }
+
 	  pixelToTime(pixel) {
 	    const {
 	      width
@@ -25105,10 +25110,6 @@
 
 	}
 
-	function round(number) {
-	  return Math.round(number * 100) / 100;
-	}
-
 	class AuroraSourceNode {
 	  constructor(_asset, audioContext, numChannels, _sampleRate, duration, playbackOptions = {}) {
 	    this.frame = null;
@@ -25138,7 +25139,7 @@
 	          return;
 	        }
 
-	        const timestamp = round(sourceOffset) * sampleRate;
+	        const timestamp = sourceOffset * sampleRate;
 	        asset.decoder.seek(timestamp);
 	        this.queue.reset();
 	      });
@@ -25199,9 +25200,10 @@
 	    this.playbackWhen = playbackOptions.when || 0;
 	    this.sourceOffset = playbackOptions.offset || 0;
 	    this.playbackDuration = playbackOptions.duration || duration;
-	    this.bufferSize = Math.ceil(4096 / (deviceSampleRate / _sampleRate) * numChannels);
+	    const baseBufferSize = playbackOptions.bufferSize || 512;
+	    this.bufferSize = Math.ceil(baseBufferSize / (deviceSampleRate / _sampleRate) * numChannels);
 	    this.bufferSize += this.bufferSize % numChannels;
-	    this.node = this.context.createScriptProcessor(4096, numChannels, numChannels);
+	    this.node = this.context.createScriptProcessor(baseBufferSize, numChannels, numChannels);
 
 	    if (deviceSampleRate !== _sampleRate) {
 	      this.resampler = new Resampler(_sampleRate, deviceSampleRate, numChannels, this.bufferSize);
@@ -25227,23 +25229,20 @@
 	      throw new Error('Cannot play. Node has already been played');
 	    }
 
+	    if (this.readyState < 2) {
+	      this.playOnQueueReady = true;
+	    } else {
+	      this.attachScriptNode();
+	    }
+
 	    return new Promise(res => {
-	      console.log(this.readyState);
-
-	      if (this.readyState < 2) {
-	        this.playOnQueueReady = true;
-	      } else {
-	        this.attachScriptNode();
-	      }
-
 	      this.resolveStart = res;
 	    });
 	  }
 
 	  stop() {
 	    this.startTime = null;
-	    this.node.disconnect();
-	    this.node.onaudioprocess = null;
+	    this.disconnect();
 	    this.readyState = 3;
 
 	    if (this.resolveStart) {
@@ -25277,6 +25276,15 @@
 	        }
 	      }
 	    };
+	  }
+
+	  connect(outputNode) {
+	    this.node.connect(outputNode);
+	  }
+
+	  disconnect() {
+	    this.node.disconnect();
+	    this.node.onaudioprocess = null;
 	  }
 
 	}
@@ -25339,7 +25347,7 @@
 	        return segmentInTimeRange(segment, range$$1.start, range$$1.duration);
 	      }).forEach(segment => {
 	        const audioSource = audioSources$$1.get(segment.sourceId);
-	        const asset = window.AV.Asset.fromBuffer(audioSource.data);
+	        const asset = AV.Asset.fromBuffer(audioSource.data);
 	        const playbackData = getPlaybackData(range$$1.start, range$$1, segment.range, segment.sourceOffset);
 	        const auroraNode = new AuroraSourceNode(asset, audioContext$$1, audioSource.channelsCount, audioSource.sampleRate, audioSource.duration.seconds, {
 	          when: playbackData.when.seconds,
@@ -33308,7 +33316,7 @@
 	var _implicitStylesheets$7 = [stylesheet$7];
 
 	function stylesheet$8(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;overflow: hidden;height: 100%;}")) + "\ncanvas" + shadowSelector + " {width: 100%;height: 100%;}\n";
 	}
 	var _implicitStylesheets$8 = [stylesheet$8];
 
@@ -33317,10 +33325,10 @@
 	    t: api_text,
 	    h: api_element
 	  } = $api;
-	  return [$cmp.hasWaveform ? !$cmp.waveformReady ? api_text("Loading Waveform") : null : null, $cmp.hasWaveform ? $cmp.waveformReady ? api_element("img", {
-	    style: $cmp.waveformStyle,
+	  return [$cmp.hasWaveform ? !$cmp.waveformReady ? api_text("Loading Waveform") : null : null, $cmp.hasWaveform ? $cmp.waveformReady ? api_element("canvas", {
 	    attrs: {
-	      "src": $cmp.waveform.url
+	      "height": "150",
+	      "width": $cmp.canvasWidth
 	    },
 	    key: 5
 	  }, []) : null : null];
@@ -33337,7 +33345,80 @@
 	  shadowAttribute: "ffmpeg-waveform_waveform"
 	};
 
-	var WORKER_ENABLED = !!(commonjsGlobal === commonjsGlobal.window && commonjsGlobal.URL && commonjsGlobal.Blob && commonjsGlobal.Worker);
+	/**
+	 * Segments are an easy way to keep track of portions of the described
+	 * audio file.
+	 *
+	 * They return values based on the actual offset. Which means if you change your
+	 * offset and:
+	 *
+	 * * a segment becomes **out of scope**, no data will be returned;
+	 * * a segment is only **partially included in the offset**, only the visible
+	 *   parts will be returned;
+	 * * a segment is **fully included in the offset**, its whole content will be
+	 *   returned.
+	 *
+	 * Segments are created with the `WaveformData.set_segment(from, to, name?)`
+	 * method.
+	 *
+	 * @see WaveformData.prototype.set_segment
+	 * @param {WaveformData} context WaveformData instance
+	 * @param {Integer} start Initial start index
+	 * @param {Integer} end Initial end index
+	 * @constructor
+	 */
+
+	var ContainerAdapter =
+	/** @class */
+	function () {
+	  function ContainerAdapter(children) {
+	    var data = children.reduce(function (seed, adapter) {
+	      return {
+	        scale: adapter.scale,
+	        sample_rate: adapter.sample_rate,
+	        is_8_bit: adapter.is_8_bit,
+	        is_16_bit: adapter.is_16_bit,
+	        length: seed.length + adapter.length
+	      };
+	    }, {
+	      length: 0
+	    });
+	    this.length = data.length;
+	    this.scale = data.scale;
+	    this.sample_rate = data.sample_rate;
+	    this.is_8_bit = data.is_8_bit;
+	    this.is_16_bit = data.is_16_bit;
+	    this.children = children;
+	  }
+
+	  ContainerAdapter.prototype.at = function (index) {
+	    var children = this.children;
+	    var len = children.length;
+	    var offset = 0;
+
+	    for (var i = 0; i < len; i += 1) {
+	      var child = children[i];
+	      var next = offset + child.length * 2;
+
+	      if (index >= offset && index < next) {
+	        return child.at(index - offset);
+	      }
+
+	      offset = next;
+	    }
+
+	    throw new Error('Index out of bounds');
+	  };
+
+	  ContainerAdapter.fromResponseData = function (data) {
+	    return new ContainerAdapter(data);
+	  };
+
+	  return ContainerAdapter;
+	}();
+
+	var commonjsGlobal$1 = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+	var WORKER_ENABLED = !!(commonjsGlobal$1 === commonjsGlobal$1.window && commonjsGlobal$1.URL && commonjsGlobal$1.Blob && commonjsGlobal$1.Worker);
 
 	const waveformSubject = new BehaviorSubject(new Map$1());
 	const WaveformState = {
@@ -33347,71 +33428,111 @@
 
 	class Waveform extends Record({
 	  sourceId: null,
-	  blob: null,
-	  url: null,
-	  state: null
+	  data: null,
+	  state: null,
+	  id: null
 	}) {}
 
-	function loadWaveform(source) {
-	  const {
-	    id: sourceId
-	  } = source;
-
-	  if (waveformSubject.value.has(sourceId)) {
-	    return;
-	  }
-
-	  const waveform = new Waveform({
-	    sourceId,
-	    state: WaveformState.LOADING
-	  });
-	  waveformSubject.next(waveformSubject.value.set(sourceId, waveform));
+	function loadWaveform(source) {// const { id: sourceId } = source;
+	  // const waveform = new Waveform({
+	  //     id: generateId(),
+	  //     sourceId,
+	  //     state: WaveformState.LOADING,
+	  // });
+	  // waveformSubject.next(
+	  //     waveformSubject.value.set(sourceId, waveform)
+	  // );
+	  // generateWaveform(source);
 	}
+
+	stream.pipe(mergeMap(sources => sources.toList().toArray()), filter(source => {
+	  return source.state !== 'LOADING' && !waveformSubject.value.has(source.id);
+	})).subscribe(loadWaveform);
 	const waveformSym = Symbol();
 	wire_2(waveformSym, wireObservable(waveformSubject.asObservable()));
 
-	const waveformSource = Symbol();
+	const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
+	  const interpolateHeight = total_height => {
+	    const amplitude = 256;
+	    return size => total_height - (size + 128) * total_height / amplitude;
+	  };
+
+	  const y = interpolateHeight(canvas.height);
+	  const ctx = canvas.getContext('2d');
+	  ctx.clearRect(0, 0, canvas.width, canvas.height);
+	  ctx.beginPath();
+
+	  for (let i = start; i < start + len; i += 1) {
+	    const min = waveform.min[i];
+	    const x = i - start;
+	    ctx.lineTo(x + 0.5, y(min) + 0.5);
+	  }
+
+	  for (let i = start + len - 1; i >= start; i -= 1) {
+	    const max = waveform.max[i];
+	    const x = i - start;
+	    ctx.lineTo(x + 0.5, y(max) + 0.5);
+	  }
+
+	  ctx.closePath();
+	  ctx.stroke();
+	  ctx.fill();
+	});
 
 	class Waveform$1 extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
-	    this.editor = void 0;
 	    this.offset = void 0;
+	    this.duration = void 0;
+	    this.source = void 0;
+	    this.previousWaveform = null;
 	    this.waveforms = void 0;
 	  }
 
-	  get source() {
-	    return this[waveformSource];
-	  }
-
-	  set source(value) {
-	    if (!this.waveforms.data.has(value.id) && value.state === AudioSourceState.READY) {
-	      loadWaveform(value);
-	    }
-
-	    this[waveformSource] = value;
-	  }
-
 	  get waveform() {
-	    return this.waveforms.data.get(this.source.id);
+	    return this.waveforms.data.get(this.source.id, null);
 	  }
 
 	  get hasWaveform() {
-	    return !!this.waveform;
+	    return !!this.waveforms.data.has(this.source.id);
 	  }
 
 	  get waveformReady() {
-	    return this.waveform.state === WaveformState.READY;
-	  }
-
-	  get waveformStyle() {
-	    const width = this.editor.data.durationToWidth(this.source.duration);
-	    const sourceOffsetWidth = this.editor.data.durationToWidth(this.offset);
-	    return `transform: translateX(-${sourceOffsetWidth}px); width: ${width}px`;
+	    return this.hasWaveform && this.waveform.state === WaveformState.READY;
 	  }
 
 	  get canvas() {
 	    return this.template.querySelector('canvas');
+	  }
+
+	  get canvasWidth() {
+	    return this.getWaveformBounds().length;
+	  }
+
+	  getWaveformBounds() {
+	    const numberOfTicks = this.waveform.data.min.length;
+	    const percentOffset = this.offset.milliseconds / this.source.duration.milliseconds;
+	    const durationPercent = this.duration.milliseconds / this.source.duration.milliseconds;
+	    const start = Math.floor(percentOffset * numberOfTicks);
+	    const length = Math.floor(durationPercent * numberOfTicks);
+	    return {
+	      start,
+	      length
+	    };
+	  }
+	  /*
+	   *
+	   *  Life cycle
+	   *
+	   */
+
+
+	  renderedCallback() {
+	    // Handle waveform change
+	    if (this.waveformReady) {
+	      const bounds = this.getWaveformBounds();
+	      drawWaveformImage(this.canvas, bounds.start, bounds.length, this.waveform.data);
+	    }
 	  }
 
 	}
@@ -33421,16 +33542,14 @@
 	    offset: {
 	      config: 0
 	    },
+	    duration: {
+	      config: 0
+	    },
 	    source: {
-	      config: 3
+	      config: 0
 	    }
 	  },
 	  wire: {
-	    editor: {
-	      adapter: editorSym,
-	      params: {},
-	      static: {}
-	    },
 	    waveforms: {
 	      adapter: waveformSym,
 	      params: {},
@@ -33469,6 +33588,7 @@
 	    style: $cmp.waveformStyle,
 	    props: {
 	      "offset": $cmp.segment.sourceOffset,
+	      "duration": $cmp.segment.duration,
 	      "source": $cmp.source
 	    },
 	    key: 6
