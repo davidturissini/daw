@@ -3,8 +3,8 @@ import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
 import { Map as ImmutableMap, Record } from 'immutable';
 import { AuroraSourceNode as AuroraAssetSourceNode } from './../player/AudioDevice';
-import { WaveNode } from 'wave-node';
-import { flatMap, filter, combineLatest } from 'rxjs/operators';
+import { WaveNode } from 'audio-waveform-node';
+import { flatMap, filter } from 'rxjs/operators';
 import { stream as audioSourceStream } from './audiosource';
 import { generateId } from './../util/uniqueid';
 
@@ -54,7 +54,10 @@ function generateWaveform(source) {
         {
             scale,
         },
-        function (waveform) {
+        function (waveform, slice, isFinished) {
+            if (isFinished !== true) {
+                return;
+            }
             waveformSubject.next(
                 waveformSubject.value.mergeIn([source.id], {
                     data: waveform,
@@ -67,7 +70,9 @@ function generateWaveform(source) {
     waveformNode.node.connect(offline.destination);
     waveformNode.beginRender();
     sourceNode.start();
-    offline.startRendering();
+    offline.startRendering().then(() => {
+        waveformNode.stopRender();
+    });
 
 }
 

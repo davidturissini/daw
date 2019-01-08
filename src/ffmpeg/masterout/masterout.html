@@ -1,3 +1,13 @@
 <template>
-    <input min="0" max="10" step="0.1" type="range" oninput={handleGainChange} />
+    <section class="gain-levels">
+        <input
+            class="gain-input"
+            value={masterGain}
+            min="0"
+            max="10"
+            step="0.1"
+            type="range"
+            oninput={handleGainChange} />
+        <ffmpeg-volumemeter class="gain-meter"></ffmpeg-volumemeter>
+    </section>
 </template>

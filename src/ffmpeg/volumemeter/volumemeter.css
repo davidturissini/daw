@@ -1,0 +1,22 @@
+:host {
+    display: flex;
+    height: 100px;
+    width: 12px;
+    overflow: hidden;
+    background: rgb(46, 46, 46);
+}
+
+.meter {
+    height: 100%;
+    flex: 1 0 auto;
+    margin-left: 0.1rem;
+}
+
+.meter:first-of-type {
+    margin-left: 0;
+}
+
+.indicator {
+    height: 100%;
+    transform-origin: 100% 100%;
+}

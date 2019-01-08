@@ -1,10 +1,23 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { waveformSym, WaveformState } from './../../wire/waveform';
-import { editorSym } from './../../wire/editor';
 import rafThrottle from 'raf-throttle';
 
-const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
-    const canvasWidth = canvas.width;
+function getWaveformBounds(waveform, sourceOffset, sourceDuration, offset, duration) {
+    const numberOfTicks = waveform.data.min.length;
+    const percentOffset = (offset.milliseconds + sourceOffset.milliseconds) / sourceDuration.milliseconds;
+    const durationPercent = duration.milliseconds / sourceDuration.milliseconds;
+    const start = Math.floor(percentOffset * numberOfTicks);
+    const length = Math.floor(durationPercent * numberOfTicks);
+    return {
+        start,
+        length,
+    };
+}
+
+const drawWaveformImage = (start, len, waveform) => {
+    const canvas = document.createElement('canvas');
+    const canvasWidth = canvas.width = len;
+    canvas.height = 60;
     const interpolateHeight = (total_height) => {
         const amplitude = 256;
         return (size) => total_height - ((size + 128) * total_height) / amplitude;
@@ -31,32 +44,60 @@ const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
     ctx.closePath();
     ctx.stroke();
     ctx.fill();
-});
+    return new Promise((res) => {
+        console.log('blob?')
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            res(url);
+        });
+    });
+};
+
+const sourceSym = Symbol();
+const sourceOffsetSym = Symbol();
 
 export default class Waveform extends LightningElement {
     @api offset;
     @api duration;
-    @api source;
-    @api sourceOffset;
+    @track waveformSrc;
+    @track waveformState;
 
-    previousWaveform = null;
-
-    @wire(waveformSym, {})
-    waveforms;
-
-    get waveform() {
-        return this.waveforms.data.get(this.source.id, null);
+    @api
+    get sourceOffset() {
+        return this[sourceOffsetSym];
     }
 
+    set sourceOffset(value) {
+        this[sourceOffsetSym] = value;
+        this.drawWaveform();
+    }
+
+    @api
+    get source() {
+        return this[sourceSym];
+    }
+
+    set source(value) {
+        this[sourceSym] = value;
+        this.drawWaveform();
+    }
+
+    @wire(waveformSym, {})
+    waveforms({ data }) {
+        if (this.source) {
+            const waveform = this.waveform = data.get(this.source.id, null);
+            this.waveformState = waveform.state;
+            this.drawWaveform();
+        }
+    }
+
+
     get hasWaveform() {
-        return !!this.waveforms.data.has(this.source.id)
+        return !!this.waveformSrc;
     }
 
     get waveformReady() {
-        return (
-            this.hasWaveform &&
-            this.waveform.state === WaveformState.READY
-        );
+        return this.waveformState === WaveformState.READY;
     }
 
     get canvas() {
@@ -67,33 +108,24 @@ export default class Waveform extends LightningElement {
         return this.getWaveformBounds().length;
     }
 
-    getWaveformBounds() {
-        const numberOfTicks = this.waveform.data.min.length;
-        const percentOffset = (this.offset.milliseconds + this.sourceOffset.milliseconds) / this.source.duration.milliseconds;
-        const durationPercent = this.duration.milliseconds / this.source.duration.milliseconds;
-        const start = Math.floor(percentOffset * numberOfTicks);
-        const length = Math.floor(durationPercent * numberOfTicks);
-        return {
-            start,
-            length,
-        };
-    }
-
-    /*
-     *
-     *  Life cycle
-     *
-     */
-    renderedCallback() {
-        // Handle waveform change
-        if (this.waveformReady) {
-            const bounds = this.getWaveformBounds();
-            drawWaveformImage(
-                this.canvas,
-                bounds.start,
-                bounds.length,
-                this.waveform.data
-            );
+    drawWaveform = rafThrottle(() => {
+        const { waveform, source, sourceOffset, offset, duration } = this;
+        if (!waveform || !source || !sourceOffset || !offset || !duration) {
+            return;
         }
-    }
+
+        const bounds = getWaveformBounds(
+            waveform,
+            sourceOffset,
+            source.duration,
+            offset,
+            duration,
+        );
+        drawWaveformImage(
+            bounds.start,
+            bounds.length,
+            waveform.data,
+        )
+        .then((url) => this.waveformSrc = url)
+    })
 }

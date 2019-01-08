@@ -1,0 +1,9 @@
+<template>
+    <template for:each={channelViews} for:item="channel">
+        <div
+            class="meter"
+            key={channel.key}>
+            <div style={channel.style} class="indicator"></div>
+        </div>
+    </template>
+</template>

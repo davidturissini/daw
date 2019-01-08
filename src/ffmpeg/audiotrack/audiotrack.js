@@ -64,7 +64,6 @@ export default class AudioTrack extends LightningElement {
 
             const visibleDuration = this.editor.data.pixelToTime(width);
             const visibleOffset = segment.offset.greaterThan(this.editor.data.visibleRange.start) ? new Time(0) : this.editor.data.visibleRange.start.minus(segment.offset);
-            console.log(visibleOffset);
             return {
                 key: index,
                 frame,

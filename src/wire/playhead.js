@@ -189,7 +189,7 @@ function playStream(audioContext, auroraNodes, range) {
             audioContext.resume();
         //}
         const promises = auroraNodes.map((node) => {
-            node.node.connect(audioContext.destination);
+            connectMasterOut(audioContext, node.node);
             return node.start();
         })
         .toList()
@@ -277,7 +277,6 @@ export function rasterize(startTime) {
             },
             null,
             () => {
-                console.log('done')
                 playheadSubject.next(
                     playheadSubject.value.set('currentTime', null)
                 );
@@ -315,7 +314,6 @@ export function play() {
             },
             null,
             () => {
-                console.log('done')
                 playheadSubject.next(
                     playheadSubject.value.set('currentTime', null)
                 );

@@ -24790,11 +24790,41 @@
 	wire_2(editorSym, wireObservable(stream$2));
 
 	class MasterOut extends Record({
-	  gain: 5
+	  gain: 1
 	}) {}
 
 	const masterOutSubject = new BehaviorSubject(new MasterOut());
 	const stream$3 = masterOutSubject.asObservable();
+	const masterOutMap = new WeakMap();
+
+	function makeMasterOut(audioContext$$1) {
+	  const gainNode = audioContext$$1.createGain();
+	  stream$3.subscribe(masterOut => {
+	    gainNode.gain.value = masterOut.gain;
+	  });
+	  const analyser = audioContext$$1.createAnalyser();
+	  analyser.fftSize = 2048;
+	  gainNode.connect(analyser);
+	  analyser.connect(audioContext$$1.destination);
+	  return {
+	    nodes: {
+	      analyser: analyser,
+	      gain: gainNode
+	    },
+	    master: gainNode
+	  };
+	}
+
+	masterOutMap.set(audioContext, makeMasterOut(audioContext));
+	function getMasterOutChain(audioContext$$1) {
+	  return masterOutMap.get(audioContext$$1);
+	}
+	function connectMasterOut(audioContext$$1, audioNode) {
+	  const {
+	    master
+	  } = masterOutMap.get(audioContext$$1);
+	  audioNode.connect(master);
+	}
 	function setGain(value) {
 	  masterOutSubject.next(masterOutSubject.value.set('gain', value));
 	}
@@ -25393,7 +25423,7 @@
 	    audioContext$$1.resume(); //}
 
 	    const promises = auroraNodes.map(node => {
-	      node.node.connect(audioContext$$1.destination);
+	      connectMasterOut(audioContext$$1, node.node);
 	      return node.start();
 	    }).toList().toArray();
 	    o.next(Promise.all(promises));
@@ -25434,7 +25464,6 @@
 	  })).pipe(dematerialize()).subscribe(time => {
 	    playheadSubject.next(playheadSubject.value.set('currentTime', time));
 	  }, null, () => {
-	    console.log('done');
 	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
 	  });
 	}
@@ -33313,7 +33342,7 @@
 	var _implicitStylesheets$7 = [stylesheet$7];
 
 	function stylesheet$8(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;overflow: hidden;height: 100%;}")) + "\ncanvas" + shadowSelector + " {width: 100%;height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;overflow: hidden;height: 100%;}") : (hostSelector + " {display: block;overflow: hidden;height: 100%;}")) + "\nimg" + shadowSelector + " {height: 100%;width: 100%;}\n";
 	}
 	var _implicitStylesheets$8 = [stylesheet$8];
 
@@ -33322,10 +33351,9 @@
 	    t: api_text,
 	    h: api_element
 	  } = $api;
-	  return [$cmp.hasWaveform ? !$cmp.waveformReady ? api_text("Loading Waveform") : null : null, $cmp.hasWaveform ? $cmp.waveformReady ? api_element("canvas", {
+	  return [$cmp.hasWaveform ? !$cmp.waveformReady ? api_text("Loading Waveform") : null : null, $cmp.hasWaveform ? $cmp.waveformReady ? api_element("img", {
 	    attrs: {
-	      "height": "150",
-	      "width": $cmp.canvasWidth
+	      "src": $cmp.waveformSrc
 	    },
 	    key: 5
 	  }, []) : null : null];
@@ -34983,6 +35011,14 @@
 	    this.onDecode = onDecode;
 	  }
 
+	  Object.defineProperty(WaveformBuffer.prototype, "queueLength", {
+	    get: function () {
+	      return this.audioBuffers.length;
+	    },
+	    enumerable: true,
+	    configurable: true
+	  });
+
 	  WaveformBuffer.prototype.push = function (audioBuffer) {
 	    this.audioBuffers.push(audioBuffer);
 
@@ -35014,8 +35050,17 @@
 	  function WaveNode(audioContext, dest, options, callback) {
 	    var _this = this;
 
+	    this.rendering = false;
+
 	    this.onAudioProcess = function (evt) {
-	      var buffer = _this.buffer;
+	      var _a = _this,
+	          buffer = _a.buffer,
+	          rendering = _a.rendering;
+
+	      if (rendering === false) {
+	        return;
+	      }
+
 	      var inputBuffer = evt.inputBuffer,
 	          outputBuffer = evt.outputBuffer;
 	      var clone = new AudioBuffer({
@@ -35038,18 +35083,20 @@
 	    this.buffer = new WaveformBuffer(function (waveform) {
 	      adapters.push(waveform.adapter);
 	      var compound = new waveformData(adapters, ContainerAdapter);
-	      callback(compound);
+	      var isFinished = _this.buffer.queueLength === 0 && _this.rendering === false;
+	      callback(compound, waveform, isFinished);
 	    }, options);
 	    this.node = audioContext.createScriptProcessor(4096, 2, 2);
+	    this.node.onaudioprocess = this.onAudioProcess;
 	    dest.connect(this.node);
 	  }
 
 	  WaveNode.prototype.beginRender = function () {
-	    this.node.onaudioprocess = this.onAudioProcess;
+	    this.rendering = true;
 	  };
 
 	  WaveNode.prototype.stopRender = function () {
-	    this.node.onaudioprocess = null;
+	    this.rendering = false;
 	    this.node.disconnect();
 	  };
 
@@ -35088,7 +35135,11 @@
 	  });
 	  const waveformNode = new WaveNode(offline, sourceNode.node, {
 	    scale
-	  }, function (waveform) {
+	  }, function (waveform, slice, isFinished) {
+	    if (isFinished !== true) {
+	      return;
+	    }
+
 	    waveformSubject.next(waveformSubject.value.mergeIn([source.id], {
 	      data: waveform,
 	      state: WaveformState.READY
@@ -35097,7 +35148,9 @@
 	  waveformNode.node.connect(offline.destination);
 	  waveformNode.beginRender();
 	  sourceNode.start();
-	  offline.startRendering();
+	  offline.startRendering().then(() => {
+	    waveformNode.stopRender();
+	  });
 	}
 
 	function loadWaveform(source) {
@@ -35119,8 +35172,22 @@
 	const waveformSym = Symbol();
 	wire_2(waveformSym, wireObservable(waveformSubject.asObservable()));
 
-	const drawWaveformImage = rafThrottle((canvas, start, len, waveform) => {
-	  const canvasWidth = canvas.width;
+	function getWaveformBounds(waveform, sourceOffset, sourceDuration, offset, duration) {
+	  const numberOfTicks = waveform.data.min.length;
+	  const percentOffset = (offset.milliseconds + sourceOffset.milliseconds) / sourceDuration.milliseconds;
+	  const durationPercent = duration.milliseconds / sourceDuration.milliseconds;
+	  const start = Math.floor(percentOffset * numberOfTicks);
+	  const length = Math.floor(durationPercent * numberOfTicks);
+	  return {
+	    start,
+	    length
+	  };
+	}
+
+	const drawWaveformImage = (start, len, waveform) => {
+	  const canvas = document.createElement('canvas');
+	  const canvasWidth = canvas.width = len;
+	  canvas.height = 60;
 
 	  const interpolateHeight = total_height => {
 	    const amplitude = 256;
@@ -35148,29 +35215,77 @@
 	  ctx.closePath();
 	  ctx.stroke();
 	  ctx.fill();
-	});
+	  return new Promise(res => {
+	    console.log('blob?');
+	    canvas.toBlob(blob => {
+	      const url = URL.createObjectURL(blob);
+	      res(url);
+	    });
+	  });
+	};
+
+	const sourceSym = Symbol();
+	const sourceOffsetSym = Symbol();
 
 	class Waveform$1 extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.offset = void 0;
 	    this.duration = void 0;
-	    this.source = void 0;
-	    this.sourceOffset = void 0;
-	    this.previousWaveform = null;
-	    this.waveforms = void 0;
+	    this.waveformSrc = void 0;
+	    this.waveformState = void 0;
+	    this.drawWaveform = rafThrottle(() => {
+	      const {
+	        waveform,
+	        source,
+	        sourceOffset,
+	        offset,
+	        duration
+	      } = this;
+
+	      if (!waveform || !source || !sourceOffset || !offset || !duration) {
+	        return;
+	      }
+
+	      const bounds = getWaveformBounds(waveform, sourceOffset, source.duration, offset, duration);
+	      drawWaveformImage(bounds.start, bounds.length, waveform.data).then(url => this.waveformSrc = url);
+	    });
 	  }
 
-	  get waveform() {
-	    return this.waveforms.data.get(this.source.id, null);
+	  get sourceOffset() {
+	    return this[sourceOffsetSym];
+	  }
+
+	  set sourceOffset(value) {
+	    this[sourceOffsetSym] = value;
+	    this.drawWaveform();
+	  }
+
+	  get source() {
+	    return this[sourceSym];
+	  }
+
+	  set source(value) {
+	    this[sourceSym] = value;
+	    this.drawWaveform();
+	  }
+
+	  waveforms({
+	    data
+	  }) {
+	    if (this.source) {
+	      const waveform = this.waveform = data.get(this.source.id, null);
+	      this.waveformState = waveform.state;
+	      this.drawWaveform();
+	    }
 	  }
 
 	  get hasWaveform() {
-	    return !!this.waveforms.data.has(this.source.id);
+	    return !!this.waveformSrc;
 	  }
 
 	  get waveformReady() {
-	    return this.hasWaveform && this.waveform.state === WaveformState.READY;
+	    return this.waveformState === WaveformState.READY;
 	  }
 
 	  get canvas() {
@@ -35179,32 +35294,6 @@
 
 	  get canvasWidth() {
 	    return this.getWaveformBounds().length;
-	  }
-
-	  getWaveformBounds() {
-	    const numberOfTicks = this.waveform.data.min.length;
-	    const percentOffset = (this.offset.milliseconds + this.sourceOffset.milliseconds) / this.source.duration.milliseconds;
-	    const durationPercent = this.duration.milliseconds / this.source.duration.milliseconds;
-	    const start = Math.floor(percentOffset * numberOfTicks);
-	    const length = Math.floor(durationPercent * numberOfTicks);
-	    return {
-	      start,
-	      length
-	    };
-	  }
-	  /*
-	   *
-	   *  Life cycle
-	   *
-	   */
-
-
-	  renderedCallback() {
-	    // Handle waveform change
-	    if (this.waveformReady) {
-	      const bounds = this.getWaveformBounds();
-	      drawWaveformImage(this.canvas, bounds.start, bounds.length, this.waveform.data);
-	    }
 	  }
 
 	}
@@ -35217,19 +35306,24 @@
 	    duration: {
 	      config: 0
 	    },
-	    source: {
-	      config: 0
-	    },
 	    sourceOffset: {
-	      config: 0
+	      config: 3
+	    },
+	    source: {
+	      config: 3
 	    }
 	  },
 	  wire: {
 	    waveforms: {
 	      adapter: waveformSym,
 	      params: {},
-	      static: {}
+	      static: {},
+	      method: 1
 	    }
+	  },
+	  track: {
+	    waveformSrc: 1,
+	    waveformState: 1
 	  }
 	});
 
@@ -35585,7 +35679,6 @@
 	      };
 	      const visibleDuration = this.editor.data.pixelToTime(width);
 	      const visibleOffset = segment.offset.greaterThan(this.editor.data.visibleRange.start) ? new Time(0) : this.editor.data.visibleRange.start.minus(segment.offset);
-	      console.log(visibleOffset);
 	      return {
 	        key: index,
 	        frame,
@@ -35824,31 +35917,183 @@
 	  tmpl: _tmpl$a
 	});
 
+	function stylesheet$a(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {background: rgb(96, 96, 96);display: flex;flex-direction: column-reverse;padding: 0.5rem;}") : (hostSelector + " {background: rgb(96, 96, 96);display: flex;flex-direction: column-reverse;padding: 0.5rem;}")) + "\n.gain-input" + shadowSelector + " {-webkit-appearance: slider-vertical;width: 1rem;height: 100%;margin: 0 0.5rem 0 0;}\n.gain-levels" + shadowSelector + " {display: flex;height: 200px;}\n.gain-meter" + shadowSelector + " {height: 100%;}\n";
+	}
+	var _implicitStylesheets$a = [stylesheet$a];
+
+	function stylesheet$b(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: flex;height: 100px;width: 12px;overflow: hidden;background: rgb(46, 46, 46);}") : (hostSelector + " {display: flex;height: 100px;width: 12px;overflow: hidden;background: rgb(46, 46, 46);}")) + "\n.meter" + shadowSelector + " {height: 100%;flex: 1 0 auto;margin-left: 0.1rem;}\n.meter:first-of-type" + shadowSelector + " {margin-left: 0;}\n.indicator" + shadowSelector + " {height: 100%;transform-origin: 100% 100%;}\n";
+	}
+	var _implicitStylesheets$b = [stylesheet$b];
+
 	function tmpl$a($api, $cmp, $slotset, $ctx) {
 	  const {
+	    h: api_element,
+	    k: api_key,
+	    i: api_iterator
+	  } = $api;
+	  return api_iterator($cmp.channelViews, function (channel) {
+	    return api_element("div", {
+	      classMap: {
+	        "meter": true
+	      },
+	      key: api_key(3, channel.key)
+	    }, [api_element("div", {
+	      classMap: {
+	        "indicator": true
+	      },
+	      style: channel.style,
+	      key: 4
+	    }, [])]);
+	  });
+	}
+
+	var _tmpl$b = engine_8(tmpl$a);
+	tmpl$a.stylesheets = [];
+
+	if (_implicitStylesheets$b) {
+	  tmpl$a.stylesheets.push.apply(tmpl$a.stylesheets, _implicitStylesheets$b);
+	}
+	tmpl$a.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-volumemeter_volumemeter-host",
+	  shadowAttribute: "ffmpeg-volumemeter_volumemeter"
+	};
+
+	class VolumeMeter extends engine_5 {
+	  constructor() {
+	    super();
+	    this.channels = [];
+	    this.averaging = 0.95;
+	    this.clipLevel = 0.98;
+	    this.clipLag = 250;
+	    this.draw = rafThrottle(evt => {
+	      const {
+	        inputBuffer
+	      } = evt;
+	      this.channels.forEach((channel, index) => {
+	        const {
+	          volume
+	        } = channel;
+	        const buf = inputBuffer.getChannelData(index);
+	        const {
+	          length: bufLength
+	        } = buf;
+	        let sum = 0; // Do a root-mean-square on the samples: sum up the squares...
+
+	        for (let i = 0; i < bufLength; i += 1) {
+	          const x = buf[i];
+
+	          if (Math.abs(x) >= this.clipLevel) {
+	            channel.lastClip = window.performance.now();
+	          }
+
+	          sum += x * x;
+	        } // ... then take the square root of the sum.
+
+
+	        const rms = Math.sqrt(sum / bufLength); // Now smooth this out with the averaging factor applied
+	        // to the previous sample - take the max here because we
+	        // want "fast attack, slow release."
+
+	        channel.volume = Math.max(rms, volume * this.averaging);
+	      });
+	    });
+	    const chain = getMasterOutChain(audioContext);
+	    this.processor = audioContext.createScriptProcessor(2048, 2, 2);
+	    this.processor.connect(audioContext.destination);
+	    chain.master.connect(this.processor);
+	  }
+
+	  connectedCallback() {
+	    this.channels = [{
+	      volume: 0,
+	      lastClip: null
+	    }, {
+	      volume: 0,
+	      lastClip: null
+	    }];
+	    this.processor.onaudioprocess = this.draw;
+	  }
+
+	  checkClipping(channel) {
+	    if (channel.lastClip + this.clipLag < window.performance.now()) {
+	      return false;
+	    }
+
+	    return true;
+	  }
+
+	  get channelViews() {
+	    return this.channels.map((channel, index) => {
+	      const isClipping = this.checkClipping(channel);
+	      const background = isClipping ? 'red' : 'rgb(104, 185, 118)';
+	      const style = `background: ${background}; transform: scale(1, ${channel.volume})`;
+	      return {
+	        key: index,
+	        style
+	      };
+	    });
+	  }
+
+	}
+
+	engine_11(VolumeMeter, {
+	  track: {
+	    channels: 1
+	  }
+	});
+
+	var _ffmpegVolumemeter = engine_10(VolumeMeter, {
+	  tmpl: _tmpl$b
+	});
+
+	function tmpl$b($api, $cmp, $slotset, $ctx) {
+	  const {
 	    b: api_bind,
-	    h: api_element
+	    h: api_element,
+	    c: api_custom_element
 	  } = $api;
 	  const {
 	    _m0
 	  } = $ctx;
-	  return [api_element("input", {
+	  return [api_element("section", {
+	    classMap: {
+	      "gain-levels": true
+	    },
+	    key: 2
+	  }, [api_element("input", {
+	    classMap: {
+	      "gain-input": true
+	    },
 	    attrs: {
 	      "min": "0",
 	      "max": "10",
 	      "step": "0.1",
 	      "type": "range"
 	    },
-	    key: 2,
+	    props: {
+	      "value": $cmp.masterGain
+	    },
+	    key: 3,
 	    on: {
 	      "input": _m0 || ($ctx._m0 = api_bind($cmp.handleGainChange))
 	    }
-	  }, [])];
+	  }, []), api_custom_element("ffmpeg-volumemeter", _ffmpegVolumemeter, {
+	    classMap: {
+	      "gain-meter": true
+	    },
+	    key: 4
+	  }, [])])];
 	}
 
-	var _tmpl$b = engine_8(tmpl$a);
-	tmpl$a.stylesheets = [];
-	tmpl$a.stylesheetTokens = {
+	var _tmpl$c = engine_8(tmpl$b);
+	tmpl$b.stylesheets = [];
+
+	if (_implicitStylesheets$a) {
+	  tmpl$b.stylesheets.push.apply(tmpl$b.stylesheets, _implicitStylesheets$a);
+	}
+	tmpl$b.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-masterout_masterout-host",
 	  shadowAttribute: "ffmpeg-masterout_masterout"
 	};
@@ -35857,6 +36102,10 @@
 	  constructor(...args) {
 	    super(...args);
 	    this.masterOut = void 0;
+	  }
+
+	  get masterGain() {
+	    return this.masterOut.data.gain;
 	  }
 
 	  handleGainChange(evt) {
@@ -35876,10 +36125,10 @@
 	});
 
 	var _ffmpegMasterout = engine_10(MasterOut$1, {
-	  tmpl: _tmpl$b
+	  tmpl: _tmpl$c
 	});
 
-	function tmpl$b($api, $cmp, $slotset, $ctx) {
+	function tmpl$c($api, $cmp, $slotset, $ctx) {
 	  const {
 	    c: api_custom_element,
 	    h: api_element,
@@ -36035,20 +36284,18 @@
 	      "cursordoubletap": _m8 || ($ctx._m8 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
 	      "cursordrag": _m9 || ($ctx._m9 = api_bind($cmp.onPlaybackDurationCursorDrag))
 	    }
-	  }, []) : null]) : null])]), api_element("footer", {
+	  }, []) : null]) : null]), api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
 	    key: 33
-	  }, [api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 34
 	  }, [])])];
 	}
 
-	var _tmpl$c = engine_8(tmpl$b);
-	tmpl$b.stylesheets = [];
+	var _tmpl$d = engine_8(tmpl$c);
+	tmpl$c.stylesheets = [];
 
 	if (_implicitStylesheets) {
-	  tmpl$b.stylesheets.push.apply(tmpl$b.stylesheets, _implicitStylesheets);
+	  tmpl$c.stylesheets.push.apply(tmpl$c.stylesheets, _implicitStylesheets);
 	}
-	tmpl$b.stylesheetTokens = {
+	tmpl$c.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-app_app-host",
 	  shadowAttribute: "ffmpeg-app_app"
 	};
@@ -36398,7 +36645,7 @@
 	});
 
 	var App$1 = engine_10(App, {
-	  tmpl: _tmpl$c
+	  tmpl: _tmpl$d
 	});
 
 	wire_1(engine_6);
