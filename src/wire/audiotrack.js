@@ -97,6 +97,26 @@ export function getTracksDuration(tracks) {
     }, new Time(0));
 }
 
+export function getTracksStart(tracks) {
+    return tracks.toList().reduce((seed, track) => {
+        const trackStart = track.segments.first().range.start;
+        if (seed === null || trackStart.lessThan(seed)) {
+            return trackStart;
+        }
+
+        return seed;
+    }, null);
+}
+
+// Returns the global range for all tracks.
+// Essentially chops off any silences at the beginning
+// or end of the document
+export function getTracksRange(tracks) {
+    const duration = getTracksDuration(tracks);
+    const start = getTracksStart(tracks);
+    return new AudioRange(start, duration);
+}
+
 export function audioTrackRange(audioTrack) {
     if (audioTrack.segments.size === 0) {
         return null;
@@ -229,6 +249,44 @@ function splitSegment(segment, range) {
             .set('sourceOffset', sumTime(segment.sourceOffset, diff))
             .set('audioTag', document.createElement('audio'));
     });
+}
+
+function getSegmentsInRange(track, range) {
+    return track.segments.filter((segment) => segmentInTimeRange(segment, range.start, range.duration));
+}
+
+export function collapseRange(range) {
+    tracksSubject.value.forEach((track) => {
+        getSegmentsInRange(track, range).forEach((segment) => {
+            const split = splitSegment(segment, range);
+            const second = split[1];
+            split[1] = second.set('offset', second.offset.minus(range.duration));
+
+            const next = tracksSubject.value.updateIn([track.id, 'segments'], (segments) => {
+                return split.reduce((seed, seg) => {
+                    return seed.set(seg.id, seg);
+                }, segments.delete(segment.id))
+            })
+
+
+            tracksSubject.next(next);
+        })
+    })
+}
+
+export function deleteRange(range) {
+    tracksSubject.value.forEach((track) => {
+        getSegmentsInRange(track, range).forEach((segment) => {
+            const split = splitSegment(segment, range);
+            tracksSubject.next(
+                tracksSubject.value.updateIn([track.id, 'segments'], (segments) => {
+                    return split.reduce((seed, seg) => {
+                        return seed.set(seg.id, seg);
+                    }, segments.delete(segment.id))
+                })
+            )
+        })
+    })
 }
 
 export function deleteSelections() {

@@ -10,8 +10,6 @@ export default class TimeRange extends LightningElement {
     get divStyle() {
         const width = this.editor.data.durationToWidth(this.range.duration);
         const x = this.editor.data.timeToPixel(this.range.start);
-        const style = `width:${width}px;transform:translateX(${x}px)`;
-        console.log(style);
-        return style;
+        return `width:${width}px;transform:translateX(${x}px)`;
     }
 }

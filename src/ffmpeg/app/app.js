@@ -16,6 +16,8 @@ import { generateId } from './../../util/uniqueid';
 import { playheadSym, incrementPlaybackDuration, setPlaybackDuration } from './../../wire/playhead';
 import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
 import { highlightSym } from './../../wire/highlight';
+import { IdleState } from './states/idle';
+import { SelectState } from './states/select';
 
 function userSelection(elm) {
     const selectionFrame = {
@@ -66,6 +68,19 @@ function userSelection(elm) {
 }
 
 export default class App extends LightningElement {
+    constructor() {
+        super();
+        this.enterState(new IdleState());
+    }
+
+    enterState(next) {
+        if (this.state) {
+            this.state.exit();
+        }
+        this.state = next;
+        this.state.enter();
+    }
+
     frame = null;
 
     get ffmpegLoaded() {
@@ -122,7 +137,7 @@ export default class App extends LightningElement {
     highlightData;
 
     get highlights() {
-        return this.highlightData.data.items.toArray();
+        return this.highlightData.data.items.toList().toArray();
     }
 
     /*

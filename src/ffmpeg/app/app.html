@@ -4,6 +4,14 @@
         <ffmpeg-audioscroll></ffmpeg-audioscroll>
     </header>
     <main>
+        <section>
+            <template for:each={highlights} for:item="highlight">
+                <ffmpeg-highlightdetail
+                    key={highlight.id}
+                    highlight={highlight}>
+                </ffmpeg-highlightdetail>
+            </template>
+        </section>
         <section class="tracks-summary">
             <header class="tracks-summary__header"></header>
             <template for:each={audioTracksArray} for:item="track">
