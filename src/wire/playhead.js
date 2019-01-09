@@ -4,7 +4,6 @@ import {
     Observable,
     combineLatest,
     of as observableOf,
-    zip as observableZip,
 } from 'rxjs';
 import {
     switchMap,
@@ -80,40 +79,24 @@ const playbackEndedStream = stream.pipe(
     })
 );
 
-const playbackRangeStartStream = editorStream.pipe(map((editor) => {
-        return editor.cursor;
-    }))
-    .pipe(
-        distinctUntilChanged(),
-        takeUntil(playbackEndedStream),
-        repeat(),
-    );
-
-const playbackRangeStream = audioTrackStream.pipe(
+const tracksAndSourcesStream = audioTrackStream.pipe(
     switchMap((audioTracks) => {
         return combineLatest(
-            playbackRangeStartStream,
             audioSourceStream.pipe(take(1)),
-            (currentTime, audioSources) => {
+            (audioSources) => {
                 const playhead = playheadSubject.value;
-                const diff = currentTime.subtract(playhead.playbackRange.start);
-                const currentTimeRange = new AudioRange(
-                    currentTime,
-                    playhead.playbackRange.duration.subtract(diff)
-                );
                 return {
                     audioTracks,
                     audioSources,
-                    range: currentTimeRange,
                 };
             })
 
     })
 );
 
-function makeSourceNodesStream(audioContext) {
-    return playbackRangeStream.pipe(
-        map(({ audioTracks, audioSources, range }) => {
+function makeSourceNodesStream(audioContext, range) {
+    return tracksAndSourcesStream.pipe(
+        map(({ audioTracks, audioSources }) => {
             let sourceNodes = new ImmutableMap();
             audioTracks.forEach((track) => {
                 track.segments
@@ -155,13 +138,15 @@ function makeSourceNodesStream(audioContext) {
     )
 }
 
-makeSourceNodesStream(defaultAudioContext)
-    .subscribe(({ sourceNodes }) => {
-        const playhead = playheadSubject.value;
-        playheadSubject.next(
-            playhead.set('auroraNodes', sourceNodes)
-        );
-    })
+
+
+// makeSourceNodesStream(defaultAudioContext)
+//     .subscribe(({ sourceNodes }) => {
+//         const playhead = playheadSubject.value;
+//         playheadSubject.next(
+//             playhead.set('auroraNodes', sourceNodes)
+//         );
+//     })
 
 
 function createCurrentTimeStream(audioContext, startAudioContextSeconds, initialTime) {
@@ -252,14 +237,14 @@ export function stop() {
     }
 }
 
-export function rasterize(startTime) {
+export function rasterize(range) {
     const { sampleRate } = defaultAudioContext;
-    const duration = playheadSubject.value.playbackRange.duration.minus(startTime);
+    const { duration } = range;
     const length = sampleRate * duration.seconds;
     const offline = new OfflineAudioContext(2, length, sampleRate)
 
-    makeSourceNodesStream(offline)
-        .pipe(switchMap(({ sourceNodes, range }) => {
+    makeSourceNodesStream(offline, range)
+        .pipe(switchMap(({ sourceNodes }) => {
             return playStream(
                 offline,
                 sourceNodes,
@@ -283,29 +268,28 @@ export function rasterize(startTime) {
             }
         );
 
-    offline.startRendering().then((audioBuffer) => {
+    return offline.startRendering();
+}
+
+export function download(startTime) {
+    return rasterize(startTime).then((audioBuffer) => {
         const wav = toWav(audioBuffer);
         const blob = new Blob([wav]);
         saveAs(blob, 'output.wav');
-    })
+    });
 }
 
-export function play() {
+export function play(range) {
     if (playSubscription) {
         playSubscription.unsubscribe();
     }
 
-    playSubscription = playbackRangeStream
-        .pipe(switchMap(({ range }) => {
-            return playStream(
-                defaultAudioContext,
-                playheadSubject.value.auroraNodes,
-                range
-            )
-            .pipe(startWith(range.start))
-            .pipe(materialize())
-        }))
-        .pipe(dematerialize())
+    playSubscription = playStream(
+            defaultAudioContext,
+            playheadSubject.value.auroraNodes,
+            range
+        )
+        .pipe(startWith(range.start))
         .subscribe(
             (time) => {
                 playheadSubject.next(

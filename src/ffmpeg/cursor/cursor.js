@@ -6,6 +6,7 @@ export default class Cursor extends LightningElement {
     @api virtual;
     @api playhead;
     @api userDrag;
+    @api time;
 
     interact;
 
@@ -16,8 +17,6 @@ export default class Cursor extends LightningElement {
     */
     @wire(editorSym, {})
     editor;
-
-    @api time;
 
     get containerStyle() {
         const { editor } = this;

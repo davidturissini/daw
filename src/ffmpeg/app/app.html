@@ -58,6 +58,9 @@
                             user-drag>
                         </ffmpeg-cursor>
                     </template>
+                    <template for:each={highlights} for:item="highlight">
+                        <ffmpeg-highlight key={highlight.id} highlight={highlight}></ffmpeg-highlight>
+                    </template>
                 </section>
             </template>
         </div>

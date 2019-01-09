@@ -15,6 +15,7 @@ import {
 import { generateId } from './../../util/uniqueid';
 import { playheadSym, incrementPlaybackDuration, setPlaybackDuration } from './../../wire/playhead';
 import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
+import { highlightSym } from './../../wire/highlight';
 
 function userSelection(elm) {
     const selectionFrame = {
@@ -111,6 +112,18 @@ export default class App extends LightningElement {
     */
     @wire(playheadSym, {})
     playhead;
+
+    /*
+     *
+     * Highlights
+     *
+    */
+    @wire(highlightSym, {})
+    highlightData;
+
+    get highlights() {
+        return this.highlightData.data.items.toArray();
+    }
 
     /*
      *

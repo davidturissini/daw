@@ -3,7 +3,6 @@ import { AudioRange } from './../util/audiorange';
 import { Time, gt } from './../util/time';
 import { wireObservable } from './../util/wire-observable';
 import { BehaviorSubject } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { Record } from 'immutable';
 import { stream as audioTrackStream, getTracksDuration } from './audiotrack';
 class Editor extends Record({

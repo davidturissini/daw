@@ -12,6 +12,10 @@ export class AudioRange {
         this.start = start;
         this.duration = duration;
     }
+
+    get end() {
+        return this.start.add(this.duration);
+    }
 }
 
 export function relative(targetRange, absoluteRange) {

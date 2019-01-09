@@ -41,11 +41,16 @@ function makeMasterOut(audioContext) {
 masterOutMap.set(defaultAudioContext, makeMasterOut(defaultAudioContext));
 
 export function getMasterOutChain(audioContext) {
-    return masterOutMap.get(audioContext);
+    let value = masterOutMap.get(audioContext);
+    if (!value) {
+        value = makeMasterOut(audioContext)
+        masterOutMap.set(audioContext, value);
+    }
+    return value;
 }
 
 export function connectMasterOut(audioContext, audioNode) {
-    const { master } = masterOutMap.get(audioContext);
+    const { master } = getMasterOutChain(audioContext);
     audioNode.connect(master);
 }
 

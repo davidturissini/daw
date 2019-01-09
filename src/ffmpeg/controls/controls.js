@@ -3,8 +3,7 @@ import { editorSym } from './../../wire/editor';
 import { audioTracks } from './../../wire/audiotrack';
 import { audioSources } from './../../wire/audiosource';
 import { playheadSym, play, stop, rasterize } from './../../wire/playhead';
-import { Time } from './../../util/time';
-import { AudioRange } from './../../util/audiorange';
+import { highlightSilences } from './../../wire/highlight';
 
 export default class Controls extends LightningElement {
     @wire(editorSym, {})
@@ -39,6 +38,10 @@ export default class Controls extends LightningElement {
 
     get stopButtonClass() {
         return 'control';
+    }
+
+    onSilenceDetectClick() {
+        highlightSilences();
     }
 
     onStopClick() {

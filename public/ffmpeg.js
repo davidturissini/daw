@@ -10297,7 +10297,7 @@
 	var _implicitStylesheets = [stylesheet];
 
 	function stylesheet$1(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;justify-content: center;margin: 0 0.5rem;}") : (hostSelector + " {display: flex;justify-content: center;margin: 0 0.5rem;}")) + "\n.control" + shadowSelector + " {background: rgb(131, 131, 131);border: 0;display: flex;align-items: center;padding: 0.5rem;cursor: pointer;border-left: 1px inset #f1f1f1;}\n.control:focus" + shadowSelector + " {outline: none;}\n.control--playing" + shadowSelector + " {background: rgb(49, 99, 59);}\n.control:first-child" + shadowSelector + " {border-left: 0;}\n.buttons-container" + shadowSelector + " {display: flex;border-radius: 0.3rem;overflow: hidden;margin: 0 1rem;}\n.control-icon" + shadowSelector + " {display: inline-block;}\n.control-icon--play" + shadowSelector + " {height: 0;width: 0;border: 0.6em solid transparent;border-left: 1.2em solid #fff;margin-right: -0.7em;}\n.control-icon--stop" + shadowSelector + " {width: 1em;height: 1em;background: #fff;}\n.time-container" + shadowSelector + " {color: rgb(52, 52, 52);font-size: 0.8rem;display: flex;align-items: center;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;justify-content: center;margin: 0 0.5rem;}") : (hostSelector + " {display: flex;justify-content: center;margin: 0 0.5rem;}")) + "\n.control" + shadowSelector + " {background: rgb(131, 131, 131);border: 0;display: flex;align-items: center;padding: 0.5rem;cursor: pointer;border-left: 1px inset #f1f1f1;}\n.control--silence" + shadowSelector + " {background: rgb(49, 59, 99);}\n.control:focus" + shadowSelector + " {outline: none;}\n.control--playing" + shadowSelector + " {background: rgb(49, 99, 59);}\n.control:first-child" + shadowSelector + " {border-left: 0;}\n.buttons-container" + shadowSelector + " {display: flex;border-radius: 0.3rem;overflow: hidden;margin: 0 1rem;}\n.control-icon" + shadowSelector + " {display: inline-block;}\n.control-icon--play" + shadowSelector + " {height: 0;width: 0;border: 0.6em solid transparent;border-left: 1.2em solid #fff;margin-right: -0.7em;}\n.control-icon--stop" + shadowSelector + " {width: 1em;height: 1em;background: #fff;}\n.time-container" + shadowSelector + " {color: rgb(52, 52, 52);font-size: 0.8rem;display: flex;align-items: center;}\n";
 	}
 	var _implicitStylesheets$1 = [stylesheet$1];
 
@@ -10526,13 +10526,14 @@
 
 	function tmpl$1($api, $cmp, $slotset, $ctx) {
 	  const {
-	    h: api_element,
 	    b: api_bind,
+	    h: api_element,
 	    c: api_custom_element
 	  } = $api;
 	  const {
 	    _m0,
-	    _m1
+	    _m1,
+	    _m2
 	  } = $ctx;
 	  return [api_element("div", {
 	    classMap: {
@@ -10540,40 +10541,54 @@
 	    },
 	    key: 2
 	  }, [api_element("button", {
-	    className: $cmp.stopButtonClass,
+	    classMap: {
+	      "control": true,
+	      "control--silence": true
+	    },
 	    key: 3,
 	    on: {
-	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onStopClick))
+	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onSilenceDetectClick))
+	    }
+	  }, [])]), api_element("div", {
+	    classMap: {
+	      "buttons-container": true
+	    },
+	    key: 4
+	  }, [api_element("button", {
+	    className: $cmp.stopButtonClass,
+	    key: 5,
+	    on: {
+	      "click": _m1 || ($ctx._m1 = api_bind($cmp.onStopClick))
 	    }
 	  }, [api_element("i", {
 	    classMap: {
 	      "control-icon": true,
 	      "control-icon--stop": true
 	    },
-	    key: 4
+	    key: 6
 	  }, [])]), api_element("button", {
 	    className: $cmp.playButtonClass,
-	    key: 5,
+	    key: 7,
 	    on: {
-	      "click": _m1 || ($ctx._m1 = api_bind($cmp.onPlayClick))
+	      "click": _m2 || ($ctx._m2 = api_bind($cmp.onPlayClick))
 	    }
 	  }, [api_element("i", {
 	    classMap: {
 	      "control-icon": true,
 	      "control-icon--play": true
 	    },
-	    key: 6
+	    key: 8
 	  }, [])])]), api_element("div", {
 	    classMap: {
 	      "time-container": true
 	    },
-	    key: 7
+	    key: 9
 	  }, [api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
 	    props: {
 	      "format": "hh:mm:ss.sss",
 	      "time": $cmp.displayTime
 	    },
-	    key: 8
+	    key: 10
 	  }, [])])];
 	}
 
@@ -10658,6 +10673,10 @@
 
 	    this.start = start;
 	    this.duration = duration;
+	  }
+
+	  get end() {
+	    return this.start.add(this.duration);
 	  }
 
 	}
@@ -14553,4015 +14572,6 @@
 
 	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
 
-	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var AuditSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(AuditSubscriber, _super);
-
-	  function AuditSubscriber(destination, durationSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.durationSelector = durationSelector;
-	    _this.hasValue = false;
-	    return _this;
-	  }
-
-	  AuditSubscriber.prototype._next = function (value) {
-	    this.value = value;
-	    this.hasValue = true;
-
-	    if (!this.throttled) {
-	      var duration = tryCatch(this.durationSelector)(value);
-
-	      if (duration === errorObject) {
-	        this.destination.error(errorObject.e);
-	      } else {
-	        var innerSubscription = subscribeToResult(this, duration);
-
-	        if (!innerSubscription || innerSubscription.closed) {
-	          this.clearThrottle();
-	        } else {
-	          this.add(this.throttled = innerSubscription);
-	        }
-	      }
-	    }
-	  };
-
-	  AuditSubscriber.prototype.clearThrottle = function () {
-	    var _a = this,
-	        value = _a.value,
-	        hasValue = _a.hasValue,
-	        throttled = _a.throttled;
-
-	    if (throttled) {
-	      this.remove(throttled);
-	      this.throttled = null;
-	      throttled.unsubscribe();
-	    }
-
-	    if (hasValue) {
-	      this.value = null;
-	      this.hasValue = false;
-	      this.destination.next(value);
-	    }
-	  };
-
-	  AuditSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex) {
-	    this.clearThrottle();
-	  };
-
-	  AuditSubscriber.prototype.notifyComplete = function () {
-	    this.clearThrottle();
-	  };
-
-	  return AuditSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START _scheduler_async,_audit,_observable_timer PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var BufferSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(BufferSubscriber, _super);
-
-	  function BufferSubscriber(destination, closingNotifier) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.buffer = [];
-
-	    _this.add(subscribeToResult(_this, closingNotifier));
-
-	    return _this;
-	  }
-
-	  BufferSubscriber.prototype._next = function (value) {
-	    this.buffer.push(value);
-	  };
-
-	  BufferSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    var buffer = this.buffer;
-	    this.buffer = [];
-	    this.destination.next(buffer);
-	  };
-
-	  return BufferSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var BufferCountSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(BufferCountSubscriber, _super);
-
-	  function BufferCountSubscriber(destination, bufferSize) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.bufferSize = bufferSize;
-	    _this.buffer = [];
-	    return _this;
-	  }
-
-	  BufferCountSubscriber.prototype._next = function (value) {
-	    var buffer = this.buffer;
-	    buffer.push(value);
-
-	    if (buffer.length == this.bufferSize) {
-	      this.destination.next(buffer);
-	      this.buffer = [];
-	    }
-	  };
-
-	  BufferCountSubscriber.prototype._complete = function () {
-	    var buffer = this.buffer;
-
-	    if (buffer.length > 0) {
-	      this.destination.next(buffer);
-	    }
-
-	    _super.prototype._complete.call(this);
-	  };
-
-	  return BufferCountSubscriber;
-	}(Subscriber);
-
-	var BufferSkipCountSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(BufferSkipCountSubscriber, _super);
-
-	  function BufferSkipCountSubscriber(destination, bufferSize, startBufferEvery) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.bufferSize = bufferSize;
-	    _this.startBufferEvery = startBufferEvery;
-	    _this.buffers = [];
-	    _this.count = 0;
-	    return _this;
-	  }
-
-	  BufferSkipCountSubscriber.prototype._next = function (value) {
-	    var _a = this,
-	        bufferSize = _a.bufferSize,
-	        startBufferEvery = _a.startBufferEvery,
-	        buffers = _a.buffers,
-	        count = _a.count;
-
-	    this.count++;
-
-	    if (count % startBufferEvery === 0) {
-	      buffers.push([]);
-	    }
-
-	    for (var i = buffers.length; i--;) {
-	      var buffer = buffers[i];
-	      buffer.push(value);
-
-	      if (buffer.length === bufferSize) {
-	        buffers.splice(i, 1);
-	        this.destination.next(buffer);
-	      }
-	    }
-	  };
-
-	  BufferSkipCountSubscriber.prototype._complete = function () {
-	    var _a = this,
-	        buffers = _a.buffers,
-	        destination = _a.destination;
-
-	    while (buffers.length > 0) {
-	      var buffer = buffers.shift();
-
-	      if (buffer.length > 0) {
-	        destination.next(buffer);
-	      }
-	    }
-
-	    _super.prototype._complete.call(this);
-	  };
-
-	  return BufferSkipCountSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_scheduler_async,_Subscriber,_util_isScheduler PURE_IMPORTS_END */
-
-	var Context =
-	/*@__PURE__*/
-	function () {
-	  function Context() {
-	    this.buffer = [];
-	  }
-
-	  return Context;
-	}();
-
-	var BufferTimeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(BufferTimeSubscriber, _super);
-
-	  function BufferTimeSubscriber(destination, bufferTimeSpan, bufferCreationInterval, maxBufferSize, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.bufferTimeSpan = bufferTimeSpan;
-	    _this.bufferCreationInterval = bufferCreationInterval;
-	    _this.maxBufferSize = maxBufferSize;
-	    _this.scheduler = scheduler;
-	    _this.contexts = [];
-
-	    var context = _this.openContext();
-
-	    _this.timespanOnly = bufferCreationInterval == null || bufferCreationInterval < 0;
-
-	    if (_this.timespanOnly) {
-	      var timeSpanOnlyState = {
-	        subscriber: _this,
-	        context: context,
-	        bufferTimeSpan: bufferTimeSpan
-	      };
-
-	      _this.add(context.closeAction = scheduler.schedule(dispatchBufferTimeSpanOnly, bufferTimeSpan, timeSpanOnlyState));
-	    } else {
-	      var closeState = {
-	        subscriber: _this,
-	        context: context
-	      };
-	      var creationState = {
-	        bufferTimeSpan: bufferTimeSpan,
-	        bufferCreationInterval: bufferCreationInterval,
-	        subscriber: _this,
-	        scheduler: scheduler
-	      };
-
-	      _this.add(context.closeAction = scheduler.schedule(dispatchBufferClose, bufferTimeSpan, closeState));
-
-	      _this.add(scheduler.schedule(dispatchBufferCreation, bufferCreationInterval, creationState));
-	    }
-
-	    return _this;
-	  }
-
-	  BufferTimeSubscriber.prototype._next = function (value) {
-	    var contexts = this.contexts;
-	    var len = contexts.length;
-	    var filledBufferContext;
-
-	    for (var i = 0; i < len; i++) {
-	      var context_1 = contexts[i];
-	      var buffer = context_1.buffer;
-	      buffer.push(value);
-
-	      if (buffer.length == this.maxBufferSize) {
-	        filledBufferContext = context_1;
-	      }
-	    }
-
-	    if (filledBufferContext) {
-	      this.onBufferFull(filledBufferContext);
-	    }
-	  };
-
-	  BufferTimeSubscriber.prototype._error = function (err) {
-	    this.contexts.length = 0;
-
-	    _super.prototype._error.call(this, err);
-	  };
-
-	  BufferTimeSubscriber.prototype._complete = function () {
-	    var _a = this,
-	        contexts = _a.contexts,
-	        destination = _a.destination;
-
-	    while (contexts.length > 0) {
-	      var context_2 = contexts.shift();
-	      destination.next(context_2.buffer);
-	    }
-
-	    _super.prototype._complete.call(this);
-	  };
-
-	  BufferTimeSubscriber.prototype._unsubscribe = function () {
-	    this.contexts = null;
-	  };
-
-	  BufferTimeSubscriber.prototype.onBufferFull = function (context) {
-	    this.closeContext(context);
-	    var closeAction = context.closeAction;
-	    closeAction.unsubscribe();
-	    this.remove(closeAction);
-
-	    if (!this.closed && this.timespanOnly) {
-	      context = this.openContext();
-	      var bufferTimeSpan = this.bufferTimeSpan;
-	      var timeSpanOnlyState = {
-	        subscriber: this,
-	        context: context,
-	        bufferTimeSpan: bufferTimeSpan
-	      };
-	      this.add(context.closeAction = this.scheduler.schedule(dispatchBufferTimeSpanOnly, bufferTimeSpan, timeSpanOnlyState));
-	    }
-	  };
-
-	  BufferTimeSubscriber.prototype.openContext = function () {
-	    var context = new Context();
-	    this.contexts.push(context);
-	    return context;
-	  };
-
-	  BufferTimeSubscriber.prototype.closeContext = function (context) {
-	    this.destination.next(context.buffer);
-	    var contexts = this.contexts;
-	    var spliceIndex = contexts ? contexts.indexOf(context) : -1;
-
-	    if (spliceIndex >= 0) {
-	      contexts.splice(contexts.indexOf(context), 1);
-	    }
-	  };
-
-	  return BufferTimeSubscriber;
-	}(Subscriber);
-
-	function dispatchBufferTimeSpanOnly(state) {
-	  var subscriber = state.subscriber;
-	  var prevContext = state.context;
-
-	  if (prevContext) {
-	    subscriber.closeContext(prevContext);
-	  }
-
-	  if (!subscriber.closed) {
-	    state.context = subscriber.openContext();
-	    state.context.closeAction = this.schedule(state, state.bufferTimeSpan);
-	  }
-	}
-
-	function dispatchBufferCreation(state) {
-	  var bufferCreationInterval = state.bufferCreationInterval,
-	      bufferTimeSpan = state.bufferTimeSpan,
-	      subscriber = state.subscriber,
-	      scheduler = state.scheduler;
-	  var context = subscriber.openContext();
-	  var action = this;
-
-	  if (!subscriber.closed) {
-	    subscriber.add(context.closeAction = scheduler.schedule(dispatchBufferClose, bufferTimeSpan, {
-	      subscriber: subscriber,
-	      context: context
-	    }));
-	    action.schedule(state, bufferCreationInterval);
-	  }
-	}
-
-	function dispatchBufferClose(arg) {
-	  var subscriber = arg.subscriber,
-	      context = arg.context;
-	  subscriber.closeContext(context);
-	}
-
-	/** PURE_IMPORTS_START tslib,_Subscription,_util_subscribeToResult,_OuterSubscriber PURE_IMPORTS_END */
-
-	var BufferToggleSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(BufferToggleSubscriber, _super);
-
-	  function BufferToggleSubscriber(destination, openings, closingSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.openings = openings;
-	    _this.closingSelector = closingSelector;
-	    _this.contexts = [];
-
-	    _this.add(subscribeToResult(_this, openings));
-
-	    return _this;
-	  }
-
-	  BufferToggleSubscriber.prototype._next = function (value) {
-	    var contexts = this.contexts;
-	    var len = contexts.length;
-
-	    for (var i = 0; i < len; i++) {
-	      contexts[i].buffer.push(value);
-	    }
-	  };
-
-	  BufferToggleSubscriber.prototype._error = function (err) {
-	    var contexts = this.contexts;
-
-	    while (contexts.length > 0) {
-	      var context_1 = contexts.shift();
-	      context_1.subscription.unsubscribe();
-	      context_1.buffer = null;
-	      context_1.subscription = null;
-	    }
-
-	    this.contexts = null;
-
-	    _super.prototype._error.call(this, err);
-	  };
-
-	  BufferToggleSubscriber.prototype._complete = function () {
-	    var contexts = this.contexts;
-
-	    while (contexts.length > 0) {
-	      var context_2 = contexts.shift();
-	      this.destination.next(context_2.buffer);
-	      context_2.subscription.unsubscribe();
-	      context_2.buffer = null;
-	      context_2.subscription = null;
-	    }
-
-	    this.contexts = null;
-
-	    _super.prototype._complete.call(this);
-	  };
-
-	  BufferToggleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    outerValue ? this.closeBuffer(outerValue) : this.openBuffer(innerValue);
-	  };
-
-	  BufferToggleSubscriber.prototype.notifyComplete = function (innerSub) {
-	    this.closeBuffer(innerSub.context);
-	  };
-
-	  BufferToggleSubscriber.prototype.openBuffer = function (value) {
-	    try {
-	      var closingSelector = this.closingSelector;
-	      var closingNotifier = closingSelector.call(this, value);
-
-	      if (closingNotifier) {
-	        this.trySubscribe(closingNotifier);
-	      }
-	    } catch (err) {
-	      this._error(err);
-	    }
-	  };
-
-	  BufferToggleSubscriber.prototype.closeBuffer = function (context) {
-	    var contexts = this.contexts;
-
-	    if (contexts && context) {
-	      var buffer = context.buffer,
-	          subscription = context.subscription;
-	      this.destination.next(buffer);
-	      contexts.splice(contexts.indexOf(context), 1);
-	      this.remove(subscription);
-	      subscription.unsubscribe();
-	    }
-	  };
-
-	  BufferToggleSubscriber.prototype.trySubscribe = function (closingNotifier) {
-	    var contexts = this.contexts;
-	    var buffer = [];
-	    var subscription = new Subscription();
-	    var context = {
-	      buffer: buffer,
-	      subscription: subscription
-	    };
-	    contexts.push(context);
-	    var innerSubscription = subscribeToResult(this, closingNotifier, context);
-
-	    if (!innerSubscription || innerSubscription.closed) {
-	      this.closeBuffer(context);
-	    } else {
-	      innerSubscription.context = context;
-	      this.add(innerSubscription);
-	      subscription.add(innerSubscription);
-	    }
-	  };
-
-	  return BufferToggleSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscription,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var BufferWhenSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(BufferWhenSubscriber, _super);
-
-	  function BufferWhenSubscriber(destination, closingSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.closingSelector = closingSelector;
-	    _this.subscribing = false;
-
-	    _this.openBuffer();
-
-	    return _this;
-	  }
-
-	  BufferWhenSubscriber.prototype._next = function (value) {
-	    this.buffer.push(value);
-	  };
-
-	  BufferWhenSubscriber.prototype._complete = function () {
-	    var buffer = this.buffer;
-
-	    if (buffer) {
-	      this.destination.next(buffer);
-	    }
-
-	    _super.prototype._complete.call(this);
-	  };
-
-	  BufferWhenSubscriber.prototype._unsubscribe = function () {
-	    this.buffer = null;
-	    this.subscribing = false;
-	  };
-
-	  BufferWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.openBuffer();
-	  };
-
-	  BufferWhenSubscriber.prototype.notifyComplete = function () {
-	    if (this.subscribing) {
-	      this.complete();
-	    } else {
-	      this.openBuffer();
-	    }
-	  };
-
-	  BufferWhenSubscriber.prototype.openBuffer = function () {
-	    var closingSubscription = this.closingSubscription;
-
-	    if (closingSubscription) {
-	      this.remove(closingSubscription);
-	      closingSubscription.unsubscribe();
-	    }
-
-	    var buffer = this.buffer;
-
-	    if (this.buffer) {
-	      this.destination.next(buffer);
-	    }
-
-	    this.buffer = [];
-	    var closingNotifier = tryCatch(this.closingSelector)();
-
-	    if (closingNotifier === errorObject) {
-	      this.error(errorObject.e);
-	    } else {
-	      closingSubscription = new Subscription();
-	      this.closingSubscription = closingSubscription;
-	      this.add(closingSubscription);
-	      this.subscribing = true;
-	      closingSubscription.add(subscribeToResult(this, closingNotifier));
-	      this.subscribing = false;
-	    }
-	  };
-
-	  return BufferWhenSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var CatchSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(CatchSubscriber, _super);
-
-	  function CatchSubscriber(destination, selector, caught) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.selector = selector;
-	    _this.caught = caught;
-	    return _this;
-	  }
-
-	  CatchSubscriber.prototype.error = function (err) {
-	    if (!this.isStopped) {
-	      var result = void 0;
-
-	      try {
-	        result = this.selector(err, this.caught);
-	      } catch (err2) {
-	        _super.prototype.error.call(this, err2);
-
-	        return;
-	      }
-
-	      this._unsubscribeAndRecycle();
-
-	      var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
-	      this.add(innerSubscriber);
-	      subscribeToResult(this, result, undefined, undefined, innerSubscriber);
-	    }
-	  };
-
-	  return CatchSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START _observable_combineLatest PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _util_isArray,_observable_combineLatest,_observable_from PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _observable_concat PURE_IMPORTS_END */
-	function concat$1() {
-	  var observables = [];
-
-	  for (var _i = 0; _i < arguments.length; _i++) {
-	    observables[_i] = arguments[_i];
-	  }
-
-	  return function (source) {
-	    return source.lift.call(concat.apply(void 0, [source].concat(observables)));
-	  };
-	}
-
-	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _concatMap PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var CountSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(CountSubscriber, _super);
-
-	  function CountSubscriber(destination, predicate, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.source = source;
-	    _this.count = 0;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  CountSubscriber.prototype._next = function (value) {
-	    if (this.predicate) {
-	      this._tryPredicate(value);
-	    } else {
-	      this.count++;
-	    }
-	  };
-
-	  CountSubscriber.prototype._tryPredicate = function (value) {
-	    var result;
-
-	    try {
-	      result = this.predicate(value, this.index++, this.source);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    if (result) {
-	      this.count++;
-	    }
-	  };
-
-	  CountSubscriber.prototype._complete = function () {
-	    this.destination.next(this.count);
-	    this.destination.complete();
-	  };
-
-	  return CountSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var DebounceSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DebounceSubscriber, _super);
-
-	  function DebounceSubscriber(destination, durationSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.durationSelector = durationSelector;
-	    _this.hasValue = false;
-	    _this.durationSubscription = null;
-	    return _this;
-	  }
-
-	  DebounceSubscriber.prototype._next = function (value) {
-	    try {
-	      var result = this.durationSelector.call(this, value);
-
-	      if (result) {
-	        this._tryNext(value, result);
-	      }
-	    } catch (err) {
-	      this.destination.error(err);
-	    }
-	  };
-
-	  DebounceSubscriber.prototype._complete = function () {
-	    this.emitValue();
-	    this.destination.complete();
-	  };
-
-	  DebounceSubscriber.prototype._tryNext = function (value, duration) {
-	    var subscription = this.durationSubscription;
-	    this.value = value;
-	    this.hasValue = true;
-
-	    if (subscription) {
-	      subscription.unsubscribe();
-	      this.remove(subscription);
-	    }
-
-	    subscription = subscribeToResult(this, duration);
-
-	    if (subscription && !subscription.closed) {
-	      this.add(this.durationSubscription = subscription);
-	    }
-	  };
-
-	  DebounceSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.emitValue();
-	  };
-
-	  DebounceSubscriber.prototype.notifyComplete = function () {
-	    this.emitValue();
-	  };
-
-	  DebounceSubscriber.prototype.emitValue = function () {
-	    if (this.hasValue) {
-	      var value = this.value;
-	      var subscription = this.durationSubscription;
-
-	      if (subscription) {
-	        this.durationSubscription = null;
-	        subscription.unsubscribe();
-	        this.remove(subscription);
-	      }
-
-	      this.value = null;
-	      this.hasValue = false;
-
-	      _super.prototype._next.call(this, value);
-	    }
-	  };
-
-	  return DebounceSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async PURE_IMPORTS_END */
-
-	var DebounceTimeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DebounceTimeSubscriber, _super);
-
-	  function DebounceTimeSubscriber(destination, dueTime, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.dueTime = dueTime;
-	    _this.scheduler = scheduler;
-	    _this.debouncedSubscription = null;
-	    _this.lastValue = null;
-	    _this.hasValue = false;
-	    return _this;
-	  }
-
-	  DebounceTimeSubscriber.prototype._next = function (value) {
-	    this.clearDebounce();
-	    this.lastValue = value;
-	    this.hasValue = true;
-	    this.add(this.debouncedSubscription = this.scheduler.schedule(dispatchNext$2, this.dueTime, this));
-	  };
-
-	  DebounceTimeSubscriber.prototype._complete = function () {
-	    this.debouncedNext();
-	    this.destination.complete();
-	  };
-
-	  DebounceTimeSubscriber.prototype.debouncedNext = function () {
-	    this.clearDebounce();
-
-	    if (this.hasValue) {
-	      var lastValue = this.lastValue;
-	      this.lastValue = null;
-	      this.hasValue = false;
-	      this.destination.next(lastValue);
-	    }
-	  };
-
-	  DebounceTimeSubscriber.prototype.clearDebounce = function () {
-	    var debouncedSubscription = this.debouncedSubscription;
-
-	    if (debouncedSubscription !== null) {
-	      this.remove(debouncedSubscription);
-	      debouncedSubscription.unsubscribe();
-	      this.debouncedSubscription = null;
-	    }
-	  };
-
-	  return DebounceTimeSubscriber;
-	}(Subscriber);
-
-	function dispatchNext$2(subscriber) {
-	  subscriber.debouncedNext();
-	}
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var DefaultIfEmptySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DefaultIfEmptySubscriber, _super);
-
-	  function DefaultIfEmptySubscriber(destination, defaultValue) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.defaultValue = defaultValue;
-	    _this.isEmpty = true;
-	    return _this;
-	  }
-
-	  DefaultIfEmptySubscriber.prototype._next = function (value) {
-	    this.isEmpty = false;
-	    this.destination.next(value);
-	  };
-
-	  DefaultIfEmptySubscriber.prototype._complete = function () {
-	    if (this.isEmpty) {
-	      this.destination.next(this.defaultValue);
-	    }
-
-	    this.destination.complete();
-	  };
-
-	  return DefaultIfEmptySubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_scheduler_async,_util_isDate,_Subscriber,_Notification PURE_IMPORTS_END */
-
-	var DelaySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DelaySubscriber, _super);
-
-	  function DelaySubscriber(destination, delay, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.delay = delay;
-	    _this.scheduler = scheduler;
-	    _this.queue = [];
-	    _this.active = false;
-	    _this.errored = false;
-	    return _this;
-	  }
-
-	  DelaySubscriber.dispatch = function (state) {
-	    var source = state.source;
-	    var queue = source.queue;
-	    var scheduler = state.scheduler;
-	    var destination = state.destination;
-
-	    while (queue.length > 0 && queue[0].time - scheduler.now() <= 0) {
-	      queue.shift().notification.observe(destination);
-	    }
-
-	    if (queue.length > 0) {
-	      var delay_1 = Math.max(0, queue[0].time - scheduler.now());
-	      this.schedule(state, delay_1);
-	    } else {
-	      this.unsubscribe();
-	      source.active = false;
-	    }
-	  };
-
-	  DelaySubscriber.prototype._schedule = function (scheduler) {
-	    this.active = true;
-	    var destination = this.destination;
-	    destination.add(scheduler.schedule(DelaySubscriber.dispatch, this.delay, {
-	      source: this,
-	      destination: this.destination,
-	      scheduler: scheduler
-	    }));
-	  };
-
-	  DelaySubscriber.prototype.scheduleNotification = function (notification) {
-	    if (this.errored === true) {
-	      return;
-	    }
-
-	    var scheduler = this.scheduler;
-	    var message = new DelayMessage(scheduler.now() + this.delay, notification);
-	    this.queue.push(message);
-
-	    if (this.active === false) {
-	      this._schedule(scheduler);
-	    }
-	  };
-
-	  DelaySubscriber.prototype._next = function (value) {
-	    this.scheduleNotification(Notification.createNext(value));
-	  };
-
-	  DelaySubscriber.prototype._error = function (err) {
-	    this.errored = true;
-	    this.queue = [];
-	    this.destination.error(err);
-	    this.unsubscribe();
-	  };
-
-	  DelaySubscriber.prototype._complete = function () {
-	    this.scheduleNotification(Notification.createComplete());
-	    this.unsubscribe();
-	  };
-
-	  return DelaySubscriber;
-	}(Subscriber);
-
-	var DelayMessage =
-	/*@__PURE__*/
-	function () {
-	  function DelayMessage(time, notification) {
-	    this.time = time;
-	    this.notification = notification;
-	  }
-
-	  return DelayMessage;
-	}();
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_Observable,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var DelayWhenSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DelayWhenSubscriber, _super);
-
-	  function DelayWhenSubscriber(destination, delayDurationSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.delayDurationSelector = delayDurationSelector;
-	    _this.completed = false;
-	    _this.delayNotifierSubscriptions = [];
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  DelayWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.destination.next(outerValue);
-	    this.removeSubscription(innerSub);
-	    this.tryComplete();
-	  };
-
-	  DelayWhenSubscriber.prototype.notifyError = function (error, innerSub) {
-	    this._error(error);
-	  };
-
-	  DelayWhenSubscriber.prototype.notifyComplete = function (innerSub) {
-	    var value = this.removeSubscription(innerSub);
-
-	    if (value) {
-	      this.destination.next(value);
-	    }
-
-	    this.tryComplete();
-	  };
-
-	  DelayWhenSubscriber.prototype._next = function (value) {
-	    var index = this.index++;
-
-	    try {
-	      var delayNotifier = this.delayDurationSelector(value, index);
-
-	      if (delayNotifier) {
-	        this.tryDelay(delayNotifier, value);
-	      }
-	    } catch (err) {
-	      this.destination.error(err);
-	    }
-	  };
-
-	  DelayWhenSubscriber.prototype._complete = function () {
-	    this.completed = true;
-	    this.tryComplete();
-	    this.unsubscribe();
-	  };
-
-	  DelayWhenSubscriber.prototype.removeSubscription = function (subscription) {
-	    subscription.unsubscribe();
-	    var subscriptionIdx = this.delayNotifierSubscriptions.indexOf(subscription);
-
-	    if (subscriptionIdx !== -1) {
-	      this.delayNotifierSubscriptions.splice(subscriptionIdx, 1);
-	    }
-
-	    return subscription.outerValue;
-	  };
-
-	  DelayWhenSubscriber.prototype.tryDelay = function (delayNotifier, value) {
-	    var notifierSubscription = subscribeToResult(this, delayNotifier, value);
-
-	    if (notifierSubscription && !notifierSubscription.closed) {
-	      var destination = this.destination;
-	      destination.add(notifierSubscription);
-	      this.delayNotifierSubscriptions.push(notifierSubscription);
-	    }
-	  };
-
-	  DelayWhenSubscriber.prototype.tryComplete = function () {
-	    if (this.completed && this.delayNotifierSubscriptions.length === 0) {
-	      this.destination.complete();
-	    }
-	  };
-
-	  return DelayWhenSubscriber;
-	}(OuterSubscriber);
-
-	var SubscriptionDelayObservable =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SubscriptionDelayObservable, _super);
-
-	  function SubscriptionDelayObservable(source, subscriptionDelay) {
-	    var _this = _super.call(this) || this;
-
-	    _this.source = source;
-	    _this.subscriptionDelay = subscriptionDelay;
-	    return _this;
-	  }
-
-	  SubscriptionDelayObservable.prototype._subscribe = function (subscriber) {
-	    this.subscriptionDelay.subscribe(new SubscriptionDelaySubscriber(subscriber, this.source));
-	  };
-
-	  return SubscriptionDelayObservable;
-	}(Observable);
-
-	var SubscriptionDelaySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SubscriptionDelaySubscriber, _super);
-
-	  function SubscriptionDelaySubscriber(parent, source) {
-	    var _this = _super.call(this) || this;
-
-	    _this.parent = parent;
-	    _this.source = source;
-	    _this.sourceSubscribed = false;
-	    return _this;
-	  }
-
-	  SubscriptionDelaySubscriber.prototype._next = function (unused) {
-	    this.subscribeToSource();
-	  };
-
-	  SubscriptionDelaySubscriber.prototype._error = function (err) {
-	    this.unsubscribe();
-	    this.parent.error(err);
-	  };
-
-	  SubscriptionDelaySubscriber.prototype._complete = function () {
-	    this.unsubscribe();
-	    this.subscribeToSource();
-	  };
-
-	  SubscriptionDelaySubscriber.prototype.subscribeToSource = function () {
-	    if (!this.sourceSubscribed) {
-	      this.sourceSubscribed = true;
-	      this.unsubscribe();
-	      this.source.subscribe(this.parent);
-	    }
-	  };
-
-	  return SubscriptionDelaySubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-	function dematerialize() {
-	  return function dematerializeOperatorFunction(source) {
-	    return source.lift(new DeMaterializeOperator());
-	  };
-	}
-
-	var DeMaterializeOperator =
-	/*@__PURE__*/
-	function () {
-	  function DeMaterializeOperator() {}
-
-	  DeMaterializeOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new DeMaterializeSubscriber(subscriber));
-	  };
-
-	  return DeMaterializeOperator;
-	}();
-
-	var DeMaterializeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DeMaterializeSubscriber, _super);
-
-	  function DeMaterializeSubscriber(destination) {
-	    return _super.call(this, destination) || this;
-	  }
-
-	  DeMaterializeSubscriber.prototype._next = function (value) {
-	    value.observe(this.destination);
-	  };
-
-	  return DeMaterializeSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var DistinctSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DistinctSubscriber, _super);
-
-	  function DistinctSubscriber(destination, keySelector, flushes) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.keySelector = keySelector;
-	    _this.values = new Set();
-
-	    if (flushes) {
-	      _this.add(subscribeToResult(_this, flushes));
-	    }
-
-	    return _this;
-	  }
-
-	  DistinctSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.values.clear();
-	  };
-
-	  DistinctSubscriber.prototype.notifyError = function (error, innerSub) {
-	    this._error(error);
-	  };
-
-	  DistinctSubscriber.prototype._next = function (value) {
-	    if (this.keySelector) {
-	      this._useKeySelector(value);
-	    } else {
-	      this._finalizeNext(value, value);
-	    }
-	  };
-
-	  DistinctSubscriber.prototype._useKeySelector = function (value) {
-	    var key;
-	    var destination = this.destination;
-
-	    try {
-	      key = this.keySelector(value);
-	    } catch (err) {
-	      destination.error(err);
-	      return;
-	    }
-
-	    this._finalizeNext(key, value);
-	  };
-
-	  DistinctSubscriber.prototype._finalizeNext = function (key, value) {
-	    var values = this.values;
-
-	    if (!values.has(key)) {
-	      values.add(key);
-	      this.destination.next(value);
-	    }
-	  };
-
-	  return DistinctSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
-	function distinctUntilChanged(compare, keySelector) {
-	  return function (source) {
-	    return source.lift(new DistinctUntilChangedOperator(compare, keySelector));
-	  };
-	}
-
-	var DistinctUntilChangedOperator =
-	/*@__PURE__*/
-	function () {
-	  function DistinctUntilChangedOperator(compare, keySelector) {
-	    this.compare = compare;
-	    this.keySelector = keySelector;
-	  }
-
-	  DistinctUntilChangedOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new DistinctUntilChangedSubscriber(subscriber, this.compare, this.keySelector));
-	  };
-
-	  return DistinctUntilChangedOperator;
-	}();
-
-	var DistinctUntilChangedSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(DistinctUntilChangedSubscriber, _super);
-
-	  function DistinctUntilChangedSubscriber(destination, compare, keySelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.keySelector = keySelector;
-	    _this.hasKey = false;
-
-	    if (typeof compare === 'function') {
-	      _this.compare = compare;
-	    }
-
-	    return _this;
-	  }
-
-	  DistinctUntilChangedSubscriber.prototype.compare = function (x, y) {
-	    return x === y;
-	  };
-
-	  DistinctUntilChangedSubscriber.prototype._next = function (value) {
-	    var keySelector = this.keySelector;
-	    var key = value;
-
-	    if (keySelector) {
-	      key = tryCatch(this.keySelector)(value);
-
-	      if (key === errorObject) {
-	        return this.destination.error(errorObject.e);
-	      }
-	    }
-
-	    var result = false;
-
-	    if (this.hasKey) {
-	      result = tryCatch(this.compare)(this.key, key);
-
-	      if (result === errorObject) {
-	        return this.destination.error(errorObject.e);
-	      }
-	    } else {
-	      this.hasKey = true;
-	    }
-
-	    if (Boolean(result) === false) {
-	      this.key = key;
-	      this.destination.next(value);
-	    }
-	  };
-
-	  return DistinctUntilChangedSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _distinctUntilChanged PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-	function filter(predicate, thisArg) {
-	  return function filterOperatorFunction(source) {
-	    return source.lift(new FilterOperator(predicate, thisArg));
-	  };
-	}
-
-	var FilterOperator =
-	/*@__PURE__*/
-	function () {
-	  function FilterOperator(predicate, thisArg) {
-	    this.predicate = predicate;
-	    this.thisArg = thisArg;
-	  }
-
-	  FilterOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new FilterSubscriber(subscriber, this.predicate, this.thisArg));
-	  };
-
-	  return FilterOperator;
-	}();
-
-	var FilterSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(FilterSubscriber, _super);
-
-	  function FilterSubscriber(destination, predicate, thisArg) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.thisArg = thisArg;
-	    _this.count = 0;
-	    return _this;
-	  }
-
-	  FilterSubscriber.prototype._next = function (value) {
-	    var result;
-
-	    try {
-	      result = this.predicate.call(this.thisArg, value, this.count++);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    if (result) {
-	      this.destination.next(value);
-	    }
-	  };
-
-	  return FilterSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_noop,_util_isFunction PURE_IMPORTS_END */
-
-	var TapSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(TapSubscriber, _super);
-
-	  function TapSubscriber(destination, observerOrNext, error, complete) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this._tapNext = noop;
-	    _this._tapError = noop;
-	    _this._tapComplete = noop;
-	    _this._tapError = error || noop;
-	    _this._tapComplete = complete || noop;
-
-	    if (isFunction(observerOrNext)) {
-	      _this._context = _this;
-	      _this._tapNext = observerOrNext;
-	    } else if (observerOrNext) {
-	      _this._context = observerOrNext;
-	      _this._tapNext = observerOrNext.next || noop;
-	      _this._tapError = observerOrNext.error || noop;
-	      _this._tapComplete = observerOrNext.complete || noop;
-	    }
-
-	    return _this;
-	  }
-
-	  TapSubscriber.prototype._next = function (value) {
-	    try {
-	      this._tapNext.call(this._context, value);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    this.destination.next(value);
-	  };
-
-	  TapSubscriber.prototype._error = function (err) {
-	    try {
-	      this._tapError.call(this._context, err);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    this.destination.error(err);
-	  };
-
-	  TapSubscriber.prototype._complete = function () {
-	    try {
-	      this._tapComplete.call(this._context);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    return this.destination.complete();
-	  };
-
-	  return TapSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _tap,_util_EmptyError PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError,_observable_empty PURE_IMPORTS_END */
-	function take(count) {
-	  return function (source) {
-	    if (count === 0) {
-	      return empty$1();
-	    } else {
-	      return source.lift(new TakeOperator(count));
-	    }
-	  };
-	}
-
-	var TakeOperator =
-	/*@__PURE__*/
-	function () {
-	  function TakeOperator(total) {
-	    this.total = total;
-
-	    if (this.total < 0) {
-	      throw new ArgumentOutOfRangeError();
-	    }
-	  }
-
-	  TakeOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new TakeSubscriber(subscriber, this.total));
-	  };
-
-	  return TakeOperator;
-	}();
-
-	var TakeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(TakeSubscriber, _super);
-
-	  function TakeSubscriber(destination, total) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.total = total;
-	    _this.count = 0;
-	    return _this;
-	  }
-
-	  TakeSubscriber.prototype._next = function (value) {
-	    var total = this.total;
-	    var count = ++this.count;
-
-	    if (count <= total) {
-	      this.destination.next(value);
-
-	      if (count === total) {
-	        this.destination.complete();
-	        this.unsubscribe();
-	      }
-	    }
-	  };
-
-	  return TakeSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _util_ArgumentOutOfRangeError,_filter,_throwIfEmpty,_defaultIfEmpty,_take PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var EverySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(EverySubscriber, _super);
-
-	  function EverySubscriber(destination, predicate, thisArg, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.thisArg = thisArg;
-	    _this.source = source;
-	    _this.index = 0;
-	    _this.thisArg = thisArg || _this;
-	    return _this;
-	  }
-
-	  EverySubscriber.prototype.notifyComplete = function (everyValueMatch) {
-	    this.destination.next(everyValueMatch);
-	    this.destination.complete();
-	  };
-
-	  EverySubscriber.prototype._next = function (value) {
-	    var result = false;
-
-	    try {
-	      result = this.predicate.call(this.thisArg, value, this.index++, this.source);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    if (!result) {
-	      this.notifyComplete(false);
-	    }
-	  };
-
-	  EverySubscriber.prototype._complete = function () {
-	    this.notifyComplete(true);
-	  };
-
-	  return EverySubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var SwitchFirstSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SwitchFirstSubscriber, _super);
-
-	  function SwitchFirstSubscriber(destination) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.hasCompleted = false;
-	    _this.hasSubscription = false;
-	    return _this;
-	  }
-
-	  SwitchFirstSubscriber.prototype._next = function (value) {
-	    if (!this.hasSubscription) {
-	      this.hasSubscription = true;
-	      this.add(subscribeToResult(this, value));
-	    }
-	  };
-
-	  SwitchFirstSubscriber.prototype._complete = function () {
-	    this.hasCompleted = true;
-
-	    if (!this.hasSubscription) {
-	      this.destination.complete();
-	    }
-	  };
-
-	  SwitchFirstSubscriber.prototype.notifyComplete = function (innerSub) {
-	    this.remove(innerSub);
-	    this.hasSubscription = false;
-
-	    if (this.hasCompleted) {
-	      this.destination.complete();
-	    }
-	  };
-
-	  return SwitchFirstSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult,_map,_observable_from PURE_IMPORTS_END */
-
-	var ExhaustMapSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(ExhaustMapSubscriber, _super);
-
-	  function ExhaustMapSubscriber(destination, project) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.project = project;
-	    _this.hasSubscription = false;
-	    _this.hasCompleted = false;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  ExhaustMapSubscriber.prototype._next = function (value) {
-	    if (!this.hasSubscription) {
-	      this.tryNext(value);
-	    }
-	  };
-
-	  ExhaustMapSubscriber.prototype.tryNext = function (value) {
-	    var result;
-	    var index = this.index++;
-
-	    try {
-	      result = this.project(value, index);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    this.hasSubscription = true;
-
-	    this._innerSub(result, value, index);
-	  };
-
-	  ExhaustMapSubscriber.prototype._innerSub = function (result, value, index) {
-	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
-	    var destination = this.destination;
-	    destination.add(innerSubscriber);
-	    subscribeToResult(this, result, value, index, innerSubscriber);
-	  };
-
-	  ExhaustMapSubscriber.prototype._complete = function () {
-	    this.hasCompleted = true;
-
-	    if (!this.hasSubscription) {
-	      this.destination.complete();
-	    }
-
-	    this.unsubscribe();
-	  };
-
-	  ExhaustMapSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.destination.next(innerValue);
-	  };
-
-	  ExhaustMapSubscriber.prototype.notifyError = function (err) {
-	    this.destination.error(err);
-	  };
-
-	  ExhaustMapSubscriber.prototype.notifyComplete = function (innerSub) {
-	    var destination = this.destination;
-	    destination.remove(innerSub);
-	    this.hasSubscription = false;
-
-	    if (this.hasCompleted) {
-	      this.destination.complete();
-	    }
-	  };
-
-	  return ExhaustMapSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var ExpandSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(ExpandSubscriber, _super);
-
-	  function ExpandSubscriber(destination, project, concurrent, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.project = project;
-	    _this.concurrent = concurrent;
-	    _this.scheduler = scheduler;
-	    _this.index = 0;
-	    _this.active = 0;
-	    _this.hasCompleted = false;
-
-	    if (concurrent < Number.POSITIVE_INFINITY) {
-	      _this.buffer = [];
-	    }
-
-	    return _this;
-	  }
-
-	  ExpandSubscriber.dispatch = function (arg) {
-	    var subscriber = arg.subscriber,
-	        result = arg.result,
-	        value = arg.value,
-	        index = arg.index;
-	    subscriber.subscribeToProjection(result, value, index);
-	  };
-
-	  ExpandSubscriber.prototype._next = function (value) {
-	    var destination = this.destination;
-
-	    if (destination.closed) {
-	      this._complete();
-
-	      return;
-	    }
-
-	    var index = this.index++;
-
-	    if (this.active < this.concurrent) {
-	      destination.next(value);
-	      var result = tryCatch(this.project)(value, index);
-
-	      if (result === errorObject) {
-	        destination.error(errorObject.e);
-	      } else if (!this.scheduler) {
-	        this.subscribeToProjection(result, value, index);
-	      } else {
-	        var state = {
-	          subscriber: this,
-	          result: result,
-	          value: value,
-	          index: index
-	        };
-	        var destination_1 = this.destination;
-	        destination_1.add(this.scheduler.schedule(ExpandSubscriber.dispatch, 0, state));
-	      }
-	    } else {
-	      this.buffer.push(value);
-	    }
-	  };
-
-	  ExpandSubscriber.prototype.subscribeToProjection = function (result, value, index) {
-	    this.active++;
-	    var destination = this.destination;
-	    destination.add(subscribeToResult(this, result, value, index));
-	  };
-
-	  ExpandSubscriber.prototype._complete = function () {
-	    this.hasCompleted = true;
-
-	    if (this.hasCompleted && this.active === 0) {
-	      this.destination.complete();
-	    }
-
-	    this.unsubscribe();
-	  };
-
-	  ExpandSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this._next(innerValue);
-	  };
-
-	  ExpandSubscriber.prototype.notifyComplete = function (innerSub) {
-	    var buffer = this.buffer;
-	    var destination = this.destination;
-	    destination.remove(innerSub);
-	    this.active--;
-
-	    if (buffer && buffer.length > 0) {
-	      this._next(buffer.shift());
-	    }
-
-	    if (this.hasCompleted && this.active === 0) {
-	      this.destination.complete();
-	    }
-	  };
-
-	  return ExpandSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_Subscription PURE_IMPORTS_END */
-
-	var FinallySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(FinallySubscriber, _super);
-
-	  function FinallySubscriber(destination, callback) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.add(new Subscription(callback));
-
-	    return _this;
-	  }
-
-	  return FinallySubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var FindValueSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(FindValueSubscriber, _super);
-
-	  function FindValueSubscriber(destination, predicate, source, yieldIndex, thisArg) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.source = source;
-	    _this.yieldIndex = yieldIndex;
-	    _this.thisArg = thisArg;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  FindValueSubscriber.prototype.notifyComplete = function (value) {
-	    var destination = this.destination;
-	    destination.next(value);
-	    destination.complete();
-	    this.unsubscribe();
-	  };
-
-	  FindValueSubscriber.prototype._next = function (value) {
-	    var _a = this,
-	        predicate = _a.predicate,
-	        thisArg = _a.thisArg;
-
-	    var index = this.index++;
-
-	    try {
-	      var result = predicate.call(thisArg || this, value, index, this.source);
-
-	      if (result) {
-	        this.notifyComplete(this.yieldIndex ? index : value);
-	      }
-	    } catch (err) {
-	      this.destination.error(err);
-	    }
-	  };
-
-	  FindValueSubscriber.prototype._complete = function () {
-	    this.notifyComplete(this.yieldIndex ? -1 : undefined);
-	  };
-
-	  return FindValueSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _operators_find PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _util_EmptyError,_filter,_take,_defaultIfEmpty,_throwIfEmpty,_util_identity PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var IgnoreElementsSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(IgnoreElementsSubscriber, _super);
-
-	  function IgnoreElementsSubscriber() {
-	    return _super !== null && _super.apply(this, arguments) || this;
-	  }
-
-	  IgnoreElementsSubscriber.prototype._next = function (unused) {};
-
-	  return IgnoreElementsSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var IsEmptySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(IsEmptySubscriber, _super);
-
-	  function IsEmptySubscriber(destination) {
-	    return _super.call(this, destination) || this;
-	  }
-
-	  IsEmptySubscriber.prototype.notifyComplete = function (isEmpty) {
-	    var destination = this.destination;
-	    destination.next(isEmpty);
-	    destination.complete();
-	  };
-
-	  IsEmptySubscriber.prototype._next = function (value) {
-	    this.notifyComplete(false);
-	  };
-
-	  IsEmptySubscriber.prototype._complete = function () {
-	    this.notifyComplete(true);
-	  };
-
-	  return IsEmptySubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError,_observable_empty PURE_IMPORTS_END */
-
-	var TakeLastSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(TakeLastSubscriber, _super);
-
-	  function TakeLastSubscriber(destination, total) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.total = total;
-	    _this.ring = new Array();
-	    _this.count = 0;
-	    return _this;
-	  }
-
-	  TakeLastSubscriber.prototype._next = function (value) {
-	    var ring = this.ring;
-	    var total = this.total;
-	    var count = this.count++;
-
-	    if (ring.length < total) {
-	      ring.push(value);
-	    } else {
-	      var index = count % total;
-	      ring[index] = value;
-	    }
-	  };
-
-	  TakeLastSubscriber.prototype._complete = function () {
-	    var destination = this.destination;
-	    var count = this.count;
-
-	    if (count > 0) {
-	      var total = this.count >= this.total ? this.total : this.count;
-	      var ring = this.ring;
-
-	      for (var i = 0; i < total; i++) {
-	        var idx = count++ % total;
-	        destination.next(ring[idx]);
-	      }
-	    }
-
-	    destination.complete();
-	  };
-
-	  return TakeLastSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _util_EmptyError,_filter,_takeLast,_throwIfEmpty,_defaultIfEmpty,_util_identity PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var MapToSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(MapToSubscriber, _super);
-
-	  function MapToSubscriber(destination, value) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.value = value;
-	    return _this;
-	  }
-
-	  MapToSubscriber.prototype._next = function (x) {
-	    this.destination.next(this.value);
-	  };
-
-	  return MapToSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_Notification PURE_IMPORTS_END */
-	function materialize() {
-	  return function materializeOperatorFunction(source) {
-	    return source.lift(new MaterializeOperator());
-	  };
-	}
-
-	var MaterializeOperator =
-	/*@__PURE__*/
-	function () {
-	  function MaterializeOperator() {}
-
-	  MaterializeOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new MaterializeSubscriber(subscriber));
-	  };
-
-	  return MaterializeOperator;
-	}();
-
-	var MaterializeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(MaterializeSubscriber, _super);
-
-	  function MaterializeSubscriber(destination) {
-	    return _super.call(this, destination) || this;
-	  }
-
-	  MaterializeSubscriber.prototype._next = function (value) {
-	    this.destination.next(Notification.createNext(value));
-	  };
-
-	  MaterializeSubscriber.prototype._error = function (err) {
-	    var destination = this.destination;
-	    destination.next(Notification.createError(err));
-	    destination.complete();
-	  };
-
-	  MaterializeSubscriber.prototype._complete = function () {
-	    var destination = this.destination;
-	    destination.next(Notification.createComplete());
-	    destination.complete();
-	  };
-
-	  return MaterializeSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var ScanSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(ScanSubscriber, _super);
-
-	  function ScanSubscriber(destination, accumulator, _seed, hasSeed) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.accumulator = accumulator;
-	    _this._seed = _seed;
-	    _this.hasSeed = hasSeed;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  Object.defineProperty(ScanSubscriber.prototype, "seed", {
-	    get: function () {
-	      return this._seed;
-	    },
-	    set: function (value) {
-	      this.hasSeed = true;
-	      this._seed = value;
-	    },
-	    enumerable: true,
-	    configurable: true
-	  });
-
-	  ScanSubscriber.prototype._next = function (value) {
-	    if (!this.hasSeed) {
-	      this.seed = value;
-	      this.destination.next(value);
-	    } else {
-	      return this._tryNext(value);
-	    }
-	  };
-
-	  ScanSubscriber.prototype._tryNext = function (value) {
-	    var index = this.index++;
-	    var result;
-
-	    try {
-	      result = this.accumulator(this.seed, value, index);
-	    } catch (err) {
-	      this.destination.error(err);
-	    }
-
-	    this.seed = result;
-	    this.destination.next(result);
-	  };
-
-	  return ScanSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _scan,_takeLast,_defaultIfEmpty,_util_pipe PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _observable_merge PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_util_subscribeToResult,_OuterSubscriber,_InnerSubscriber PURE_IMPORTS_END */
-
-	var MergeScanSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(MergeScanSubscriber, _super);
-
-	  function MergeScanSubscriber(destination, accumulator, acc, concurrent) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.accumulator = accumulator;
-	    _this.acc = acc;
-	    _this.concurrent = concurrent;
-	    _this.hasValue = false;
-	    _this.hasCompleted = false;
-	    _this.buffer = [];
-	    _this.active = 0;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  MergeScanSubscriber.prototype._next = function (value) {
-	    if (this.active < this.concurrent) {
-	      var index = this.index++;
-	      var ish = tryCatch(this.accumulator)(this.acc, value);
-	      var destination = this.destination;
-
-	      if (ish === errorObject) {
-	        destination.error(errorObject.e);
-	      } else {
-	        this.active++;
-
-	        this._innerSub(ish, value, index);
-	      }
-	    } else {
-	      this.buffer.push(value);
-	    }
-	  };
-
-	  MergeScanSubscriber.prototype._innerSub = function (ish, value, index) {
-	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
-	    var destination = this.destination;
-	    destination.add(innerSubscriber);
-	    subscribeToResult(this, ish, value, index, innerSubscriber);
-	  };
-
-	  MergeScanSubscriber.prototype._complete = function () {
-	    this.hasCompleted = true;
-
-	    if (this.active === 0 && this.buffer.length === 0) {
-	      if (this.hasValue === false) {
-	        this.destination.next(this.acc);
-	      }
-
-	      this.destination.complete();
-	    }
-
-	    this.unsubscribe();
-	  };
-
-	  MergeScanSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    var destination = this.destination;
-	    this.acc = innerValue;
-	    this.hasValue = true;
-	    destination.next(innerValue);
-	  };
-
-	  MergeScanSubscriber.prototype.notifyComplete = function (innerSub) {
-	    var buffer = this.buffer;
-	    var destination = this.destination;
-	    destination.remove(innerSub);
-	    this.active--;
-
-	    if (buffer.length > 0) {
-	      this._next(buffer.shift());
-	    } else if (this.active === 0 && this.hasCompleted) {
-	      if (this.hasValue === false) {
-	        this.destination.next(this.acc);
-	      }
-
-	      this.destination.complete();
-	    }
-	  };
-
-	  return MergeScanSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _observable_ConnectableObservable PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_observable_from,_util_isArray,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var OnErrorResumeNextSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(OnErrorResumeNextSubscriber, _super);
-
-	  function OnErrorResumeNextSubscriber(destination, nextSources) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.destination = destination;
-	    _this.nextSources = nextSources;
-	    return _this;
-	  }
-
-	  OnErrorResumeNextSubscriber.prototype.notifyError = function (error, innerSub) {
-	    this.subscribeToNextSource();
-	  };
-
-	  OnErrorResumeNextSubscriber.prototype.notifyComplete = function (innerSub) {
-	    this.subscribeToNextSource();
-	  };
-
-	  OnErrorResumeNextSubscriber.prototype._error = function (err) {
-	    this.subscribeToNextSource();
-	    this.unsubscribe();
-	  };
-
-	  OnErrorResumeNextSubscriber.prototype._complete = function () {
-	    this.subscribeToNextSource();
-	    this.unsubscribe();
-	  };
-
-	  OnErrorResumeNextSubscriber.prototype.subscribeToNextSource = function () {
-	    var next = this.nextSources.shift();
-
-	    if (next) {
-	      var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
-	      var destination = this.destination;
-	      destination.add(innerSubscriber);
-	      subscribeToResult(this, next, undefined, undefined, innerSubscriber);
-	    } else {
-	      this.destination.complete();
-	    }
-	  };
-
-	  return OnErrorResumeNextSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-	function pairwise() {
-	  return function (source) {
-	    return source.lift(new PairwiseOperator());
-	  };
-	}
-
-	var PairwiseOperator =
-	/*@__PURE__*/
-	function () {
-	  function PairwiseOperator() {}
-
-	  PairwiseOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new PairwiseSubscriber(subscriber));
-	  };
-
-	  return PairwiseOperator;
-	}();
-
-	var PairwiseSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(PairwiseSubscriber, _super);
-
-	  function PairwiseSubscriber(destination) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.hasPrev = false;
-	    return _this;
-	  }
-
-	  PairwiseSubscriber.prototype._next = function (value) {
-	    if (this.hasPrev) {
-	      this.destination.next([this.prev, value]);
-	    } else {
-	      this.hasPrev = true;
-	    }
-
-	    this.prev = value;
-	  };
-
-	  return PairwiseSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _util_not,_filter PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _map PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _Subject,_multicast PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _BehaviorSubject,_multicast PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _AsyncSubject,_multicast PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _ReplaySubject,_multicast PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _util_isArray,_observable_race PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_observable_empty PURE_IMPORTS_END */
-	function repeat(count) {
-	  if (count === void 0) {
-	    count = -1;
-	  }
-
-	  return function (source) {
-	    if (count === 0) {
-	      return empty$1();
-	    } else if (count < 0) {
-	      return source.lift(new RepeatOperator(-1, source));
-	    } else {
-	      return source.lift(new RepeatOperator(count - 1, source));
-	    }
-	  };
-	}
-
-	var RepeatOperator =
-	/*@__PURE__*/
-	function () {
-	  function RepeatOperator(count, source) {
-	    this.count = count;
-	    this.source = source;
-	  }
-
-	  RepeatOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new RepeatSubscriber(subscriber, this.count, this.source));
-	  };
-
-	  return RepeatOperator;
-	}();
-
-	var RepeatSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(RepeatSubscriber, _super);
-
-	  function RepeatSubscriber(destination, count, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.count = count;
-	    _this.source = source;
-	    return _this;
-	  }
-
-	  RepeatSubscriber.prototype.complete = function () {
-	    if (!this.isStopped) {
-	      var _a = this,
-	          source = _a.source,
-	          count = _a.count;
-
-	      if (count === 0) {
-	        return _super.prototype.complete.call(this);
-	      } else if (count > -1) {
-	        this.count = count - 1;
-	      }
-
-	      source.subscribe(this._unsubscribeAndRecycle());
-	    }
-	  };
-
-	  return RepeatSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var RepeatWhenSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(RepeatWhenSubscriber, _super);
-
-	  function RepeatWhenSubscriber(destination, notifier, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.notifier = notifier;
-	    _this.source = source;
-	    _this.sourceIsBeingSubscribedTo = true;
-	    return _this;
-	  }
-
-	  RepeatWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.sourceIsBeingSubscribedTo = true;
-	    this.source.subscribe(this);
-	  };
-
-	  RepeatWhenSubscriber.prototype.notifyComplete = function (innerSub) {
-	    if (this.sourceIsBeingSubscribedTo === false) {
-	      return _super.prototype.complete.call(this);
-	    }
-	  };
-
-	  RepeatWhenSubscriber.prototype.complete = function () {
-	    this.sourceIsBeingSubscribedTo = false;
-
-	    if (!this.isStopped) {
-	      if (!this.retries) {
-	        this.subscribeToRetries();
-	      }
-
-	      if (!this.retriesSubscription || this.retriesSubscription.closed) {
-	        return _super.prototype.complete.call(this);
-	      }
-
-	      this._unsubscribeAndRecycle();
-
-	      this.notifications.next();
-	    }
-	  };
-
-	  RepeatWhenSubscriber.prototype._unsubscribe = function () {
-	    var _a = this,
-	        notifications = _a.notifications,
-	        retriesSubscription = _a.retriesSubscription;
-
-	    if (notifications) {
-	      notifications.unsubscribe();
-	      this.notifications = null;
-	    }
-
-	    if (retriesSubscription) {
-	      retriesSubscription.unsubscribe();
-	      this.retriesSubscription = null;
-	    }
-
-	    this.retries = null;
-	  };
-
-	  RepeatWhenSubscriber.prototype._unsubscribeAndRecycle = function () {
-	    var _unsubscribe = this._unsubscribe;
-	    this._unsubscribe = null;
-
-	    _super.prototype._unsubscribeAndRecycle.call(this);
-
-	    this._unsubscribe = _unsubscribe;
-	    return this;
-	  };
-
-	  RepeatWhenSubscriber.prototype.subscribeToRetries = function () {
-	    this.notifications = new Subject();
-	    var retries = tryCatch(this.notifier)(this.notifications);
-
-	    if (retries === errorObject) {
-	      return _super.prototype.complete.call(this);
-	    }
-
-	    this.retries = retries;
-	    this.retriesSubscription = subscribeToResult(this, retries);
-	  };
-
-	  return RepeatWhenSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var RetrySubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(RetrySubscriber, _super);
-
-	  function RetrySubscriber(destination, count, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.count = count;
-	    _this.source = source;
-	    return _this;
-	  }
-
-	  RetrySubscriber.prototype.error = function (err) {
-	    if (!this.isStopped) {
-	      var _a = this,
-	          source = _a.source,
-	          count = _a.count;
-
-	      if (count === 0) {
-	        return _super.prototype.error.call(this, err);
-	      } else if (count > -1) {
-	        this.count = count - 1;
-	      }
-
-	      source.subscribe(this._unsubscribeAndRecycle());
-	    }
-	  };
-
-	  return RetrySubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var RetryWhenSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(RetryWhenSubscriber, _super);
-
-	  function RetryWhenSubscriber(destination, notifier, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.notifier = notifier;
-	    _this.source = source;
-	    return _this;
-	  }
-
-	  RetryWhenSubscriber.prototype.error = function (err) {
-	    if (!this.isStopped) {
-	      var errors = this.errors;
-	      var retries = this.retries;
-	      var retriesSubscription = this.retriesSubscription;
-
-	      if (!retries) {
-	        errors = new Subject();
-	        retries = tryCatch(this.notifier)(errors);
-
-	        if (retries === errorObject) {
-	          return _super.prototype.error.call(this, errorObject.e);
-	        }
-
-	        retriesSubscription = subscribeToResult(this, retries);
-	      } else {
-	        this.errors = null;
-	        this.retriesSubscription = null;
-	      }
-
-	      this._unsubscribeAndRecycle();
-
-	      this.errors = errors;
-	      this.retries = retries;
-	      this.retriesSubscription = retriesSubscription;
-	      errors.next(err);
-	    }
-	  };
-
-	  RetryWhenSubscriber.prototype._unsubscribe = function () {
-	    var _a = this,
-	        errors = _a.errors,
-	        retriesSubscription = _a.retriesSubscription;
-
-	    if (errors) {
-	      errors.unsubscribe();
-	      this.errors = null;
-	    }
-
-	    if (retriesSubscription) {
-	      retriesSubscription.unsubscribe();
-	      this.retriesSubscription = null;
-	    }
-
-	    this.retries = null;
-	  };
-
-	  RetryWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    var _unsubscribe = this._unsubscribe;
-	    this._unsubscribe = null;
-
-	    this._unsubscribeAndRecycle();
-
-	    this._unsubscribe = _unsubscribe;
-	    this.source.subscribe(this);
-	  };
-
-	  return RetryWhenSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var SampleSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SampleSubscriber, _super);
-
-	  function SampleSubscriber() {
-	    var _this = _super !== null && _super.apply(this, arguments) || this;
-
-	    _this.hasValue = false;
-	    return _this;
-	  }
-
-	  SampleSubscriber.prototype._next = function (value) {
-	    this.value = value;
-	    this.hasValue = true;
-	  };
-
-	  SampleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.emitValue();
-	  };
-
-	  SampleSubscriber.prototype.notifyComplete = function () {
-	    this.emitValue();
-	  };
-
-	  SampleSubscriber.prototype.emitValue = function () {
-	    if (this.hasValue) {
-	      this.hasValue = false;
-	      this.destination.next(this.value);
-	    }
-	  };
-
-	  return SampleSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async PURE_IMPORTS_END */
-
-	var SampleTimeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SampleTimeSubscriber, _super);
-
-	  function SampleTimeSubscriber(destination, period, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.period = period;
-	    _this.scheduler = scheduler;
-	    _this.hasValue = false;
-
-	    _this.add(scheduler.schedule(dispatchNotification, period, {
-	      subscriber: _this,
-	      period: period
-	    }));
-
-	    return _this;
-	  }
-
-	  SampleTimeSubscriber.prototype._next = function (value) {
-	    this.lastValue = value;
-	    this.hasValue = true;
-	  };
-
-	  SampleTimeSubscriber.prototype.notifyNext = function () {
-	    if (this.hasValue) {
-	      this.hasValue = false;
-	      this.destination.next(this.lastValue);
-	    }
-	  };
-
-	  return SampleTimeSubscriber;
-	}(Subscriber);
-
-	function dispatchNotification(state) {
-	  var subscriber = state.subscriber,
-	      period = state.period;
-	  subscriber.notifyNext();
-	  this.schedule(state, period);
-	}
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
-
-	var SequenceEqualSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SequenceEqualSubscriber, _super);
-
-	  function SequenceEqualSubscriber(destination, compareTo, comparor) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.compareTo = compareTo;
-	    _this.comparor = comparor;
-	    _this._a = [];
-	    _this._b = [];
-	    _this._oneComplete = false;
-
-	    _this.destination.add(compareTo.subscribe(new SequenceEqualCompareToSubscriber(destination, _this)));
-
-	    return _this;
-	  }
-
-	  SequenceEqualSubscriber.prototype._next = function (value) {
-	    if (this._oneComplete && this._b.length === 0) {
-	      this.emit(false);
-	    } else {
-	      this._a.push(value);
-
-	      this.checkValues();
-	    }
-	  };
-
-	  SequenceEqualSubscriber.prototype._complete = function () {
-	    if (this._oneComplete) {
-	      this.emit(this._a.length === 0 && this._b.length === 0);
-	    } else {
-	      this._oneComplete = true;
-	    }
-
-	    this.unsubscribe();
-	  };
-
-	  SequenceEqualSubscriber.prototype.checkValues = function () {
-	    var _c = this,
-	        _a = _c._a,
-	        _b = _c._b,
-	        comparor = _c.comparor;
-
-	    while (_a.length > 0 && _b.length > 0) {
-	      var a = _a.shift();
-
-	      var b = _b.shift();
-
-	      var areEqual = false;
-
-	      if (comparor) {
-	        areEqual = tryCatch(comparor)(a, b);
-
-	        if (areEqual === errorObject) {
-	          this.destination.error(errorObject.e);
-	        }
-	      } else {
-	        areEqual = a === b;
-	      }
-
-	      if (!areEqual) {
-	        this.emit(false);
-	      }
-	    }
-	  };
-
-	  SequenceEqualSubscriber.prototype.emit = function (value) {
-	    var destination = this.destination;
-	    destination.next(value);
-	    destination.complete();
-	  };
-
-	  SequenceEqualSubscriber.prototype.nextB = function (value) {
-	    if (this._oneComplete && this._a.length === 0) {
-	      this.emit(false);
-	    } else {
-	      this._b.push(value);
-
-	      this.checkValues();
-	    }
-	  };
-
-	  SequenceEqualSubscriber.prototype.completeB = function () {
-	    if (this._oneComplete) {
-	      this.emit(this._a.length === 0 && this._b.length === 0);
-	    } else {
-	      this._oneComplete = true;
-	    }
-	  };
-
-	  return SequenceEqualSubscriber;
-	}(Subscriber);
-
-	var SequenceEqualCompareToSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SequenceEqualCompareToSubscriber, _super);
-
-	  function SequenceEqualCompareToSubscriber(destination, parent) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.parent = parent;
-	    return _this;
-	  }
-
-	  SequenceEqualCompareToSubscriber.prototype._next = function (value) {
-	    this.parent.nextB(value);
-	  };
-
-	  SequenceEqualCompareToSubscriber.prototype._error = function (err) {
-	    this.parent.error(err);
-	    this.unsubscribe();
-	  };
-
-	  SequenceEqualCompareToSubscriber.prototype._complete = function () {
-	    this.parent.completeB();
-	    this.unsubscribe();
-	  };
-
-	  return SequenceEqualCompareToSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _multicast,_refCount,_Subject PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _ReplaySubject PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_EmptyError PURE_IMPORTS_END */
-
-	var SingleSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SingleSubscriber, _super);
-
-	  function SingleSubscriber(destination, predicate, source) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.source = source;
-	    _this.seenValue = false;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  SingleSubscriber.prototype.applySingleValue = function (value) {
-	    if (this.seenValue) {
-	      this.destination.error('Sequence contains more than one element');
-	    } else {
-	      this.seenValue = true;
-	      this.singleValue = value;
-	    }
-	  };
-
-	  SingleSubscriber.prototype._next = function (value) {
-	    var index = this.index++;
-
-	    if (this.predicate) {
-	      this.tryNext(value, index);
-	    } else {
-	      this.applySingleValue(value);
-	    }
-	  };
-
-	  SingleSubscriber.prototype.tryNext = function (value, index) {
-	    try {
-	      if (this.predicate(value, index, this.source)) {
-	        this.applySingleValue(value);
-	      }
-	    } catch (err) {
-	      this.destination.error(err);
-	    }
-	  };
-
-	  SingleSubscriber.prototype._complete = function () {
-	    var destination = this.destination;
-
-	    if (this.index > 0) {
-	      destination.next(this.seenValue ? this.singleValue : undefined);
-	      destination.complete();
-	    } else {
-	      destination.error(new EmptyError());
-	    }
-	  };
-
-	  return SingleSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var SkipSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SkipSubscriber, _super);
-
-	  function SkipSubscriber(destination, total) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.total = total;
-	    _this.count = 0;
-	    return _this;
-	  }
-
-	  SkipSubscriber.prototype._next = function (x) {
-	    if (++this.count > this.total) {
-	      this.destination.next(x);
-	    }
-	  };
-
-	  return SkipSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError PURE_IMPORTS_END */
-
-	var SkipLastSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SkipLastSubscriber, _super);
-
-	  function SkipLastSubscriber(destination, _skipCount) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this._skipCount = _skipCount;
-	    _this._count = 0;
-	    _this._ring = new Array(_skipCount);
-	    return _this;
-	  }
-
-	  SkipLastSubscriber.prototype._next = function (value) {
-	    var skipCount = this._skipCount;
-	    var count = this._count++;
-
-	    if (count < skipCount) {
-	      this._ring[count] = value;
-	    } else {
-	      var currentIndex = count % skipCount;
-	      var ring = this._ring;
-	      var oldValue = ring[currentIndex];
-	      ring[currentIndex] = value;
-	      this.destination.next(oldValue);
-	    }
-	  };
-
-	  return SkipLastSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var SkipUntilSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SkipUntilSubscriber, _super);
-
-	  function SkipUntilSubscriber(destination, notifier) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.hasValue = false;
-	    var innerSubscriber = new InnerSubscriber(_this, undefined, undefined);
-
-	    _this.add(innerSubscriber);
-
-	    _this.innerSubscription = innerSubscriber;
-	    subscribeToResult(_this, notifier, undefined, undefined, innerSubscriber);
-	    return _this;
-	  }
-
-	  SkipUntilSubscriber.prototype._next = function (value) {
-	    if (this.hasValue) {
-	      _super.prototype._next.call(this, value);
-	    }
-	  };
-
-	  SkipUntilSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.hasValue = true;
-
-	    if (this.innerSubscription) {
-	      this.innerSubscription.unsubscribe();
-	    }
-	  };
-
-	  SkipUntilSubscriber.prototype.notifyComplete = function () {};
-
-	  return SkipUntilSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var SkipWhileSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SkipWhileSubscriber, _super);
-
-	  function SkipWhileSubscriber(destination, predicate) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.skipping = true;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  SkipWhileSubscriber.prototype._next = function (value) {
-	    var destination = this.destination;
-
-	    if (this.skipping) {
-	      this.tryCallPredicate(value);
-	    }
-
-	    if (!this.skipping) {
-	      destination.next(value);
-	    }
-	  };
-
-	  SkipWhileSubscriber.prototype.tryCallPredicate = function (value) {
-	    try {
-	      var result = this.predicate(value, this.index++);
-	      this.skipping = Boolean(result);
-	    } catch (err) {
-	      this.destination.error(err);
-	    }
-	  };
-
-	  return SkipWhileSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
-	function startWith() {
-	  var array = [];
-
-	  for (var _i = 0; _i < arguments.length; _i++) {
-	    array[_i] = arguments[_i];
-	  }
-
-	  return function (source) {
-	    var scheduler = array[array.length - 1];
-
-	    if (isScheduler(scheduler)) {
-	      array.pop();
-	    } else {
-	      scheduler = null;
-	    }
-
-	    var len = array.length;
-
-	    if (len === 1 && !scheduler) {
-	      return concat(scalar(array[0]), source);
-	    } else if (len > 0) {
-	      return concat(fromArray(array, scheduler), source);
-	    } else {
-	      return concat(empty$1(scheduler), source);
-	    }
-	  };
-	}
-
-	/** PURE_IMPORTS_START tslib,_Observable,_scheduler_asap,_util_isNumeric PURE_IMPORTS_END */
-
-	var SubscribeOnObservable =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SubscribeOnObservable, _super);
-
-	  function SubscribeOnObservable(source, delayTime, scheduler) {
-	    if (delayTime === void 0) {
-	      delayTime = 0;
-	    }
-
-	    if (scheduler === void 0) {
-	      scheduler = asap;
-	    }
-
-	    var _this = _super.call(this) || this;
-
-	    _this.source = source;
-	    _this.delayTime = delayTime;
-	    _this.scheduler = scheduler;
-
-	    if (!isNumeric(delayTime) || delayTime < 0) {
-	      _this.delayTime = 0;
-	    }
-
-	    if (!scheduler || typeof scheduler.schedule !== 'function') {
-	      _this.scheduler = asap;
-	    }
-
-	    return _this;
-	  }
-
-	  SubscribeOnObservable.create = function (source, delay, scheduler) {
-	    if (delay === void 0) {
-	      delay = 0;
-	    }
-
-	    if (scheduler === void 0) {
-	      scheduler = asap;
-	    }
-
-	    return new SubscribeOnObservable(source, delay, scheduler);
-	  };
-
-	  SubscribeOnObservable.dispatch = function (arg) {
-	    var source = arg.source,
-	        subscriber = arg.subscriber;
-	    return this.add(source.subscribe(subscriber));
-	  };
-
-	  SubscribeOnObservable.prototype._subscribe = function (subscriber) {
-	    var delay = this.delayTime;
-	    var source = this.source;
-	    var scheduler = this.scheduler;
-	    return scheduler.schedule(SubscribeOnObservable.dispatch, delay, {
-	      source: source,
-	      subscriber: subscriber
-	    });
-	  };
-
-	  return SubscribeOnObservable;
-	}(Observable);
-
-	/** PURE_IMPORTS_START _observable_SubscribeOnObservable PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult,_map,_observable_from PURE_IMPORTS_END */
-	function switchMap(project, resultSelector) {
-	  if (typeof resultSelector === 'function') {
-	    return function (source) {
-	      return source.pipe(switchMap(function (a, i) {
-	        return from(project(a, i)).pipe(map(function (b, ii) {
-	          return resultSelector(a, b, i, ii);
-	        }));
-	      }));
-	    };
-	  }
-
-	  return function (source) {
-	    return source.lift(new SwitchMapOperator(project));
-	  };
-	}
-
-	var SwitchMapOperator =
-	/*@__PURE__*/
-	function () {
-	  function SwitchMapOperator(project) {
-	    this.project = project;
-	  }
-
-	  SwitchMapOperator.prototype.call = function (subscriber, source) {
-	    return source.subscribe(new SwitchMapSubscriber(subscriber, this.project));
-	  };
-
-	  return SwitchMapOperator;
-	}();
-
-	var SwitchMapSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(SwitchMapSubscriber, _super);
-
-	  function SwitchMapSubscriber(destination, project) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.project = project;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  SwitchMapSubscriber.prototype._next = function (value) {
-	    var result;
-	    var index = this.index++;
-
-	    try {
-	      result = this.project(value, index);
-	    } catch (error) {
-	      this.destination.error(error);
-	      return;
-	    }
-
-	    this._innerSub(result, value, index);
-	  };
-
-	  SwitchMapSubscriber.prototype._innerSub = function (result, value, index) {
-	    var innerSubscription = this.innerSubscription;
-
-	    if (innerSubscription) {
-	      innerSubscription.unsubscribe();
-	    }
-
-	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
-	    var destination = this.destination;
-	    destination.add(innerSubscriber);
-	    this.innerSubscription = subscribeToResult(this, result, value, index, innerSubscriber);
-	  };
-
-	  SwitchMapSubscriber.prototype._complete = function () {
-	    var innerSubscription = this.innerSubscription;
-
-	    if (!innerSubscription || innerSubscription.closed) {
-	      _super.prototype._complete.call(this);
-	    }
-
-	    this.unsubscribe();
-	  };
-
-	  SwitchMapSubscriber.prototype._unsubscribe = function () {
-	    this.innerSubscription = null;
-	  };
-
-	  SwitchMapSubscriber.prototype.notifyComplete = function (innerSub) {
-	    var destination = this.destination;
-	    destination.remove(innerSub);
-	    this.innerSubscription = null;
-
-	    if (this.isStopped) {
-	      _super.prototype._complete.call(this);
-	    }
-	  };
-
-	  SwitchMapSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.destination.next(innerValue);
-	  };
-
-	  return SwitchMapSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START _switchMap,_util_identity PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _switchMap PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-	function takeUntil(notifier) {
-	  return function (source) {
-	    return source.lift(new TakeUntilOperator(notifier));
-	  };
-	}
-
-	var TakeUntilOperator =
-	/*@__PURE__*/
-	function () {
-	  function TakeUntilOperator(notifier) {
-	    this.notifier = notifier;
-	  }
-
-	  TakeUntilOperator.prototype.call = function (subscriber, source) {
-	    var takeUntilSubscriber = new TakeUntilSubscriber(subscriber);
-	    var notifierSubscription = subscribeToResult(takeUntilSubscriber, this.notifier);
-
-	    if (notifierSubscription && !takeUntilSubscriber.seenValue) {
-	      takeUntilSubscriber.add(notifierSubscription);
-	      return source.subscribe(takeUntilSubscriber);
-	    }
-
-	    return takeUntilSubscriber;
-	  };
-
-	  return TakeUntilOperator;
-	}();
-
-	var TakeUntilSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(TakeUntilSubscriber, _super);
-
-	  function TakeUntilSubscriber(destination) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.seenValue = false;
-	    return _this;
-	  }
-
-	  TakeUntilSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.seenValue = true;
-	    this.complete();
-	  };
-
-	  TakeUntilSubscriber.prototype.notifyComplete = function () {};
-
-	  return TakeUntilSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
-
-	var TakeWhileSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(TakeWhileSubscriber, _super);
-
-	  function TakeWhileSubscriber(destination, predicate) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.predicate = predicate;
-	    _this.index = 0;
-	    return _this;
-	  }
-
-	  TakeWhileSubscriber.prototype._next = function (value) {
-	    var destination = this.destination;
-	    var result;
-
-	    try {
-	      result = this.predicate(value, this.index++);
-	    } catch (err) {
-	      destination.error(err);
-	      return;
-	    }
-
-	    this.nextOrComplete(value, result);
-	  };
-
-	  TakeWhileSubscriber.prototype.nextOrComplete = function (value, predicateResult) {
-	    var destination = this.destination;
-
-	    if (Boolean(predicateResult)) {
-	      destination.next(value);
-	    } else {
-	      destination.complete();
-	    }
-	  };
-
-	  return TakeWhileSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var ThrottleSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(ThrottleSubscriber, _super);
-
-	  function ThrottleSubscriber(destination, durationSelector, _leading, _trailing) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.destination = destination;
-	    _this.durationSelector = durationSelector;
-	    _this._leading = _leading;
-	    _this._trailing = _trailing;
-	    _this._hasValue = false;
-	    return _this;
-	  }
-
-	  ThrottleSubscriber.prototype._next = function (value) {
-	    this._hasValue = true;
-	    this._sendValue = value;
-
-	    if (!this._throttled) {
-	      if (this._leading) {
-	        this.send();
-	      } else {
-	        this.throttle(value);
-	      }
-	    }
-	  };
-
-	  ThrottleSubscriber.prototype.send = function () {
-	    var _a = this,
-	        _hasValue = _a._hasValue,
-	        _sendValue = _a._sendValue;
-
-	    if (_hasValue) {
-	      this.destination.next(_sendValue);
-	      this.throttle(_sendValue);
-	    }
-
-	    this._hasValue = false;
-	    this._sendValue = null;
-	  };
-
-	  ThrottleSubscriber.prototype.throttle = function (value) {
-	    var duration = this.tryDurationSelector(value);
-
-	    if (duration) {
-	      this.add(this._throttled = subscribeToResult(this, duration));
-	    }
-	  };
-
-	  ThrottleSubscriber.prototype.tryDurationSelector = function (value) {
-	    try {
-	      return this.durationSelector(value);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return null;
-	    }
-	  };
-
-	  ThrottleSubscriber.prototype.throttlingDone = function () {
-	    var _a = this,
-	        _throttled = _a._throttled,
-	        _trailing = _a._trailing;
-
-	    if (_throttled) {
-	      _throttled.unsubscribe();
-	    }
-
-	    this._throttled = null;
-
-	    if (_trailing) {
-	      this.send();
-	    }
-	  };
-
-	  ThrottleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.throttlingDone();
-	  };
-
-	  ThrottleSubscriber.prototype.notifyComplete = function () {
-	    this.throttlingDone();
-	  };
-
-	  return ThrottleSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async,_throttle PURE_IMPORTS_END */
-
-	var ThrottleTimeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(ThrottleTimeSubscriber, _super);
-
-	  function ThrottleTimeSubscriber(destination, duration, scheduler, leading, trailing) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.duration = duration;
-	    _this.scheduler = scheduler;
-	    _this.leading = leading;
-	    _this.trailing = trailing;
-	    _this._hasTrailingValue = false;
-	    _this._trailingValue = null;
-	    return _this;
-	  }
-
-	  ThrottleTimeSubscriber.prototype._next = function (value) {
-	    if (this.throttled) {
-	      if (this.trailing) {
-	        this._trailingValue = value;
-	        this._hasTrailingValue = true;
-	      }
-	    } else {
-	      this.add(this.throttled = this.scheduler.schedule(dispatchNext$3, this.duration, {
-	        subscriber: this
-	      }));
-
-	      if (this.leading) {
-	        this.destination.next(value);
-	      }
-	    }
-	  };
-
-	  ThrottleTimeSubscriber.prototype._complete = function () {
-	    if (this._hasTrailingValue) {
-	      this.destination.next(this._trailingValue);
-	      this.destination.complete();
-	    } else {
-	      this.destination.complete();
-	    }
-	  };
-
-	  ThrottleTimeSubscriber.prototype.clearThrottle = function () {
-	    var throttled = this.throttled;
-
-	    if (throttled) {
-	      if (this.trailing && this._hasTrailingValue) {
-	        this.destination.next(this._trailingValue);
-	        this._trailingValue = null;
-	        this._hasTrailingValue = false;
-	      }
-
-	      throttled.unsubscribe();
-	      this.remove(throttled);
-	      this.throttled = null;
-	    }
-	  };
-
-	  return ThrottleTimeSubscriber;
-	}(Subscriber);
-
-	function dispatchNext$3(arg) {
-	  var subscriber = arg.subscriber;
-	  subscriber.clearThrottle();
-	}
-
-	/** PURE_IMPORTS_START _scheduler_async,_scan,_observable_defer,_map PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_scheduler_async,_util_isDate,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var TimeoutWithSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(TimeoutWithSubscriber, _super);
-
-	  function TimeoutWithSubscriber(destination, absoluteTimeout, waitFor, withObservable, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.absoluteTimeout = absoluteTimeout;
-	    _this.waitFor = waitFor;
-	    _this.withObservable = withObservable;
-	    _this.scheduler = scheduler;
-	    _this.action = null;
-
-	    _this.scheduleTimeout();
-
-	    return _this;
-	  }
-
-	  TimeoutWithSubscriber.dispatchTimeout = function (subscriber) {
-	    var withObservable = subscriber.withObservable;
-
-	    subscriber._unsubscribeAndRecycle();
-
-	    subscriber.add(subscribeToResult(subscriber, withObservable));
-	  };
-
-	  TimeoutWithSubscriber.prototype.scheduleTimeout = function () {
-	    var action = this.action;
-
-	    if (action) {
-	      this.action = action.schedule(this, this.waitFor);
-	    } else {
-	      this.add(this.action = this.scheduler.schedule(TimeoutWithSubscriber.dispatchTimeout, this.waitFor, this));
-	    }
-	  };
-
-	  TimeoutWithSubscriber.prototype._next = function (value) {
-	    if (!this.absoluteTimeout) {
-	      this.scheduleTimeout();
-	    }
-
-	    _super.prototype._next.call(this, value);
-	  };
-
-	  TimeoutWithSubscriber.prototype._unsubscribe = function () {
-	    this.action = null;
-	    this.scheduler = null;
-	    this.withObservable = null;
-	  };
-
-	  return TimeoutWithSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START _scheduler_async,_util_TimeoutError,_timeoutWith,_observable_throwError PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _scheduler_async,_map PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START tslib,_Subject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var WindowSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(WindowSubscriber, _super);
-
-	  function WindowSubscriber(destination) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.window = new Subject();
-	    destination.next(_this.window);
-	    return _this;
-	  }
-
-	  WindowSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.openWindow();
-	  };
-
-	  WindowSubscriber.prototype.notifyError = function (error, innerSub) {
-	    this._error(error);
-	  };
-
-	  WindowSubscriber.prototype.notifyComplete = function (innerSub) {
-	    this._complete();
-	  };
-
-	  WindowSubscriber.prototype._next = function (value) {
-	    this.window.next(value);
-	  };
-
-	  WindowSubscriber.prototype._error = function (err) {
-	    this.window.error(err);
-	    this.destination.error(err);
-	  };
-
-	  WindowSubscriber.prototype._complete = function () {
-	    this.window.complete();
-	    this.destination.complete();
-	  };
-
-	  WindowSubscriber.prototype._unsubscribe = function () {
-	    this.window = null;
-	  };
-
-	  WindowSubscriber.prototype.openWindow = function () {
-	    var prevWindow = this.window;
-
-	    if (prevWindow) {
-	      prevWindow.complete();
-	    }
-
-	    var destination = this.destination;
-	    var newWindow = this.window = new Subject();
-	    destination.next(newWindow);
-	  };
-
-	  return WindowSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subscriber,_Subject PURE_IMPORTS_END */
-
-	var WindowCountSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(WindowCountSubscriber, _super);
-
-	  function WindowCountSubscriber(destination, windowSize, startWindowEvery) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.destination = destination;
-	    _this.windowSize = windowSize;
-	    _this.startWindowEvery = startWindowEvery;
-	    _this.windows = [new Subject()];
-	    _this.count = 0;
-	    destination.next(_this.windows[0]);
-	    return _this;
-	  }
-
-	  WindowCountSubscriber.prototype._next = function (value) {
-	    var startWindowEvery = this.startWindowEvery > 0 ? this.startWindowEvery : this.windowSize;
-	    var destination = this.destination;
-	    var windowSize = this.windowSize;
-	    var windows = this.windows;
-	    var len = windows.length;
-
-	    for (var i = 0; i < len && !this.closed; i++) {
-	      windows[i].next(value);
-	    }
-
-	    var c = this.count - windowSize + 1;
-
-	    if (c >= 0 && c % startWindowEvery === 0 && !this.closed) {
-	      windows.shift().complete();
-	    }
-
-	    if (++this.count % startWindowEvery === 0 && !this.closed) {
-	      var window_1 = new Subject();
-	      windows.push(window_1);
-	      destination.next(window_1);
-	    }
-	  };
-
-	  WindowCountSubscriber.prototype._error = function (err) {
-	    var windows = this.windows;
-
-	    if (windows) {
-	      while (windows.length > 0 && !this.closed) {
-	        windows.shift().error(err);
-	      }
-	    }
-
-	    this.destination.error(err);
-	  };
-
-	  WindowCountSubscriber.prototype._complete = function () {
-	    var windows = this.windows;
-
-	    if (windows) {
-	      while (windows.length > 0 && !this.closed) {
-	        windows.shift().complete();
-	      }
-	    }
-
-	    this.destination.complete();
-	  };
-
-	  WindowCountSubscriber.prototype._unsubscribe = function () {
-	    this.count = 0;
-	    this.windows = null;
-	  };
-
-	  return WindowCountSubscriber;
-	}(Subscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subject,_scheduler_async,_Subscriber,_util_isNumeric,_util_isScheduler PURE_IMPORTS_END */
-
-	var CountedSubject =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(CountedSubject, _super);
-
-	  function CountedSubject() {
-	    var _this = _super !== null && _super.apply(this, arguments) || this;
-
-	    _this._numberOfNextedValues = 0;
-	    return _this;
-	  }
-
-	  CountedSubject.prototype.next = function (value) {
-	    this._numberOfNextedValues++;
-
-	    _super.prototype.next.call(this, value);
-	  };
-
-	  Object.defineProperty(CountedSubject.prototype, "numberOfNextedValues", {
-	    get: function () {
-	      return this._numberOfNextedValues;
-	    },
-	    enumerable: true,
-	    configurable: true
-	  });
-	  return CountedSubject;
-	}(Subject);
-
-	var WindowTimeSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(WindowTimeSubscriber, _super);
-
-	  function WindowTimeSubscriber(destination, windowTimeSpan, windowCreationInterval, maxWindowSize, scheduler) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.destination = destination;
-	    _this.windowTimeSpan = windowTimeSpan;
-	    _this.windowCreationInterval = windowCreationInterval;
-	    _this.maxWindowSize = maxWindowSize;
-	    _this.scheduler = scheduler;
-	    _this.windows = [];
-
-	    var window = _this.openWindow();
-
-	    if (windowCreationInterval !== null && windowCreationInterval >= 0) {
-	      var closeState = {
-	        subscriber: _this,
-	        window: window,
-	        context: null
-	      };
-	      var creationState = {
-	        windowTimeSpan: windowTimeSpan,
-	        windowCreationInterval: windowCreationInterval,
-	        subscriber: _this,
-	        scheduler: scheduler
-	      };
-
-	      _this.add(scheduler.schedule(dispatchWindowClose, windowTimeSpan, closeState));
-
-	      _this.add(scheduler.schedule(dispatchWindowCreation, windowCreationInterval, creationState));
-	    } else {
-	      var timeSpanOnlyState = {
-	        subscriber: _this,
-	        window: window,
-	        windowTimeSpan: windowTimeSpan
-	      };
-
-	      _this.add(scheduler.schedule(dispatchWindowTimeSpanOnly, windowTimeSpan, timeSpanOnlyState));
-	    }
-
-	    return _this;
-	  }
-
-	  WindowTimeSubscriber.prototype._next = function (value) {
-	    var windows = this.windows;
-	    var len = windows.length;
-
-	    for (var i = 0; i < len; i++) {
-	      var window_1 = windows[i];
-
-	      if (!window_1.closed) {
-	        window_1.next(value);
-
-	        if (window_1.numberOfNextedValues >= this.maxWindowSize) {
-	          this.closeWindow(window_1);
-	        }
-	      }
-	    }
-	  };
-
-	  WindowTimeSubscriber.prototype._error = function (err) {
-	    var windows = this.windows;
-
-	    while (windows.length > 0) {
-	      windows.shift().error(err);
-	    }
-
-	    this.destination.error(err);
-	  };
-
-	  WindowTimeSubscriber.prototype._complete = function () {
-	    var windows = this.windows;
-
-	    while (windows.length > 0) {
-	      var window_2 = windows.shift();
-
-	      if (!window_2.closed) {
-	        window_2.complete();
-	      }
-	    }
-
-	    this.destination.complete();
-	  };
-
-	  WindowTimeSubscriber.prototype.openWindow = function () {
-	    var window = new CountedSubject();
-	    this.windows.push(window);
-	    var destination = this.destination;
-	    destination.next(window);
-	    return window;
-	  };
-
-	  WindowTimeSubscriber.prototype.closeWindow = function (window) {
-	    window.complete();
-	    var windows = this.windows;
-	    windows.splice(windows.indexOf(window), 1);
-	  };
-
-	  return WindowTimeSubscriber;
-	}(Subscriber);
-
-	function dispatchWindowTimeSpanOnly(state) {
-	  var subscriber = state.subscriber,
-	      windowTimeSpan = state.windowTimeSpan,
-	      window = state.window;
-
-	  if (window) {
-	    subscriber.closeWindow(window);
-	  }
-
-	  state.window = subscriber.openWindow();
-	  this.schedule(state, windowTimeSpan);
-	}
-
-	function dispatchWindowCreation(state) {
-	  var windowTimeSpan = state.windowTimeSpan,
-	      subscriber = state.subscriber,
-	      scheduler = state.scheduler,
-	      windowCreationInterval = state.windowCreationInterval;
-	  var window = subscriber.openWindow();
-	  var action = this;
-	  var context = {
-	    action: action,
-	    subscription: null
-	  };
-	  var timeSpanState = {
-	    subscriber: subscriber,
-	    window: window,
-	    context: context
-	  };
-	  context.subscription = scheduler.schedule(dispatchWindowClose, windowTimeSpan, timeSpanState);
-	  action.add(context.subscription);
-	  action.schedule(state, windowCreationInterval);
-	}
-
-	function dispatchWindowClose(state) {
-	  var subscriber = state.subscriber,
-	      window = state.window,
-	      context = state.context;
-
-	  if (context && context.action && context.subscription) {
-	    context.action.remove(context.subscription);
-	  }
-
-	  subscriber.closeWindow(window);
-	}
-
-	/** PURE_IMPORTS_START tslib,_Subject,_Subscription,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var WindowToggleSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(WindowToggleSubscriber, _super);
-
-	  function WindowToggleSubscriber(destination, openings, closingSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.openings = openings;
-	    _this.closingSelector = closingSelector;
-	    _this.contexts = [];
-
-	    _this.add(_this.openSubscription = subscribeToResult(_this, openings, openings));
-
-	    return _this;
-	  }
-
-	  WindowToggleSubscriber.prototype._next = function (value) {
-	    var contexts = this.contexts;
-
-	    if (contexts) {
-	      var len = contexts.length;
-
-	      for (var i = 0; i < len; i++) {
-	        contexts[i].window.next(value);
-	      }
-	    }
-	  };
-
-	  WindowToggleSubscriber.prototype._error = function (err) {
-	    var contexts = this.contexts;
-	    this.contexts = null;
-
-	    if (contexts) {
-	      var len = contexts.length;
-	      var index = -1;
-
-	      while (++index < len) {
-	        var context_1 = contexts[index];
-	        context_1.window.error(err);
-	        context_1.subscription.unsubscribe();
-	      }
-	    }
-
-	    _super.prototype._error.call(this, err);
-	  };
-
-	  WindowToggleSubscriber.prototype._complete = function () {
-	    var contexts = this.contexts;
-	    this.contexts = null;
-
-	    if (contexts) {
-	      var len = contexts.length;
-	      var index = -1;
-
-	      while (++index < len) {
-	        var context_2 = contexts[index];
-	        context_2.window.complete();
-	        context_2.subscription.unsubscribe();
-	      }
-	    }
-
-	    _super.prototype._complete.call(this);
-	  };
-
-	  WindowToggleSubscriber.prototype._unsubscribe = function () {
-	    var contexts = this.contexts;
-	    this.contexts = null;
-
-	    if (contexts) {
-	      var len = contexts.length;
-	      var index = -1;
-
-	      while (++index < len) {
-	        var context_3 = contexts[index];
-	        context_3.window.unsubscribe();
-	        context_3.subscription.unsubscribe();
-	      }
-	    }
-	  };
-
-	  WindowToggleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    if (outerValue === this.openings) {
-	      var closingSelector = this.closingSelector;
-	      var closingNotifier = tryCatch(closingSelector)(innerValue);
-
-	      if (closingNotifier === errorObject) {
-	        return this.error(errorObject.e);
-	      } else {
-	        var window_1 = new Subject();
-	        var subscription = new Subscription();
-	        var context_4 = {
-	          window: window_1,
-	          subscription: subscription
-	        };
-	        this.contexts.push(context_4);
-	        var innerSubscription = subscribeToResult(this, closingNotifier, context_4);
-
-	        if (innerSubscription.closed) {
-	          this.closeWindow(this.contexts.length - 1);
-	        } else {
-	          innerSubscription.context = context_4;
-	          subscription.add(innerSubscription);
-	        }
-
-	        this.destination.next(window_1);
-	      }
-	    } else {
-	      this.closeWindow(this.contexts.indexOf(outerValue));
-	    }
-	  };
-
-	  WindowToggleSubscriber.prototype.notifyError = function (err) {
-	    this.error(err);
-	  };
-
-	  WindowToggleSubscriber.prototype.notifyComplete = function (inner) {
-	    if (inner !== this.openSubscription) {
-	      this.closeWindow(this.contexts.indexOf(inner.context));
-	    }
-	  };
-
-	  WindowToggleSubscriber.prototype.closeWindow = function (index) {
-	    if (index === -1) {
-	      return;
-	    }
-
-	    var contexts = this.contexts;
-	    var context = contexts[index];
-	    var window = context.window,
-	        subscription = context.subscription;
-	    contexts.splice(index, 1);
-	    window.complete();
-	    subscription.unsubscribe();
-	  };
-
-	  return WindowToggleSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var WindowSubscriber$1 =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(WindowSubscriber, _super);
-
-	  function WindowSubscriber(destination, closingSelector) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.destination = destination;
-	    _this.closingSelector = closingSelector;
-
-	    _this.openWindow();
-
-	    return _this;
-	  }
-
-	  WindowSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.openWindow(innerSub);
-	  };
-
-	  WindowSubscriber.prototype.notifyError = function (error, innerSub) {
-	    this._error(error);
-	  };
-
-	  WindowSubscriber.prototype.notifyComplete = function (innerSub) {
-	    this.openWindow(innerSub);
-	  };
-
-	  WindowSubscriber.prototype._next = function (value) {
-	    this.window.next(value);
-	  };
-
-	  WindowSubscriber.prototype._error = function (err) {
-	    this.window.error(err);
-	    this.destination.error(err);
-	    this.unsubscribeClosingNotification();
-	  };
-
-	  WindowSubscriber.prototype._complete = function () {
-	    this.window.complete();
-	    this.destination.complete();
-	    this.unsubscribeClosingNotification();
-	  };
-
-	  WindowSubscriber.prototype.unsubscribeClosingNotification = function () {
-	    if (this.closingNotification) {
-	      this.closingNotification.unsubscribe();
-	    }
-	  };
-
-	  WindowSubscriber.prototype.openWindow = function (innerSub) {
-	    if (innerSub === void 0) {
-	      innerSub = null;
-	    }
-
-	    if (innerSub) {
-	      this.remove(innerSub);
-	      innerSub.unsubscribe();
-	    }
-
-	    var prevWindow = this.window;
-
-	    if (prevWindow) {
-	      prevWindow.complete();
-	    }
-
-	    var window = this.window = new Subject();
-	    this.destination.next(window);
-	    var closingNotifier = tryCatch(this.closingSelector)();
-
-	    if (closingNotifier === errorObject) {
-	      var err = errorObject.e;
-	      this.destination.error(err);
-	      this.window.error(err);
-	    } else {
-	      this.add(this.closingNotification = subscribeToResult(this, closingNotifier));
-	    }
-	  };
-
-	  return WindowSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
-
-	var WithLatestFromSubscriber =
-	/*@__PURE__*/
-	function (_super) {
-	  __extends(WithLatestFromSubscriber, _super);
-
-	  function WithLatestFromSubscriber(destination, observables, project) {
-	    var _this = _super.call(this, destination) || this;
-
-	    _this.observables = observables;
-	    _this.project = project;
-	    _this.toRespond = [];
-	    var len = observables.length;
-	    _this.values = new Array(len);
-
-	    for (var i = 0; i < len; i++) {
-	      _this.toRespond.push(i);
-	    }
-
-	    for (var i = 0; i < len; i++) {
-	      var observable = observables[i];
-
-	      _this.add(subscribeToResult(_this, observable, observable, i));
-	    }
-
-	    return _this;
-	  }
-
-	  WithLatestFromSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
-	    this.values[outerIndex] = innerValue;
-	    var toRespond = this.toRespond;
-
-	    if (toRespond.length > 0) {
-	      var found = toRespond.indexOf(outerIndex);
-
-	      if (found !== -1) {
-	        toRespond.splice(found, 1);
-	      }
-	    }
-	  };
-
-	  WithLatestFromSubscriber.prototype.notifyComplete = function () {};
-
-	  WithLatestFromSubscriber.prototype._next = function (value) {
-	    if (this.toRespond.length === 0) {
-	      var args = [value].concat(this.values);
-
-	      if (this.project) {
-	        this._tryProject(args);
-	      } else {
-	        this.destination.next(args);
-	      }
-	    }
-	  };
-
-	  WithLatestFromSubscriber.prototype._tryProject = function (args) {
-	    var result;
-
-	    try {
-	      result = this.project.apply(this, args);
-	    } catch (err) {
-	      this.destination.error(err);
-	      return;
-	    }
-
-	    this.destination.next(result);
-	  };
-
-	  return WithLatestFromSubscriber;
-	}(OuterSubscriber);
-
-	/** PURE_IMPORTS_START _observable_zip PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START _observable_zip PURE_IMPORTS_END */
-
-	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
-
 	var _tmpl$2 = void 0;
 
 	/**
@@ -20709,7 +16719,7 @@
 	  return updateIn(this, keyPath, notSetValue, updater);
 	}
 
-	function merge$2() {
+	function merge$1() {
 	  var iters = [],
 	      len = arguments.length;
 
@@ -21057,7 +17067,7 @@
 	MapPrototype.removeIn = MapPrototype.deleteIn = deleteIn;
 	MapPrototype.update = update$1;
 	MapPrototype.updateIn = updateIn$1;
-	MapPrototype.merge = MapPrototype.concat = merge$2;
+	MapPrototype.merge = MapPrototype.concat = merge$1;
 	MapPrototype.mergeWith = mergeWith;
 	MapPrototype.mergeDeep = mergeDeep$1;
 	MapPrototype.mergeDeepWith = mergeDeepWith$1;
@@ -23439,10 +19449,10 @@
 	    return reify(this, mapFactory(this, mapper, context));
 	  },
 	  reduce: function reduce$1(reducer, initialReduction, context) {
-	    return reduce$1(this, reducer, initialReduction, context, arguments.length < 2, false);
+	    return reduce(this, reducer, initialReduction, context, arguments.length < 2, false);
 	  },
 	  reduceRight: function reduceRight(reducer, initialReduction, context) {
-	    return reduce$1(this, reducer, initialReduction, context, arguments.length < 2, true);
+	    return reduce(this, reducer, initialReduction, context, arguments.length < 2, true);
 	  },
 	  reverse: function reverse() {
 	    return reify(this, reverseFactory(this, true));
@@ -23451,7 +19461,7 @@
 	    return reify(this, sliceFactory(this, begin, end, true));
 	  },
 	  some: function some(predicate, context) {
-	    return !this.every(not$1(predicate), context);
+	    return !this.every(not(predicate), context);
 	  },
 	  sort: function sort(comparator) {
 	    return reify(this, sortFactory(this, comparator));
@@ -23494,7 +19504,7 @@
 	    return entriesSequence;
 	  },
 	  filterNot: function filterNot(predicate, context) {
-	    return this.filter(not$1(predicate), context);
+	    return this.filter(not(predicate), context);
 	  },
 	  findEntry: function findEntry(predicate, context, notSetValue) {
 	    var found = notSetValue;
@@ -23595,7 +19605,7 @@
 	    return reify(this, skipWhileFactory(this, predicate, context, true));
 	  },
 	  skipUntil: function skipUntil(predicate, context) {
-	    return this.skipWhile(not$1(predicate), context);
+	    return this.skipWhile(not(predicate), context);
 	  },
 	  sortBy: function sortBy(mapper, comparator) {
 	    return reify(this, sortFactory(this, comparator, mapper));
@@ -23610,7 +19620,7 @@
 	    return reify(this, takeWhileFactory(this, predicate, context));
 	  },
 	  takeUntil: function takeUntil(predicate, context) {
-	    return this.takeWhile(not$1(predicate), context);
+	    return this.takeWhile(not(predicate), context);
 	  },
 	  update: function update(fn) {
 	    return fn(this);
@@ -23799,7 +19809,7 @@
 	mixin(IndexedSeq, IndexedCollection.prototype);
 	mixin(SetSeq, SetCollection.prototype); // #pragma Helper functions
 
-	function reduce$1(collection, reducer, reduction, context, useFirst, reverse) {
+	function reduce(collection, reducer, reduction, context, useFirst, reverse) {
 	  assertNotInfinite(collection.size);
 
 	  collection.__iterate(function (v, k, c) {
@@ -23822,7 +19832,7 @@
 	  return [k, v];
 	}
 
-	function not$1(predicate) {
+	function not(predicate) {
 	  return function () {
 	    return !predicate.apply(this, arguments);
 	  };
@@ -24102,7 +20112,7 @@
 	RecordPrototype.deleteIn = RecordPrototype.removeIn = deleteIn;
 	RecordPrototype.getIn = getIn$1;
 	RecordPrototype.hasIn = CollectionPrototype.hasIn;
-	RecordPrototype.merge = merge$2;
+	RecordPrototype.merge = merge$1;
 	RecordPrototype.mergeWith = mergeWith;
 	RecordPrototype.mergeIn = mergeIn;
 	RecordPrototype.mergeDeep = mergeDeep$1;
@@ -24740,13 +20750,13 @@
 	function setVisibleRange(start, duration) {
 	  const range$$1 = new AudioRange(start, duration);
 	  let next = editorSubject.value.set('visibleRange', range$$1);
-	  const max$$1 = 40;
+	  const max = 40;
 	  let value = null;
 
 	  for (let i = 0; i < quanitizationValues.length; i += 1) {
 	    const ticks = duration.seconds / quanitizationValues[i];
 
-	    if (ticks <= max$$1) {
+	    if (ticks <= max) {
 	      value = quanitizationValues[i];
 	      break;
 	    }
@@ -24789,6 +20799,3965 @@
 	const editorSym = Symbol();
 	wire_2(editorSym, wireObservable(stream$2));
 
+	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var AuditSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(AuditSubscriber, _super);
+
+	  function AuditSubscriber(destination, durationSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.durationSelector = durationSelector;
+	    _this.hasValue = false;
+	    return _this;
+	  }
+
+	  AuditSubscriber.prototype._next = function (value) {
+	    this.value = value;
+	    this.hasValue = true;
+
+	    if (!this.throttled) {
+	      var duration = tryCatch(this.durationSelector)(value);
+
+	      if (duration === errorObject) {
+	        this.destination.error(errorObject.e);
+	      } else {
+	        var innerSubscription = subscribeToResult(this, duration);
+
+	        if (!innerSubscription || innerSubscription.closed) {
+	          this.clearThrottle();
+	        } else {
+	          this.add(this.throttled = innerSubscription);
+	        }
+	      }
+	    }
+	  };
+
+	  AuditSubscriber.prototype.clearThrottle = function () {
+	    var _a = this,
+	        value = _a.value,
+	        hasValue = _a.hasValue,
+	        throttled = _a.throttled;
+
+	    if (throttled) {
+	      this.remove(throttled);
+	      this.throttled = null;
+	      throttled.unsubscribe();
+	    }
+
+	    if (hasValue) {
+	      this.value = null;
+	      this.hasValue = false;
+	      this.destination.next(value);
+	    }
+	  };
+
+	  AuditSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex) {
+	    this.clearThrottle();
+	  };
+
+	  AuditSubscriber.prototype.notifyComplete = function () {
+	    this.clearThrottle();
+	  };
+
+	  return AuditSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _scheduler_async,_audit,_observable_timer PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var BufferSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferSubscriber, _super);
+
+	  function BufferSubscriber(destination, closingNotifier) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.buffer = [];
+
+	    _this.add(subscribeToResult(_this, closingNotifier));
+
+	    return _this;
+	  }
+
+	  BufferSubscriber.prototype._next = function (value) {
+	    this.buffer.push(value);
+	  };
+
+	  BufferSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    var buffer = this.buffer;
+	    this.buffer = [];
+	    this.destination.next(buffer);
+	  };
+
+	  return BufferSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var BufferCountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferCountSubscriber, _super);
+
+	  function BufferCountSubscriber(destination, bufferSize) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.bufferSize = bufferSize;
+	    _this.buffer = [];
+	    return _this;
+	  }
+
+	  BufferCountSubscriber.prototype._next = function (value) {
+	    var buffer = this.buffer;
+	    buffer.push(value);
+
+	    if (buffer.length == this.bufferSize) {
+	      this.destination.next(buffer);
+	      this.buffer = [];
+	    }
+	  };
+
+	  BufferCountSubscriber.prototype._complete = function () {
+	    var buffer = this.buffer;
+
+	    if (buffer.length > 0) {
+	      this.destination.next(buffer);
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  return BufferCountSubscriber;
+	}(Subscriber);
+
+	var BufferSkipCountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferSkipCountSubscriber, _super);
+
+	  function BufferSkipCountSubscriber(destination, bufferSize, startBufferEvery) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.bufferSize = bufferSize;
+	    _this.startBufferEvery = startBufferEvery;
+	    _this.buffers = [];
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  BufferSkipCountSubscriber.prototype._next = function (value) {
+	    var _a = this,
+	        bufferSize = _a.bufferSize,
+	        startBufferEvery = _a.startBufferEvery,
+	        buffers = _a.buffers,
+	        count = _a.count;
+
+	    this.count++;
+
+	    if (count % startBufferEvery === 0) {
+	      buffers.push([]);
+	    }
+
+	    for (var i = buffers.length; i--;) {
+	      var buffer = buffers[i];
+	      buffer.push(value);
+
+	      if (buffer.length === bufferSize) {
+	        buffers.splice(i, 1);
+	        this.destination.next(buffer);
+	      }
+	    }
+	  };
+
+	  BufferSkipCountSubscriber.prototype._complete = function () {
+	    var _a = this,
+	        buffers = _a.buffers,
+	        destination = _a.destination;
+
+	    while (buffers.length > 0) {
+	      var buffer = buffers.shift();
+
+	      if (buffer.length > 0) {
+	        destination.next(buffer);
+	      }
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  return BufferSkipCountSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_scheduler_async,_Subscriber,_util_isScheduler PURE_IMPORTS_END */
+
+	var Context =
+	/*@__PURE__*/
+	function () {
+	  function Context() {
+	    this.buffer = [];
+	  }
+
+	  return Context;
+	}();
+
+	var BufferTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferTimeSubscriber, _super);
+
+	  function BufferTimeSubscriber(destination, bufferTimeSpan, bufferCreationInterval, maxBufferSize, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.bufferTimeSpan = bufferTimeSpan;
+	    _this.bufferCreationInterval = bufferCreationInterval;
+	    _this.maxBufferSize = maxBufferSize;
+	    _this.scheduler = scheduler;
+	    _this.contexts = [];
+
+	    var context = _this.openContext();
+
+	    _this.timespanOnly = bufferCreationInterval == null || bufferCreationInterval < 0;
+
+	    if (_this.timespanOnly) {
+	      var timeSpanOnlyState = {
+	        subscriber: _this,
+	        context: context,
+	        bufferTimeSpan: bufferTimeSpan
+	      };
+
+	      _this.add(context.closeAction = scheduler.schedule(dispatchBufferTimeSpanOnly, bufferTimeSpan, timeSpanOnlyState));
+	    } else {
+	      var closeState = {
+	        subscriber: _this,
+	        context: context
+	      };
+	      var creationState = {
+	        bufferTimeSpan: bufferTimeSpan,
+	        bufferCreationInterval: bufferCreationInterval,
+	        subscriber: _this,
+	        scheduler: scheduler
+	      };
+
+	      _this.add(context.closeAction = scheduler.schedule(dispatchBufferClose, bufferTimeSpan, closeState));
+
+	      _this.add(scheduler.schedule(dispatchBufferCreation, bufferCreationInterval, creationState));
+	    }
+
+	    return _this;
+	  }
+
+	  BufferTimeSubscriber.prototype._next = function (value) {
+	    var contexts = this.contexts;
+	    var len = contexts.length;
+	    var filledBufferContext;
+
+	    for (var i = 0; i < len; i++) {
+	      var context_1 = contexts[i];
+	      var buffer = context_1.buffer;
+	      buffer.push(value);
+
+	      if (buffer.length == this.maxBufferSize) {
+	        filledBufferContext = context_1;
+	      }
+	    }
+
+	    if (filledBufferContext) {
+	      this.onBufferFull(filledBufferContext);
+	    }
+	  };
+
+	  BufferTimeSubscriber.prototype._error = function (err) {
+	    this.contexts.length = 0;
+
+	    _super.prototype._error.call(this, err);
+	  };
+
+	  BufferTimeSubscriber.prototype._complete = function () {
+	    var _a = this,
+	        contexts = _a.contexts,
+	        destination = _a.destination;
+
+	    while (contexts.length > 0) {
+	      var context_2 = contexts.shift();
+	      destination.next(context_2.buffer);
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  BufferTimeSubscriber.prototype._unsubscribe = function () {
+	    this.contexts = null;
+	  };
+
+	  BufferTimeSubscriber.prototype.onBufferFull = function (context) {
+	    this.closeContext(context);
+	    var closeAction = context.closeAction;
+	    closeAction.unsubscribe();
+	    this.remove(closeAction);
+
+	    if (!this.closed && this.timespanOnly) {
+	      context = this.openContext();
+	      var bufferTimeSpan = this.bufferTimeSpan;
+	      var timeSpanOnlyState = {
+	        subscriber: this,
+	        context: context,
+	        bufferTimeSpan: bufferTimeSpan
+	      };
+	      this.add(context.closeAction = this.scheduler.schedule(dispatchBufferTimeSpanOnly, bufferTimeSpan, timeSpanOnlyState));
+	    }
+	  };
+
+	  BufferTimeSubscriber.prototype.openContext = function () {
+	    var context = new Context();
+	    this.contexts.push(context);
+	    return context;
+	  };
+
+	  BufferTimeSubscriber.prototype.closeContext = function (context) {
+	    this.destination.next(context.buffer);
+	    var contexts = this.contexts;
+	    var spliceIndex = contexts ? contexts.indexOf(context) : -1;
+
+	    if (spliceIndex >= 0) {
+	      contexts.splice(contexts.indexOf(context), 1);
+	    }
+	  };
+
+	  return BufferTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchBufferTimeSpanOnly(state) {
+	  var subscriber = state.subscriber;
+	  var prevContext = state.context;
+
+	  if (prevContext) {
+	    subscriber.closeContext(prevContext);
+	  }
+
+	  if (!subscriber.closed) {
+	    state.context = subscriber.openContext();
+	    state.context.closeAction = this.schedule(state, state.bufferTimeSpan);
+	  }
+	}
+
+	function dispatchBufferCreation(state) {
+	  var bufferCreationInterval = state.bufferCreationInterval,
+	      bufferTimeSpan = state.bufferTimeSpan,
+	      subscriber = state.subscriber,
+	      scheduler = state.scheduler;
+	  var context = subscriber.openContext();
+	  var action = this;
+
+	  if (!subscriber.closed) {
+	    subscriber.add(context.closeAction = scheduler.schedule(dispatchBufferClose, bufferTimeSpan, {
+	      subscriber: subscriber,
+	      context: context
+	    }));
+	    action.schedule(state, bufferCreationInterval);
+	  }
+	}
+
+	function dispatchBufferClose(arg) {
+	  var subscriber = arg.subscriber,
+	      context = arg.context;
+	  subscriber.closeContext(context);
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subscription,_util_subscribeToResult,_OuterSubscriber PURE_IMPORTS_END */
+
+	var BufferToggleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferToggleSubscriber, _super);
+
+	  function BufferToggleSubscriber(destination, openings, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.openings = openings;
+	    _this.closingSelector = closingSelector;
+	    _this.contexts = [];
+
+	    _this.add(subscribeToResult(_this, openings));
+
+	    return _this;
+	  }
+
+	  BufferToggleSubscriber.prototype._next = function (value) {
+	    var contexts = this.contexts;
+	    var len = contexts.length;
+
+	    for (var i = 0; i < len; i++) {
+	      contexts[i].buffer.push(value);
+	    }
+	  };
+
+	  BufferToggleSubscriber.prototype._error = function (err) {
+	    var contexts = this.contexts;
+
+	    while (contexts.length > 0) {
+	      var context_1 = contexts.shift();
+	      context_1.subscription.unsubscribe();
+	      context_1.buffer = null;
+	      context_1.subscription = null;
+	    }
+
+	    this.contexts = null;
+
+	    _super.prototype._error.call(this, err);
+	  };
+
+	  BufferToggleSubscriber.prototype._complete = function () {
+	    var contexts = this.contexts;
+
+	    while (contexts.length > 0) {
+	      var context_2 = contexts.shift();
+	      this.destination.next(context_2.buffer);
+	      context_2.subscription.unsubscribe();
+	      context_2.buffer = null;
+	      context_2.subscription = null;
+	    }
+
+	    this.contexts = null;
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  BufferToggleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    outerValue ? this.closeBuffer(outerValue) : this.openBuffer(innerValue);
+	  };
+
+	  BufferToggleSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.closeBuffer(innerSub.context);
+	  };
+
+	  BufferToggleSubscriber.prototype.openBuffer = function (value) {
+	    try {
+	      var closingSelector = this.closingSelector;
+	      var closingNotifier = closingSelector.call(this, value);
+
+	      if (closingNotifier) {
+	        this.trySubscribe(closingNotifier);
+	      }
+	    } catch (err) {
+	      this._error(err);
+	    }
+	  };
+
+	  BufferToggleSubscriber.prototype.closeBuffer = function (context) {
+	    var contexts = this.contexts;
+
+	    if (contexts && context) {
+	      var buffer = context.buffer,
+	          subscription = context.subscription;
+	      this.destination.next(buffer);
+	      contexts.splice(contexts.indexOf(context), 1);
+	      this.remove(subscription);
+	      subscription.unsubscribe();
+	    }
+	  };
+
+	  BufferToggleSubscriber.prototype.trySubscribe = function (closingNotifier) {
+	    var contexts = this.contexts;
+	    var buffer = [];
+	    var subscription = new Subscription();
+	    var context = {
+	      buffer: buffer,
+	      subscription: subscription
+	    };
+	    contexts.push(context);
+	    var innerSubscription = subscribeToResult(this, closingNotifier, context);
+
+	    if (!innerSubscription || innerSubscription.closed) {
+	      this.closeBuffer(context);
+	    } else {
+	      innerSubscription.context = context;
+	      this.add(innerSubscription);
+	      subscription.add(innerSubscription);
+	    }
+	  };
+
+	  return BufferToggleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscription,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var BufferWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(BufferWhenSubscriber, _super);
+
+	  function BufferWhenSubscriber(destination, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.closingSelector = closingSelector;
+	    _this.subscribing = false;
+
+	    _this.openBuffer();
+
+	    return _this;
+	  }
+
+	  BufferWhenSubscriber.prototype._next = function (value) {
+	    this.buffer.push(value);
+	  };
+
+	  BufferWhenSubscriber.prototype._complete = function () {
+	    var buffer = this.buffer;
+
+	    if (buffer) {
+	      this.destination.next(buffer);
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  BufferWhenSubscriber.prototype._unsubscribe = function () {
+	    this.buffer = null;
+	    this.subscribing = false;
+	  };
+
+	  BufferWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.openBuffer();
+	  };
+
+	  BufferWhenSubscriber.prototype.notifyComplete = function () {
+	    if (this.subscribing) {
+	      this.complete();
+	    } else {
+	      this.openBuffer();
+	    }
+	  };
+
+	  BufferWhenSubscriber.prototype.openBuffer = function () {
+	    var closingSubscription = this.closingSubscription;
+
+	    if (closingSubscription) {
+	      this.remove(closingSubscription);
+	      closingSubscription.unsubscribe();
+	    }
+
+	    var buffer = this.buffer;
+
+	    if (this.buffer) {
+	      this.destination.next(buffer);
+	    }
+
+	    this.buffer = [];
+	    var closingNotifier = tryCatch(this.closingSelector)();
+
+	    if (closingNotifier === errorObject) {
+	      this.error(errorObject.e);
+	    } else {
+	      closingSubscription = new Subscription();
+	      this.closingSubscription = closingSubscription;
+	      this.add(closingSubscription);
+	      this.subscribing = true;
+	      closingSubscription.add(subscribeToResult(this, closingNotifier));
+	      this.subscribing = false;
+	    }
+	  };
+
+	  return BufferWhenSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var CatchSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(CatchSubscriber, _super);
+
+	  function CatchSubscriber(destination, selector, caught) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.selector = selector;
+	    _this.caught = caught;
+	    return _this;
+	  }
+
+	  CatchSubscriber.prototype.error = function (err) {
+	    if (!this.isStopped) {
+	      var result = void 0;
+
+	      try {
+	        result = this.selector(err, this.caught);
+	      } catch (err2) {
+	        _super.prototype.error.call(this, err2);
+
+	        return;
+	      }
+
+	      this._unsubscribeAndRecycle();
+
+	      var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	      this.add(innerSubscriber);
+	      subscribeToResult(this, result, undefined, undefined, innerSubscriber);
+	    }
+	  };
+
+	  return CatchSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _observable_combineLatest PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_isArray,_observable_combineLatest,_observable_from PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_concat PURE_IMPORTS_END */
+	function concat$1() {
+	  var observables = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    observables[_i] = arguments[_i];
+	  }
+
+	  return function (source) {
+	    return source.lift.call(concat.apply(void 0, [source].concat(observables)));
+	  };
+	}
+
+	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _concatMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var CountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(CountSubscriber, _super);
+
+	  function CountSubscriber(destination, predicate, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.source = source;
+	    _this.count = 0;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  CountSubscriber.prototype._next = function (value) {
+	    if (this.predicate) {
+	      this._tryPredicate(value);
+	    } else {
+	      this.count++;
+	    }
+	  };
+
+	  CountSubscriber.prototype._tryPredicate = function (value) {
+	    var result;
+
+	    try {
+	      result = this.predicate(value, this.index++, this.source);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    if (result) {
+	      this.count++;
+	    }
+	  };
+
+	  CountSubscriber.prototype._complete = function () {
+	    this.destination.next(this.count);
+	    this.destination.complete();
+	  };
+
+	  return CountSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var DebounceSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DebounceSubscriber, _super);
+
+	  function DebounceSubscriber(destination, durationSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.durationSelector = durationSelector;
+	    _this.hasValue = false;
+	    _this.durationSubscription = null;
+	    return _this;
+	  }
+
+	  DebounceSubscriber.prototype._next = function (value) {
+	    try {
+	      var result = this.durationSelector.call(this, value);
+
+	      if (result) {
+	        this._tryNext(value, result);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  DebounceSubscriber.prototype._complete = function () {
+	    this.emitValue();
+	    this.destination.complete();
+	  };
+
+	  DebounceSubscriber.prototype._tryNext = function (value, duration) {
+	    var subscription = this.durationSubscription;
+	    this.value = value;
+	    this.hasValue = true;
+
+	    if (subscription) {
+	      subscription.unsubscribe();
+	      this.remove(subscription);
+	    }
+
+	    subscription = subscribeToResult(this, duration);
+
+	    if (subscription && !subscription.closed) {
+	      this.add(this.durationSubscription = subscription);
+	    }
+	  };
+
+	  DebounceSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.emitValue();
+	  };
+
+	  DebounceSubscriber.prototype.notifyComplete = function () {
+	    this.emitValue();
+	  };
+
+	  DebounceSubscriber.prototype.emitValue = function () {
+	    if (this.hasValue) {
+	      var value = this.value;
+	      var subscription = this.durationSubscription;
+
+	      if (subscription) {
+	        this.durationSubscription = null;
+	        subscription.unsubscribe();
+	        this.remove(subscription);
+	      }
+
+	      this.value = null;
+	      this.hasValue = false;
+
+	      _super.prototype._next.call(this, value);
+	    }
+	  };
+
+	  return DebounceSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async PURE_IMPORTS_END */
+
+	var DebounceTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DebounceTimeSubscriber, _super);
+
+	  function DebounceTimeSubscriber(destination, dueTime, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.dueTime = dueTime;
+	    _this.scheduler = scheduler;
+	    _this.debouncedSubscription = null;
+	    _this.lastValue = null;
+	    _this.hasValue = false;
+	    return _this;
+	  }
+
+	  DebounceTimeSubscriber.prototype._next = function (value) {
+	    this.clearDebounce();
+	    this.lastValue = value;
+	    this.hasValue = true;
+	    this.add(this.debouncedSubscription = this.scheduler.schedule(dispatchNext$2, this.dueTime, this));
+	  };
+
+	  DebounceTimeSubscriber.prototype._complete = function () {
+	    this.debouncedNext();
+	    this.destination.complete();
+	  };
+
+	  DebounceTimeSubscriber.prototype.debouncedNext = function () {
+	    this.clearDebounce();
+
+	    if (this.hasValue) {
+	      var lastValue = this.lastValue;
+	      this.lastValue = null;
+	      this.hasValue = false;
+	      this.destination.next(lastValue);
+	    }
+	  };
+
+	  DebounceTimeSubscriber.prototype.clearDebounce = function () {
+	    var debouncedSubscription = this.debouncedSubscription;
+
+	    if (debouncedSubscription !== null) {
+	      this.remove(debouncedSubscription);
+	      debouncedSubscription.unsubscribe();
+	      this.debouncedSubscription = null;
+	    }
+	  };
+
+	  return DebounceTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchNext$2(subscriber) {
+	  subscriber.debouncedNext();
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var DefaultIfEmptySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DefaultIfEmptySubscriber, _super);
+
+	  function DefaultIfEmptySubscriber(destination, defaultValue) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.defaultValue = defaultValue;
+	    _this.isEmpty = true;
+	    return _this;
+	  }
+
+	  DefaultIfEmptySubscriber.prototype._next = function (value) {
+	    this.isEmpty = false;
+	    this.destination.next(value);
+	  };
+
+	  DefaultIfEmptySubscriber.prototype._complete = function () {
+	    if (this.isEmpty) {
+	      this.destination.next(this.defaultValue);
+	    }
+
+	    this.destination.complete();
+	  };
+
+	  return DefaultIfEmptySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_scheduler_async,_util_isDate,_Subscriber,_Notification PURE_IMPORTS_END */
+
+	var DelaySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DelaySubscriber, _super);
+
+	  function DelaySubscriber(destination, delay, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.delay = delay;
+	    _this.scheduler = scheduler;
+	    _this.queue = [];
+	    _this.active = false;
+	    _this.errored = false;
+	    return _this;
+	  }
+
+	  DelaySubscriber.dispatch = function (state) {
+	    var source = state.source;
+	    var queue = source.queue;
+	    var scheduler = state.scheduler;
+	    var destination = state.destination;
+
+	    while (queue.length > 0 && queue[0].time - scheduler.now() <= 0) {
+	      queue.shift().notification.observe(destination);
+	    }
+
+	    if (queue.length > 0) {
+	      var delay_1 = Math.max(0, queue[0].time - scheduler.now());
+	      this.schedule(state, delay_1);
+	    } else {
+	      this.unsubscribe();
+	      source.active = false;
+	    }
+	  };
+
+	  DelaySubscriber.prototype._schedule = function (scheduler) {
+	    this.active = true;
+	    var destination = this.destination;
+	    destination.add(scheduler.schedule(DelaySubscriber.dispatch, this.delay, {
+	      source: this,
+	      destination: this.destination,
+	      scheduler: scheduler
+	    }));
+	  };
+
+	  DelaySubscriber.prototype.scheduleNotification = function (notification) {
+	    if (this.errored === true) {
+	      return;
+	    }
+
+	    var scheduler = this.scheduler;
+	    var message = new DelayMessage(scheduler.now() + this.delay, notification);
+	    this.queue.push(message);
+
+	    if (this.active === false) {
+	      this._schedule(scheduler);
+	    }
+	  };
+
+	  DelaySubscriber.prototype._next = function (value) {
+	    this.scheduleNotification(Notification.createNext(value));
+	  };
+
+	  DelaySubscriber.prototype._error = function (err) {
+	    this.errored = true;
+	    this.queue = [];
+	    this.destination.error(err);
+	    this.unsubscribe();
+	  };
+
+	  DelaySubscriber.prototype._complete = function () {
+	    this.scheduleNotification(Notification.createComplete());
+	    this.unsubscribe();
+	  };
+
+	  return DelaySubscriber;
+	}(Subscriber);
+
+	var DelayMessage =
+	/*@__PURE__*/
+	function () {
+	  function DelayMessage(time, notification) {
+	    this.time = time;
+	    this.notification = notification;
+	  }
+
+	  return DelayMessage;
+	}();
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Observable,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var DelayWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DelayWhenSubscriber, _super);
+
+	  function DelayWhenSubscriber(destination, delayDurationSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.delayDurationSelector = delayDurationSelector;
+	    _this.completed = false;
+	    _this.delayNotifierSubscriptions = [];
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  DelayWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.destination.next(outerValue);
+	    this.removeSubscription(innerSub);
+	    this.tryComplete();
+	  };
+
+	  DelayWhenSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  DelayWhenSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var value = this.removeSubscription(innerSub);
+
+	    if (value) {
+	      this.destination.next(value);
+	    }
+
+	    this.tryComplete();
+	  };
+
+	  DelayWhenSubscriber.prototype._next = function (value) {
+	    var index = this.index++;
+
+	    try {
+	      var delayNotifier = this.delayDurationSelector(value, index);
+
+	      if (delayNotifier) {
+	        this.tryDelay(delayNotifier, value);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  DelayWhenSubscriber.prototype._complete = function () {
+	    this.completed = true;
+	    this.tryComplete();
+	    this.unsubscribe();
+	  };
+
+	  DelayWhenSubscriber.prototype.removeSubscription = function (subscription) {
+	    subscription.unsubscribe();
+	    var subscriptionIdx = this.delayNotifierSubscriptions.indexOf(subscription);
+
+	    if (subscriptionIdx !== -1) {
+	      this.delayNotifierSubscriptions.splice(subscriptionIdx, 1);
+	    }
+
+	    return subscription.outerValue;
+	  };
+
+	  DelayWhenSubscriber.prototype.tryDelay = function (delayNotifier, value) {
+	    var notifierSubscription = subscribeToResult(this, delayNotifier, value);
+
+	    if (notifierSubscription && !notifierSubscription.closed) {
+	      var destination = this.destination;
+	      destination.add(notifierSubscription);
+	      this.delayNotifierSubscriptions.push(notifierSubscription);
+	    }
+	  };
+
+	  DelayWhenSubscriber.prototype.tryComplete = function () {
+	    if (this.completed && this.delayNotifierSubscriptions.length === 0) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return DelayWhenSubscriber;
+	}(OuterSubscriber);
+
+	var SubscriptionDelayObservable =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SubscriptionDelayObservable, _super);
+
+	  function SubscriptionDelayObservable(source, subscriptionDelay) {
+	    var _this = _super.call(this) || this;
+
+	    _this.source = source;
+	    _this.subscriptionDelay = subscriptionDelay;
+	    return _this;
+	  }
+
+	  SubscriptionDelayObservable.prototype._subscribe = function (subscriber) {
+	    this.subscriptionDelay.subscribe(new SubscriptionDelaySubscriber(subscriber, this.source));
+	  };
+
+	  return SubscriptionDelayObservable;
+	}(Observable);
+
+	var SubscriptionDelaySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SubscriptionDelaySubscriber, _super);
+
+	  function SubscriptionDelaySubscriber(parent, source) {
+	    var _this = _super.call(this) || this;
+
+	    _this.parent = parent;
+	    _this.source = source;
+	    _this.sourceSubscribed = false;
+	    return _this;
+	  }
+
+	  SubscriptionDelaySubscriber.prototype._next = function (unused) {
+	    this.subscribeToSource();
+	  };
+
+	  SubscriptionDelaySubscriber.prototype._error = function (err) {
+	    this.unsubscribe();
+	    this.parent.error(err);
+	  };
+
+	  SubscriptionDelaySubscriber.prototype._complete = function () {
+	    this.unsubscribe();
+	    this.subscribeToSource();
+	  };
+
+	  SubscriptionDelaySubscriber.prototype.subscribeToSource = function () {
+	    if (!this.sourceSubscribed) {
+	      this.sourceSubscribed = true;
+	      this.unsubscribe();
+	      this.source.subscribe(this.parent);
+	    }
+	  };
+
+	  return SubscriptionDelaySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+	function dematerialize() {
+	  return function dematerializeOperatorFunction(source) {
+	    return source.lift(new DeMaterializeOperator());
+	  };
+	}
+
+	var DeMaterializeOperator =
+	/*@__PURE__*/
+	function () {
+	  function DeMaterializeOperator() {}
+
+	  DeMaterializeOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new DeMaterializeSubscriber(subscriber));
+	  };
+
+	  return DeMaterializeOperator;
+	}();
+
+	var DeMaterializeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DeMaterializeSubscriber, _super);
+
+	  function DeMaterializeSubscriber(destination) {
+	    return _super.call(this, destination) || this;
+	  }
+
+	  DeMaterializeSubscriber.prototype._next = function (value) {
+	    value.observe(this.destination);
+	  };
+
+	  return DeMaterializeSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var DistinctSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DistinctSubscriber, _super);
+
+	  function DistinctSubscriber(destination, keySelector, flushes) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.keySelector = keySelector;
+	    _this.values = new Set();
+
+	    if (flushes) {
+	      _this.add(subscribeToResult(_this, flushes));
+	    }
+
+	    return _this;
+	  }
+
+	  DistinctSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.values.clear();
+	  };
+
+	  DistinctSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  DistinctSubscriber.prototype._next = function (value) {
+	    if (this.keySelector) {
+	      this._useKeySelector(value);
+	    } else {
+	      this._finalizeNext(value, value);
+	    }
+	  };
+
+	  DistinctSubscriber.prototype._useKeySelector = function (value) {
+	    var key;
+	    var destination = this.destination;
+
+	    try {
+	      key = this.keySelector(value);
+	    } catch (err) {
+	      destination.error(err);
+	      return;
+	    }
+
+	    this._finalizeNext(key, value);
+	  };
+
+	  DistinctSubscriber.prototype._finalizeNext = function (key, value) {
+	    var values = this.values;
+
+	    if (!values.has(key)) {
+	      values.add(key);
+	      this.destination.next(value);
+	    }
+	  };
+
+	  return DistinctSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
+
+	var DistinctUntilChangedSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(DistinctUntilChangedSubscriber, _super);
+
+	  function DistinctUntilChangedSubscriber(destination, compare, keySelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.keySelector = keySelector;
+	    _this.hasKey = false;
+
+	    if (typeof compare === 'function') {
+	      _this.compare = compare;
+	    }
+
+	    return _this;
+	  }
+
+	  DistinctUntilChangedSubscriber.prototype.compare = function (x, y) {
+	    return x === y;
+	  };
+
+	  DistinctUntilChangedSubscriber.prototype._next = function (value) {
+	    var keySelector = this.keySelector;
+	    var key = value;
+
+	    if (keySelector) {
+	      key = tryCatch(this.keySelector)(value);
+
+	      if (key === errorObject) {
+	        return this.destination.error(errorObject.e);
+	      }
+	    }
+
+	    var result = false;
+
+	    if (this.hasKey) {
+	      result = tryCatch(this.compare)(this.key, key);
+
+	      if (result === errorObject) {
+	        return this.destination.error(errorObject.e);
+	      }
+	    } else {
+	      this.hasKey = true;
+	    }
+
+	    if (Boolean(result) === false) {
+	      this.key = key;
+	      this.destination.next(value);
+	    }
+	  };
+
+	  return DistinctUntilChangedSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _distinctUntilChanged PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+	function filter(predicate, thisArg) {
+	  return function filterOperatorFunction(source) {
+	    return source.lift(new FilterOperator(predicate, thisArg));
+	  };
+	}
+
+	var FilterOperator =
+	/*@__PURE__*/
+	function () {
+	  function FilterOperator(predicate, thisArg) {
+	    this.predicate = predicate;
+	    this.thisArg = thisArg;
+	  }
+
+	  FilterOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new FilterSubscriber(subscriber, this.predicate, this.thisArg));
+	  };
+
+	  return FilterOperator;
+	}();
+
+	var FilterSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(FilterSubscriber, _super);
+
+	  function FilterSubscriber(destination, predicate, thisArg) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.thisArg = thisArg;
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  FilterSubscriber.prototype._next = function (value) {
+	    var result;
+
+	    try {
+	      result = this.predicate.call(this.thisArg, value, this.count++);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    if (result) {
+	      this.destination.next(value);
+	    }
+	  };
+
+	  return FilterSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_noop,_util_isFunction PURE_IMPORTS_END */
+
+	var TapSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TapSubscriber, _super);
+
+	  function TapSubscriber(destination, observerOrNext, error, complete) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this._tapNext = noop;
+	    _this._tapError = noop;
+	    _this._tapComplete = noop;
+	    _this._tapError = error || noop;
+	    _this._tapComplete = complete || noop;
+
+	    if (isFunction(observerOrNext)) {
+	      _this._context = _this;
+	      _this._tapNext = observerOrNext;
+	    } else if (observerOrNext) {
+	      _this._context = observerOrNext;
+	      _this._tapNext = observerOrNext.next || noop;
+	      _this._tapError = observerOrNext.error || noop;
+	      _this._tapComplete = observerOrNext.complete || noop;
+	    }
+
+	    return _this;
+	  }
+
+	  TapSubscriber.prototype._next = function (value) {
+	    try {
+	      this._tapNext.call(this._context, value);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.destination.next(value);
+	  };
+
+	  TapSubscriber.prototype._error = function (err) {
+	    try {
+	      this._tapError.call(this._context, err);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.destination.error(err);
+	  };
+
+	  TapSubscriber.prototype._complete = function () {
+	    try {
+	      this._tapComplete.call(this._context);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    return this.destination.complete();
+	  };
+
+	  return TapSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _tap,_util_EmptyError PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError,_observable_empty PURE_IMPORTS_END */
+	function take(count) {
+	  return function (source) {
+	    if (count === 0) {
+	      return empty$1();
+	    } else {
+	      return source.lift(new TakeOperator(count));
+	    }
+	  };
+	}
+
+	var TakeOperator =
+	/*@__PURE__*/
+	function () {
+	  function TakeOperator(total) {
+	    this.total = total;
+
+	    if (this.total < 0) {
+	      throw new ArgumentOutOfRangeError();
+	    }
+	  }
+
+	  TakeOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new TakeSubscriber(subscriber, this.total));
+	  };
+
+	  return TakeOperator;
+	}();
+
+	var TakeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeSubscriber, _super);
+
+	  function TakeSubscriber(destination, total) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.total = total;
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  TakeSubscriber.prototype._next = function (value) {
+	    var total = this.total;
+	    var count = ++this.count;
+
+	    if (count <= total) {
+	      this.destination.next(value);
+
+	      if (count === total) {
+	        this.destination.complete();
+	        this.unsubscribe();
+	      }
+	    }
+	  };
+
+	  return TakeSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _util_ArgumentOutOfRangeError,_filter,_throwIfEmpty,_defaultIfEmpty,_take PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var EverySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(EverySubscriber, _super);
+
+	  function EverySubscriber(destination, predicate, thisArg, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.thisArg = thisArg;
+	    _this.source = source;
+	    _this.index = 0;
+	    _this.thisArg = thisArg || _this;
+	    return _this;
+	  }
+
+	  EverySubscriber.prototype.notifyComplete = function (everyValueMatch) {
+	    this.destination.next(everyValueMatch);
+	    this.destination.complete();
+	  };
+
+	  EverySubscriber.prototype._next = function (value) {
+	    var result = false;
+
+	    try {
+	      result = this.predicate.call(this.thisArg, value, this.index++, this.source);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    if (!result) {
+	      this.notifyComplete(false);
+	    }
+	  };
+
+	  EverySubscriber.prototype._complete = function () {
+	    this.notifyComplete(true);
+	  };
+
+	  return EverySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var SwitchFirstSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SwitchFirstSubscriber, _super);
+
+	  function SwitchFirstSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.hasCompleted = false;
+	    _this.hasSubscription = false;
+	    return _this;
+	  }
+
+	  SwitchFirstSubscriber.prototype._next = function (value) {
+	    if (!this.hasSubscription) {
+	      this.hasSubscription = true;
+	      this.add(subscribeToResult(this, value));
+	    }
+	  };
+
+	  SwitchFirstSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (!this.hasSubscription) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  SwitchFirstSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.remove(innerSub);
+	    this.hasSubscription = false;
+
+	    if (this.hasCompleted) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return SwitchFirstSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult,_map,_observable_from PURE_IMPORTS_END */
+
+	var ExhaustMapSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ExhaustMapSubscriber, _super);
+
+	  function ExhaustMapSubscriber(destination, project) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.project = project;
+	    _this.hasSubscription = false;
+	    _this.hasCompleted = false;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  ExhaustMapSubscriber.prototype._next = function (value) {
+	    if (!this.hasSubscription) {
+	      this.tryNext(value);
+	    }
+	  };
+
+	  ExhaustMapSubscriber.prototype.tryNext = function (value) {
+	    var result;
+	    var index = this.index++;
+
+	    try {
+	      result = this.project(value, index);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.hasSubscription = true;
+
+	    this._innerSub(result, value, index);
+	  };
+
+	  ExhaustMapSubscriber.prototype._innerSub = function (result, value, index) {
+	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	    var destination = this.destination;
+	    destination.add(innerSubscriber);
+	    subscribeToResult(this, result, value, index, innerSubscriber);
+	  };
+
+	  ExhaustMapSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (!this.hasSubscription) {
+	      this.destination.complete();
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  ExhaustMapSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.destination.next(innerValue);
+	  };
+
+	  ExhaustMapSubscriber.prototype.notifyError = function (err) {
+	    this.destination.error(err);
+	  };
+
+	  ExhaustMapSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.hasSubscription = false;
+
+	    if (this.hasCompleted) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return ExhaustMapSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var ExpandSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ExpandSubscriber, _super);
+
+	  function ExpandSubscriber(destination, project, concurrent, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.project = project;
+	    _this.concurrent = concurrent;
+	    _this.scheduler = scheduler;
+	    _this.index = 0;
+	    _this.active = 0;
+	    _this.hasCompleted = false;
+
+	    if (concurrent < Number.POSITIVE_INFINITY) {
+	      _this.buffer = [];
+	    }
+
+	    return _this;
+	  }
+
+	  ExpandSubscriber.dispatch = function (arg) {
+	    var subscriber = arg.subscriber,
+	        result = arg.result,
+	        value = arg.value,
+	        index = arg.index;
+	    subscriber.subscribeToProjection(result, value, index);
+	  };
+
+	  ExpandSubscriber.prototype._next = function (value) {
+	    var destination = this.destination;
+
+	    if (destination.closed) {
+	      this._complete();
+
+	      return;
+	    }
+
+	    var index = this.index++;
+
+	    if (this.active < this.concurrent) {
+	      destination.next(value);
+	      var result = tryCatch(this.project)(value, index);
+
+	      if (result === errorObject) {
+	        destination.error(errorObject.e);
+	      } else if (!this.scheduler) {
+	        this.subscribeToProjection(result, value, index);
+	      } else {
+	        var state = {
+	          subscriber: this,
+	          result: result,
+	          value: value,
+	          index: index
+	        };
+	        var destination_1 = this.destination;
+	        destination_1.add(this.scheduler.schedule(ExpandSubscriber.dispatch, 0, state));
+	      }
+	    } else {
+	      this.buffer.push(value);
+	    }
+	  };
+
+	  ExpandSubscriber.prototype.subscribeToProjection = function (result, value, index) {
+	    this.active++;
+	    var destination = this.destination;
+	    destination.add(subscribeToResult(this, result, value, index));
+	  };
+
+	  ExpandSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (this.hasCompleted && this.active === 0) {
+	      this.destination.complete();
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  ExpandSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this._next(innerValue);
+	  };
+
+	  ExpandSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var buffer = this.buffer;
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.active--;
+
+	    if (buffer && buffer.length > 0) {
+	      this._next(buffer.shift());
+	    }
+
+	    if (this.hasCompleted && this.active === 0) {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return ExpandSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Subscription PURE_IMPORTS_END */
+
+	var FinallySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(FinallySubscriber, _super);
+
+	  function FinallySubscriber(destination, callback) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.add(new Subscription(callback));
+
+	    return _this;
+	  }
+
+	  return FinallySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var FindValueSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(FindValueSubscriber, _super);
+
+	  function FindValueSubscriber(destination, predicate, source, yieldIndex, thisArg) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.source = source;
+	    _this.yieldIndex = yieldIndex;
+	    _this.thisArg = thisArg;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  FindValueSubscriber.prototype.notifyComplete = function (value) {
+	    var destination = this.destination;
+	    destination.next(value);
+	    destination.complete();
+	    this.unsubscribe();
+	  };
+
+	  FindValueSubscriber.prototype._next = function (value) {
+	    var _a = this,
+	        predicate = _a.predicate,
+	        thisArg = _a.thisArg;
+
+	    var index = this.index++;
+
+	    try {
+	      var result = predicate.call(thisArg || this, value, index, this.source);
+
+	      if (result) {
+	        this.notifyComplete(this.yieldIndex ? index : value);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  FindValueSubscriber.prototype._complete = function () {
+	    this.notifyComplete(this.yieldIndex ? -1 : undefined);
+	  };
+
+	  return FindValueSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _operators_find PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_EmptyError,_filter,_take,_defaultIfEmpty,_throwIfEmpty,_util_identity PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var IgnoreElementsSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(IgnoreElementsSubscriber, _super);
+
+	  function IgnoreElementsSubscriber() {
+	    return _super !== null && _super.apply(this, arguments) || this;
+	  }
+
+	  IgnoreElementsSubscriber.prototype._next = function (unused) {};
+
+	  return IgnoreElementsSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var IsEmptySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(IsEmptySubscriber, _super);
+
+	  function IsEmptySubscriber(destination) {
+	    return _super.call(this, destination) || this;
+	  }
+
+	  IsEmptySubscriber.prototype.notifyComplete = function (isEmpty) {
+	    var destination = this.destination;
+	    destination.next(isEmpty);
+	    destination.complete();
+	  };
+
+	  IsEmptySubscriber.prototype._next = function (value) {
+	    this.notifyComplete(false);
+	  };
+
+	  IsEmptySubscriber.prototype._complete = function () {
+	    this.notifyComplete(true);
+	  };
+
+	  return IsEmptySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError,_observable_empty PURE_IMPORTS_END */
+
+	var TakeLastSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeLastSubscriber, _super);
+
+	  function TakeLastSubscriber(destination, total) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.total = total;
+	    _this.ring = new Array();
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  TakeLastSubscriber.prototype._next = function (value) {
+	    var ring = this.ring;
+	    var total = this.total;
+	    var count = this.count++;
+
+	    if (ring.length < total) {
+	      ring.push(value);
+	    } else {
+	      var index = count % total;
+	      ring[index] = value;
+	    }
+	  };
+
+	  TakeLastSubscriber.prototype._complete = function () {
+	    var destination = this.destination;
+	    var count = this.count;
+
+	    if (count > 0) {
+	      var total = this.count >= this.total ? this.total : this.count;
+	      var ring = this.ring;
+
+	      for (var i = 0; i < total; i++) {
+	        var idx = count++ % total;
+	        destination.next(ring[idx]);
+	      }
+	    }
+
+	    destination.complete();
+	  };
+
+	  return TakeLastSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _util_EmptyError,_filter,_takeLast,_throwIfEmpty,_defaultIfEmpty,_util_identity PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var MapToSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(MapToSubscriber, _super);
+
+	  function MapToSubscriber(destination, value) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.value = value;
+	    return _this;
+	  }
+
+	  MapToSubscriber.prototype._next = function (x) {
+	    this.destination.next(this.value);
+	  };
+
+	  return MapToSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Notification PURE_IMPORTS_END */
+	function materialize() {
+	  return function materializeOperatorFunction(source) {
+	    return source.lift(new MaterializeOperator());
+	  };
+	}
+
+	var MaterializeOperator =
+	/*@__PURE__*/
+	function () {
+	  function MaterializeOperator() {}
+
+	  MaterializeOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new MaterializeSubscriber(subscriber));
+	  };
+
+	  return MaterializeOperator;
+	}();
+
+	var MaterializeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(MaterializeSubscriber, _super);
+
+	  function MaterializeSubscriber(destination) {
+	    return _super.call(this, destination) || this;
+	  }
+
+	  MaterializeSubscriber.prototype._next = function (value) {
+	    this.destination.next(Notification.createNext(value));
+	  };
+
+	  MaterializeSubscriber.prototype._error = function (err) {
+	    var destination = this.destination;
+	    destination.next(Notification.createError(err));
+	    destination.complete();
+	  };
+
+	  MaterializeSubscriber.prototype._complete = function () {
+	    var destination = this.destination;
+	    destination.next(Notification.createComplete());
+	    destination.complete();
+	  };
+
+	  return MaterializeSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var ScanSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ScanSubscriber, _super);
+
+	  function ScanSubscriber(destination, accumulator, _seed, hasSeed) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.accumulator = accumulator;
+	    _this._seed = _seed;
+	    _this.hasSeed = hasSeed;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  Object.defineProperty(ScanSubscriber.prototype, "seed", {
+	    get: function () {
+	      return this._seed;
+	    },
+	    set: function (value) {
+	      this.hasSeed = true;
+	      this._seed = value;
+	    },
+	    enumerable: true,
+	    configurable: true
+	  });
+
+	  ScanSubscriber.prototype._next = function (value) {
+	    if (!this.hasSeed) {
+	      this.seed = value;
+	      this.destination.next(value);
+	    } else {
+	      return this._tryNext(value);
+	    }
+	  };
+
+	  ScanSubscriber.prototype._tryNext = function (value) {
+	    var index = this.index++;
+	    var result;
+
+	    try {
+	      result = this.accumulator(this.seed, value, index);
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+
+	    this.seed = result;
+	    this.destination.next(result);
+	  };
+
+	  return ScanSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _scan,_takeLast,_defaultIfEmpty,_util_pipe PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_merge PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _mergeMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_util_tryCatch,_util_errorObject,_util_subscribeToResult,_OuterSubscriber,_InnerSubscriber PURE_IMPORTS_END */
+
+	var MergeScanSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(MergeScanSubscriber, _super);
+
+	  function MergeScanSubscriber(destination, accumulator, acc, concurrent) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.accumulator = accumulator;
+	    _this.acc = acc;
+	    _this.concurrent = concurrent;
+	    _this.hasValue = false;
+	    _this.hasCompleted = false;
+	    _this.buffer = [];
+	    _this.active = 0;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  MergeScanSubscriber.prototype._next = function (value) {
+	    if (this.active < this.concurrent) {
+	      var index = this.index++;
+	      var ish = tryCatch(this.accumulator)(this.acc, value);
+	      var destination = this.destination;
+
+	      if (ish === errorObject) {
+	        destination.error(errorObject.e);
+	      } else {
+	        this.active++;
+
+	        this._innerSub(ish, value, index);
+	      }
+	    } else {
+	      this.buffer.push(value);
+	    }
+	  };
+
+	  MergeScanSubscriber.prototype._innerSub = function (ish, value, index) {
+	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	    var destination = this.destination;
+	    destination.add(innerSubscriber);
+	    subscribeToResult(this, ish, value, index, innerSubscriber);
+	  };
+
+	  MergeScanSubscriber.prototype._complete = function () {
+	    this.hasCompleted = true;
+
+	    if (this.active === 0 && this.buffer.length === 0) {
+	      if (this.hasValue === false) {
+	        this.destination.next(this.acc);
+	      }
+
+	      this.destination.complete();
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  MergeScanSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    var destination = this.destination;
+	    this.acc = innerValue;
+	    this.hasValue = true;
+	    destination.next(innerValue);
+	  };
+
+	  MergeScanSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var buffer = this.buffer;
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.active--;
+
+	    if (buffer.length > 0) {
+	      this._next(buffer.shift());
+	    } else if (this.active === 0 && this.hasCompleted) {
+	      if (this.hasValue === false) {
+	        this.destination.next(this.acc);
+	      }
+
+	      this.destination.complete();
+	    }
+	  };
+
+	  return MergeScanSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_ConnectableObservable PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_observable_from,_util_isArray,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var OnErrorResumeNextSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(OnErrorResumeNextSubscriber, _super);
+
+	  function OnErrorResumeNextSubscriber(destination, nextSources) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.nextSources = nextSources;
+	    return _this;
+	  }
+
+	  OnErrorResumeNextSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this.subscribeToNextSource();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.subscribeToNextSource();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype._error = function (err) {
+	    this.subscribeToNextSource();
+	    this.unsubscribe();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype._complete = function () {
+	    this.subscribeToNextSource();
+	    this.unsubscribe();
+	  };
+
+	  OnErrorResumeNextSubscriber.prototype.subscribeToNextSource = function () {
+	    var next = this.nextSources.shift();
+
+	    if (next) {
+	      var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	      var destination = this.destination;
+	      destination.add(innerSubscriber);
+	      subscribeToResult(this, next, undefined, undefined, innerSubscriber);
+	    } else {
+	      this.destination.complete();
+	    }
+	  };
+
+	  return OnErrorResumeNextSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+	function pairwise() {
+	  return function (source) {
+	    return source.lift(new PairwiseOperator());
+	  };
+	}
+
+	var PairwiseOperator =
+	/*@__PURE__*/
+	function () {
+	  function PairwiseOperator() {}
+
+	  PairwiseOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new PairwiseSubscriber(subscriber));
+	  };
+
+	  return PairwiseOperator;
+	}();
+
+	var PairwiseSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(PairwiseSubscriber, _super);
+
+	  function PairwiseSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.hasPrev = false;
+	    return _this;
+	  }
+
+	  PairwiseSubscriber.prototype._next = function (value) {
+	    if (this.hasPrev) {
+	      this.destination.next([this.prev, value]);
+	    } else {
+	      this.hasPrev = true;
+	    }
+
+	    this.prev = value;
+	  };
+
+	  return PairwiseSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_not,_filter PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _map PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _Subject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _BehaviorSubject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _AsyncSubject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _ReplaySubject,_multicast PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _util_isArray,_observable_race PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_observable_empty PURE_IMPORTS_END */
+
+	var RepeatSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RepeatSubscriber, _super);
+
+	  function RepeatSubscriber(destination, count, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.count = count;
+	    _this.source = source;
+	    return _this;
+	  }
+
+	  RepeatSubscriber.prototype.complete = function () {
+	    if (!this.isStopped) {
+	      var _a = this,
+	          source = _a.source,
+	          count = _a.count;
+
+	      if (count === 0) {
+	        return _super.prototype.complete.call(this);
+	      } else if (count > -1) {
+	        this.count = count - 1;
+	      }
+
+	      source.subscribe(this._unsubscribeAndRecycle());
+	    }
+	  };
+
+	  return RepeatSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var RepeatWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RepeatWhenSubscriber, _super);
+
+	  function RepeatWhenSubscriber(destination, notifier, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.notifier = notifier;
+	    _this.source = source;
+	    _this.sourceIsBeingSubscribedTo = true;
+	    return _this;
+	  }
+
+	  RepeatWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.sourceIsBeingSubscribedTo = true;
+	    this.source.subscribe(this);
+	  };
+
+	  RepeatWhenSubscriber.prototype.notifyComplete = function (innerSub) {
+	    if (this.sourceIsBeingSubscribedTo === false) {
+	      return _super.prototype.complete.call(this);
+	    }
+	  };
+
+	  RepeatWhenSubscriber.prototype.complete = function () {
+	    this.sourceIsBeingSubscribedTo = false;
+
+	    if (!this.isStopped) {
+	      if (!this.retries) {
+	        this.subscribeToRetries();
+	      }
+
+	      if (!this.retriesSubscription || this.retriesSubscription.closed) {
+	        return _super.prototype.complete.call(this);
+	      }
+
+	      this._unsubscribeAndRecycle();
+
+	      this.notifications.next();
+	    }
+	  };
+
+	  RepeatWhenSubscriber.prototype._unsubscribe = function () {
+	    var _a = this,
+	        notifications = _a.notifications,
+	        retriesSubscription = _a.retriesSubscription;
+
+	    if (notifications) {
+	      notifications.unsubscribe();
+	      this.notifications = null;
+	    }
+
+	    if (retriesSubscription) {
+	      retriesSubscription.unsubscribe();
+	      this.retriesSubscription = null;
+	    }
+
+	    this.retries = null;
+	  };
+
+	  RepeatWhenSubscriber.prototype._unsubscribeAndRecycle = function () {
+	    var _unsubscribe = this._unsubscribe;
+	    this._unsubscribe = null;
+
+	    _super.prototype._unsubscribeAndRecycle.call(this);
+
+	    this._unsubscribe = _unsubscribe;
+	    return this;
+	  };
+
+	  RepeatWhenSubscriber.prototype.subscribeToRetries = function () {
+	    this.notifications = new Subject();
+	    var retries = tryCatch(this.notifier)(this.notifications);
+
+	    if (retries === errorObject) {
+	      return _super.prototype.complete.call(this);
+	    }
+
+	    this.retries = retries;
+	    this.retriesSubscription = subscribeToResult(this, retries);
+	  };
+
+	  return RepeatWhenSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var RetrySubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RetrySubscriber, _super);
+
+	  function RetrySubscriber(destination, count, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.count = count;
+	    _this.source = source;
+	    return _this;
+	  }
+
+	  RetrySubscriber.prototype.error = function (err) {
+	    if (!this.isStopped) {
+	      var _a = this,
+	          source = _a.source,
+	          count = _a.count;
+
+	      if (count === 0) {
+	        return _super.prototype.error.call(this, err);
+	      } else if (count > -1) {
+	        this.count = count - 1;
+	      }
+
+	      source.subscribe(this._unsubscribeAndRecycle());
+	    }
+	  };
+
+	  return RetrySubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var RetryWhenSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(RetryWhenSubscriber, _super);
+
+	  function RetryWhenSubscriber(destination, notifier, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.notifier = notifier;
+	    _this.source = source;
+	    return _this;
+	  }
+
+	  RetryWhenSubscriber.prototype.error = function (err) {
+	    if (!this.isStopped) {
+	      var errors = this.errors;
+	      var retries = this.retries;
+	      var retriesSubscription = this.retriesSubscription;
+
+	      if (!retries) {
+	        errors = new Subject();
+	        retries = tryCatch(this.notifier)(errors);
+
+	        if (retries === errorObject) {
+	          return _super.prototype.error.call(this, errorObject.e);
+	        }
+
+	        retriesSubscription = subscribeToResult(this, retries);
+	      } else {
+	        this.errors = null;
+	        this.retriesSubscription = null;
+	      }
+
+	      this._unsubscribeAndRecycle();
+
+	      this.errors = errors;
+	      this.retries = retries;
+	      this.retriesSubscription = retriesSubscription;
+	      errors.next(err);
+	    }
+	  };
+
+	  RetryWhenSubscriber.prototype._unsubscribe = function () {
+	    var _a = this,
+	        errors = _a.errors,
+	        retriesSubscription = _a.retriesSubscription;
+
+	    if (errors) {
+	      errors.unsubscribe();
+	      this.errors = null;
+	    }
+
+	    if (retriesSubscription) {
+	      retriesSubscription.unsubscribe();
+	      this.retriesSubscription = null;
+	    }
+
+	    this.retries = null;
+	  };
+
+	  RetryWhenSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    var _unsubscribe = this._unsubscribe;
+	    this._unsubscribe = null;
+
+	    this._unsubscribeAndRecycle();
+
+	    this._unsubscribe = _unsubscribe;
+	    this.source.subscribe(this);
+	  };
+
+	  return RetryWhenSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var SampleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SampleSubscriber, _super);
+
+	  function SampleSubscriber() {
+	    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+	    _this.hasValue = false;
+	    return _this;
+	  }
+
+	  SampleSubscriber.prototype._next = function (value) {
+	    this.value = value;
+	    this.hasValue = true;
+	  };
+
+	  SampleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.emitValue();
+	  };
+
+	  SampleSubscriber.prototype.notifyComplete = function () {
+	    this.emitValue();
+	  };
+
+	  SampleSubscriber.prototype.emitValue = function () {
+	    if (this.hasValue) {
+	      this.hasValue = false;
+	      this.destination.next(this.value);
+	    }
+	  };
+
+	  return SampleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async PURE_IMPORTS_END */
+
+	var SampleTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SampleTimeSubscriber, _super);
+
+	  function SampleTimeSubscriber(destination, period, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.period = period;
+	    _this.scheduler = scheduler;
+	    _this.hasValue = false;
+
+	    _this.add(scheduler.schedule(dispatchNotification, period, {
+	      subscriber: _this,
+	      period: period
+	    }));
+
+	    return _this;
+	  }
+
+	  SampleTimeSubscriber.prototype._next = function (value) {
+	    this.lastValue = value;
+	    this.hasValue = true;
+	  };
+
+	  SampleTimeSubscriber.prototype.notifyNext = function () {
+	    if (this.hasValue) {
+	      this.hasValue = false;
+	      this.destination.next(this.lastValue);
+	    }
+	  };
+
+	  return SampleTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchNotification(state) {
+	  var subscriber = state.subscriber,
+	      period = state.period;
+	  subscriber.notifyNext();
+	  this.schedule(state, period);
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_tryCatch,_util_errorObject PURE_IMPORTS_END */
+
+	var SequenceEqualSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SequenceEqualSubscriber, _super);
+
+	  function SequenceEqualSubscriber(destination, compareTo, comparor) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.compareTo = compareTo;
+	    _this.comparor = comparor;
+	    _this._a = [];
+	    _this._b = [];
+	    _this._oneComplete = false;
+
+	    _this.destination.add(compareTo.subscribe(new SequenceEqualCompareToSubscriber(destination, _this)));
+
+	    return _this;
+	  }
+
+	  SequenceEqualSubscriber.prototype._next = function (value) {
+	    if (this._oneComplete && this._b.length === 0) {
+	      this.emit(false);
+	    } else {
+	      this._a.push(value);
+
+	      this.checkValues();
+	    }
+	  };
+
+	  SequenceEqualSubscriber.prototype._complete = function () {
+	    if (this._oneComplete) {
+	      this.emit(this._a.length === 0 && this._b.length === 0);
+	    } else {
+	      this._oneComplete = true;
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  SequenceEqualSubscriber.prototype.checkValues = function () {
+	    var _c = this,
+	        _a = _c._a,
+	        _b = _c._b,
+	        comparor = _c.comparor;
+
+	    while (_a.length > 0 && _b.length > 0) {
+	      var a = _a.shift();
+
+	      var b = _b.shift();
+
+	      var areEqual = false;
+
+	      if (comparor) {
+	        areEqual = tryCatch(comparor)(a, b);
+
+	        if (areEqual === errorObject) {
+	          this.destination.error(errorObject.e);
+	        }
+	      } else {
+	        areEqual = a === b;
+	      }
+
+	      if (!areEqual) {
+	        this.emit(false);
+	      }
+	    }
+	  };
+
+	  SequenceEqualSubscriber.prototype.emit = function (value) {
+	    var destination = this.destination;
+	    destination.next(value);
+	    destination.complete();
+	  };
+
+	  SequenceEqualSubscriber.prototype.nextB = function (value) {
+	    if (this._oneComplete && this._a.length === 0) {
+	      this.emit(false);
+	    } else {
+	      this._b.push(value);
+
+	      this.checkValues();
+	    }
+	  };
+
+	  SequenceEqualSubscriber.prototype.completeB = function () {
+	    if (this._oneComplete) {
+	      this.emit(this._a.length === 0 && this._b.length === 0);
+	    } else {
+	      this._oneComplete = true;
+	    }
+	  };
+
+	  return SequenceEqualSubscriber;
+	}(Subscriber);
+
+	var SequenceEqualCompareToSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SequenceEqualCompareToSubscriber, _super);
+
+	  function SequenceEqualCompareToSubscriber(destination, parent) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.parent = parent;
+	    return _this;
+	  }
+
+	  SequenceEqualCompareToSubscriber.prototype._next = function (value) {
+	    this.parent.nextB(value);
+	  };
+
+	  SequenceEqualCompareToSubscriber.prototype._error = function (err) {
+	    this.parent.error(err);
+	    this.unsubscribe();
+	  };
+
+	  SequenceEqualCompareToSubscriber.prototype._complete = function () {
+	    this.parent.completeB();
+	    this.unsubscribe();
+	  };
+
+	  return SequenceEqualCompareToSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _multicast,_refCount,_Subject PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _ReplaySubject PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_EmptyError PURE_IMPORTS_END */
+
+	var SingleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SingleSubscriber, _super);
+
+	  function SingleSubscriber(destination, predicate, source) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.source = source;
+	    _this.seenValue = false;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  SingleSubscriber.prototype.applySingleValue = function (value) {
+	    if (this.seenValue) {
+	      this.destination.error('Sequence contains more than one element');
+	    } else {
+	      this.seenValue = true;
+	      this.singleValue = value;
+	    }
+	  };
+
+	  SingleSubscriber.prototype._next = function (value) {
+	    var index = this.index++;
+
+	    if (this.predicate) {
+	      this.tryNext(value, index);
+	    } else {
+	      this.applySingleValue(value);
+	    }
+	  };
+
+	  SingleSubscriber.prototype.tryNext = function (value, index) {
+	    try {
+	      if (this.predicate(value, index, this.source)) {
+	        this.applySingleValue(value);
+	      }
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  SingleSubscriber.prototype._complete = function () {
+	    var destination = this.destination;
+
+	    if (this.index > 0) {
+	      destination.next(this.seenValue ? this.singleValue : undefined);
+	      destination.complete();
+	    } else {
+	      destination.error(new EmptyError());
+	    }
+	  };
+
+	  return SingleSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var SkipSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipSubscriber, _super);
+
+	  function SkipSubscriber(destination, total) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.total = total;
+	    _this.count = 0;
+	    return _this;
+	  }
+
+	  SkipSubscriber.prototype._next = function (x) {
+	    if (++this.count > this.total) {
+	      this.destination.next(x);
+	    }
+	  };
+
+	  return SkipSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_util_ArgumentOutOfRangeError PURE_IMPORTS_END */
+
+	var SkipLastSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipLastSubscriber, _super);
+
+	  function SkipLastSubscriber(destination, _skipCount) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this._skipCount = _skipCount;
+	    _this._count = 0;
+	    _this._ring = new Array(_skipCount);
+	    return _this;
+	  }
+
+	  SkipLastSubscriber.prototype._next = function (value) {
+	    var skipCount = this._skipCount;
+	    var count = this._count++;
+
+	    if (count < skipCount) {
+	      this._ring[count] = value;
+	    } else {
+	      var currentIndex = count % skipCount;
+	      var ring = this._ring;
+	      var oldValue = ring[currentIndex];
+	      ring[currentIndex] = value;
+	      this.destination.next(oldValue);
+	    }
+	  };
+
+	  return SkipLastSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var SkipUntilSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipUntilSubscriber, _super);
+
+	  function SkipUntilSubscriber(destination, notifier) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.hasValue = false;
+	    var innerSubscriber = new InnerSubscriber(_this, undefined, undefined);
+
+	    _this.add(innerSubscriber);
+
+	    _this.innerSubscription = innerSubscriber;
+	    subscribeToResult(_this, notifier, undefined, undefined, innerSubscriber);
+	    return _this;
+	  }
+
+	  SkipUntilSubscriber.prototype._next = function (value) {
+	    if (this.hasValue) {
+	      _super.prototype._next.call(this, value);
+	    }
+	  };
+
+	  SkipUntilSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.hasValue = true;
+
+	    if (this.innerSubscription) {
+	      this.innerSubscription.unsubscribe();
+	    }
+	  };
+
+	  SkipUntilSubscriber.prototype.notifyComplete = function () {};
+
+	  return SkipUntilSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var SkipWhileSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SkipWhileSubscriber, _super);
+
+	  function SkipWhileSubscriber(destination, predicate) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.skipping = true;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  SkipWhileSubscriber.prototype._next = function (value) {
+	    var destination = this.destination;
+
+	    if (this.skipping) {
+	      this.tryCallPredicate(value);
+	    }
+
+	    if (!this.skipping) {
+	      destination.next(value);
+	    }
+	  };
+
+	  SkipWhileSubscriber.prototype.tryCallPredicate = function (value) {
+	    try {
+	      var result = this.predicate(value, this.index++);
+	      this.skipping = Boolean(result);
+	    } catch (err) {
+	      this.destination.error(err);
+	    }
+	  };
+
+	  return SkipWhileSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START _observable_fromArray,_observable_scalar,_observable_empty,_observable_concat,_util_isScheduler PURE_IMPORTS_END */
+	function startWith() {
+	  var array = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    array[_i] = arguments[_i];
+	  }
+
+	  return function (source) {
+	    var scheduler = array[array.length - 1];
+
+	    if (isScheduler(scheduler)) {
+	      array.pop();
+	    } else {
+	      scheduler = null;
+	    }
+
+	    var len = array.length;
+
+	    if (len === 1 && !scheduler) {
+	      return concat(scalar(array[0]), source);
+	    } else if (len > 0) {
+	      return concat(fromArray(array, scheduler), source);
+	    } else {
+	      return concat(empty$1(scheduler), source);
+	    }
+	  };
+	}
+
+	/** PURE_IMPORTS_START tslib,_Observable,_scheduler_asap,_util_isNumeric PURE_IMPORTS_END */
+
+	var SubscribeOnObservable =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SubscribeOnObservable, _super);
+
+	  function SubscribeOnObservable(source, delayTime, scheduler) {
+	    if (delayTime === void 0) {
+	      delayTime = 0;
+	    }
+
+	    if (scheduler === void 0) {
+	      scheduler = asap;
+	    }
+
+	    var _this = _super.call(this) || this;
+
+	    _this.source = source;
+	    _this.delayTime = delayTime;
+	    _this.scheduler = scheduler;
+
+	    if (!isNumeric(delayTime) || delayTime < 0) {
+	      _this.delayTime = 0;
+	    }
+
+	    if (!scheduler || typeof scheduler.schedule !== 'function') {
+	      _this.scheduler = asap;
+	    }
+
+	    return _this;
+	  }
+
+	  SubscribeOnObservable.create = function (source, delay, scheduler) {
+	    if (delay === void 0) {
+	      delay = 0;
+	    }
+
+	    if (scheduler === void 0) {
+	      scheduler = asap;
+	    }
+
+	    return new SubscribeOnObservable(source, delay, scheduler);
+	  };
+
+	  SubscribeOnObservable.dispatch = function (arg) {
+	    var source = arg.source,
+	        subscriber = arg.subscriber;
+	    return this.add(source.subscribe(subscriber));
+	  };
+
+	  SubscribeOnObservable.prototype._subscribe = function (subscriber) {
+	    var delay = this.delayTime;
+	    var source = this.source;
+	    var scheduler = this.scheduler;
+	    return scheduler.schedule(SubscribeOnObservable.dispatch, delay, {
+	      source: source,
+	      subscriber: subscriber
+	    });
+	  };
+
+	  return SubscribeOnObservable;
+	}(Observable);
+
+	/** PURE_IMPORTS_START _observable_SubscribeOnObservable PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_InnerSubscriber,_util_subscribeToResult,_map,_observable_from PURE_IMPORTS_END */
+	function switchMap(project, resultSelector) {
+	  if (typeof resultSelector === 'function') {
+	    return function (source) {
+	      return source.pipe(switchMap(function (a, i) {
+	        return from(project(a, i)).pipe(map(function (b, ii) {
+	          return resultSelector(a, b, i, ii);
+	        }));
+	      }));
+	    };
+	  }
+
+	  return function (source) {
+	    return source.lift(new SwitchMapOperator(project));
+	  };
+	}
+
+	var SwitchMapOperator =
+	/*@__PURE__*/
+	function () {
+	  function SwitchMapOperator(project) {
+	    this.project = project;
+	  }
+
+	  SwitchMapOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new SwitchMapSubscriber(subscriber, this.project));
+	  };
+
+	  return SwitchMapOperator;
+	}();
+
+	var SwitchMapSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(SwitchMapSubscriber, _super);
+
+	  function SwitchMapSubscriber(destination, project) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.project = project;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  SwitchMapSubscriber.prototype._next = function (value) {
+	    var result;
+	    var index = this.index++;
+
+	    try {
+	      result = this.project(value, index);
+	    } catch (error) {
+	      this.destination.error(error);
+	      return;
+	    }
+
+	    this._innerSub(result, value, index);
+	  };
+
+	  SwitchMapSubscriber.prototype._innerSub = function (result, value, index) {
+	    var innerSubscription = this.innerSubscription;
+
+	    if (innerSubscription) {
+	      innerSubscription.unsubscribe();
+	    }
+
+	    var innerSubscriber = new InnerSubscriber(this, undefined, undefined);
+	    var destination = this.destination;
+	    destination.add(innerSubscriber);
+	    this.innerSubscription = subscribeToResult(this, result, value, index, innerSubscriber);
+	  };
+
+	  SwitchMapSubscriber.prototype._complete = function () {
+	    var innerSubscription = this.innerSubscription;
+
+	    if (!innerSubscription || innerSubscription.closed) {
+	      _super.prototype._complete.call(this);
+	    }
+
+	    this.unsubscribe();
+	  };
+
+	  SwitchMapSubscriber.prototype._unsubscribe = function () {
+	    this.innerSubscription = null;
+	  };
+
+	  SwitchMapSubscriber.prototype.notifyComplete = function (innerSub) {
+	    var destination = this.destination;
+	    destination.remove(innerSub);
+	    this.innerSubscription = null;
+
+	    if (this.isStopped) {
+	      _super.prototype._complete.call(this);
+	    }
+	  };
+
+	  SwitchMapSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.destination.next(innerValue);
+	  };
+
+	  return SwitchMapSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _switchMap,_util_identity PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _switchMap PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+	function takeUntil(notifier) {
+	  return function (source) {
+	    return source.lift(new TakeUntilOperator(notifier));
+	  };
+	}
+
+	var TakeUntilOperator =
+	/*@__PURE__*/
+	function () {
+	  function TakeUntilOperator(notifier) {
+	    this.notifier = notifier;
+	  }
+
+	  TakeUntilOperator.prototype.call = function (subscriber, source) {
+	    var takeUntilSubscriber = new TakeUntilSubscriber(subscriber);
+	    var notifierSubscription = subscribeToResult(takeUntilSubscriber, this.notifier);
+
+	    if (notifierSubscription && !takeUntilSubscriber.seenValue) {
+	      takeUntilSubscriber.add(notifierSubscription);
+	      return source.subscribe(takeUntilSubscriber);
+	    }
+
+	    return takeUntilSubscriber;
+	  };
+
+	  return TakeUntilOperator;
+	}();
+
+	var TakeUntilSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeUntilSubscriber, _super);
+
+	  function TakeUntilSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.seenValue = false;
+	    return _this;
+	  }
+
+	  TakeUntilSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.seenValue = true;
+	    this.complete();
+	  };
+
+	  TakeUntilSubscriber.prototype.notifyComplete = function () {};
+
+	  return TakeUntilSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber PURE_IMPORTS_END */
+
+	var TakeWhileSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TakeWhileSubscriber, _super);
+
+	  function TakeWhileSubscriber(destination, predicate) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.predicate = predicate;
+	    _this.index = 0;
+	    return _this;
+	  }
+
+	  TakeWhileSubscriber.prototype._next = function (value) {
+	    var destination = this.destination;
+	    var result;
+
+	    try {
+	      result = this.predicate(value, this.index++);
+	    } catch (err) {
+	      destination.error(err);
+	      return;
+	    }
+
+	    this.nextOrComplete(value, result);
+	  };
+
+	  TakeWhileSubscriber.prototype.nextOrComplete = function (value, predicateResult) {
+	    var destination = this.destination;
+
+	    if (Boolean(predicateResult)) {
+	      destination.next(value);
+	    } else {
+	      destination.complete();
+	    }
+	  };
+
+	  return TakeWhileSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var ThrottleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ThrottleSubscriber, _super);
+
+	  function ThrottleSubscriber(destination, durationSelector, _leading, _trailing) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.durationSelector = durationSelector;
+	    _this._leading = _leading;
+	    _this._trailing = _trailing;
+	    _this._hasValue = false;
+	    return _this;
+	  }
+
+	  ThrottleSubscriber.prototype._next = function (value) {
+	    this._hasValue = true;
+	    this._sendValue = value;
+
+	    if (!this._throttled) {
+	      if (this._leading) {
+	        this.send();
+	      } else {
+	        this.throttle(value);
+	      }
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.send = function () {
+	    var _a = this,
+	        _hasValue = _a._hasValue,
+	        _sendValue = _a._sendValue;
+
+	    if (_hasValue) {
+	      this.destination.next(_sendValue);
+	      this.throttle(_sendValue);
+	    }
+
+	    this._hasValue = false;
+	    this._sendValue = null;
+	  };
+
+	  ThrottleSubscriber.prototype.throttle = function (value) {
+	    var duration = this.tryDurationSelector(value);
+
+	    if (duration) {
+	      this.add(this._throttled = subscribeToResult(this, duration));
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.tryDurationSelector = function (value) {
+	    try {
+	      return this.durationSelector(value);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return null;
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.throttlingDone = function () {
+	    var _a = this,
+	        _throttled = _a._throttled,
+	        _trailing = _a._trailing;
+
+	    if (_throttled) {
+	      _throttled.unsubscribe();
+	    }
+
+	    this._throttled = null;
+
+	    if (_trailing) {
+	      this.send();
+	    }
+	  };
+
+	  ThrottleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.throttlingDone();
+	  };
+
+	  ThrottleSubscriber.prototype.notifyComplete = function () {
+	    this.throttlingDone();
+	  };
+
+	  return ThrottleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_scheduler_async,_throttle PURE_IMPORTS_END */
+
+	var ThrottleTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(ThrottleTimeSubscriber, _super);
+
+	  function ThrottleTimeSubscriber(destination, duration, scheduler, leading, trailing) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.duration = duration;
+	    _this.scheduler = scheduler;
+	    _this.leading = leading;
+	    _this.trailing = trailing;
+	    _this._hasTrailingValue = false;
+	    _this._trailingValue = null;
+	    return _this;
+	  }
+
+	  ThrottleTimeSubscriber.prototype._next = function (value) {
+	    if (this.throttled) {
+	      if (this.trailing) {
+	        this._trailingValue = value;
+	        this._hasTrailingValue = true;
+	      }
+	    } else {
+	      this.add(this.throttled = this.scheduler.schedule(dispatchNext$3, this.duration, {
+	        subscriber: this
+	      }));
+
+	      if (this.leading) {
+	        this.destination.next(value);
+	      }
+	    }
+	  };
+
+	  ThrottleTimeSubscriber.prototype._complete = function () {
+	    if (this._hasTrailingValue) {
+	      this.destination.next(this._trailingValue);
+	      this.destination.complete();
+	    } else {
+	      this.destination.complete();
+	    }
+	  };
+
+	  ThrottleTimeSubscriber.prototype.clearThrottle = function () {
+	    var throttled = this.throttled;
+
+	    if (throttled) {
+	      if (this.trailing && this._hasTrailingValue) {
+	        this.destination.next(this._trailingValue);
+	        this._trailingValue = null;
+	        this._hasTrailingValue = false;
+	      }
+
+	      throttled.unsubscribe();
+	      this.remove(throttled);
+	      this.throttled = null;
+	    }
+	  };
+
+	  return ThrottleTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchNext$3(arg) {
+	  var subscriber = arg.subscriber;
+	  subscriber.clearThrottle();
+	}
+
+	/** PURE_IMPORTS_START _scheduler_async,_scan,_observable_defer,_map PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_scheduler_async,_util_isDate,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var TimeoutWithSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(TimeoutWithSubscriber, _super);
+
+	  function TimeoutWithSubscriber(destination, absoluteTimeout, waitFor, withObservable, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.absoluteTimeout = absoluteTimeout;
+	    _this.waitFor = waitFor;
+	    _this.withObservable = withObservable;
+	    _this.scheduler = scheduler;
+	    _this.action = null;
+
+	    _this.scheduleTimeout();
+
+	    return _this;
+	  }
+
+	  TimeoutWithSubscriber.dispatchTimeout = function (subscriber) {
+	    var withObservable = subscriber.withObservable;
+
+	    subscriber._unsubscribeAndRecycle();
+
+	    subscriber.add(subscribeToResult(subscriber, withObservable));
+	  };
+
+	  TimeoutWithSubscriber.prototype.scheduleTimeout = function () {
+	    var action = this.action;
+
+	    if (action) {
+	      this.action = action.schedule(this, this.waitFor);
+	    } else {
+	      this.add(this.action = this.scheduler.schedule(TimeoutWithSubscriber.dispatchTimeout, this.waitFor, this));
+	    }
+	  };
+
+	  TimeoutWithSubscriber.prototype._next = function (value) {
+	    if (!this.absoluteTimeout) {
+	      this.scheduleTimeout();
+	    }
+
+	    _super.prototype._next.call(this, value);
+	  };
+
+	  TimeoutWithSubscriber.prototype._unsubscribe = function () {
+	    this.action = null;
+	    this.scheduler = null;
+	    this.withObservable = null;
+	  };
+
+	  return TimeoutWithSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _scheduler_async,_util_TimeoutError,_timeoutWith,_observable_throwError PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _scheduler_async,_map PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _reduce PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START tslib,_Subject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WindowSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowSubscriber, _super);
+
+	  function WindowSubscriber(destination) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.window = new Subject();
+	    destination.next(_this.window);
+	    return _this;
+	  }
+
+	  WindowSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.openWindow();
+	  };
+
+	  WindowSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  WindowSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this._complete();
+	  };
+
+	  WindowSubscriber.prototype._next = function (value) {
+	    this.window.next(value);
+	  };
+
+	  WindowSubscriber.prototype._error = function (err) {
+	    this.window.error(err);
+	    this.destination.error(err);
+	  };
+
+	  WindowSubscriber.prototype._complete = function () {
+	    this.window.complete();
+	    this.destination.complete();
+	  };
+
+	  WindowSubscriber.prototype._unsubscribe = function () {
+	    this.window = null;
+	  };
+
+	  WindowSubscriber.prototype.openWindow = function () {
+	    var prevWindow = this.window;
+
+	    if (prevWindow) {
+	      prevWindow.complete();
+	    }
+
+	    var destination = this.destination;
+	    var newWindow = this.window = new Subject();
+	    destination.next(newWindow);
+	  };
+
+	  return WindowSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subscriber,_Subject PURE_IMPORTS_END */
+
+	var WindowCountSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowCountSubscriber, _super);
+
+	  function WindowCountSubscriber(destination, windowSize, startWindowEvery) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.windowSize = windowSize;
+	    _this.startWindowEvery = startWindowEvery;
+	    _this.windows = [new Subject()];
+	    _this.count = 0;
+	    destination.next(_this.windows[0]);
+	    return _this;
+	  }
+
+	  WindowCountSubscriber.prototype._next = function (value) {
+	    var startWindowEvery = this.startWindowEvery > 0 ? this.startWindowEvery : this.windowSize;
+	    var destination = this.destination;
+	    var windowSize = this.windowSize;
+	    var windows = this.windows;
+	    var len = windows.length;
+
+	    for (var i = 0; i < len && !this.closed; i++) {
+	      windows[i].next(value);
+	    }
+
+	    var c = this.count - windowSize + 1;
+
+	    if (c >= 0 && c % startWindowEvery === 0 && !this.closed) {
+	      windows.shift().complete();
+	    }
+
+	    if (++this.count % startWindowEvery === 0 && !this.closed) {
+	      var window_1 = new Subject();
+	      windows.push(window_1);
+	      destination.next(window_1);
+	    }
+	  };
+
+	  WindowCountSubscriber.prototype._error = function (err) {
+	    var windows = this.windows;
+
+	    if (windows) {
+	      while (windows.length > 0 && !this.closed) {
+	        windows.shift().error(err);
+	      }
+	    }
+
+	    this.destination.error(err);
+	  };
+
+	  WindowCountSubscriber.prototype._complete = function () {
+	    var windows = this.windows;
+
+	    if (windows) {
+	      while (windows.length > 0 && !this.closed) {
+	        windows.shift().complete();
+	      }
+	    }
+
+	    this.destination.complete();
+	  };
+
+	  WindowCountSubscriber.prototype._unsubscribe = function () {
+	    this.count = 0;
+	    this.windows = null;
+	  };
+
+	  return WindowCountSubscriber;
+	}(Subscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_scheduler_async,_Subscriber,_util_isNumeric,_util_isScheduler PURE_IMPORTS_END */
+
+	var CountedSubject =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(CountedSubject, _super);
+
+	  function CountedSubject() {
+	    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+	    _this._numberOfNextedValues = 0;
+	    return _this;
+	  }
+
+	  CountedSubject.prototype.next = function (value) {
+	    this._numberOfNextedValues++;
+
+	    _super.prototype.next.call(this, value);
+	  };
+
+	  Object.defineProperty(CountedSubject.prototype, "numberOfNextedValues", {
+	    get: function () {
+	      return this._numberOfNextedValues;
+	    },
+	    enumerable: true,
+	    configurable: true
+	  });
+	  return CountedSubject;
+	}(Subject);
+
+	var WindowTimeSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowTimeSubscriber, _super);
+
+	  function WindowTimeSubscriber(destination, windowTimeSpan, windowCreationInterval, maxWindowSize, scheduler) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.windowTimeSpan = windowTimeSpan;
+	    _this.windowCreationInterval = windowCreationInterval;
+	    _this.maxWindowSize = maxWindowSize;
+	    _this.scheduler = scheduler;
+	    _this.windows = [];
+
+	    var window = _this.openWindow();
+
+	    if (windowCreationInterval !== null && windowCreationInterval >= 0) {
+	      var closeState = {
+	        subscriber: _this,
+	        window: window,
+	        context: null
+	      };
+	      var creationState = {
+	        windowTimeSpan: windowTimeSpan,
+	        windowCreationInterval: windowCreationInterval,
+	        subscriber: _this,
+	        scheduler: scheduler
+	      };
+
+	      _this.add(scheduler.schedule(dispatchWindowClose, windowTimeSpan, closeState));
+
+	      _this.add(scheduler.schedule(dispatchWindowCreation, windowCreationInterval, creationState));
+	    } else {
+	      var timeSpanOnlyState = {
+	        subscriber: _this,
+	        window: window,
+	        windowTimeSpan: windowTimeSpan
+	      };
+
+	      _this.add(scheduler.schedule(dispatchWindowTimeSpanOnly, windowTimeSpan, timeSpanOnlyState));
+	    }
+
+	    return _this;
+	  }
+
+	  WindowTimeSubscriber.prototype._next = function (value) {
+	    var windows = this.windows;
+	    var len = windows.length;
+
+	    for (var i = 0; i < len; i++) {
+	      var window_1 = windows[i];
+
+	      if (!window_1.closed) {
+	        window_1.next(value);
+
+	        if (window_1.numberOfNextedValues >= this.maxWindowSize) {
+	          this.closeWindow(window_1);
+	        }
+	      }
+	    }
+	  };
+
+	  WindowTimeSubscriber.prototype._error = function (err) {
+	    var windows = this.windows;
+
+	    while (windows.length > 0) {
+	      windows.shift().error(err);
+	    }
+
+	    this.destination.error(err);
+	  };
+
+	  WindowTimeSubscriber.prototype._complete = function () {
+	    var windows = this.windows;
+
+	    while (windows.length > 0) {
+	      var window_2 = windows.shift();
+
+	      if (!window_2.closed) {
+	        window_2.complete();
+	      }
+	    }
+
+	    this.destination.complete();
+	  };
+
+	  WindowTimeSubscriber.prototype.openWindow = function () {
+	    var window = new CountedSubject();
+	    this.windows.push(window);
+	    var destination = this.destination;
+	    destination.next(window);
+	    return window;
+	  };
+
+	  WindowTimeSubscriber.prototype.closeWindow = function (window) {
+	    window.complete();
+	    var windows = this.windows;
+	    windows.splice(windows.indexOf(window), 1);
+	  };
+
+	  return WindowTimeSubscriber;
+	}(Subscriber);
+
+	function dispatchWindowTimeSpanOnly(state) {
+	  var subscriber = state.subscriber,
+	      windowTimeSpan = state.windowTimeSpan,
+	      window = state.window;
+
+	  if (window) {
+	    subscriber.closeWindow(window);
+	  }
+
+	  state.window = subscriber.openWindow();
+	  this.schedule(state, windowTimeSpan);
+	}
+
+	function dispatchWindowCreation(state) {
+	  var windowTimeSpan = state.windowTimeSpan,
+	      subscriber = state.subscriber,
+	      scheduler = state.scheduler,
+	      windowCreationInterval = state.windowCreationInterval;
+	  var window = subscriber.openWindow();
+	  var action = this;
+	  var context = {
+	    action: action,
+	    subscription: null
+	  };
+	  var timeSpanState = {
+	    subscriber: subscriber,
+	    window: window,
+	    context: context
+	  };
+	  context.subscription = scheduler.schedule(dispatchWindowClose, windowTimeSpan, timeSpanState);
+	  action.add(context.subscription);
+	  action.schedule(state, windowCreationInterval);
+	}
+
+	function dispatchWindowClose(state) {
+	  var subscriber = state.subscriber,
+	      window = state.window,
+	      context = state.context;
+
+	  if (context && context.action && context.subscription) {
+	    context.action.remove(context.subscription);
+	  }
+
+	  subscriber.closeWindow(window);
+	}
+
+	/** PURE_IMPORTS_START tslib,_Subject,_Subscription,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WindowToggleSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowToggleSubscriber, _super);
+
+	  function WindowToggleSubscriber(destination, openings, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.openings = openings;
+	    _this.closingSelector = closingSelector;
+	    _this.contexts = [];
+
+	    _this.add(_this.openSubscription = subscribeToResult(_this, openings, openings));
+
+	    return _this;
+	  }
+
+	  WindowToggleSubscriber.prototype._next = function (value) {
+	    var contexts = this.contexts;
+
+	    if (contexts) {
+	      var len = contexts.length;
+
+	      for (var i = 0; i < len; i++) {
+	        contexts[i].window.next(value);
+	      }
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype._error = function (err) {
+	    var contexts = this.contexts;
+	    this.contexts = null;
+
+	    if (contexts) {
+	      var len = contexts.length;
+	      var index = -1;
+
+	      while (++index < len) {
+	        var context_1 = contexts[index];
+	        context_1.window.error(err);
+	        context_1.subscription.unsubscribe();
+	      }
+	    }
+
+	    _super.prototype._error.call(this, err);
+	  };
+
+	  WindowToggleSubscriber.prototype._complete = function () {
+	    var contexts = this.contexts;
+	    this.contexts = null;
+
+	    if (contexts) {
+	      var len = contexts.length;
+	      var index = -1;
+
+	      while (++index < len) {
+	        var context_2 = contexts[index];
+	        context_2.window.complete();
+	        context_2.subscription.unsubscribe();
+	      }
+	    }
+
+	    _super.prototype._complete.call(this);
+	  };
+
+	  WindowToggleSubscriber.prototype._unsubscribe = function () {
+	    var contexts = this.contexts;
+	    this.contexts = null;
+
+	    if (contexts) {
+	      var len = contexts.length;
+	      var index = -1;
+
+	      while (++index < len) {
+	        var context_3 = contexts[index];
+	        context_3.window.unsubscribe();
+	        context_3.subscription.unsubscribe();
+	      }
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    if (outerValue === this.openings) {
+	      var closingSelector = this.closingSelector;
+	      var closingNotifier = tryCatch(closingSelector)(innerValue);
+
+	      if (closingNotifier === errorObject) {
+	        return this.error(errorObject.e);
+	      } else {
+	        var window_1 = new Subject();
+	        var subscription = new Subscription();
+	        var context_4 = {
+	          window: window_1,
+	          subscription: subscription
+	        };
+	        this.contexts.push(context_4);
+	        var innerSubscription = subscribeToResult(this, closingNotifier, context_4);
+
+	        if (innerSubscription.closed) {
+	          this.closeWindow(this.contexts.length - 1);
+	        } else {
+	          innerSubscription.context = context_4;
+	          subscription.add(innerSubscription);
+	        }
+
+	        this.destination.next(window_1);
+	      }
+	    } else {
+	      this.closeWindow(this.contexts.indexOf(outerValue));
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype.notifyError = function (err) {
+	    this.error(err);
+	  };
+
+	  WindowToggleSubscriber.prototype.notifyComplete = function (inner) {
+	    if (inner !== this.openSubscription) {
+	      this.closeWindow(this.contexts.indexOf(inner.context));
+	    }
+	  };
+
+	  WindowToggleSubscriber.prototype.closeWindow = function (index) {
+	    if (index === -1) {
+	      return;
+	    }
+
+	    var contexts = this.contexts;
+	    var context = contexts[index];
+	    var window = context.window,
+	        subscription = context.subscription;
+	    contexts.splice(index, 1);
+	    window.complete();
+	    subscription.unsubscribe();
+	  };
+
+	  return WindowToggleSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_Subject,_util_tryCatch,_util_errorObject,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WindowSubscriber$1 =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WindowSubscriber, _super);
+
+	  function WindowSubscriber(destination, closingSelector) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.destination = destination;
+	    _this.closingSelector = closingSelector;
+
+	    _this.openWindow();
+
+	    return _this;
+	  }
+
+	  WindowSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.openWindow(innerSub);
+	  };
+
+	  WindowSubscriber.prototype.notifyError = function (error, innerSub) {
+	    this._error(error);
+	  };
+
+	  WindowSubscriber.prototype.notifyComplete = function (innerSub) {
+	    this.openWindow(innerSub);
+	  };
+
+	  WindowSubscriber.prototype._next = function (value) {
+	    this.window.next(value);
+	  };
+
+	  WindowSubscriber.prototype._error = function (err) {
+	    this.window.error(err);
+	    this.destination.error(err);
+	    this.unsubscribeClosingNotification();
+	  };
+
+	  WindowSubscriber.prototype._complete = function () {
+	    this.window.complete();
+	    this.destination.complete();
+	    this.unsubscribeClosingNotification();
+	  };
+
+	  WindowSubscriber.prototype.unsubscribeClosingNotification = function () {
+	    if (this.closingNotification) {
+	      this.closingNotification.unsubscribe();
+	    }
+	  };
+
+	  WindowSubscriber.prototype.openWindow = function (innerSub) {
+	    if (innerSub === void 0) {
+	      innerSub = null;
+	    }
+
+	    if (innerSub) {
+	      this.remove(innerSub);
+	      innerSub.unsubscribe();
+	    }
+
+	    var prevWindow = this.window;
+
+	    if (prevWindow) {
+	      prevWindow.complete();
+	    }
+
+	    var window = this.window = new Subject();
+	    this.destination.next(window);
+	    var closingNotifier = tryCatch(this.closingSelector)();
+
+	    if (closingNotifier === errorObject) {
+	      var err = errorObject.e;
+	      this.destination.error(err);
+	      this.window.error(err);
+	    } else {
+	      this.add(this.closingNotification = subscribeToResult(this, closingNotifier));
+	    }
+	  };
+
+	  return WindowSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START tslib,_OuterSubscriber,_util_subscribeToResult PURE_IMPORTS_END */
+
+	var WithLatestFromSubscriber =
+	/*@__PURE__*/
+	function (_super) {
+	  __extends(WithLatestFromSubscriber, _super);
+
+	  function WithLatestFromSubscriber(destination, observables, project) {
+	    var _this = _super.call(this, destination) || this;
+
+	    _this.observables = observables;
+	    _this.project = project;
+	    _this.toRespond = [];
+	    var len = observables.length;
+	    _this.values = new Array(len);
+
+	    for (var i = 0; i < len; i++) {
+	      _this.toRespond.push(i);
+	    }
+
+	    for (var i = 0; i < len; i++) {
+	      var observable = observables[i];
+
+	      _this.add(subscribeToResult(_this, observable, observable, i));
+	    }
+
+	    return _this;
+	  }
+
+	  WithLatestFromSubscriber.prototype.notifyNext = function (outerValue, innerValue, outerIndex, innerIndex, innerSub) {
+	    this.values[outerIndex] = innerValue;
+	    var toRespond = this.toRespond;
+
+	    if (toRespond.length > 0) {
+	      var found = toRespond.indexOf(outerIndex);
+
+	      if (found !== -1) {
+	        toRespond.splice(found, 1);
+	      }
+	    }
+	  };
+
+	  WithLatestFromSubscriber.prototype.notifyComplete = function () {};
+
+	  WithLatestFromSubscriber.prototype._next = function (value) {
+	    if (this.toRespond.length === 0) {
+	      var args = [value].concat(this.values);
+
+	      if (this.project) {
+	        this._tryProject(args);
+	      } else {
+	        this.destination.next(args);
+	      }
+	    }
+	  };
+
+	  WithLatestFromSubscriber.prototype._tryProject = function (args) {
+	    var result;
+
+	    try {
+	      result = this.project.apply(this, args);
+	    } catch (err) {
+	      this.destination.error(err);
+	      return;
+	    }
+
+	    this.destination.next(result);
+	  };
+
+	  return WithLatestFromSubscriber;
+	}(OuterSubscriber);
+
+	/** PURE_IMPORTS_START _observable_zip PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START _observable_zip PURE_IMPORTS_END */
+
+	/** PURE_IMPORTS_START  PURE_IMPORTS_END */
+
 	class MasterOut extends Record({
 	  gain: 1
 	}) {}
@@ -24817,12 +24786,19 @@
 
 	masterOutMap.set(audioContext, makeMasterOut(audioContext));
 	function getMasterOutChain(audioContext$$1) {
-	  return masterOutMap.get(audioContext$$1);
+	  let value = masterOutMap.get(audioContext$$1);
+
+	  if (!value) {
+	    value = makeMasterOut(audioContext$$1);
+	    masterOutMap.set(audioContext$$1, value);
+	  }
+
+	  return value;
 	}
 	function connectMasterOut(audioContext$$1, audioNode) {
 	  const {
 	    master
-	  } = masterOutMap.get(audioContext$$1);
+	  } = getMasterOutChain(audioContext$$1);
 	  audioNode.connect(master);
 	}
 	function setGain(value) {
@@ -24830,6 +24806,114 @@
 	}
 	const masterOutSym = Symbol();
 	wire_2(masterOutSym, wireObservable(stream$3));
+
+	var audiobufferToWav = audioBufferToWav;
+
+	function audioBufferToWav(buffer, opt) {
+	  opt = opt || {};
+	  var numChannels = buffer.numberOfChannels;
+	  var sampleRate = buffer.sampleRate;
+	  var format = opt.float32 ? 3 : 1;
+	  var bitDepth = format === 3 ? 32 : 16;
+	  var result;
+
+	  if (numChannels === 2) {
+	    result = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
+	  } else {
+	    result = buffer.getChannelData(0);
+	  }
+
+	  return encodeWAV(result, format, sampleRate, numChannels, bitDepth);
+	}
+
+	function encodeWAV(samples, format, sampleRate, numChannels, bitDepth) {
+	  var bytesPerSample = bitDepth / 8;
+	  var blockAlign = numChannels * bytesPerSample;
+	  var buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
+	  var view = new DataView(buffer);
+	  /* RIFF identifier */
+
+	  writeString(view, 0, 'RIFF');
+	  /* RIFF chunk length */
+
+	  view.setUint32(4, 36 + samples.length * bytesPerSample, true);
+	  /* RIFF type */
+
+	  writeString(view, 8, 'WAVE');
+	  /* format chunk identifier */
+
+	  writeString(view, 12, 'fmt ');
+	  /* format chunk length */
+
+	  view.setUint32(16, 16, true);
+	  /* sample format (raw) */
+
+	  view.setUint16(20, format, true);
+	  /* channel count */
+
+	  view.setUint16(22, numChannels, true);
+	  /* sample rate */
+
+	  view.setUint32(24, sampleRate, true);
+	  /* byte rate (sample rate * block align) */
+
+	  view.setUint32(28, sampleRate * blockAlign, true);
+	  /* block align (channel count * bytes per sample) */
+
+	  view.setUint16(32, blockAlign, true);
+	  /* bits per sample */
+
+	  view.setUint16(34, bitDepth, true);
+	  /* data chunk identifier */
+
+	  writeString(view, 36, 'data');
+	  /* data chunk length */
+
+	  view.setUint32(40, samples.length * bytesPerSample, true);
+
+	  if (format === 1) {
+	    // Raw PCM
+	    floatTo16BitPCM(view, 44, samples);
+	  } else {
+	    writeFloat32(view, 44, samples);
+	  }
+
+	  return buffer;
+	}
+
+	function interleave(inputL, inputR) {
+	  var length = inputL.length + inputR.length;
+	  var result = new Float32Array(length);
+	  var index = 0;
+	  var inputIndex = 0;
+
+	  while (index < length) {
+	    result[index++] = inputL[inputIndex];
+	    result[index++] = inputR[inputIndex];
+	    inputIndex++;
+	  }
+
+	  return result;
+	}
+
+	function writeFloat32(output, offset, input) {
+	  for (var i = 0; i < input.length; i++, offset += 4) {
+	    output.setFloat32(offset, input[i], true);
+	  }
+	}
+
+	function floatTo16BitPCM(output, offset, input) {
+	  for (var i = 0; i < input.length; i++, offset += 2) {
+	    var s = Math.max(-1, Math.min(1, input[i]));
+	    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+	  }
+	}
+
+	function writeString(view, offset, string) {
+	  for (var i = 0; i < string.length; i++) {
+	    view.setUint8(offset + i, string.charCodeAt(i));
+	  }
+	}
 
 	var FileSaver_min = createCommonjsModule(function (module, exports) {
 	(function (a, b) {
@@ -25346,27 +25430,19 @@
 	const playbackEndedStream = stream$4.pipe(pairwise(), filter(([last$$1, current]) => {
 	  return last$$1.currentTime !== null && current.currentTime === null;
 	}));
-	const playbackRangeStartStream = stream$2.pipe(map(editor => {
-	  return editor.cursor;
-	})).pipe(distinctUntilChanged(), takeUntil(playbackEndedStream), repeat());
-	const playbackRangeStream = stream$1.pipe(switchMap(audioTracks$$1 => {
-	  return combineLatest(playbackRangeStartStream, stream.pipe(take(1)), (currentTime, audioSources$$1) => {
-	    const playhead = playheadSubject.value;
-	    const diff = currentTime.subtract(playhead.playbackRange.start);
-	    const currentTimeRange = new AudioRange(currentTime, playhead.playbackRange.duration.subtract(diff));
+	const tracksAndSourcesStream = stream$1.pipe(switchMap(audioTracks$$1 => {
+	  return combineLatest(stream.pipe(take(1)), audioSources$$1 => {
 	    return {
 	      audioTracks: audioTracks$$1,
-	      audioSources: audioSources$$1,
-	      range: currentTimeRange
+	      audioSources: audioSources$$1
 	    };
 	  });
 	}));
 
-	function makeSourceNodesStream(audioContext$$1) {
-	  return playbackRangeStream.pipe(map(({
+	function makeSourceNodesStream(audioContext$$1, range$$1) {
+	  return tracksAndSourcesStream.pipe(map(({
 	    audioTracks: audioTracks$$1,
-	    audioSources: audioSources$$1,
-	    range: range$$1
+	    audioSources: audioSources$$1
 	  }) => {
 	    let sourceNodes = new Map$1();
 	    audioTracks$$1.forEach(track => {
@@ -25389,14 +25465,14 @@
 	      range: range$$1
 	    };
 	  }));
-	}
+	} // makeSourceNodesStream(defaultAudioContext)
+	//     .subscribe(({ sourceNodes }) => {
+	//         const playhead = playheadSubject.value;
+	//         playheadSubject.next(
+	//             playhead.set('auroraNodes', sourceNodes)
+	//         );
+	//     })
 
-	makeSourceNodesStream(audioContext).subscribe(({
-	  sourceNodes
-	}) => {
-	  const playhead = playheadSubject.value;
-	  playheadSubject.next(playhead.set('auroraNodes', sourceNodes));
-	});
 
 	function createCurrentTimeStream(audioContext$$1, startAudioContextSeconds, initialTime) {
 	  return Observable.create(o => {
@@ -25452,16 +25528,32 @@
 	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
 	  }
 	}
-	function play() {
+	function rasterize(range$$1) {
+	  const {
+	    sampleRate
+	  } = audioContext;
+	  const {
+	    duration
+	  } = range$$1;
+	  const length = sampleRate * duration.seconds;
+	  const offline = new OfflineAudioContext(2, length, sampleRate);
+	  makeSourceNodesStream(offline, range$$1).pipe(switchMap(({
+	    sourceNodes
+	  }) => {
+	    return playStream(offline, sourceNodes, range$$1).pipe(startWith(range$$1.start)).pipe(materialize());
+	  })).pipe(dematerialize()).subscribe(time => {
+	    playheadSubject.next(playheadSubject.value.set('currentTime', time));
+	  }, null, () => {
+	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
+	  });
+	  return offline.startRendering();
+	}
+	function play(range$$1) {
 	  if (playSubscription) {
 	    playSubscription.unsubscribe();
 	  }
 
-	  playSubscription = playbackRangeStream.pipe(switchMap(({
-	    range: range$$1
-	  }) => {
-	    return playStream(audioContext, playheadSubject.value.auroraNodes, range$$1).pipe(startWith(range$$1.start)).pipe(materialize());
-	  })).pipe(dematerialize()).subscribe(time => {
+	  playSubscription = playStream(audioContext, playheadSubject.value.auroraNodes, range$$1).pipe(startWith(range$$1.start)).subscribe(time => {
 	    playheadSubject.next(playheadSubject.value.set('currentTime', time));
 	  }, null, () => {
 	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
@@ -25469,6 +25561,154 @@
 	}
 	const playheadSym = Symbol();
 	wire_2(playheadSym, wireObservable(stream$4));
+
+	class Process {
+	  constructor(worker, pid, args, files) {
+	    this.pid = pid;
+	    this.worker = worker;
+	    this.args = args;
+	    this.files = files;
+	  }
+
+	  execute() {
+	    return new Promise(res => {
+	      const {
+	        worker
+	      } = this;
+
+	      const onMessage = evt => {
+	        const {
+	          data
+	        } = evt;
+
+	        if (data.pid === this.pid) {
+	          if (data.type == 'stdout' && this.stdout) {
+	            this.stdout(data);
+	          } else if (data.type === 'done') {
+	            worker.removeEventListener('message', onMessage);
+	            res(data);
+	          }
+	        }
+	      };
+
+	      worker.addEventListener('message', onMessage);
+	      worker.postMessage({
+	        type: 'command',
+	        pid: this.pid,
+	        arguments: this.args,
+	        files: this.files
+	      });
+	    });
+	  }
+
+	}
+
+	class FFMPEG {
+	  constructor(worker) {
+	    this.worker = worker;
+	    this.pid = 0;
+	  }
+
+	  createProcess(args, files) {
+	    if (!this.worker) {
+	      throw new Error(`cannot create process. FFMPEG worker hasn't been created yet`);
+	    }
+
+	    return new Process(this.worker, this.pid += 1, args, files);
+	  }
+
+	}
+	function getFFMPEG() {
+	  return new Promise(res => {
+	    const worker = new Worker('/ffmpeg-worker.js');
+
+	    const onReady = event => {
+	      const {
+	        data: message
+	      } = event;
+
+	      if (message.type == "ready") {
+	        worker.removeEventListener('message', onReady);
+	        const ffmpeg = new FFMPEG(worker);
+	        res(ffmpeg);
+	      }
+	    };
+
+	    worker.addEventListener('message', onReady);
+	  });
+	}
+	wire_2(getFFMPEG, function (wiredEventTarget) {
+	  wiredEventTarget.dispatchEvent(new wire_3({
+	    data: undefined,
+	    error: undefined
+	  }));
+	  getFFMPEG().then(ffmpeg => {
+	    wiredEventTarget.dispatchEvent(new wire_3({
+	      data: ffmpeg,
+	      error: undefined
+	    }));
+	  });
+	});
+
+	class Highlight extends Record({
+	  id: null,
+	  range: null
+	}) {}
+
+	class HighlightState extends Record({
+	  items: new List()
+	}) {}
+
+	const highlightSubject = new BehaviorSubject(new HighlightState());
+	const stream$5 = highlightSubject.asObservable();
+	function highlightSilences() {
+	  const range$$1 = new AudioRange(new Time(0), new Time(10000));
+	  rasterize(range$$1).then(audioBuffer => {
+	    return getFFMPEG().then(ffmpeg => {
+	      const wav = audiobufferToWav(audioBuffer);
+	      const uint8 = new Uint8Array(wav);
+	      const process = ffmpeg.createProcess(['-i', 'input.wav', '-af', 'silencedetect=n=-50dB:d=1', 'output.wav'], [{
+	        name: 'input.wav',
+	        data: uint8
+	      }]);
+	      const ranges = [];
+	      let currentStart = null;
+
+	      process.stdout = ({
+	        data
+	      }) => {
+	        if (/silence_start/.test(data)) {
+	          let startTime = parseFloat(data.split(': ')[1]);
+
+	          if (startTime < 0) {
+	            startTime = 0;
+	          }
+
+	          currentStart = Time.fromSeconds(startTime);
+	        } else if (/silence_end/.test(data)) {
+	          const endTime = Time.fromSeconds(parseFloat(data.split(': ')[1]));
+	          const duration = endTime.minus(currentStart);
+	          ranges.push(new AudioRange(currentStart, duration));
+	          currentStart = null;
+	        }
+	      };
+
+	      return process.execute().then(() => ranges);
+	    }).then(ranges => {
+	      const highlights = ranges.map(range$$1 => {
+	        return new Highlight({
+	          range: range$$1,
+	          id: generateId()
+	        });
+	      });
+	      highlightSubject.next(highlightSubject.value.update('items', items => {
+	        return items.concat(highlights);
+	      }));
+	    });
+	  });
+	}
+	const highlightSym = Symbol();
+	wire_2(highlightSym, wireObservable(stream$5));
 
 	class Controls extends engine_5 {
 	  constructor(...args) {
@@ -25499,6 +25739,10 @@
 
 	  get stopButtonClass() {
 	    return 'control';
+	  }
+
+	  onSilenceDetectClick() {
+	    highlightSilences();
 	  }
 
 	  onStopClick() {
@@ -35814,9 +36058,9 @@
 	    this.virtual = void 0;
 	    this.playhead = void 0;
 	    this.userDrag = void 0;
+	    this.time = void 0;
 	    this.interact = void 0;
 	    this.editor = void 0;
-	    this.time = void 0;
 
 	    this.onCaretDrag = evt => {
 	      const event = new CustomEvent('cursordrag', {
@@ -35918,16 +36162,136 @@
 	});
 
 	function stylesheet$a(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {background: rgb(96, 96, 96);display: flex;flex-direction: column-reverse;padding: 0.5rem;}") : (hostSelector + " {background: rgb(96, 96, 96);display: flex;flex-direction: column-reverse;padding: 0.5rem;}")) + "\n.gain-input" + shadowSelector + " {-webkit-appearance: slider-vertical;width: 1rem;height: 100%;margin: 0 0.5rem 0 0;}\n.gain-levels" + shadowSelector + " {display: flex;height: 200px;}\n.gain-meter" + shadowSelector + " {height: 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;}") : (hostSelector + " {display: block;}")) + "\n";
 	}
 	var _implicitStylesheets$a = [stylesheet$a];
 
 	function stylesheet$b(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;height: 100px;width: 12px;overflow: hidden;background: rgb(46, 46, 46);}") : (hostSelector + " {display: flex;height: 100px;width: 12px;overflow: hidden;background: rgb(46, 46, 46);}")) + "\n.meter" + shadowSelector + " {height: 100%;flex: 1 0 auto;margin-left: 0.1rem;}\n.meter:first-of-type" + shadowSelector + " {margin-left: 0;}\n.indicator" + shadowSelector + " {height: 100%;transform-origin: 100% 100%;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 0;z-index: 5;}") : (hostSelector + " {display: block;position: absolute;left: 0;top: 0;bottom: 0;width: 0;z-index: 5;}")) + "\ndiv" + shadowSelector + " {height: 100%;background: rgba(0, 0, 0, 0.3);}\n";
 	}
 	var _implicitStylesheets$b = [stylesheet$b];
 
 	function tmpl$a($api, $cmp, $slotset, $ctx) {
+	  const {
+	    h: api_element
+	  } = $api;
+	  return [api_element("div", {
+	    style: $cmp.divStyle,
+	    key: 2
+	  }, [])];
+	}
+
+	var _tmpl$b = engine_8(tmpl$a);
+	tmpl$a.stylesheets = [];
+
+	if (_implicitStylesheets$b) {
+	  tmpl$a.stylesheets.push.apply(tmpl$a.stylesheets, _implicitStylesheets$b);
+	}
+	tmpl$a.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-timerange_timerange-host",
+	  shadowAttribute: "ffmpeg-timerange_timerange"
+	};
+
+	class TimeRange extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.range = void 0;
+	    this.editor = void 0;
+	  }
+
+	  get divStyle() {
+	    const width = this.editor.data.durationToWidth(this.range.duration);
+	    const x = this.editor.data.timeToPixel(this.range.start);
+	    const style = `width:${width}px;transform:translateX(${x}px)`;
+	    console.log(style);
+	    return style;
+	  }
+
+	}
+
+	engine_11(TimeRange, {
+	  publicProps: {
+	    range: {
+	      config: 0
+	    }
+	  },
+	  wire: {
+	    editor: {
+	      adapter: editorSym,
+	      params: {},
+	      static: {}
+	    }
+	  }
+	});
+
+	var _ffmpegTimerange = engine_10(TimeRange, {
+	  tmpl: _tmpl$b
+	});
+
+	function tmpl$b($api, $cmp, $slotset, $ctx) {
+	  const {
+	    c: api_custom_element
+	  } = $api;
+	  return [api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
+	    props: {
+	      "time": $cmp.highlight.range.start
+	    },
+	    key: 2
+	  }, []), api_custom_element("ffmpeg-timerange", _ffmpegTimerange, {
+	    props: {
+	      "range": $cmp.highlight.range
+	    },
+	    key: 3
+	  }, []), api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
+	    props: {
+	      "time": $cmp.highlight.range.end
+	    },
+	    key: 4
+	  }, [])];
+	}
+
+	var _tmpl$c = engine_8(tmpl$b);
+	tmpl$b.stylesheets = [];
+
+	if (_implicitStylesheets$a) {
+	  tmpl$b.stylesheets.push.apply(tmpl$b.stylesheets, _implicitStylesheets$a);
+	}
+	tmpl$b.stylesheetTokens = {
+	  hostAttribute: "ffmpeg-highlight_highlight-host",
+	  shadowAttribute: "ffmpeg-highlight_highlight"
+	};
+
+	class Highlight$1 extends engine_5 {
+	  constructor(...args) {
+	    super(...args);
+	    this.highlight = void 0;
+	  }
+
+	}
+
+	engine_11(Highlight$1, {
+	  publicProps: {
+	    highlight: {
+	      config: 0
+	    }
+	  }
+	});
+
+	var _ffmpegHighlight = engine_10(Highlight$1, {
+	  tmpl: _tmpl$c
+	});
+
+	function stylesheet$c(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {background: rgb(96, 96, 96);display: flex;flex-direction: column-reverse;padding: 0.5rem;}") : (hostSelector + " {background: rgb(96, 96, 96);display: flex;flex-direction: column-reverse;padding: 0.5rem;}")) + "\n.gain-input" + shadowSelector + " {-webkit-appearance: slider-vertical;width: 1rem;height: 100%;margin: 0 0.5rem 0 0;}\n.gain-levels" + shadowSelector + " {display: flex;height: 200px;}\n.gain-meter" + shadowSelector + " {height: 100%;}\n";
+	}
+	var _implicitStylesheets$c = [stylesheet$c];
+
+	function stylesheet$d(hostSelector, shadowSelector, nativeShadow) {
+	  return "\n" + (nativeShadow ? (":host {display: flex;height: 100px;width: 12px;overflow: hidden;background: rgb(46, 46, 46);}") : (hostSelector + " {display: flex;height: 100px;width: 12px;overflow: hidden;background: rgb(46, 46, 46);}")) + "\n.meter" + shadowSelector + " {height: 100%;flex: 1 0 auto;margin-left: 0.1rem;}\n.meter:first-of-type" + shadowSelector + " {margin-left: 0;}\n.indicator" + shadowSelector + " {height: 100%;transform-origin: 100% 100%;}\n";
+	}
+	var _implicitStylesheets$d = [stylesheet$d];
+
+	function tmpl$c($api, $cmp, $slotset, $ctx) {
 	  const {
 	    h: api_element,
 	    k: api_key,
@@ -35949,13 +36313,13 @@
 	  });
 	}
 
-	var _tmpl$b = engine_8(tmpl$a);
-	tmpl$a.stylesheets = [];
+	var _tmpl$d = engine_8(tmpl$c);
+	tmpl$c.stylesheets = [];
 
-	if (_implicitStylesheets$b) {
-	  tmpl$a.stylesheets.push.apply(tmpl$a.stylesheets, _implicitStylesheets$b);
+	if (_implicitStylesheets$d) {
+	  tmpl$c.stylesheets.push.apply(tmpl$c.stylesheets, _implicitStylesheets$d);
 	}
-	tmpl$a.stylesheetTokens = {
+	tmpl$c.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-volumemeter_volumemeter-host",
 	  shadowAttribute: "ffmpeg-volumemeter_volumemeter"
 	};
@@ -36045,10 +36409,10 @@
 	});
 
 	var _ffmpegVolumemeter = engine_10(VolumeMeter, {
-	  tmpl: _tmpl$b
+	  tmpl: _tmpl$d
 	});
 
-	function tmpl$b($api, $cmp, $slotset, $ctx) {
+	function tmpl$d($api, $cmp, $slotset, $ctx) {
 	  const {
 	    b: api_bind,
 	    h: api_element,
@@ -36087,13 +36451,13 @@
 	  }, [])])];
 	}
 
-	var _tmpl$c = engine_8(tmpl$b);
-	tmpl$b.stylesheets = [];
+	var _tmpl$e = engine_8(tmpl$d);
+	tmpl$d.stylesheets = [];
 
-	if (_implicitStylesheets$a) {
-	  tmpl$b.stylesheets.push.apply(tmpl$b.stylesheets, _implicitStylesheets$a);
+	if (_implicitStylesheets$c) {
+	  tmpl$d.stylesheets.push.apply(tmpl$d.stylesheets, _implicitStylesheets$c);
 	}
-	tmpl$b.stylesheetTokens = {
+	tmpl$d.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-masterout_masterout-host",
 	  shadowAttribute: "ffmpeg-masterout_masterout"
 	};
@@ -36125,10 +36489,10 @@
 	});
 
 	var _ffmpegMasterout = engine_10(MasterOut$1, {
-	  tmpl: _tmpl$c
+	  tmpl: _tmpl$e
 	});
 
-	function tmpl$c($api, $cmp, $slotset, $ctx) {
+	function tmpl$e($api, $cmp, $slotset, $ctx) {
 	  const {
 	    c: api_custom_element,
 	    h: api_element,
@@ -36221,7 +36585,7 @@
 	      "mousemove": _m10 || ($ctx._m10 = api_bind($cmp.onEditorMouseMove)),
 	      "mouseleave": _m11 || ($ctx._m11 = api_bind($cmp.onEditorMouseLeave))
 	    }
-	  }, [$cmp.isSelecting ? api_custom_element("ffmpeg-selection", _ffmpegSelection, {
+	  }, api_flatten([$cmp.isSelecting ? api_custom_element("ffmpeg-selection", _ffmpegSelection, {
 	    props: {
 	      "frame": $cmp.selectionFrame
 	    },
@@ -36284,18 +36648,25 @@
 	      "cursordoubletap": _m8 || ($ctx._m8 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
 	      "cursordrag": _m9 || ($ctx._m9 = api_bind($cmp.onPlaybackDurationCursorDrag))
 	    }
-	  }, []) : null]) : null]), api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 33
+	  }, []) : null, api_iterator($cmp.highlights, function (highlight) {
+	    return api_custom_element("ffmpeg-highlight", _ffmpegHighlight, {
+	      props: {
+	        "highlight": highlight
+	      },
+	      key: api_key(34, highlight.id)
+	    }, []);
+	  })])) : null]), api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
+	    key: 35
 	  }, [])])];
 	}
 
-	var _tmpl$d = engine_8(tmpl$c);
-	tmpl$c.stylesheets = [];
+	var _tmpl$f = engine_8(tmpl$e);
+	tmpl$e.stylesheets = [];
 
 	if (_implicitStylesheets) {
-	  tmpl$c.stylesheets.push.apply(tmpl$c.stylesheets, _implicitStylesheets);
+	  tmpl$e.stylesheets.push.apply(tmpl$e.stylesheets, _implicitStylesheets);
 	}
-	tmpl$c.stylesheetTokens = {
+	tmpl$e.stylesheetTokens = {
 	  hostAttribute: "ffmpeg-app_app-host",
 	  shadowAttribute: "ffmpeg-app_app"
 	};
@@ -36345,6 +36716,7 @@
 	    this.audioTracks = void 0;
 	    this.editor = void 0;
 	    this.playhead = void 0;
+	    this.highlightData = void 0;
 
 	    this.updateFrame = () => {
 	      const rect = this.template.querySelector('.editor-container').getBoundingClientRect();
@@ -36450,6 +36822,16 @@
 	  /*
 	   *
 	   * Editor
+	   *
+	  */
+
+
+	  get highlights() {
+	    return this.highlightData.data.items.toArray();
+	  }
+	  /*
+	   *
+	   * Frame
 	   *
 	  */
 
@@ -36637,6 +37019,11 @@
 	      adapter: playheadSym,
 	      params: {},
 	      static: {}
+	    },
+	    highlightData: {
+	      adapter: highlightSym,
+	      params: {},
+	      static: {}
 	    }
 	  },
 	  track: {
@@ -36645,7 +37032,7 @@
 	});
 
 	var App$1 = engine_10(App, {
-	  tmpl: _tmpl$d
+	  tmpl: _tmpl$f
 	});
 
 	wire_1(engine_6);
