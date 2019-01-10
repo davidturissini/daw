@@ -2,9 +2,6 @@ import { LightningElement, api, wire } from 'lwc';
 import { editorSym } from './../../wire/editor';
 import { audioSources } from './../../wire/audiosource';
 import {
-    moveSegment,
-    moveSegmentSourceOffset,
-    setSegmentDuration,
     deleteSegment,
     setTrackFrame,
 } from './../../wire/audiotrack';
@@ -75,36 +72,6 @@ export default class AudioTrack extends LightningElement {
         })
         .toList()
         .toJS();
-    }
-
-    handleSegmentMove(evt) {
-        const { time, segmentId } = evt.detail;
-        moveSegment(
-            this.track.id,
-            segmentId,
-            time,
-        );
-    }
-
-    handleSegmentSourceOffsetChange(evt) {
-        const { time, segmentId } = evt.detail;
-        moveSegmentSourceOffset(
-            this.track.id,
-            segmentId,
-            time,
-        );
-    }
-
-    handleSegmentDurationChange(evt) {
-        const { time, segmentId } = evt.detail;
-        const audioSourceId = this.track.segments.getIn([segmentId, 'sourceId']);
-        const audioSource = this.audioSources.data.get(audioSourceId);
-        setSegmentDuration(
-            this.track.id,
-            segmentId,
-            audioSource,
-            time,
-        );
     }
 
     onSegmentKeyUp(evt) {

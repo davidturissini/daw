@@ -1,71 +1,14 @@
 import { LightningElement, wire, track } from 'lwc';
-import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime, setCursorTime } from './../../wire/editor';
-import { Time } from '../../util/time';
+import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime } from './../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
-import { takeUntil,filter, take, switchMap, flatMap, map } from 'rxjs/operators';
 import {
     audioTracks,
-    createTrackAndSourceFile,
     deleteTrack,
-    setSegmentSelection,
     deleteSelections,
-    getTracksDuration,
-    segmentInTimeRange,
 } from './../../wire/audiotrack';
-import { generateId } from './../../util/uniqueid';
-import { playheadSym, incrementPlaybackDuration, setPlaybackDuration } from './../../wire/playhead';
-import { AudioRange, clamp as clampAudioRange } from './../../util/audiorange';
+import { playheadSym } from './../../wire/playhead';
 import { highlightSym } from './../../wire/highlight';
 import { IdleState } from './states/idle';
-import { SelectState } from './states/select';
-
-function userSelection(elm) {
-    const selectionFrame = {
-        left: 0,
-        top: 0,
-        width: 0,
-        height: 0,
-    };
-
-    const rect = elm.getBoundingClientRect();
-    const offsetX = rect.x;
-    const offsetY = rect.y;
-
-    return observableFromEvent(elm, 'mousedown')
-        .pipe(
-            take(1)
-        )
-        .pipe(
-            flatMap((evt) => {
-                selectionFrame.left = evt.offsetX;
-                selectionFrame.top = evt.offsetY;
-
-                return observableFromEvent(elm, 'mousemove')
-                    .pipe(
-                        map((evt) => {
-                            selectionFrame.width = (evt.x - offsetX) - selectionFrame.left;
-                            selectionFrame.height = (evt.y - offsetY) - selectionFrame.top;
-                            const frame = { ...selectionFrame };
-
-                            if (frame.height < 0) {
-                                frame.top += frame.height;
-                                frame.height = -frame.height;
-                            }
-
-                            if (frame.width < 0) {
-                                frame.left += frame.width;
-                                frame.width = -frame.width;
-                            }
-                            return frame;
-                        })
-                    )
-                    .pipe(
-                        takeUntil(observableFromEvent(document, 'mouseup'))
-                    )
-            })
-        )
-
-}
 
 export default class App extends LightningElement {
     constructor() {
@@ -75,10 +18,10 @@ export default class App extends LightningElement {
 
     enterState(next) {
         if (this.state) {
-            this.state.exit();
+            this.state.exit(this);
         }
         this.state = next;
-        this.state.enter();
+        this.state.enter(this);
     }
 
     frame = null;
@@ -166,87 +109,84 @@ export default class App extends LightningElement {
      * Events
      *
     */
-    segmentDrag = false;
     onSegmentDragStart() {
-        this.segmentDrag = true;
+        this.state.onSegmentDragStart(this);
     }
 
     onSegmentDragEnd() {
-        requestAnimationFrame(() => {
-            this.segmentDrag = false;
-        });
+        this.state.onSegmentDragEnd(this);
+    }
+
+    onSegmentDrag(evt) {
+        this.state.onSegmentDrag(this, evt);
+    }
+
+    onSegmentSourceOffsetChange(evt) {
+        this.state.onSegmentSourceOffsetChange(this, evt);
+    }
+
+    onSegmentDurationChange(evt) {
+        this.state.onSegmentDurationChange(this, evt);
     }
 
     onEditorMouseMove = (evt) => {
-        const { offsetX } = evt;
-        const time = this.editor.data.pixelToTime(offsetX);
-        const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
-        setVirtualCursorTime(next);
+        this.state.onEditorMouseMove(this, evt);
     }
 
     onEditorMouseLeave = (evt) => {
         setVirtualCursorTime(null);
     }
 
+    onEditorMouseDown(evt) {
+        this.state.onEditorMouseDown(this, evt);
+    }
+
     onEditorClick = (evt) => {
-        if (this.segmentDrag) {
-            return;
-        }
-        const next = this.editor.data.absolutePixelToTime(evt.offsetX);
-        setCursorTime(next);
+        this.state.onEditorClick(this, evt);
     }
 
     onTimelineDragStart() {
-        this.template.host.classList.add('editor--drag');
+        this.state.onTimelineDragStart(this);
     }
 
     onTimelineDragEnd() {
-        this.template.host.classList.remove('editor--drag');
+        this.state.onTimelineDragEnd(this);
+    }
+
+    onTimelineDrag(evt) {
+        this.state.onTimelineDrag(this, evt);
     }
 
     onDragOver = (evt) => {
-        evt.preventDefault();
-        const { offsetX } = evt;
-        const time = this.editor.data.pixelToTime(offsetX - this.editor.data.frame.left);
-        const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
-        setVirtualCursorTime(next);
+        this.state.onEditorDragOver(this, evt);
     }
 
     onDrop = (evt) => {
-        evt.preventDefault();
-        const { files } = evt.dataTransfer;
-        for(let i = 0, len = files.length; i < len; i += 1) {
-            const sourceId = generateId();
-            const trackId = generateId();
-            const time = this.editor.data.absolutePixelToTime(evt.offsetX - this.editor.data.frame.left);
-            createTrackAndSourceFile(
-                trackId,
-                sourceId,
-                files[i],
-                time,
-            );
-        }
+        this.state.onEditorDrop(this, evt);
     }
 
-    onTimelineMouseEnter = () => {
-        this.template.host.classList.add('editor--draggable');
+    onTimelineMouseEnter = (evt) => {
+        this.state.onTimelineMouseEnter(this, evt);
     }
 
-    onTimelineMouseLeave = () => {
-        this.template.host.classList.remove('editor--draggable');
+    onTimelineMouseLeave = (evt) => {
+        this.state.onTimelineMouseLeave(this, evt);
     }
 
     onPlaybackDurationCursorDrag(evt) {
-        const { dx } = evt.detail;
-        const time = this.editor.data.pixelToTime(dx);
-        incrementPlaybackDuration(time);
+       this.state.onPlaybackDurationCursorDrag(this, evt);
     }
 
     onPlaybackDurationCursorDoubleTap(evt) {
-        const duration = getTracksDuration(this.audioTracks.data);
-        if (duration.greaterThan(this.playhead.data.playbackRange.duration)) {
-            setPlaybackDuration(duration);
-        }
+        this.state.onPlaybackDurationCursorDoubleTap(this, evt);
+    }
+
+    onPlayButtonClick(evt) {
+        this.state.onPlayButtonClick(this, evt);
+    }
+
+    onStopButtonClick(evt) {
+        this.state.onStopButtonClick(this, evt);
     }
 
     /*
@@ -298,73 +238,8 @@ export default class App extends LightningElement {
         incrementEnd(time);
     }
 
-    /*
-     *
-     * Selection
-     *
-    */
-    @track selectionFrame = null;
-
-    get isSelecting() {
-        return this.selectionFrame !== null;
-    }
-
-    get editorClassName() {
-        if (this.selectionFrame) {
-            return 'editor editor--selecting';
-        }
-        return 'editor';
-    }
-
-    selectionSubscription;
-    listenForSelection() {
-        this.selectionSubscription = observableFromEvent(document, 'keydown')
-            .pipe(filter((evt) => evt.key === 'Meta'))
-            .pipe(take(1))
-            .pipe(
-                switchMap(() => {
-                    return userSelection(this.template.querySelector('.editor'));
-                })
-            )
-            .subscribe((frame) => {
-                this.selectionFrame = frame;
-            }, null, () => {
-                const frame = this.selectionFrame;
-                const startTime = this.editor.data.absolutePixelToTime(frame.left);
-                const duration = this.editor.data.pixelToTime(frame.width);
-                const range = new AudioRange(startTime, duration);
-                const frameBottom = frame.top + frame.height;
-                this.audioTracks.data.filter((audioTrack) => {
-                    const { frame: audioTrackFrame } = audioTrack;
-                    const bottom = audioTrackFrame.top + audioTrackFrame.height;
-                    const midHeight = audioTrackFrame.height / 2;
-                    return (
-                        frame.top <= (audioTrackFrame.top + midHeight) &&
-                        frameBottom >= (bottom - midHeight)
-                    );
-                })
-                .forEach((audioTrack) => {
-                    audioTrack.segments.filter((segment) => {
-                        return segmentInTimeRange(
-                            segment,
-                            range.start,
-                            range.duration,
-                        );
-                    })
-                    .forEach((segment) => {
-                        const clamped = clampAudioRange(
-                            new AudioRange(segment.offset, segment.duration),
-                            range,
-                        );
-
-                        setSegmentSelection(audioTrack.id, segment.id, clamped);
-                    })
-                });
-
-
-                this.selectionFrame = null;
-                this.listenForSelection();
-            })
+    get editorElement() {
+        return this.template.querySelector('.editor');
     }
 
     /*
@@ -381,10 +256,16 @@ export default class App extends LightningElement {
             }
         })
 
+        observableFromEvent(document, 'keydown').subscribe((evt) => {
+            this.state.onDocumentKeyDown(this, evt);
+        })
+
+        observableFromEvent(document, 'mouseup').subscribe((evt) => {
+            this.state.onDocumentMouseUp(this, evt);
+        })
+
         this.addEventListener('dragover', this.onDragOver);
         this.addEventListener('drop', this.onDrop);
-        this.listenForSelection();
-
     }
 
     renderedCallback() {

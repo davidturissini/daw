@@ -138,17 +138,6 @@ function makeSourceNodesStream(audioContext, range) {
     )
 }
 
-
-
-// makeSourceNodesStream(defaultAudioContext)
-//     .subscribe(({ sourceNodes }) => {
-//         const playhead = playheadSubject.value;
-//         playheadSubject.next(
-//             playhead.set('auroraNodes', sourceNodes)
-//         );
-//     })
-
-
 function createCurrentTimeStream(audioContext, startAudioContextSeconds, initialTime) {
     return Observable.create((o) => {
         let raf;
@@ -173,6 +162,7 @@ function playStream(audioContext, auroraNodes, range) {
         //if (audioContext.state === 'suspended') {
             audioContext.resume();
         //}
+
         const promises = auroraNodes.map((node) => {
             connectMasterOut(audioContext, node.node);
             return node.start();
@@ -284,12 +274,17 @@ export function play(range) {
         playSubscription.unsubscribe();
     }
 
-    playSubscription = playStream(
-            defaultAudioContext,
-            playheadSubject.value.auroraNodes,
-            range
+    playSubscription = makeSourceNodesStream(defaultAudioContext, range)
+        .pipe(
+            flatMap(({ sourceNodes }) => {
+                return playStream(
+                    defaultAudioContext,
+                    sourceNodes,
+                    range
+                )
+            }),
+            startWith(range.start)
         )
-        .pipe(startWith(range.start))
         .subscribe(
             (time) => {
                 playheadSubject.next(

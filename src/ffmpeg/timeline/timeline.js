@@ -1,5 +1,5 @@
 import { LightningElement, wire, track } from 'lwc';
-import { editorSym, setVisibleRangeStart } from './../../wire/editor';
+import { editorSym } from './../../wire/editor';
 import interact from 'interactjs';
 import { Time } from '../../util/time';
 import rafThrottle from 'raf-throttle';
@@ -76,12 +76,12 @@ export default class Timeline extends LightningElement {
     }
 
     onDrag = rafThrottle((evt) => {
-        const time = this.editor.pixelToTime(evt.dx);
-        const updated = new Time(this.editor.visibleRange.start.milliseconds - time.milliseconds);
-        if (updated.milliseconds < 0) {
-            return setVisibleRangeStart(new Time(0));
-        }
-        setVisibleRangeStart(updated);
+        const customEvent = new CustomEvent('timelinedrag', {
+            detail: {
+                dx: evt.dx,
+            },
+        });
+        this.dispatchEvent(customEvent);
     })
 
     onDragEnd = () => {

@@ -200,7 +200,7 @@ function getDurationMilliseconds(time, segmentSourceOffsetMilliseconds, segmentD
     return next;
 }
 
-export function setSegmentDuration(trackId, segmentId, audioSource, time) {
+export function setSegmentDuration(trackId, segmentId, audioSourceId, time) {
     const track = tracksSubject.value.get(trackId);
 
     const updatedTrack = track.updateIn(['segments', segmentId], (segment) => {

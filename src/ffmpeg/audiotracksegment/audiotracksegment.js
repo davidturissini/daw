@@ -48,10 +48,11 @@ export default class AudioTrackSegment extends LightningElement {
         const { editor, segment } = this;
         const { dx } = evt;
         const time = editor.data.pixelToTime(dx);
-        const event = new CustomEvent('segmentmove', {
+        const event = new CustomEvent('segmentdrag', {
             composed: true,
             bubbles: true,
             detail: {
+                trackId: this.track.id,
                 time,
                 segmentId: segment.id,
             }
@@ -74,10 +75,11 @@ export default class AudioTrackSegment extends LightningElement {
         const { dx } = evt;
         const time = editor.data.pixelToTime(dx);
         const event = new CustomEvent('segmentsourceoffsetchange', {
-            composed: false,
+            composed: true,
             bubbles: true,
             detail: {
                 time,
+                trackId: this.track.id,
                 segmentId: segment.id,
             }
         });
@@ -90,11 +92,13 @@ export default class AudioTrackSegment extends LightningElement {
         const { dx } = evt;
         const time = editor.data.pixelToTime(dx);
         const event = new CustomEvent('segmentdurationchange', {
-            composed: false,
+            composed: true,
             bubbles: true,
             detail: {
                 time,
+                trackId: this.track.id,
                 segmentId: segment.id,
+                sourceId: segment.sourceId,
             }
         });
 

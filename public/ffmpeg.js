@@ -14319,6 +14319,35 @@
 	/** PURE_IMPORTS_START _Observable,_from,_empty PURE_IMPORTS_END */
 
 	/** PURE_IMPORTS_START tslib,_fromArray,_util_isArray,_Subscriber,_OuterSubscriber,_util_subscribeToResult,_.._internal_symbol_iterator PURE_IMPORTS_END */
+	function zip() {
+	  var observables = [];
+
+	  for (var _i = 0; _i < arguments.length; _i++) {
+	    observables[_i] = arguments[_i];
+	  }
+
+	  var resultSelector = observables[observables.length - 1];
+
+	  if (typeof resultSelector === 'function') {
+	    observables.pop();
+	  }
+
+	  return fromArray(observables, undefined).lift(new ZipOperator(resultSelector));
+	}
+
+	var ZipOperator =
+	/*@__PURE__*/
+	function () {
+	  function ZipOperator(resultSelector) {
+	    this.resultSelector = resultSelector;
+	  }
+
+	  ZipOperator.prototype.call = function (subscriber, source) {
+	    return source.subscribe(new ZipSubscriber(subscriber, this.resultSelector));
+	  };
+
+	  return ZipOperator;
+	}();
 
 	var ZipSubscriber =
 	/*@__PURE__*/
@@ -20617,7 +20646,7 @@
 	  return next;
 	}
 
-	function setSegmentDuration(trackId, segmentId, audioSource, time) {
+	function setSegmentDuration(trackId, segmentId, audioSourceId, time) {
 	  const track = tracksSubject.value.get(trackId);
 	  const updatedTrack = track.updateIn(['segments', segmentId], segment => {
 	    const nextDurationMilliseconds = getDurationMilliseconds(time, segment.sourceOffset.milliseconds, segment.duration.milliseconds, audioSource.duration.milliseconds);
@@ -25515,14 +25544,7 @@
 	      range: range$$1
 	    };
 	  }));
-	} // makeSourceNodesStream(defaultAudioContext)
-	//     .subscribe(({ sourceNodes }) => {
-	//         const playhead = playheadSubject.value;
-	//         playheadSubject.next(
-	//             playhead.set('auroraNodes', sourceNodes)
-	//         );
-	//     })
-
+	}
 
 	function createCurrentTimeStream(audioContext$$1, startAudioContextSeconds, initialTime) {
 	  return Observable.create(o => {
@@ -25603,7 +25625,11 @@
 	    playSubscription.unsubscribe();
 	  }
 
-	  playSubscription = playStream(audioContext, playheadSubject.value.auroraNodes, range$$1).pipe(startWith(range$$1.start)).subscribe(time => {
+	  playSubscription = makeSourceNodesStream(audioContext, range$$1).pipe(mergeMap(({
+	    sourceNodes
+	  }) => {
+	    return playStream(audioContext, sourceNodes, range$$1);
+	  }), startWith(range$$1.start)).subscribe(time => {
 	    playheadSubject.next(playheadSubject.value.set('currentTime', time));
 	  }, null, () => {
 	    playheadSubject.next(playheadSubject.value.set('currentTime', null));
@@ -25808,11 +25834,19 @@
 	  }
 
 	  onStopClick() {
-	    stop();
+	    const event = new CustomEvent('stopbuttonclick', {
+	      bubbles: true,
+	      composed: true
+	    });
+	    this.dispatchEvent(event);
 	  }
 
 	  onPlayClick() {
-	    play(this.editor.data.cursor); // rasterize(this.editor.data.cursor);
+	    const event = new CustomEvent('playbuttonclick', {
+	      bubbles: true,
+	      composed: true
+	    });
+	    this.dispatchEvent(event);
 	  }
 
 	}
@@ -33448,14 +33482,12 @@
 	    };
 
 	    this.onDrag = rafThrottle(evt => {
-	      const time = this.editor.pixelToTime(evt.dx);
-	      const updated = new Time(this.editor.visibleRange.start.milliseconds - time.milliseconds);
-
-	      if (updated.milliseconds < 0) {
-	        return setVisibleRangeStart(new Time(0));
-	      }
-
-	      setVisibleRangeStart(updated);
+	      const customEvent = new CustomEvent('timelinedrag', {
+	        detail: {
+	          dx: evt.dx
+	        }
+	      });
+	      this.dispatchEvent(customEvent);
 	    });
 
 	    this.onDragEnd = () => {
@@ -33594,34 +33626,64 @@
 	  shadowAttribute: "ffmpeg-selection_selection"
 	};
 
-	class Selection extends engine_5 {
+	class Selection extends Record({
+	  frame: null
+	}) {}
+
+	const selectionSubject = new BehaviorSubject(null);
+	const stream$6 = selectionSubject.asObservable();
+
+	function dispatch$9(func) {
+	  return function (...args) {
+	    const nextState = func(...args);
+	    selectionSubject.next(nextState);
+	  };
+	}
+
+	const setSelectionFrame = dispatch$9(function (frame) {
+	  return new Selection({
+	    frame
+	  });
+	});
+	const clearSelectionFrame = dispatch$9(function () {
+	  return null;
+	});
+	const selectionSym = Symbol();
+	wire_2(selectionSym, wireObservable(stream$6));
+
+	class Selection$1 extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
-	    this.frame = void 0;
+	    this.selection = void 0;
 	  }
 
 	  get rectStyle() {
+	    if (!this.selection.data) {
+	      return '';
+	    }
+
 	    const {
 	      width,
 	      height,
 	      left,
 	      top
-	    } = this.frame;
-	    const translate = `translate(${left}px, ${top}px) scale(${width}, ${height})`;
-	    return `transform: ${translate}`;
+	    } = this.selection.data.frame;
+	    return `transform: translate(${left}px, ${top}px); width:${width}px; height: ${height}px`;
 	  }
 
 	}
 
-	engine_11(Selection, {
-	  publicProps: {
-	    frame: {
-	      config: 0
+	engine_11(Selection$1, {
+	  wire: {
+	    selection: {
+	      adapter: selectionSym,
+	      params: {},
+	      static: {}
 	    }
 	  }
 	});
 
-	var _ffmpegSelection = engine_10(Selection, {
+	var _ffmpegSelection = engine_10(Selection$1, {
 	  tmpl: _tmpl$6
 	});
 
@@ -35804,10 +35866,11 @@
 	        dx
 	      } = evt;
 	      const time = editor.data.pixelToTime(dx);
-	      const event = new CustomEvent('segmentmove', {
+	      const event = new CustomEvent('segmentdrag', {
 	        composed: true,
 	        bubbles: true,
 	        detail: {
+	          trackId: this.track.id,
 	          time,
 	          segmentId: segment.id
 	        }
@@ -35833,10 +35896,11 @@
 	      } = evt;
 	      const time = editor.data.pixelToTime(dx);
 	      const event = new CustomEvent('segmentsourceoffsetchange', {
-	        composed: false,
+	        composed: true,
 	        bubbles: true,
 	        detail: {
 	          time,
+	          trackId: this.track.id,
 	          segmentId: segment.id
 	        }
 	      });
@@ -35852,11 +35916,13 @@
 	      } = evt;
 	      const time = editor.data.pixelToTime(dx);
 	      const event = new CustomEvent('segmentdurationchange', {
-	        composed: false,
+	        composed: true,
 	        bubbles: true,
 	        detail: {
 	          time,
-	          segmentId: segment.id
+	          trackId: this.track.id,
+	          segmentId: segment.id,
+	          sourceId: segment.sourceId
 	        }
 	      });
 	      this.dispatchEvent(event);
@@ -35977,10 +36043,7 @@
 	    f: api_flatten
 	  } = $api;
 	  const {
-	    _m0,
-	    _m1,
-	    _m2,
-	    _m3
+	    _m0
 	  } = $ctx;
 	  return api_flatten([api_iterator($cmp.trackSelections, function (trackSelection) {
 	    return api_element("div", {
@@ -36003,10 +36066,7 @@
 	      },
 	      key: api_key(5, trackSegment.key),
 	      on: {
-	        "keyup": _m0 || ($ctx._m0 = api_bind($cmp.onSegmentKeyUp)),
-	        "segmentdurationchange": _m1 || ($ctx._m1 = api_bind($cmp.handleSegmentDurationChange)),
-	        "segmentsourceoffsetchange": _m2 || ($ctx._m2 = api_bind($cmp.handleSegmentSourceOffsetChange)),
-	        "segmentmove": _m3 || ($ctx._m3 = api_bind($cmp.handleSegmentMove))
+	        "keyup": _m0 || ($ctx._m0 = api_bind($cmp.onSegmentKeyUp))
 	      }
 	    }, []);
 	  })]);
@@ -36084,32 +36144,6 @@
 	        visibleOffset
 	      };
 	    }).toList().toJS();
-	  }
-
-	  handleSegmentMove(evt) {
-	    const {
-	      time,
-	      segmentId
-	    } = evt.detail;
-	    moveSegment(this.track.id, segmentId, time);
-	  }
-
-	  handleSegmentSourceOffsetChange(evt) {
-	    const {
-	      time,
-	      segmentId
-	    } = evt.detail;
-	    moveSegmentSourceOffset(this.track.id, segmentId, time);
-	  }
-
-	  handleSegmentDurationChange(evt) {
-	    const {
-	      time,
-	      segmentId
-	    } = evt.detail;
-	    const audioSourceId = this.track.segments.getIn([segmentId, 'sourceId']);
-	    const audioSource = this.audioSources.data.get(audioSourceId);
-	    setSegmentDuration(this.track.id, segmentId, audioSource, time);
 	  }
 
 	  onSegmentKeyUp(evt) {
@@ -36644,12 +36678,12 @@
 
 	function tmpl$f($api, $cmp, $slotset, $ctx) {
 	  const {
+	    b: api_bind,
 	    c: api_custom_element,
 	    h: api_element,
 	    k: api_key,
 	    i: api_iterator,
 	    d: api_dynamic,
-	    b: api_bind,
 	    f: api_flatten,
 	    gid: api_scoped_id
 	  } = $api;
@@ -36665,7 +36699,14 @@
 	    _m8,
 	    _m9,
 	    _m10,
-	    _m11
+	    _m11,
+	    _m12,
+	    _m13,
+	    _m14,
+	    _m15,
+	    _m16,
+	    _m17,
+	    _m18
 	  } = $ctx;
 	  return [api_element("header", {
 	    classMap: {
@@ -36673,7 +36714,11 @@
 	    },
 	    key: 2
 	  }, [api_custom_element("ffmpeg-controls", _ffmpegControls, {
-	    key: 3
+	    key: 3,
+	    on: {
+	      "stopbuttonclick": _m0 || ($ctx._m0 = api_bind($cmp.onStopButtonClick)),
+	      "playbuttonclick": _m1 || ($ctx._m1 = api_bind($cmp.onPlayButtonClick))
+	    }
 	  }, []), api_custom_element("ffmpeg-audioscroll", _ffmpegAudioscroll, {
 	    key: 4
 	  }, [])]), api_element("main", {
@@ -36709,7 +36754,7 @@
 	      },
 	      key: api_key(12, track.data.id),
 	      on: {
-	        "keyup": _m0 || ($ctx._m0 = api_bind($cmp.onTrackSummaryKeyUp))
+	        "keyup": _m2 || ($ctx._m2 = api_bind($cmp.onTrackSummaryKeyUp))
 	      }
 	    }, [api_element("span", {
 	      classMap: {
@@ -36732,30 +36777,31 @@
 	  }, [api_custom_element("ffmpeg-timeline", _ffmpegTimeline, {
 	    key: 18,
 	    on: {
-	      "mouseenter": _m1 || ($ctx._m1 = api_bind($cmp.onTimelineMouseEnter)),
-	      "mouseleave": _m2 || ($ctx._m2 = api_bind($cmp.onTimelineMouseLeave)),
-	      "timelinedragstart": _m3 || ($ctx._m3 = api_bind($cmp.onTimelineDragStart)),
-	      "timelinedragend": _m4 || ($ctx._m4 = api_bind($cmp.onTimelineDragEnd))
+	      "mouseenter": _m3 || ($ctx._m3 = api_bind($cmp.onTimelineMouseEnter)),
+	      "mouseleave": _m4 || ($ctx._m4 = api_bind($cmp.onTimelineMouseLeave)),
+	      "timelinedrag": _m5 || ($ctx._m5 = api_bind($cmp.onTimelineDrag)),
+	      "timelinedragstart": _m6 || ($ctx._m6 = api_bind($cmp.onTimelineDragStart)),
+	      "timelinedragend": _m7 || ($ctx._m7 = api_bind($cmp.onTimelineDragEnd))
 	    }
 	  }, [])]) : null, $cmp.editor.data.frame ? api_element("section", {
-	    className: $cmp.editorClassName,
+	    classMap: {
+	      "editor": true
+	    },
 	    key: 19,
 	    on: {
-	      "mousemove": _m10 || ($ctx._m10 = api_bind($cmp.onEditorMouseMove)),
-	      "mouseleave": _m11 || ($ctx._m11 = api_bind($cmp.onEditorMouseLeave))
+	      "mousedown": _m16 || ($ctx._m16 = api_bind($cmp.onEditorMouseDown)),
+	      "mousemove": _m17 || ($ctx._m17 = api_bind($cmp.onEditorMouseMove)),
+	      "mouseleave": _m18 || ($ctx._m18 = api_bind($cmp.onEditorMouseLeave))
 	    }
-	  }, api_flatten([$cmp.isSelecting ? api_custom_element("ffmpeg-selection", _ffmpegSelection, {
-	    props: {
-	      "frame": $cmp.selectionFrame
-	    },
-	    key: 21
-	  }, []) : null, api_element("div", {
-	    key: 22,
+	  }, api_flatten([api_custom_element("ffmpeg-selection", _ffmpegSelection, {
+	    key: 20
+	  }, []), api_element("div", {
+	    key: 21,
 	    on: {
-	      "click": _m7 || ($ctx._m7 = api_bind($cmp.onEditorClick))
+	      "click": _m13 || ($ctx._m13 = api_bind($cmp.onEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
-	    key: 23
+	    key: 22
 	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
@@ -36763,59 +36809,62 @@
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 24
+	    key: 23
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(26, track.data.id)
+	      key: api_key(25, track.data.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
 	        "track": track.data
 	      },
-	      key: 27,
+	      key: 26,
 	      on: {
-	        "segmentdragend": _m5 || ($ctx._m5 = api_bind($cmp.onSegmentDragEnd)),
-	        "segmentdragstart": _m6 || ($ctx._m6 = api_bind($cmp.onSegmentDragStart))
+	        "segmentdurationchange": _m8 || ($ctx._m8 = api_bind($cmp.onSegmentDurationChange)),
+	        "segmentsourceoffsetchange": _m9 || ($ctx._m9 = api_bind($cmp.onSegmentSourceOffsetChange)),
+	        "segmentdrag": _m10 || ($ctx._m10 = api_bind($cmp.onSegmentDrag)),
+	        "segmentdragend": _m11 || ($ctx._m11 = api_bind($cmp.onSegmentDragEnd)),
+	        "segmentdragstart": _m12 || ($ctx._m12 = api_bind($cmp.onSegmentDragStart))
 	      }
 	    }, [])]);
 	  }))]), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.cursor
 	    },
-	    key: 29
+	    key: 28
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 31
+	    key: 30
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.currentTime,
 	      "playhead": true
 	    },
-	    key: 33
+	    key: 32
 	  }, []) : null, $cmp.hasPlaybackDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.playbackRange.duration,
 	      "userDrag": true
 	    },
-	    key: 35,
+	    key: 34,
 	    on: {
-	      "cursordoubletap": _m8 || ($ctx._m8 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
-	      "cursordrag": _m9 || ($ctx._m9 = api_bind($cmp.onPlaybackDurationCursorDrag))
+	      "cursordoubletap": _m14 || ($ctx._m14 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
+	      "cursordrag": _m15 || ($ctx._m15 = api_bind($cmp.onPlaybackDurationCursorDrag))
 	    }
 	  }, []) : null, api_iterator($cmp.highlights, function (highlight) {
 	    return api_custom_element("ffmpeg-highlight", _ffmpegHighlight, {
 	      props: {
 	        "highlight": highlight
 	      },
-	      key: api_key(37, highlight.id)
+	      key: api_key(36, highlight.id)
 	    }, []);
 	  })])) : null]), api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 38
+	    key: 37
 	  }, [])])];
 	}
 
@@ -36830,51 +36879,353 @@
 	  shadowAttribute: "ffmpeg-app_app"
 	};
 
-	class IdleState {
-	  enter() {
-	    console.log('enter idle');
-	  }
+	class BaseState {
+	  enter() {}
 
 	  exit() {}
 
+	  onTimelineDragStart(app) {}
+
+	  onTimelineDrag(app, evt) {}
+
+	  onTimelineDragEnd(app) {}
+
+	  onTimelineMouseEnter(app, evt) {}
+
+	  onTimelineMouseLeave(app, evt) {}
+
+	  onSegmentDragStart(app) {}
+
+	  onSegmentDragEnd(app) {}
+
+	  onSegmentDrag(app) {}
+
+	  onSegmentSourceOffsetChange(app, evt) {}
+
+	  onDocumentKeyDown(app, evt) {}
+
+	  onEditorClick(app, evt) {}
+
+	  onEditorMouseDown(app, evt) {}
+
+	  onEditorMouseMove(app, evt) {}
+
+	  onEditorDragOver(app, evt) {}
+
+	  onEditorDrop(app, evt) {}
+
+	  onDocumentMouseUp(app, evt) {}
+
+	  onPlaybackDurationCursorDoubleTap(app, evt) {}
+
+	  onPlaybackDurationCursorDrag(app, evt) {}
+
+	  onPlayButtonClick(app, evt) {}
+
+	  onStopButtonClick(app, evt) {}
+
 	}
 
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+	class TimelineDragState extends BaseState {
+	  enter(app) {
+	    app.template.host.classList.add('editor--drag');
+	  }
 
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+	  exit(app) {
+	    app.template.host.classList.remove('editor--drag');
+	  }
 
-	function userSelection(elm) {
-	  const selectionFrame = {
-	    left: 0,
-	    top: 0,
-	    width: 0,
-	    height: 0
-	  };
-	  const rect = elm.getBoundingClientRect();
-	  const offsetX = rect.x;
-	  const offsetY = rect.y;
-	  return fromEvent(elm, 'mousedown').pipe(take(1)).pipe(mergeMap(evt => {
-	    selectionFrame.left = evt.offsetX;
-	    selectionFrame.top = evt.offsetY;
-	    return fromEvent(elm, 'mousemove').pipe(map(evt => {
-	      selectionFrame.width = evt.x - offsetX - selectionFrame.left;
-	      selectionFrame.height = evt.y - offsetY - selectionFrame.top;
+	  onTimelineDragEnd(app) {
+	    app.enterState(new IdleState());
+	  }
 
-	      const frame = _objectSpread({}, selectionFrame);
+	  onTimelineDrag(app, evt) {
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const time = editor.pixelToTime(evt.detail.dx);
+	      const updated = editor.visibleRange.start.minus(time);
 
-	      if (frame.height < 0) {
-	        frame.top += frame.height;
-	        frame.height = -frame.height;
+	      if (updated.milliseconds < 0) {
+	        return setVisibleRangeStart(new Time(0));
 	      }
 
-	      if (frame.width < 0) {
-	        frame.left += frame.width;
-	        frame.width = -frame.width;
+	      setVisibleRangeStart(updated);
+	    });
+	  }
+
+	}
+
+	class SelectState extends BaseState {
+	  constructor(initialLeft, initialTop) {
+	    super();
+
+	    if (typeof initialLeft !== 'number') {
+	      throw new TypeError(`Cannot create SelectState. "${initialLeft}" is not a valid value for initial left.`);
+	    }
+
+	    if (typeof initialTop !== 'number') {
+	      throw new TypeError(`Cannot create SelectState. "${initialTop}" is not a valid value for initial top.`);
+	    }
+
+	    this.initialLeft = initialLeft;
+	    this.initialTop = initialTop;
+	    this.selectionFrame = {
+	      width: 0,
+	      height: 0,
+	      top: initialTop,
+	      left: initialLeft
+	    };
+	  }
+
+	  enter(app) {
+	    const elm = app.editorElement;
+	    const rect = elm.getBoundingClientRect();
+	    this.offsetX = rect.x;
+	    this.offsetY = rect.y;
+	  }
+
+	  exit(app) {
+	    const frame = this.selectionFrame;
+	    clearSelectionFrame();
+	    combineLatest(stream$2, stream$1, (editor, audioTracks$$1) => {
+	      return {
+	        editor,
+	        audioTracks: audioTracks$$1
+	      };
+	    }).pipe(take(1)).subscribe(({
+	      editor,
+	      audioTracks: audioTracks$$1
+	    }) => {
+	      const startTime = editor.absolutePixelToTime(frame.left);
+	      const duration = editor.pixelToTime(frame.width);
+	      const range$$1 = new AudioRange(startTime, duration);
+	      const frameBottom = frame.top + frame.height;
+	      audioTracks$$1.filter(audioTrack => {
+	        const {
+	          frame: audioTrackFrame
+	        } = audioTrack;
+	        const bottom = audioTrackFrame.top + audioTrackFrame.height;
+	        const midHeight = audioTrackFrame.height / 2;
+	        return frame.top <= audioTrackFrame.top + midHeight && frameBottom >= bottom - midHeight;
+	      }).forEach(audioTrack => {
+	        audioTrack.segments.filter(segment => {
+	          return segmentInTimeRange(segment, range$$1.start, range$$1.duration);
+	        }).forEach(segment => {
+	          const clamped = clamp(new AudioRange(segment.offset, segment.duration), range$$1);
+	          setSegmentSelection(audioTrack.id, segment.id, clamped);
+	        });
+	      });
+	    });
+	  }
+
+	  onDocumentMouseUp(app, evt) {
+	    app.enterState(new IdleState());
+	  }
+
+	  onEditorMouseMove(app, evt) {
+	    const {
+	      offsetX,
+	      offsetY,
+	      initialLeft,
+	      initialTop
+	    } = this;
+	    const frame = {
+	      width: evt.x - offsetX - initialLeft,
+	      height: evt.y - offsetY - initialTop,
+	      top: initialTop,
+	      left: initialLeft
+	    };
+
+	    if (frame.height < 0) {
+	      frame.top += frame.height;
+	      frame.height = -frame.height;
+	    }
+
+	    if (frame.width < 0) {
+	      frame.left += frame.width;
+	      frame.width = -frame.width;
+	    }
+
+	    this.selectionFrame = frame;
+	    setSelectionFrame(frame);
+	  }
+
+	}
+
+	class MetaKeyDownState extends BaseState {
+	  onEditorMouseDown(app, evt) {
+	    app.enterState(new SelectState(evt.offsetX, evt.offsetY));
+	  }
+
+	}
+
+	class SegmentDragState extends BaseState {
+	  onSegmentDrag(app, evt) {
+	    const {
+	      time,
+	      segmentId,
+	      trackId
+	    } = evt.detail;
+	    moveSegment(trackId, segmentId, time);
+	  }
+
+	  onSegmentDragEnd(app) {
+	    requestAnimationFrame(() => {
+	      app.enterState(new IdleState());
+	    });
+	  }
+
+	}
+
+	class EditorDragState extends BaseState {
+	  enter() {
+	    console.log('enter');
+	  }
+
+	  onEditorDragOver(app, evt) {
+	    evt.preventDefault();
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const {
+	        offsetX
+	      } = evt;
+	      const time = editor.pixelToTime(offsetX - editor.frame.left);
+	      const next = time.add(editor.visibleRange.start);
+	      setVirtualCursorTime(next);
+	    });
+	  }
+
+	  onEditorDrop(app, evt) {
+	    evt.preventDefault();
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const {
+	        files
+	      } = evt.dataTransfer;
+
+	      for (let i = 0, len = files.length; i < len; i += 1) {
+	        const sourceId = generateId();
+	        const trackId = generateId();
+	        const time = editor.absolutePixelToTime(evt.offsetX - editor.frame.left);
+	        createTrackAndSourceFile(trackId, sourceId, files[i], time);
 	      }
 
-	      return frame;
-	    })).pipe(takeUntil(fromEvent(document, 'mouseup')));
-	  }));
+	      console.log('drop');
+	      app.enterState(new IdleState());
+	    });
+	  }
+
+	}
+
+	class PlayingState extends BaseState {
+	  constructor(range) {
+	    super();
+	    this.range = range;
+	  }
+
+	  enter() {
+	    play(this.range);
+	  }
+
+	  exit() {
+	    stop();
+	  }
+
+	  onStopButtonClick(app, evt) {
+	    app.enterState(new IdleState());
+	  }
+
+	}
+
+	class IdleState extends BaseState {
+	  onDocumentKeyDown(app, evt) {
+	    if (evt.key === 'Meta') {
+	      app.enterState(new MetaKeyDownState());
+	    }
+	  }
+
+	  onTimelineDragStart(app) {
+	    app.enterState(new TimelineDragState());
+	  }
+
+	  onSegmentDragStart(app) {
+	    app.enterState(new SegmentDragState());
+	  }
+
+	  onSegmentSourceOffsetChange(app, evt) {
+	    const {
+	      time,
+	      segmentId,
+	      trackId
+	    } = evt.detail;
+	    moveSegmentSourceOffset(trackId, segmentId, time);
+	  }
+
+	  onEditorMouseMove(app, evt) {
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const {
+	        offsetX
+	      } = evt;
+	      const time = editor.pixelToTime(offsetX);
+	      const next = time.add(editor.visibleRange.start);
+	      setVirtualCursorTime(next);
+	    });
+	  }
+
+	  onSegmentDurationChange(app, evt) {
+	    const {
+	      time,
+	      segmentId,
+	      trackId,
+	      sourceId
+	    } = evt.detail;
+	    setSegmentDuration(trackId, segmentId, sourceId, time);
+	  }
+
+	  onEditorClick(app, evt) {
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const next = editor.absolutePixelToTime(evt.offsetX);
+	      setCursorTime(next);
+	    });
+	  }
+
+	  onEditorDragOver(app, evt) {
+	    evt.preventDefault();
+	    app.enterState(new EditorDragState());
+	  }
+
+	  onTimelineMouseEnter(app, evt) {
+	    app.template.host.classList.add('editor--draggable');
+	  }
+
+	  onTimelineMouseLeave(app, evt) {
+	    app.template.host.classList.remove('editor--draggable');
+	  }
+
+	  onPlaybackDurationCursorDoubleTap(app, evt) {
+	    zip(stream$4, stream$1).pipe(take(1)).subscribe(([playhead, audioTracks$$1]) => {
+	      const duration = getTracksDuration(audioTracks$$1);
+
+	      if (duration.greaterThan(playhead.playbackRange.duration)) {
+	        setPlaybackDuration(duration);
+	      }
+	    });
+	  }
+
+	  onPlaybackDurationCursorDrag(app, evt) {
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const {
+	        dx
+	      } = evt.detail;
+	      const time = editor.pixelToTime(dx);
+	      incrementPlaybackDuration(time);
+	    });
+	  }
+
+	  onPlayButtonClick(app, evt) {
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const range$$1 = new AudioRange(editor.cursor, editor.duration);
+	      app.enterState(new PlayingState(range$$1));
+	    });
+	  }
+
 	}
 
 	class App extends engine_5 {
@@ -36902,15 +37253,8 @@
 	      });
 	    };
 
-	    this.segmentDrag = false;
-
 	    this.onEditorMouseMove = evt => {
-	      const {
-	        offsetX
-	      } = evt;
-	      const time = this.editor.data.pixelToTime(offsetX);
-	      const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
-	      setVirtualCursorTime(next);
+	      this.state.onEditorMouseMove(this, evt);
 	    };
 
 	    this.onEditorMouseLeave = evt => {
@@ -36918,58 +37262,35 @@
 	    };
 
 	    this.onEditorClick = evt => {
-	      if (this.segmentDrag) {
-	        return;
-	      }
-
-	      const next = this.editor.data.absolutePixelToTime(evt.offsetX);
-	      setCursorTime(next);
+	      this.state.onEditorClick(this, evt);
 	    };
 
 	    this.onDragOver = evt => {
-	      evt.preventDefault();
-	      const {
-	        offsetX
-	      } = evt;
-	      const time = this.editor.data.pixelToTime(offsetX - this.editor.data.frame.left);
-	      const next = new Time(time.milliseconds + this.editor.data.visibleRange.start.milliseconds);
-	      setVirtualCursorTime(next);
+	      this.state.onEditorDragOver(this, evt);
 	    };
 
 	    this.onDrop = evt => {
-	      evt.preventDefault();
-	      const {
-	        files
-	      } = evt.dataTransfer;
-
-	      for (let i = 0, len = files.length; i < len; i += 1) {
-	        const sourceId = generateId();
-	        const trackId = generateId();
-	        const time = this.editor.data.absolutePixelToTime(evt.offsetX - this.editor.data.frame.left);
-	        createTrackAndSourceFile(trackId, sourceId, files[i], time);
-	      }
+	      this.state.onEditorDrop(this, evt);
 	    };
 
-	    this.onTimelineMouseEnter = () => {
-	      this.template.host.classList.add('editor--draggable');
+	    this.onTimelineMouseEnter = evt => {
+	      this.state.onTimelineMouseEnter(this, evt);
 	    };
 
-	    this.onTimelineMouseLeave = () => {
-	      this.template.host.classList.remove('editor--draggable');
+	    this.onTimelineMouseLeave = evt => {
+	      this.state.onTimelineMouseLeave(this, evt);
 	    };
 
-	    this.selectionFrame = null;
-	    this.selectionSubscription = void 0;
 	    this.enterState(new IdleState());
 	  }
 
 	  enterState(next) {
 	    if (this.state) {
-	      this.state.exit();
+	      this.state.exit(this);
 	    }
 
 	    this.state = next;
-	    this.state.enter();
+	    this.state.enter(this);
 	  }
 
 	  get ffmpegLoaded() {
@@ -37014,38 +37335,61 @@
 	  */
 
 
+	  /*
+	   *
+	   * Events
+	   *
+	  */
 	  onSegmentDragStart() {
-	    this.segmentDrag = true;
+	    this.state.onSegmentDragStart(this);
 	  }
 
 	  onSegmentDragEnd() {
-	    requestAnimationFrame(() => {
-	      this.segmentDrag = false;
-	    });
+	    this.state.onSegmentDragEnd(this);
+	  }
+
+	  onSegmentDrag(evt) {
+	    this.state.onSegmentDrag(this, evt);
+	  }
+
+	  onSegmentSourceOffsetChange(evt) {
+	    this.state.onSegmentSourceOffsetChange(this, evt);
+	  }
+
+	  onSegmentDurationChange(evt) {
+	    this.state.onSegmentDurationChange(this, evt);
+	  }
+
+	  onEditorMouseDown(evt) {
+	    this.state.onEditorMouseDown(this, evt);
 	  }
 
 	  onTimelineDragStart() {
-	    this.template.host.classList.add('editor--drag');
+	    this.state.onTimelineDragStart(this);
 	  }
 
 	  onTimelineDragEnd() {
-	    this.template.host.classList.remove('editor--drag');
+	    this.state.onTimelineDragEnd(this);
+	  }
+
+	  onTimelineDrag(evt) {
+	    this.state.onTimelineDrag(this, evt);
 	  }
 
 	  onPlaybackDurationCursorDrag(evt) {
-	    const {
-	      dx
-	    } = evt.detail;
-	    const time = this.editor.data.pixelToTime(dx);
-	    incrementPlaybackDuration(time);
+	    this.state.onPlaybackDurationCursorDrag(this, evt);
 	  }
 
 	  onPlaybackDurationCursorDoubleTap(evt) {
-	    const duration = getTracksDuration(this.audioTracks.data);
+	    this.state.onPlaybackDurationCursorDoubleTap(this, evt);
+	  }
 
-	    if (duration.greaterThan(this.playhead.data.playbackRange.duration)) {
-	      setPlaybackDuration(duration);
-	    }
+	  onPlayButtonClick(evt) {
+	    this.state.onPlayButtonClick(this, evt);
+	  }
+
+	  onStopButtonClick(evt) {
+	    this.state.onStopButtonClick(this, evt);
 	  }
 	  /*
 	   *
@@ -37097,54 +37441,9 @@
 	    const time = this.editor.data.pixelToTime(evt.detail.dx);
 	    incrementEnd(time);
 	  }
-	  /*
-	   *
-	   * Selection
-	   *
-	  */
 
-
-	  get isSelecting() {
-	    return this.selectionFrame !== null;
-	  }
-
-	  get editorClassName() {
-	    if (this.selectionFrame) {
-	      return 'editor editor--selecting';
-	    }
-
-	    return 'editor';
-	  }
-
-	  listenForSelection() {
-	    this.selectionSubscription = fromEvent(document, 'keydown').pipe(filter(evt => evt.key === 'Meta')).pipe(take(1)).pipe(switchMap(() => {
-	      return userSelection(this.template.querySelector('.editor'));
-	    })).subscribe(frame => {
-	      this.selectionFrame = frame;
-	    }, null, () => {
-	      const frame = this.selectionFrame;
-	      const startTime = this.editor.data.absolutePixelToTime(frame.left);
-	      const duration = this.editor.data.pixelToTime(frame.width);
-	      const range$$1 = new AudioRange(startTime, duration);
-	      const frameBottom = frame.top + frame.height;
-	      this.audioTracks.data.filter(audioTrack => {
-	        const {
-	          frame: audioTrackFrame
-	        } = audioTrack;
-	        const bottom = audioTrackFrame.top + audioTrackFrame.height;
-	        const midHeight = audioTrackFrame.height / 2;
-	        return frame.top <= audioTrackFrame.top + midHeight && frameBottom >= bottom - midHeight;
-	      }).forEach(audioTrack => {
-	        audioTrack.segments.filter(segment => {
-	          return segmentInTimeRange(segment, range$$1.start, range$$1.duration);
-	        }).forEach(segment => {
-	          const clamped = clamp(new AudioRange(segment.offset, segment.duration), range$$1);
-	          setSegmentSelection(audioTrack.id, segment.id, clamped);
-	        });
-	      });
-	      this.selectionFrame = null;
-	      this.listenForSelection();
-	    });
+	  get editorElement() {
+	    return this.template.querySelector('.editor');
 	  }
 	  /*
 	   *
@@ -37160,9 +37459,14 @@
 	        deleteSelections();
 	      }
 	    });
+	    fromEvent(document, 'keydown').subscribe(evt => {
+	      this.state.onDocumentKeyDown(this, evt);
+	    });
+	    fromEvent(document, 'mouseup').subscribe(evt => {
+	      this.state.onDocumentMouseUp(this, evt);
+	    });
 	    this.addEventListener('dragover', this.onDragOver);
 	    this.addEventListener('drop', this.onDrop);
-	    this.listenForSelection();
 	  }
 
 	  renderedCallback() {
@@ -37203,9 +37507,6 @@
 	      params: {},
 	      static: {}
 	    }
-	  },
-	  track: {
-	    selectionFrame: 1
 	  }
 	});
 

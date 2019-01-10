@@ -48,11 +48,18 @@ export default class Controls extends LightningElement {
     }
 
     onStopClick() {
-        stop();
+        const event = new CustomEvent('stopbuttonclick', {
+            bubbles: true,
+            composed: true,
+        });
+        this.dispatchEvent(event);
     }
 
     onPlayClick() {
-        play(this.editor.data.cursor)
-        // rasterize(this.editor.data.cursor);
+        const event = new CustomEvent('playbuttonclick', {
+            bubbles: true,
+            composed: true,
+        });
+        this.dispatchEvent(event);
     }
 }

@@ -1,11 +1,16 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
+import { selectionSym } from './../../wire/selection';
 
 export default class Selection extends LightningElement {
-    @api frame;
+    @wire(selectionSym, {})
+    selection
 
     get rectStyle() {
-        const { width, height, left, top } = this.frame;
-        const translate = `translate(${left}px, ${top}px) scale(${width}, ${height})`;
-        return `transform: ${translate}`;
+        if (!this.selection.data) {
+            return '';
+        }
+
+        const { width, height, left, top } = this.selection.data.frame;
+        return `transform: translate(${left}px, ${top}px); width:${width}px; height: ${height}px`;
     }
 }

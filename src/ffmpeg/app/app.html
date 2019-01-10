@@ -1,6 +1,9 @@
 <template>
     <header class="header">
-        <ffmpeg-controls></ffmpeg-controls>
+        <ffmpeg-controls
+            onstopbuttonclick={onStopButtonClick}
+            onplaybuttonclick={onPlayButtonClick}>
+        </ffmpeg-controls>
         <ffmpeg-audioscroll></ffmpeg-audioscroll>
     </header>
     <main>
@@ -27,20 +30,22 @@
                     <ffmpeg-timeline
                         onmouseenter={onTimelineMouseEnter}
                         onmouseleave={onTimelineMouseLeave}
+                        ontimelinedrag={onTimelineDrag}
                         ontimelinedragstart={onTimelineDragStart}
                         ontimelinedragend={onTimelineDragEnd}>
                     </ffmpeg-timeline>
                 </header>
-                <section class={editorClassName} onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
-                    <template if:true={isSelecting}>
-                        <ffmpeg-selection frame={selectionFrame}></ffmpeg-selection>
-                    </template>
+                <section class="editor" onmousedown={onEditorMouseDown} onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
+                    <ffmpeg-selection></ffmpeg-selection>
                     <div onclick={onEditorClick}>
                         <ffmpeg-grid></ffmpeg-grid>
                         <section class="waveforms-container" id="tracks">
                             <template for:each={audioTracksArray} for:item="track">
                                 <article class="track" key={track.data.id}>
                                     <ffmpeg-audiotrack
+                                        onsegmentdurationchange={onSegmentDurationChange}
+                                        onsegmentsourceoffsetchange={onSegmentSourceOffsetChange}
+                                        onsegmentdrag={onSegmentDrag}
                                         onsegmentdragend={onSegmentDragEnd}
                                         onsegmentdragstart={onSegmentDragStart}
                                         track={track.data}>
