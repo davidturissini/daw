@@ -1,18 +1,11 @@
 import { LightningElement, wire } from 'lwc';
 import { editorSym } from './../../wire/editor';
-import { audioTracks, getTracksRange } from './../../wire/audiotrack';
 import { audioSources } from './../../wire/audiosource';
-import { playheadSym, play, stop } from './../../wire/playhead';
-import { highlightSilences } from './../../wire/highlight';
-import { AudioRange } from '../../util/audiorange';
-import { Time } from '../../util/time';
+import { playheadSym } from './../../wire/playhead';
 
 export default class Controls extends LightningElement {
     @wire(editorSym, {})
     editor;
-
-    @wire(audioTracks, {})
-    audioTracks
 
     @wire(audioSources, {})
     audioSources
@@ -43,8 +36,11 @@ export default class Controls extends LightningElement {
     }
 
     onSilenceDetectClick() {
-        const range = getTracksRange(this.audioTracks.data);
-        highlightSilences(range);
+        const event = new CustomEvent('silencedetectbuttonclick', {
+            bubbles: true,
+            composed: true,
+        });
+        this.dispatchEvent(event);
     }
 
     onStopClick() {

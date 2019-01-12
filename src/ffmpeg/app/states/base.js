@@ -23,4 +23,6 @@ export class BaseState {
     onPlaybackDurationCursorDrag(app, evt) {}
     onPlayButtonClick(app, evt) {}
     onStopButtonClick(app, evt) {}
+    onDocumentKeyUpEsc(app, evt) {}
+    onSilenceDetectButtonClick(app, evt) {}
 }

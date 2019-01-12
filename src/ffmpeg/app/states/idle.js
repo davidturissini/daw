@@ -4,11 +4,13 @@ import { MetaKeyDownState } from './metakeydown';
 import { SegmentDragState } from './segmentdrag';
 import { EditorDragState } from './editordrag';
 import { PlayingState } from './playing';
+import { HighlightSilencesState } from './highlightsilences';
 import {
     moveSegmentSourceOffset,
     setSegmentDuration,
     getTracksDuration,
     stream as audioTracksStream,
+    getTracksRange,
 } from './../../../wire/audiotrack';
 import {
     stream as editorStream,
@@ -112,6 +114,13 @@ export class IdleState extends BaseState {
         editorStream.pipe(take(1)).subscribe((editor) => {
             const range = new AudioRange(editor.cursor, editor.duration);
             app.enterState(new PlayingState(range));
+        });
+    }
+
+    onSilenceDetectButtonClick(app, evt) {
+        audioTracksStream.pipe(take(1)).subscribe((audioTracks) => {
+            const range = getTracksRange(audioTracks);
+            app.enterState(new HighlightSilencesState(range));
         });
     }
 }

@@ -4,7 +4,6 @@ import { fromEvent as observableFromEvent } from 'rxjs';
 import {
     audioTracks,
     deleteTrack,
-    deleteSelections,
 } from './../../wire/audiotrack';
 import { playheadSym } from './../../wire/playhead';
 import { highlightSym } from './../../wire/highlight';
@@ -185,8 +184,21 @@ export default class App extends LightningElement {
         this.state.onPlayButtonClick(this, evt);
     }
 
+    onSilenceDetectButtonClick(evt) {
+        this.state.onSilenceDetectButtonClick(this, evt);
+
+        // const range = getTracksRange(this.audioTracks.data);
+        // highlightSilences(range);
+    }
+
     onStopButtonClick(evt) {
         this.state.onStopButtonClick(this, evt);
+    }
+
+    onDocumentKeyUp = (evt) => {
+        if (evt.which === 8) {
+            this.state.onDocumentKeyUpEsc(this, evt);
+        }
     }
 
     /*
@@ -249,12 +261,7 @@ export default class App extends LightningElement {
     */
     connectedCallback() {
         window.addEventListener('resize', this.updateFrame);
-
-        document.addEventListener('keyup', (evt) => {
-            if (evt.which === 8) {
-                deleteSelections();
-            }
-        })
+        document.addEventListener('keyup', this.onDocumentKeyUp);
 
         observableFromEvent(document, 'keydown').subscribe((evt) => {
             this.state.onDocumentKeyDown(this, evt);

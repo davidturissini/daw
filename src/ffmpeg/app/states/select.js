@@ -1,4 +1,5 @@
 import { BaseState } from './base';
+import { HasSelectionState } from './hasselection';
 import { IdleState } from './idle';
 
 import { AudioRange, clamp as clampAudioRange } from './../../../util/audiorange';
@@ -7,6 +8,7 @@ import {
     stream as audioTracksStream,
     segmentInTimeRange,
     setSegmentSelection,
+    getSelectedAudioTracks,
 } from './../../../wire/audiotrack';
 import { take } from 'rxjs/operators';
 import { combineLatest as observableCombineLatest } from 'rxjs';
@@ -88,7 +90,21 @@ export class SelectState extends BaseState {
     }
 
     onDocumentMouseUp(app, evt) {
-        app.enterState(new IdleState());
+        const { selectionFrame: frame } = this;
+
+        const selectedTracks = getSelectedAudioTracks(frame);
+        if (selectedTracks.size === 0) {
+            app.enterState(new IdleState());
+            return;
+        }
+
+
+        editorStream.pipe(take(1)).subscribe((editor) => {
+            const start = editor.absolutePixelToTime(frame.left);
+            const duration = editor.pixelToTime(frame.width);
+            const range = new AudioRange(start, duration);
+            app.enterState(new HasSelectionState(range));
+        });
     }
 
     onEditorMouseMove(app, evt) {

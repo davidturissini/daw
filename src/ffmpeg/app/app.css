@@ -25,6 +25,7 @@ ffmpeg-audioscroll {
 }
 
 main {
+    background: rgb(96, 96, 96);
     display: flex;
     cursor: auto;
     flex: 1 0 auto;
@@ -56,13 +57,24 @@ main {
 }
 
 .tracks-summary {
-    background: rgb(96, 96, 96);
     flex: 0 0 200px;
+    border-left: 1px solid rgb(52, 52, 52);
+    margin-left: 2px;
 }
 
 .tracks-summary__header {
     height: 2rem;
     background: rgb(52, 52, 52);
+}
+
+.selections {
+    flex: 0 1 150px;
+    background: rgb(96, 96, 96);
+    border-right: 1px solid rgb(52, 52, 52);
+}
+
+.tracks-summary__body {
+    display: flex;
 }
 
 .editor {

@@ -199,8 +199,6 @@ export function isPlaying() {
     return playheadSubject.value.currentTime !== null;
 }
 
-let playSubscription = null;
-
 export function setPlaybackDuration(duration) {
     const current = playheadSubject.value;
     const nextRange = new AudioRange(
@@ -270,11 +268,7 @@ export function download(startTime) {
 }
 
 export function play(range) {
-    if (playSubscription) {
-        playSubscription.unsubscribe();
-    }
-
-    playSubscription = makeSourceNodesStream(defaultAudioContext, range)
+    makeSourceNodesStream(defaultAudioContext, range)
         .pipe(
             flatMap(({ sourceNodes }) => {
                 return playStream(

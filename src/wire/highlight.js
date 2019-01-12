@@ -36,6 +36,22 @@ export const clearHighlight = dispatch((id) => {
     return highlightSubject.value.deleteIn(['items', id]);
 });
 
+function createHighlightFromRange(range) {
+    const id = generateId();
+    return new Highlight({
+        range,
+        id,
+    });
+}
+
+export const highlightRange = dispatch((range) => {
+    const highlight = createHighlightFromRange(range);
+
+    return highlightSubject.value.update('items', (items) => {
+        return items.set(highlight.id, highlight);
+    })
+});
+
 export function highlightSilences(range) {
     rasterize(range).then((audioBuffer) => {
         return getFFMPEG().then((ffmpeg) => {
@@ -75,11 +91,8 @@ export function highlightSilences(range) {
         })
         .then((ranges) => {
             const highlights = ranges.reduce((seed, range) => {
-                const id = generateId();
-                return seed.set(id, new Highlight({
-                    range,
-                    id,
-                }));
+                const highlight = createHighlightFromRange(range);
+                return seed.set(highlight.id, highlight);
             }, new ImmutableMap());
 
             highlightSubject.next(

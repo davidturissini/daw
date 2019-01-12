@@ -225,6 +225,19 @@ export function deleteTrack(trackId) {
     );
 }
 
+export function getSelectedAudioTracks(selectionFrame) {
+    const frameBottom = selectionFrame.top + selectionFrame.height;
+    return tracksSubject.value.filter((audioTrack) => {
+        const { frame: audioTrackFrame } = audioTrack;
+        const bottom = audioTrackFrame.top + audioTrackFrame.height;
+        const midHeight = audioTrackFrame.height / 2;
+        return (
+            selectionFrame.top <= (audioTrackFrame.top + midHeight) &&
+            frameBottom >= (bottom - midHeight)
+        );
+    });
+}
+
 export function setSegmentSelection(trackId, segmentId, range) {
     const selection = new TimeRangeSelection({
         segmentId,
@@ -289,6 +302,14 @@ export function deleteRange(range) {
     })
 }
 
+export function clearSelections() {
+    tracksSubject.value.forEach((track) => {
+        tracksSubject.next(
+            tracksSubject.value.setIn([track.id, 'selections'], new List())
+        )
+    })
+}
+
 export function deleteSelections() {
     tracksSubject.value.forEach((track) => {
         track.selections.forEach((selection) => {
@@ -302,6 +323,7 @@ export function deleteSelections() {
                         return seed.set(seg.id, seg);
                     }, segments.delete(segment.id))
                 })
+                .setIn([track.id, 'selections'], new List())
             )
         })
     })

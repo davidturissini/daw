@@ -10292,7 +10292,7 @@
 	var wire_3 = wire.ValueChangedEvent;
 
 	function stylesheet(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;border-bottom: 1px solid rgb(40, 40, 40);}\n.track--summary" + shadowSelector + " {box-sizing: border-box;border-bottom-color: rgb(83, 83, 83);display: flex;align-items: stretch;}\n.track-index" + shadowSelector + " {display: flex;padding: 1rem;align-items: center;border-right: 1px solid rgb(83, 83, 83);}\n.track__title" + shadowSelector + " {display: flex;padding: 0 1rem;align-items: center;}\n.tracks-summary" + shadowSelector + " {background: rgb(96, 96, 96);flex: 0 0 200px;}\n.tracks-summary__header" + shadowSelector + " {height: 2rem;background: rgb(52, 52, 52);}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;background: rgb(46, 46, 46);}\n.editor--selecting" + shadowSelector + " {cursor: crosshair;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
+	  return "\n" + (nativeShadow ? (":host {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}") : (hostSelector + " {display: flex;flex-direction: column;font-family: Arial;height: 100vh;}")) + "\n\n" + (nativeShadow ? (":host(.editor--draggable) main" + shadowSelector + " {cursor: -webkit-grab;}") : (hostSelector + ".editor--draggable main" + shadowSelector + " {cursor: -webkit-grab;}")) + "\n\n" + (nativeShadow ? (":host(.editor--drag) main" + shadowSelector + " {cursor: -webkit-grabbing;}") : (hostSelector + ".editor--drag main" + shadowSelector + " {cursor: -webkit-grabbing;}")) + "\n.header" + shadowSelector + " {background: rgba(163, 163, 163, 1);padding: 0.4rem;display: flex;align-items: center;}\nffmpeg-audioscroll" + shadowSelector + " {flex: 1 0 auto;}\nmain" + shadowSelector + " {background: rgb(96, 96, 96);display: flex;cursor: auto;flex: 1 0 auto;}\n.track" + shadowSelector + " {height: 60px;border-bottom: 1px solid rgb(40, 40, 40);}\n.track--summary" + shadowSelector + " {box-sizing: border-box;border-bottom-color: rgb(83, 83, 83);display: flex;align-items: stretch;}\n.track-index" + shadowSelector + " {display: flex;padding: 1rem;align-items: center;border-right: 1px solid rgb(83, 83, 83);}\n.track__title" + shadowSelector + " {display: flex;padding: 0 1rem;align-items: center;}\n.tracks-summary" + shadowSelector + " {flex: 0 0 200px;border-left: 1px solid rgb(52, 52, 52);margin-left: 2px;}\n.tracks-summary__header" + shadowSelector + " {height: 2rem;background: rgb(52, 52, 52);}\n.selections" + shadowSelector + " {flex: 0 1 150px;background: rgb(96, 96, 96);border-right: 1px solid rgb(52, 52, 52);}\n.tracks-summary__body" + shadowSelector + " {display: flex;}\n.editor" + shadowSelector + " {position: relative;z-index: 1;flex: 1 0 auto;background: rgb(46, 46, 46);}\n.editor--selecting" + shadowSelector + " {cursor: crosshair;}\n.editor-container" + shadowSelector + " {flex: 1 0 auto;display: flex;flex-direction: column;}\n.waveforms-container" + shadowSelector + " {overflow: hidden;}\n";
 	}
 	var _implicitStylesheets = [stylesheet];
 
@@ -20661,6 +20661,17 @@
 	function deleteTrack(trackId) {
 	  tracksSubject.next(tracksSubject.value.delete(trackId));
 	}
+	function getSelectedAudioTracks(selectionFrame) {
+	  const frameBottom = selectionFrame.top + selectionFrame.height;
+	  return tracksSubject.value.filter(audioTrack => {
+	    const {
+	      frame: audioTrackFrame
+	    } = audioTrack;
+	    const bottom = audioTrackFrame.top + audioTrackFrame.height;
+	    const midHeight = audioTrackFrame.height / 2;
+	    return selectionFrame.top <= audioTrackFrame.top + midHeight && frameBottom >= bottom - midHeight;
+	  });
+	}
 	function setSegmentSelection(trackId, segmentId, range$$1) {
 	  const selection = new TimeRangeSelection({
 	    segmentId,
@@ -20711,6 +20722,11 @@
 	    });
 	  });
 	}
+	function clearSelections() {
+	  tracksSubject.value.forEach(track => {
+	    tracksSubject.next(tracksSubject.value.setIn([track.id, 'selections'], new List()));
+	  });
+	}
 	function deleteSelections() {
 	  tracksSubject.value.forEach(track => {
 	    track.selections.forEach(selection => {
@@ -20724,7 +20740,7 @@
 	        return split$$1.reduce((seed, seg) => {
 	          return seed.set(seg.id, seg);
 	        }, segments.delete(segment.id));
-	      }));
+	      }).setIn([track.id, 'selections'], new List()));
 	    });
 	  });
 	}
@@ -25583,7 +25599,6 @@
 	    return shared.pipe(takeUntil(completedPromise)).pipe(concat$1(of(range$$1.start.plus(range$$1.duration)))).pipe(materialize());
 	  })).pipe(dematerialize());
 	}
-	let playSubscription = null;
 	function setPlaybackDuration(duration) {
 	  const current = playheadSubject.value;
 	  const nextRange = new AudioRange(current.playbackRange.start, duration);
@@ -25621,11 +25636,7 @@
 	  return offline.startRendering();
 	}
 	function play(range$$1) {
-	  if (playSubscription) {
-	    playSubscription.unsubscribe();
-	  }
-
-	  playSubscription = makeSourceNodesStream(audioContext, range$$1).pipe(mergeMap(({
+	  makeSourceNodesStream(audioContext, range$$1).pipe(mergeMap(({
 	    sourceNodes
 	  }) => {
 	    return playStream(audioContext, sourceNodes, range$$1);
@@ -25638,170 +25649,10 @@
 	const playheadSym = Symbol();
 	wire_2(playheadSym, wireObservable(stream$4));
 
-	class Process {
-	  constructor(worker, pid, args, files) {
-	    this.pid = pid;
-	    this.worker = worker;
-	    this.args = args;
-	    this.files = files;
-	  }
-
-	  execute() {
-	    return new Promise(res => {
-	      const {
-	        worker
-	      } = this;
-
-	      const onMessage = evt => {
-	        const {
-	          data
-	        } = evt;
-
-	        if (data.pid === this.pid) {
-	          if (data.type == 'stdout' && this.stdout) {
-	            this.stdout(data);
-	          } else if (data.type === 'done') {
-	            worker.removeEventListener('message', onMessage);
-	            res(data);
-	          }
-	        }
-	      };
-
-	      worker.addEventListener('message', onMessage);
-	      worker.postMessage({
-	        type: 'command',
-	        pid: this.pid,
-	        arguments: this.args,
-	        files: this.files
-	      });
-	    });
-	  }
-
-	}
-
-	class FFMPEG {
-	  constructor(worker) {
-	    this.worker = worker;
-	    this.pid = 0;
-	  }
-
-	  createProcess(args, files) {
-	    if (!this.worker) {
-	      throw new Error(`cannot create process. FFMPEG worker hasn't been created yet`);
-	    }
-
-	    return new Process(this.worker, this.pid += 1, args, files);
-	  }
-
-	}
-	function getFFMPEG() {
-	  return new Promise(res => {
-	    const worker = new Worker('/ffmpeg-worker.js');
-
-	    const onReady = event => {
-	      const {
-	        data: message
-	      } = event;
-
-	      if (message.type == "ready") {
-	        worker.removeEventListener('message', onReady);
-	        const ffmpeg = new FFMPEG(worker);
-	        res(ffmpeg);
-	      }
-	    };
-
-	    worker.addEventListener('message', onReady);
-	  });
-	}
-	wire_2(getFFMPEG, function (wiredEventTarget) {
-	  wiredEventTarget.dispatchEvent(new wire_3({
-	    data: undefined,
-	    error: undefined
-	  }));
-	  getFFMPEG().then(ffmpeg => {
-	    wiredEventTarget.dispatchEvent(new wire_3({
-	      data: ffmpeg,
-	      error: undefined
-	    }));
-	  });
-	});
-
-	class Highlight extends Record({
-	  id: null,
-	  range: null
-	}) {}
-
-	class HighlightState extends Record({
-	  items: new Map$1()
-	}) {}
-
-	const highlightSubject = new BehaviorSubject(new HighlightState());
-	const stream$5 = highlightSubject.asObservable();
-
-	function dispatch$8(func) {
-	  return function (...args) {
-	    const nextState = func(...args);
-	    highlightSubject.next(nextState);
-	  };
-	}
-
-	const clearHighlight = dispatch$8(id => {
-	  return highlightSubject.value.deleteIn(['items', id]);
-	});
-	function highlightSilences(range$$1) {
-	  rasterize(range$$1).then(audioBuffer => {
-	    return getFFMPEG().then(ffmpeg => {
-	      const wav = audiobufferToWav(audioBuffer);
-	      const uint8 = new Uint8Array(wav);
-	      const process = ffmpeg.createProcess(['-i', 'input.wav', '-af', 'silencedetect=n=-50dB:d=0.5', 'output.wav'], [{
-	        name: 'input.wav',
-	        data: uint8
-	      }]);
-	      const ranges = [];
-	      let currentStart = null;
-
-	      process.stdout = ({
-	        data
-	      }) => {
-	        if (/silence_start/.test(data)) {
-	          let startTime = parseFloat(data.split(': ')[1]);
-
-	          if (startTime < 0) {
-	            startTime = 0;
-	          }
-
-	          currentStart = Time.fromSeconds(startTime);
-	        } else if (/silence_end/.test(data)) {
-	          const endTime = Time.fromSeconds(parseFloat(data.split(': ')[1]));
-	          const duration = endTime.minus(currentStart);
-	          ranges.push(new AudioRange(currentStart.add(range$$1.start), duration));
-	          currentStart = null;
-	        }
-	      };
-
-	      return process.execute().then(() => ranges);
-	    }).then(ranges => {
-	      const highlights = ranges.reduce((seed, range$$1) => {
-	        const id = generateId();
-	        return seed.set(id, new Highlight({
-	          range: range$$1,
-	          id
-	        }));
-	      }, new Map$1());
-	      highlightSubject.next(highlightSubject.value.update('items', items => {
-	        return items.merge(highlights);
-	      }));
-	    });
-	  });
-	}
-	const highlightSym = Symbol();
-	wire_2(highlightSym, wireObservable(stream$5));
-
 	class Controls extends engine_5 {
 	  constructor(...args) {
 	    super(...args);
 	    this.editor = void 0;
-	    this.audioTracks = void 0;
 	    this.audioSources = void 0;
 	    this.playhead = void 0;
 	  }
@@ -25829,8 +25680,11 @@
 	  }
 
 	  onSilenceDetectClick() {
-	    const range = getTracksRange(this.audioTracks.data);
-	    highlightSilences(range);
+	    const event = new CustomEvent('silencedetectbuttonclick', {
+	      bubbles: true,
+	      composed: true
+	    });
+	    this.dispatchEvent(event);
 	  }
 
 	  onStopClick() {
@@ -25855,11 +25709,6 @@
 	  wire: {
 	    editor: {
 	      adapter: editorSym,
-	      params: {},
-	      static: {}
-	    },
-	    audioTracks: {
-	      adapter: audioTracks,
 	      params: {},
 	      static: {}
 	    },
@@ -33337,48 +33186,52 @@
 	});
 
 	function stylesheet$3(hostSelector, shadowSelector, nativeShadow) {
-	  return "\n" + (nativeShadow ? (":host {display: block;}") : (hostSelector + " {display: block;}")) + "\n";
+	  return "\n" + (nativeShadow ? (":host {display: block;padding: 0.5rem;font-size: 0.8rem;}") : (hostSelector + " {display: block;padding: 0.5rem;font-size: 0.8rem;}")) + "\n";
 	}
 	var _implicitStylesheets$3 = [stylesheet$3];
 
 	function tmpl$3($api, $cmp, $slotset, $ctx) {
 	  const {
 	    c: api_custom_element,
+	    h: api_element,
 	    t: api_text,
-	    b: api_bind,
-	    h: api_element
+	    b: api_bind
 	  } = $api;
 	  const {
 	    _m0,
 	    _m1,
 	    _m2
 	  } = $ctx;
-	  return [api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
+	  return [api_element("header", {
+	    key: 2
+	  }, [api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
 	    props: {
 	      "time": $cmp.highlight.range.start
 	    },
-	    key: 2
+	    key: 3
 	  }, []), api_custom_element("ffmpeg-timelabel", _ffmpegTimelabel, {
 	    props: {
 	      "time": $cmp.highlight.range.end
 	    },
-	    key: 3
-	  }, []), api_element("button", {
-	    key: 4,
+	    key: 4
+	  }, [])]), api_element("footer", {
+	    key: 5
+	  }, [api_element("button", {
+	    key: 6,
 	    on: {
 	      "click": _m0 || ($ctx._m0 = api_bind($cmp.onDeleteClick))
 	    }
 	  }, [api_text("Delete")]), api_element("button", {
-	    key: 5,
+	    key: 7,
 	    on: {
 	      "click": _m1 || ($ctx._m1 = api_bind($cmp.onCollapseClick))
 	    }
 	  }, [api_text("Collapse")]), api_element("button", {
-	    key: 6,
+	    key: 8,
 	    on: {
 	      "click": _m2 || ($ctx._m2 = api_bind($cmp.onClearClick))
 	    }
-	  }, [api_text("Clear")])];
+	  }, [api_text("Clear")])])];
 	}
 
 	var _tmpl$4 = engine_8(tmpl$3);
@@ -33391,6 +33244,177 @@
 	  hostAttribute: "ffmpeg-highlightdetail_highlightdetail-host",
 	  shadowAttribute: "ffmpeg-highlightdetail_highlightdetail"
 	};
+
+	class Process {
+	  constructor(worker, pid, args, files) {
+	    this.pid = pid;
+	    this.worker = worker;
+	    this.args = args;
+	    this.files = files;
+	  }
+
+	  execute() {
+	    return new Promise(res => {
+	      const {
+	        worker
+	      } = this;
+
+	      const onMessage = evt => {
+	        const {
+	          data
+	        } = evt;
+
+	        if (data.pid === this.pid) {
+	          if (data.type == 'stdout' && this.stdout) {
+	            this.stdout(data);
+	          } else if (data.type === 'done') {
+	            worker.removeEventListener('message', onMessage);
+	            res(data);
+	          }
+	        }
+	      };
+
+	      worker.addEventListener('message', onMessage);
+	      worker.postMessage({
+	        type: 'command',
+	        pid: this.pid,
+	        arguments: this.args,
+	        files: this.files
+	      });
+	    });
+	  }
+
+	}
+
+	class FFMPEG {
+	  constructor(worker) {
+	    this.worker = worker;
+	    this.pid = 0;
+	  }
+
+	  createProcess(args, files) {
+	    if (!this.worker) {
+	      throw new Error(`cannot create process. FFMPEG worker hasn't been created yet`);
+	    }
+
+	    return new Process(this.worker, this.pid += 1, args, files);
+	  }
+
+	}
+	function getFFMPEG() {
+	  return new Promise(res => {
+	    const worker = new Worker('/ffmpeg-worker.js');
+
+	    const onReady = event => {
+	      const {
+	        data: message
+	      } = event;
+
+	      if (message.type == "ready") {
+	        worker.removeEventListener('message', onReady);
+	        const ffmpeg = new FFMPEG(worker);
+	        res(ffmpeg);
+	      }
+	    };
+
+	    worker.addEventListener('message', onReady);
+	  });
+	}
+	wire_2(getFFMPEG, function (wiredEventTarget) {
+	  wiredEventTarget.dispatchEvent(new wire_3({
+	    data: undefined,
+	    error: undefined
+	  }));
+	  getFFMPEG().then(ffmpeg => {
+	    wiredEventTarget.dispatchEvent(new wire_3({
+	      data: ffmpeg,
+	      error: undefined
+	    }));
+	  });
+	});
+
+	class Highlight extends Record({
+	  id: null,
+	  range: null
+	}) {}
+
+	class HighlightState extends Record({
+	  items: new Map$1()
+	}) {}
+
+	const highlightSubject = new BehaviorSubject(new HighlightState());
+	const stream$5 = highlightSubject.asObservable();
+
+	function dispatch$8(func) {
+	  return function (...args) {
+	    const nextState = func(...args);
+	    highlightSubject.next(nextState);
+	  };
+	}
+
+	const clearHighlight = dispatch$8(id => {
+	  return highlightSubject.value.deleteIn(['items', id]);
+	});
+
+	function createHighlightFromRange(range$$1) {
+	  const id = generateId();
+	  return new Highlight({
+	    range: range$$1,
+	    id
+	  });
+	}
+
+	const highlightRange = dispatch$8(range$$1 => {
+	  const highlight = createHighlightFromRange(range$$1);
+	  return highlightSubject.value.update('items', items => {
+	    return items.set(highlight.id, highlight);
+	  });
+	});
+	function highlightSilences(range$$1) {
+	  rasterize(range$$1).then(audioBuffer => {
+	    return getFFMPEG().then(ffmpeg => {
+	      const wav = audiobufferToWav(audioBuffer);
+	      const uint8 = new Uint8Array(wav);
+	      const process = ffmpeg.createProcess(['-i', 'input.wav', '-af', 'silencedetect=n=-50dB:d=0.5', 'output.wav'], [{
+	        name: 'input.wav',
+	        data: uint8
+	      }]);
+	      const ranges = [];
+	      let currentStart = null;
+
+	      process.stdout = ({
+	        data
+	      }) => {
+	        if (/silence_start/.test(data)) {
+	          let startTime = parseFloat(data.split(': ')[1]);
+
+	          if (startTime < 0) {
+	            startTime = 0;
+	          }
+
+	          currentStart = Time.fromSeconds(startTime);
+	        } else if (/silence_end/.test(data)) {
+	          const endTime = Time.fromSeconds(parseFloat(data.split(': ')[1]));
+	          const duration = endTime.minus(currentStart);
+	          ranges.push(new AudioRange(currentStart.add(range$$1.start), duration));
+	          currentStart = null;
+	        }
+	      };
+
+	      return process.execute().then(() => ranges);
+	    }).then(ranges => {
+	      const highlights = ranges.reduce((seed, range$$1) => {
+	        const highlight = createHighlightFromRange(range$$1);
+	        return seed.set(highlight.id, highlight);
+	      }, new Map$1());
+	      highlightSubject.next(highlightSubject.value.update('items', items => {
+	        return items.merge(highlights);
+	      }));
+	    });
+	  });
+	}
+	const highlightSym = Symbol();
+	wire_2(highlightSym, wireObservable(stream$5));
 
 	class HighlightDetail extends engine_5 {
 	  constructor(...args) {
@@ -36684,8 +36708,8 @@
 	    k: api_key,
 	    i: api_iterator,
 	    d: api_dynamic,
-	    f: api_flatten,
-	    gid: api_scoped_id
+	    gid: api_scoped_id,
+	    f: api_flatten
 	  } = $api;
 	  const {
 	    _m0,
@@ -36706,7 +36730,8 @@
 	    _m15,
 	    _m16,
 	    _m17,
-	    _m18
+	    _m18,
+	    _m19
 	  } = $ctx;
 	  return [api_element("header", {
 	    classMap: {
@@ -36716,33 +36741,47 @@
 	  }, [api_custom_element("ffmpeg-controls", _ffmpegControls, {
 	    key: 3,
 	    on: {
-	      "stopbuttonclick": _m0 || ($ctx._m0 = api_bind($cmp.onStopButtonClick)),
-	      "playbuttonclick": _m1 || ($ctx._m1 = api_bind($cmp.onPlayButtonClick))
+	      "silencedetectbuttonclick": _m0 || ($ctx._m0 = api_bind($cmp.onSilenceDetectButtonClick)),
+	      "stopbuttonclick": _m1 || ($ctx._m1 = api_bind($cmp.onStopButtonClick)),
+	      "playbuttonclick": _m2 || ($ctx._m2 = api_bind($cmp.onPlayButtonClick))
 	    }
 	  }, []), api_custom_element("ffmpeg-audioscroll", _ffmpegAudioscroll, {
 	    key: 4
 	  }, [])]), api_element("main", {
 	    key: 5
-	  }, [api_element("section", {
+	  }, [api_element("aside", {
+	    classMap: {
+	      "selections": true
+	    },
 	    key: 6
+	  }, [api_element("section", {
+	    classMap: {
+	      "highlights": true
+	    },
+	    key: 7
 	  }, api_iterator($cmp.highlights, function (highlight) {
 	    return api_custom_element("ffmpeg-highlightdetail", _ffmpegHighlightdetail, {
 	      props: {
 	        "highlight": highlight
 	      },
-	      key: api_key(8, highlight.id)
+	      key: api_key(9, highlight.id)
 	    }, []);
-	  })), api_element("section", {
+	  }))]), api_element("section", {
 	    classMap: {
 	      "tracks-summary": true
 	    },
-	    key: 9
-	  }, api_flatten([api_element("header", {
+	    key: 10
+	  }, [api_element("header", {
 	    classMap: {
 	      "tracks-summary__header": true
 	    },
-	    key: 10
-	  }, []), api_iterator($cmp.audioTracksArray, function (track) {
+	    key: 11
+	  }, []), api_element("section", {
+	    classMap: {
+	      "tracks": true
+	    },
+	    key: 12
+	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true,
@@ -36752,56 +36791,56 @@
 	        "data-track-id": track.data.id,
 	        "tabindex": "0"
 	      },
-	      key: api_key(12, track.data.id),
+	      key: api_key(14, track.data.id),
 	      on: {
-	        "keyup": _m2 || ($ctx._m2 = api_bind($cmp.onTrackSummaryKeyUp))
+	        "keyup": _m3 || ($ctx._m3 = api_bind($cmp.onTrackSummaryKeyUp))
 	      }
 	    }, [api_element("span", {
 	      classMap: {
 	        "track-index": true
 	      },
-	      key: 13
+	      key: 15
 	    }, [api_dynamic(track.index)]), api_element("h4", {
 	      classMap: {
 	        "track__title": true
 	      },
-	      key: 14
+	      key: 16
 	    }, [api_dynamic(track.data.title)])]);
-	  })])), api_element("div", {
+	  }))]), api_element("div", {
 	    classMap: {
 	      "editor-container": true
 	    },
-	    key: 15
-	  }, [$cmp.editor.data.frame ? api_element("header", {
 	    key: 17
+	  }, [$cmp.editor.data.frame ? api_element("header", {
+	    key: 19
 	  }, [api_custom_element("ffmpeg-timeline", _ffmpegTimeline, {
-	    key: 18,
+	    key: 20,
 	    on: {
-	      "mouseenter": _m3 || ($ctx._m3 = api_bind($cmp.onTimelineMouseEnter)),
-	      "mouseleave": _m4 || ($ctx._m4 = api_bind($cmp.onTimelineMouseLeave)),
-	      "timelinedrag": _m5 || ($ctx._m5 = api_bind($cmp.onTimelineDrag)),
-	      "timelinedragstart": _m6 || ($ctx._m6 = api_bind($cmp.onTimelineDragStart)),
-	      "timelinedragend": _m7 || ($ctx._m7 = api_bind($cmp.onTimelineDragEnd))
+	      "mouseenter": _m4 || ($ctx._m4 = api_bind($cmp.onTimelineMouseEnter)),
+	      "mouseleave": _m5 || ($ctx._m5 = api_bind($cmp.onTimelineMouseLeave)),
+	      "timelinedrag": _m6 || ($ctx._m6 = api_bind($cmp.onTimelineDrag)),
+	      "timelinedragstart": _m7 || ($ctx._m7 = api_bind($cmp.onTimelineDragStart)),
+	      "timelinedragend": _m8 || ($ctx._m8 = api_bind($cmp.onTimelineDragEnd))
 	    }
 	  }, [])]) : null, $cmp.editor.data.frame ? api_element("section", {
 	    classMap: {
 	      "editor": true
 	    },
-	    key: 19,
-	    on: {
-	      "mousedown": _m16 || ($ctx._m16 = api_bind($cmp.onEditorMouseDown)),
-	      "mousemove": _m17 || ($ctx._m17 = api_bind($cmp.onEditorMouseMove)),
-	      "mouseleave": _m18 || ($ctx._m18 = api_bind($cmp.onEditorMouseLeave))
-	    }
-	  }, api_flatten([api_custom_element("ffmpeg-selection", _ffmpegSelection, {
-	    key: 20
-	  }, []), api_element("div", {
 	    key: 21,
 	    on: {
-	      "click": _m13 || ($ctx._m13 = api_bind($cmp.onEditorClick))
+	      "mousedown": _m17 || ($ctx._m17 = api_bind($cmp.onEditorMouseDown)),
+	      "mousemove": _m18 || ($ctx._m18 = api_bind($cmp.onEditorMouseMove)),
+	      "mouseleave": _m19 || ($ctx._m19 = api_bind($cmp.onEditorMouseLeave))
+	    }
+	  }, api_flatten([api_custom_element("ffmpeg-selection", _ffmpegSelection, {
+	    key: 22
+	  }, []), api_element("div", {
+	    key: 23,
+	    on: {
+	      "click": _m14 || ($ctx._m14 = api_bind($cmp.onEditorClick))
 	    }
 	  }, [api_custom_element("ffmpeg-grid", _ffmpegGrid, {
-	    key: 22
+	    key: 24
 	  }, []), api_element("section", {
 	    classMap: {
 	      "waveforms-container": true
@@ -36809,62 +36848,62 @@
 	    attrs: {
 	      "id": api_scoped_id("tracks")
 	    },
-	    key: 23
+	    key: 25
 	  }, api_iterator($cmp.audioTracksArray, function (track) {
 	    return api_element("article", {
 	      classMap: {
 	        "track": true
 	      },
-	      key: api_key(25, track.data.id)
+	      key: api_key(27, track.data.id)
 	    }, [api_custom_element("ffmpeg-audiotrack", _ffmpegAudiotrack, {
 	      props: {
 	        "track": track.data
 	      },
-	      key: 26,
+	      key: 28,
 	      on: {
-	        "segmentdurationchange": _m8 || ($ctx._m8 = api_bind($cmp.onSegmentDurationChange)),
-	        "segmentsourceoffsetchange": _m9 || ($ctx._m9 = api_bind($cmp.onSegmentSourceOffsetChange)),
-	        "segmentdrag": _m10 || ($ctx._m10 = api_bind($cmp.onSegmentDrag)),
-	        "segmentdragend": _m11 || ($ctx._m11 = api_bind($cmp.onSegmentDragEnd)),
-	        "segmentdragstart": _m12 || ($ctx._m12 = api_bind($cmp.onSegmentDragStart))
+	        "segmentdurationchange": _m9 || ($ctx._m9 = api_bind($cmp.onSegmentDurationChange)),
+	        "segmentsourceoffsetchange": _m10 || ($ctx._m10 = api_bind($cmp.onSegmentSourceOffsetChange)),
+	        "segmentdrag": _m11 || ($ctx._m11 = api_bind($cmp.onSegmentDrag)),
+	        "segmentdragend": _m12 || ($ctx._m12 = api_bind($cmp.onSegmentDragEnd)),
+	        "segmentdragstart": _m13 || ($ctx._m13 = api_bind($cmp.onSegmentDragStart))
 	      }
 	    }, [])]);
 	  }))]), $cmp.cursorInWindow ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.cursor
 	    },
-	    key: 28
+	    key: 30
 	  }, []) : null, $cmp.hasVirtualCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.editor.data.virtualCursor,
 	      "virtual": true
 	    },
-	    key: 30
+	    key: 32
 	  }, []) : null, $cmp.hasPlaybackCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.currentTime,
 	      "playhead": true
 	    },
-	    key: 32
+	    key: 34
 	  }, []) : null, $cmp.hasPlaybackDurationCursor ? api_custom_element("ffmpeg-cursor", _ffmpegCursor, {
 	    props: {
 	      "time": $cmp.playhead.data.playbackRange.duration,
 	      "userDrag": true
 	    },
-	    key: 34,
+	    key: 36,
 	    on: {
-	      "cursordoubletap": _m14 || ($ctx._m14 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
-	      "cursordrag": _m15 || ($ctx._m15 = api_bind($cmp.onPlaybackDurationCursorDrag))
+	      "cursordoubletap": _m15 || ($ctx._m15 = api_bind($cmp.onPlaybackDurationCursorDoubleTap)),
+	      "cursordrag": _m16 || ($ctx._m16 = api_bind($cmp.onPlaybackDurationCursorDrag))
 	    }
 	  }, []) : null, api_iterator($cmp.highlights, function (highlight) {
 	    return api_custom_element("ffmpeg-highlight", _ffmpegHighlight, {
 	      props: {
 	        "highlight": highlight
 	      },
-	      key: api_key(36, highlight.id)
+	      key: api_key(38, highlight.id)
 	    }, []);
 	  })])) : null]), api_custom_element("ffmpeg-masterout", _ffmpegMasterout, {
-	    key: 37
+	    key: 39
 	  }, [])])];
 	}
 
@@ -36924,6 +36963,10 @@
 
 	  onStopButtonClick(app, evt) {}
 
+	  onDocumentKeyUpEsc(app, evt) {}
+
+	  onSilenceDetectButtonClick(app, evt) {}
+
 	}
 
 	class TimelineDragState extends BaseState {
@@ -36949,6 +36992,39 @@
 	      }
 
 	      setVisibleRangeStart(updated);
+	    });
+	  }
+
+	}
+
+	class HasSelectionState extends BaseState {
+	  constructor(range) {
+	    super();
+	    this.selectionRange = range;
+	  }
+
+	  goToIdleState(app) {
+	    app.enterState(new IdleState());
+	  }
+
+	  onDocumentKeyDown(app, evt) {
+	    // CMD + H
+	    if (evt.which === 72 && evt.metaKey) {
+	      evt.preventDefault();
+	      highlightRange(this.selectionRange);
+	      this.goToIdleState(app);
+	    }
+	  }
+
+	  onDocumentKeyUpEsc(app) {
+	    deleteSelections();
+	    this.goToIdleState(app);
+	  }
+
+	  onDocumentMouseUp(app) {
+	    clearSelections();
+	    requestAnimationFrame(() => {
+	      this.goToIdleState(app);
 	    });
 	  }
 
@@ -37018,7 +37094,22 @@
 	  }
 
 	  onDocumentMouseUp(app, evt) {
-	    app.enterState(new IdleState());
+	    const {
+	      selectionFrame: frame
+	    } = this;
+	    const selectedTracks = getSelectedAudioTracks(frame);
+
+	    if (selectedTracks.size === 0) {
+	      app.enterState(new IdleState());
+	      return;
+	    }
+
+	    stream$2.pipe(take(1)).subscribe(editor => {
+	      const start = editor.absolutePixelToTime(frame.left);
+	      const duration = editor.pixelToTime(frame.width);
+	      const range$$1 = new AudioRange(start, duration);
+	      app.enterState(new HasSelectionState(range$$1));
+	    });
 	  }
 
 	  onEditorMouseMove(app, evt) {
@@ -37134,6 +37225,18 @@
 
 	}
 
+	class HighlightSilencesState extends BaseState {
+	  constructor(range) {
+	    super();
+	    this.range = range;
+	  }
+
+	  enter() {
+	    highlightSilences(this.range);
+	  }
+
+	}
+
 	class IdleState extends BaseState {
 	  onDocumentKeyDown(app, evt) {
 	    if (evt.key === 'Meta') {
@@ -37226,6 +37329,13 @@
 	    });
 	  }
 
+	  onSilenceDetectButtonClick(app, evt) {
+	    stream$1.pipe(take(1)).subscribe(audioTracks$$1 => {
+	      const range$$1 = getTracksRange(audioTracks$$1);
+	      app.enterState(new HighlightSilencesState(range$$1));
+	    });
+	  }
+
 	}
 
 	class App extends engine_5 {
@@ -37279,6 +37389,12 @@
 
 	    this.onTimelineMouseLeave = evt => {
 	      this.state.onTimelineMouseLeave(this, evt);
+	    };
+
+	    this.onDocumentKeyUp = evt => {
+	      if (evt.which === 8) {
+	        this.state.onDocumentKeyUpEsc(this, evt);
+	      }
 	    };
 
 	    this.enterState(new IdleState());
@@ -37388,16 +37504,20 @@
 	    this.state.onPlayButtonClick(this, evt);
 	  }
 
+	  onSilenceDetectButtonClick(evt) {
+	    this.state.onSilenceDetectButtonClick(this, evt); // const range = getTracksRange(this.audioTracks.data);
+	    // highlightSilences(range);
+	  }
+
 	  onStopButtonClick(evt) {
 	    this.state.onStopButtonClick(this, evt);
 	  }
+
 	  /*
 	   *
 	   * Template
 	   *
 	  */
-
-
 	  get hasVirtualCursor() {
 	    return this.editor && this.editor.data.virtualCursor !== null && this.timeInWindow(this.editor.data.virtualCursor);
 	  }
@@ -37454,11 +37574,7 @@
 
 	  connectedCallback() {
 	    window.addEventListener('resize', this.updateFrame);
-	    document.addEventListener('keyup', evt => {
-	      if (evt.which === 8) {
-	        deleteSelections();
-	      }
-	    });
+	    document.addEventListener('keyup', this.onDocumentKeyUp);
 	    fromEvent(document, 'keydown').subscribe(evt => {
 	      this.state.onDocumentKeyDown(this, evt);
 	    });
