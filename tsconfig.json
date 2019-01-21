@@ -8,7 +8,6 @@
         "experimentalDecorators": true,
         "noUnusedLocals": true,
         "strictNullChecks": true,
-        "emitDecoratorMetadata": true,
         "paths": {
             "util/*": ["./src/util/*"],
             "lwc": ["./node_modules/@lwc/engine"],

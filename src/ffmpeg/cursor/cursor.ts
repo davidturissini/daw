@@ -1,30 +1,41 @@
 import { LightningElement, wire, api } from 'lwc';
-import { editorSym } from '../../wire/editor';
+import { wireSymbol } from 'store/index';
 import interact from 'interactjs';
+import { EditorState } from 'store/editor/reducer';
+import { timeToPixel } from 'util/geometry';
+import { Time } from 'util/time';
 
 export default class Cursor extends LightningElement {
     @api virtual;
     @api playhead;
     @api userDrag;
-    @api time;
+    @api time: Time;
 
-    interact;
+    interact: any;
 
     /*
      *
      * Editor
      *
     */
-    @wire(editorSym, {})
-    editor;
+    @wire(wireSymbol, {
+        paths: {
+            editor: ['editor']
+        }
+    })
+    reduxData: {
+        data: {
+            editor: EditorState;
+        }
+    }
 
     get containerStyle() {
-        const { editor } = this;
-        if (!editor.data.frame) {
+        const { editor } = this.reduxData.data
+        if (!editor.frame) {
             return '';
         }
 
-        const px = editor.data.timeToPixel(this.time);
+        const px = timeToPixel(editor.frame, editor.visibleRange, this.time);
         return `transform: translateX(${px}px)`;
     }
 

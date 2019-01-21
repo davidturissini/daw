@@ -1,8 +1,8 @@
 import { TimelineDragState } from './timelinedrag';
 
 export class BaseState {
-    enter() {}
-    exit() {}
+    enter(app) {}
+    exit(app) {}
     onTimelineDragStart(app) {}
     onTimelineDrag(app, evt) {}
     onTimelineDragEnd(app) {}
@@ -26,4 +26,5 @@ export class BaseState {
     onDocumentKeyUpEsc(app, evt) {}
     onSilenceDetectButtonClick(app, evt) {}
     onSegmentDurationChange(app, evt) {}
+    onEditorMouseLeave(app, evt) {}
 }

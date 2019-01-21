@@ -13,7 +13,6 @@ export enum OscillatorNodeTypes {
 }
 
 export interface InstrumentDataOscillator {
-    frequency: number;
     detune: number;
     type: OscillatorNodeTypes;
 }

@@ -15,6 +15,11 @@ const middleware: any[] = [];
 if (process.env.NODE_ENV !== 'production') {
     middleware.push(
         createLogger({
+            predicate: (getState, action) => {
+                return (
+                    action.type !== 'SET_VIRTUAL_CURSOR_TIME'
+                );
+            },
             stateTransformer: (state) => {
                 const newState = {};
                 for (const i of Object.keys(state)) {

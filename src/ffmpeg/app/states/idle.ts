@@ -16,8 +16,6 @@ import {
 } from './../../../wire/audiotracksegment';
 import {
     stream as editorStream,
-    setVirtualCursorTime,
-    setCursorTime,
 } from './../../../wire/editor';
 import { take } from 'rxjs/operators';
 import {
@@ -27,6 +25,9 @@ import {
 } from './../../../wire/playhead';
 import { zip } from 'rxjs';
 import { AudioRange } from '../../../util/audiorange';
+import { appStore } from 'store/index';
+import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
+import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 
 export class IdleState extends BaseState {
     onDocumentKeyDown(app, evt) {
@@ -52,12 +53,15 @@ export class IdleState extends BaseState {
     }
 
     onEditorMouseMove(app, evt) {
-        editorStream.pipe(take(1)).subscribe((editor) => {
-            const { offsetX } = evt;
-            const time = editor.pixelToTime(offsetX);
-            const next = time.add(editor.visibleRange.start);
-            setVirtualCursorTime(next);
-        });
+        const { editor } = appStore.getState()
+        const { offsetX } = evt;
+        const time = pixelToTime(editor.frame, editor.visibleRange, offsetX);
+        const next = time.add(editor.visibleRange.start);
+        appStore.dispatch(setVirtualCursorTime(next));
+    }
+
+    onEditorMouseLeave(app, evt) {
+        appStore.dispatch(setVirtualCursorTime(null));
     }
 
     onSegmentDurationChange(app, evt) {
@@ -69,10 +73,9 @@ export class IdleState extends BaseState {
     }
 
     onEditorClick(app, evt) {
-        editorStream.pipe(take(1)).subscribe((editor) => {
-            const next = editor.absolutePixelToTime(evt.offsetX);
-            setCursorTime(next);
-        });
+        const { editor } = appStore.getState();
+        const next = absolutePixelToTime(editor.frame, editor.visibleRange, evt.offsetX);
+        appStore.dispatch(setCursorTime(next));
     }
 
     onEditorDragOver(app, evt) {
@@ -110,10 +113,9 @@ export class IdleState extends BaseState {
     }
 
     onPlayButtonClick(app, evt) {
-        editorStream.pipe(take(1)).subscribe((editor) => {
-            const range = new AudioRange(editor.cursor, editor.duration);
-            app.enterState(new PlayingState(range));
-        });
+        const { editor } = appStore.getState();
+        const range = new AudioRange(editor.cursor, editor.duration);
+        app.enterState(new PlayingState(range));
     }
 
     onSilenceDetectButtonClick(app, evt) {

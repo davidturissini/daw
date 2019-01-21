@@ -14,7 +14,6 @@ export default class Instruments extends LightningElement {
                 instrumentId,
                 InstrumentType.Oscillator,
                 {
-                    frequency: 440,
                     detune: 0,
                     type: OscillatorNodeTypes.sine,
                 }

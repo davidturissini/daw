@@ -1,5 +1,5 @@
 import { LightningElement, wire } from 'lwc';
-import { incrementEnd, setVirtualCursorTime } from '../../wire/editor';
+import { incrementEnd } from '../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
 import { playheadSym } from '../../wire/playhead';
 import { highlightSym } from '../../wire/highlight';
@@ -21,10 +21,10 @@ export default class App extends LightningElement {
 
     enterState(next: BaseState) {
         if (this.state) {
-            this.state.exit();
+            this.state.exit(this);
         }
         this.state = next;
-        this.state.enter();
+        this.state.enter(this);
     }
 
     /*
@@ -129,7 +129,7 @@ export default class App extends LightningElement {
     }
 
     onEditorMouseLeave = (evt) => {
-        setVirtualCursorTime(null);
+        this.state.onEditorMouseLeave(this, evt);
     }
 
     onEditorMouseDown(evt) {
