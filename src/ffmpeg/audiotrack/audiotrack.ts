@@ -3,13 +3,30 @@ import { editorSym } from '../../wire/editor';
 import { audioSources } from '../../wire/audiosource';
 import {
     deleteTrackSegment,
-    setTrackFrame,
 } from '../../wire/audiotrack';
 import { audioTrackSegmentsSymbol, mapAudioTrackSegments } from '../../wire/audiotracksegment';
 import { Time } from '../../util/time';
+import { wireSymbol, appStore } from 'store/index';
+import { InstrumentState } from 'store/instrument/reducer';
+import { setTrackRect } from 'store/audiotrack/action';
 
-export default class AudioTrack extends LightningElement {
-    @api track;
+export default class AudioTrackElement extends LightningElement {
+    @api track: AudioTrack;
+
+    @wire(wireSymbol, {
+        paths: {
+            instruments: ['instrument', 'items']
+        }
+    })
+    storeData: {
+        data: {
+            instruments: InstrumentState['items']
+        }
+    }
+
+    get instrument() {
+        return this.storeData.data.instruments.get(this.track.instrumentId);
+    }
 
     @wire(audioTrackSegmentsSymbol, {})
     audioTrackSegments;
@@ -82,15 +99,18 @@ export default class AudioTrack extends LightningElement {
      *
     */
     renderedCallback() {
-        if (!this.track.frame) {
+        if (!this.track.rect) {
+            const { host } = this.template;
             const rect = this.template.host.getBoundingClientRect();
-            const frame = {
-                left: this.template.host.offsetLeft,
-                top: this.template.host.offsetTop,
-                width: rect.width,
-                height: rect.height,
-            };
-            setTrackFrame(this.track.id, frame);
+            appStore.dispatch(
+                setTrackRect(
+                    this.track.id,
+                    host.offsetLeft,
+                    host.offsetTop,
+                    rect.width,
+                    rect.height,
+                )
+            );
         }
     }
 

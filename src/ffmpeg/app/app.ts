@@ -1,18 +1,18 @@
 import { LightningElement, wire } from 'lwc';
-import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime } from '../../wire/editor';
+import { incrementEnd, setVirtualCursorTime } from '../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
-import {
-    audioTracks,
-    deleteTrack,
-} from '../../wire/audiotrack';
 import { playheadSym } from '../../wire/playhead';
 import { highlightSym } from '../../wire/highlight';
 import { IdleState } from './states/idle';
 import { BaseState } from './states/base';
+import { wireSymbol, appStore } from './../../store/index';
+import { Map as ImmutableMap } from 'immutable';
+import { AudioTrack } from 'store/audiotrack';
+import { EditorState } from 'store/editor/reducer';
+import { setEditorFrame } from 'store/editor/action';
 
 export default class App extends LightningElement {
     state: BaseState;
-    template: ShadowRoot;
     constructor() {
         super();
         this.enterState(new IdleState());
@@ -26,28 +26,34 @@ export default class App extends LightningElement {
         this.state.enter();
     }
 
-    frame = null;
-
-    get ffmpegLoaded() {
-        return this.ffmpeg.data !== undefined;
-    }
-
     /*
      *
      * Audio Tracks
      *
     */
-    @wire(audioTracks, {})
-    audioTracks;
+    @wire(wireSymbol, {
+        paths: {
+            audiotracks: ['audiotrack', 'items'],
+            editor: ['editor']
+        }
+    })
+    storeData: {
+        data: {
+            editor: EditorState;
+            audiotracks: ImmutableMap<string, AudioTrack>;
+        }
+    }
+
+    get editor(): EditorState {
+        return this.storeData.data.editor;
+    }
+
+    get audioTracks(): ImmutableMap<string, AudioTrack> {
+        return this.storeData.data.audiotracks;
+    }
 
     get audioTracksArray() {
-        return this.audioTracks.data.toList().toArray()
-            .map((track, index) => {
-                return {
-                    index: index + 1,
-                    data: track,
-                };
-            })
+       return this.audioTracks.toList().toArray();
     }
 
     onTrackSummaryKeyUp(evt) {
@@ -56,14 +62,6 @@ export default class App extends LightningElement {
             deleteTrack(trackId);
         }
     }
-
-    /*
-     *
-     * Editor
-     *
-    */
-    @wire(editorSym, {})
-    editor;
 
     /*
      *
@@ -92,18 +90,12 @@ export default class App extends LightningElement {
     */
     updateFrame = () => {
         const rect = this.template.querySelector('.editor-container').getBoundingClientRect();
-        this.frame = {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-        };
-        setEditorFrame({
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-        });
+        appStore.dispatch(
+            setEditorFrame(
+                rect.height,
+                rect.width,
+            )
+        );
     }
 
     /*
@@ -211,8 +203,8 @@ export default class App extends LightningElement {
     */
     get hasVirtualCursor() {
         return (
-            this.editor && this.editor.data.virtualCursor !== null &&
-            this.timeInWindow(this.editor.data.virtualCursor)
+            this.editor && this.editor.virtualCursor !== null &&
+            this.timeInWindow(this.editor.virtualCursor)
         );
     }
 
@@ -226,7 +218,7 @@ export default class App extends LightningElement {
 
     timeInWindow(time) {
         if(this.editor) {
-            const { visibleRange } = this.editor.data;
+            const { visibleRange } = this.editor;
             const { milliseconds: timeMilliseconds } = time;
             const startMilliseconds = visibleRange.start.milliseconds;
             const endMilliseconds = startMilliseconds + visibleRange.duration.milliseconds;
@@ -241,7 +233,7 @@ export default class App extends LightningElement {
 
     get cursorInWindow() {
         if(this.editor) {
-            const { cursor } = this.editor.data;
+            const { cursor } = this.editor;
             return this.timeInWindow(cursor);
         }
 
@@ -279,15 +271,12 @@ export default class App extends LightningElement {
     }
 
     renderedCallback() {
-        if (this.frame === null) {
+        if (this.editor.frame === null) {
             this.updateFrame();
         }
     }
 
     disconnectedCallback() {
         window.removeEventListener('resize', this.updateFrame);
-        if (this.selectionSubscription) {
-            this.selectionSubscription.unsubscribe();
-        }
     }
 }

@@ -239,25 +239,6 @@ export function deleteRange(range) {
     })
 }
 
-export function createTrack(id) {
-    const trackLen = tracksSubject.value.size;
-    const audioTrack = new AudioTrack({
-        title: `Track ${trackLen + 1}`,
-        id,
-    });
-    tracksSubject.next(
-        tracksSubject.value.set(id, audioTrack)
-    );
-
-    return audioTrack;
-}
-
-export function setTrackFrame(trackId, frame) {
-    tracksSubject.next(
-        tracksSubject.value.setIn([trackId, 'frame'], frame)
-    );
-}
-
 export const audioTracks = Symbol();
 
 register(audioTracks, wireObservable(stream));

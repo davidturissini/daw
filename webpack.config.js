@@ -21,6 +21,7 @@ module.exports = {
         // Add '.ts' and '.tsx' as resolvable extensions.
         extensions: [".ts", ".js", ".css", ".html"],
         alias: {
+            'store': path.resolve('./src/store'),
             lwc: '@lwc/engine',
             'wire-service': '@lwc/wire-service',
             ...lwcAliases,

@@ -6,6 +6,7 @@
             onplaybuttonclick={onPlayButtonClick}>
         </ffmpeg-controls>
         <ffmpeg-audioscroll></ffmpeg-audioscroll>
+        <ffmpeg-instruments></ffmpeg-instruments>
     </header>
     <main>
         <aside class="selections">
@@ -21,16 +22,16 @@
         <section class="tracks-summary">
             <header class="tracks-summary__header"></header>
             <section class="tracks">
-                <template for:each={audioTracksArray} for:item="track">
-                    <article data-track-id={track.data.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.data.id}>
-                        <span class="track-index">{track.index}</span>
-                        <h4 class="track__title">{track.data.title}</h4>
+                <template for:each={audioTracksArray} for:item="track" for:index="index">
+                    <article data-track-id={track.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.id}>
+                        <span class="track-index">{index}</span>
+                        <h4 class="track__title">{track.title}</h4>
                     </article>
                 </template>
             </section>
         </section>
         <div class="editor-container">
-            <template if:true={editor.data.frame}>
+            <template if:true={editor.frame}>
                 <header>
                     <ffmpeg-timeline
                         onmouseenter={onTimelineMouseEnter}
@@ -46,33 +47,33 @@
                         <ffmpeg-grid></ffmpeg-grid>
                         <section class="waveforms-container" id="tracks">
                             <template for:each={audioTracksArray} for:item="track">
-                                <article class="track" key={track.data.id}>
+                                <article class="track" key={track.id}>
                                     <ffmpeg-audiotrack
                                         onsegmentdurationchange={onSegmentDurationChange}
                                         onsegmentsourceoffsetchange={onSegmentSourceOffsetChange}
                                         onsegmentdrag={onSegmentDrag}
                                         onsegmentdragend={onSegmentDragEnd}
                                         onsegmentdragstart={onSegmentDragStart}
-                                        track={track.data}>
+                                        track={track}>
                                     </ffmpeg-audiotrack>
                                 </article>
                             </template>
                         </section>
                     </div>
                     <template if:true={cursorInWindow}>
-                        <ffmpeg-cursor time={editor.data.cursor}></ffmpeg-cursor>
+                        <ffmpeg-cursor time={editor.cursor}></ffmpeg-cursor>
                     </template>
                     <template if:true={hasVirtualCursor}>
-                        <ffmpeg-cursor time={editor.data.virtualCursor} virtual></ffmpeg-cursor>
+                        <ffmpeg-cursor time={editor.virtualCursor} virtual></ffmpeg-cursor>
                     </template>
                     <template if:true={hasPlaybackCursor}>
-                        <ffmpeg-cursor time={playhead.data.currentTime} playhead></ffmpeg-cursor>
+                        <ffmpeg-cursor time={playhead.currentTime} playhead></ffmpeg-cursor>
                     </template>
                     <template if:true={hasPlaybackDurationCursor}>
                         <ffmpeg-cursor
                             oncursordoubletap={onPlaybackDurationCursorDoubleTap}
                             oncursordrag={onPlaybackDurationCursorDrag}
-                            time={playhead.data.playbackRange.duration}
+                            time={playhead.playbackRange.duration}
                             user-drag>
                         </ffmpeg-cursor>
                     </template>

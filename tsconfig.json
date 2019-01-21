@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "module": "es6",
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "target": "es2017",
+        "experimentalDecorators": true,
+        "noUnusedLocals": true,
+        "strictNullChecks": true,
+        "emitDecoratorMetadata": true,
+        "paths": {
+            "lwc": ["./node_modules/@lwc/engine"],
+            "wire-service": ["./node_modules/@lwc/wire-service"],
+            "store/*": ["./src/store/*"]
+        }
+    },
+}

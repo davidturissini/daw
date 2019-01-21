@@ -17,6 +17,7 @@
     "@lwc/babel-plugin-component": "^0.34.0",
     "@lwc/compiler": "^0.34.0",
     "babel-loader": "^8.0.5",
+    "redux-logger": "^3.0.6",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1"
   },
@@ -37,6 +38,7 @@
     "ogg.js": "^0.1.0",
     "parse-ms": "^2.0.0",
     "raf-throttle": "^2.0.3",
+    "redux": "^4.0.1",
     "rxjs": "^6.3.3"
   }
 }

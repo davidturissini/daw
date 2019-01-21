@@ -1,0 +1,1 @@
+export const SET_EDITOR_FRAME = 'SET_EDITOR_FRAME';
