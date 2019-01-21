@@ -1,6 +1,7 @@
 
 export class Time {
-    constructor(milliseconds) {
+    milliseconds: number;
+    constructor(milliseconds: number) {
         this.milliseconds = milliseconds;
     }
 

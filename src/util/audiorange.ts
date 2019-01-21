@@ -1,7 +1,9 @@
 import { Time, sum as sumTime, gt, subtract as subtractTime } from './time';
 
 export class AudioRange {
-    constructor(start, duration) {
+    start: Time;
+    duration: Time;
+    constructor(start: Time, duration: Time) {
         if (!(start instanceof Time)) {
             throw new Error(`Invalid start time for AudioRange. "${start}" is not a valid instance of Time`);
         }

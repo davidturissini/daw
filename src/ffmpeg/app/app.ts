@@ -10,6 +10,7 @@ import { Map as ImmutableMap } from 'immutable';
 import { AudioTrack } from 'store/audiotrack';
 import { EditorState } from 'store/editor/reducer';
 import { setEditorFrame } from 'store/editor/action';
+import { pixelToTime } from 'util/geometry';
 
 export default class App extends LightningElement {
     state: BaseState;
@@ -89,7 +90,7 @@ export default class App extends LightningElement {
      *
     */
     updateFrame = () => {
-        const rect = this.template.querySelector('.editor-container').getBoundingClientRect();
+        const rect = this.template.querySelector('.editor-container')!.getBoundingClientRect();
         appStore.dispatch(
             setEditorFrame(
                 rect.height,
@@ -241,8 +242,16 @@ export default class App extends LightningElement {
     }
 
     handleEditorEndDrag(evt) {
-        const time = this.editor.data.pixelToTime(evt.detail.dx);
-        incrementEnd(time);
+        const { editor } = this;
+        const { frame } = editor;
+        if (frame) {
+            const time = pixelToTime(
+                frame,
+                editor.visibleRange,
+                evt.detail.dx,
+            );
+            incrementEnd(time);
+        }
     }
 
     get editorElement() {

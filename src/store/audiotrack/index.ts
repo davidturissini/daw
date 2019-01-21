@@ -1,11 +1,5 @@
 import { Record, List } from 'immutable';
-
-export interface Rect {
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-}
+import { Rect } from 'util/geometry';
 
 class Color {
     red: number;

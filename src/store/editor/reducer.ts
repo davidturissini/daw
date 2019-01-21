@@ -3,11 +3,7 @@ import { AudioRange } from './../../util/audiorange';
 import { Record } from 'immutable';
 import { SET_EDITOR_FRAME } from './const';
 import { SetEditorFrameAction } from './action';
-
-interface Frame {
-    height: number;
-    width: number;
-}
+import { Frame } from 'util/geometry';
 
 export class EditorState extends Record({
     visibleRange: new AudioRange(
