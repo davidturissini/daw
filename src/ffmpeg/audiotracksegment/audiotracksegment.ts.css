@@ -41,3 +41,12 @@
 .container {
     height: 100%;
 }
+
+.selection {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 4;
+    background: rgba(96, 130, 171, 0.4);
+}

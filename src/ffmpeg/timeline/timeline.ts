@@ -1,5 +1,5 @@
 import { LightningElement, wire, track } from 'lwc';
-import { editorSym } from './../../wire/editor';
+import { editorSym } from '../../wire/editor';
 import interact from 'interactjs';
 import { Time } from '../../util/time';
 import rafThrottle from 'raf-throttle';

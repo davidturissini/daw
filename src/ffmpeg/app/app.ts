@@ -1,26 +1,29 @@
-import { LightningElement, wire, track } from 'lwc';
-import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime } from './../../wire/editor';
+import { LightningElement, wire } from 'lwc';
+import { editorSym, incrementEnd, setFrame as setEditorFrame, setVirtualCursorTime } from '../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
 import {
     audioTracks,
     deleteTrack,
-} from './../../wire/audiotrack';
-import { playheadSym } from './../../wire/playhead';
-import { highlightSym } from './../../wire/highlight';
+} from '../../wire/audiotrack';
+import { playheadSym } from '../../wire/playhead';
+import { highlightSym } from '../../wire/highlight';
 import { IdleState } from './states/idle';
+import { BaseState } from './states/base';
 
 export default class App extends LightningElement {
+    state: BaseState;
+    template: ShadowRoot;
     constructor() {
         super();
         this.enterState(new IdleState());
     }
 
-    enterState(next) {
+    enterState(next: BaseState) {
         if (this.state) {
-            this.state.exit(this);
+            this.state.exit();
         }
         this.state = next;
-        this.state.enter(this);
+        this.state.enter();
     }
 
     frame = null;

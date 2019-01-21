@@ -6,12 +6,14 @@ import { EditorDragState } from './editordrag';
 import { PlayingState } from './playing';
 import { HighlightSilencesState } from './highlightsilences';
 import {
-    moveSegmentSourceOffset,
-    setSegmentDuration,
     getTracksDuration,
     stream as audioTracksStream,
     getTracksRange,
 } from './../../../wire/audiotrack';
+import {
+    setSegmentDuration,
+    moveSegmentSourceOffset,
+} from './../../../wire/audiotracksegment';
 import {
     stream as editorStream,
     setVirtualCursorTime,
@@ -42,9 +44,8 @@ export class IdleState extends BaseState {
     }
 
     onSegmentSourceOffsetChange(app, evt) {
-        const { time, segmentId, trackId } = evt.detail;
+        const { time, segmentId } = evt.detail;
         moveSegmentSourceOffset(
-            trackId,
             segmentId,
             time,
         );
@@ -60,11 +61,9 @@ export class IdleState extends BaseState {
     }
 
     onSegmentDurationChange(app, evt) {
-        const { time, segmentId, trackId, sourceId } = evt.detail;
+        const { time, segmentId } = evt.detail;
         setSegmentDuration(
-            trackId,
             segmentId,
-            sourceId,
             time,
         );
     }

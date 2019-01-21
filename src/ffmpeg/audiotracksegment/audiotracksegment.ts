@@ -1,8 +1,9 @@
 import { LightningElement, api, wire } from 'lwc';
-import { audioSources } from './../../wire/audiosource';
-import { editorSym } from './../../wire/editor';
+import { audioSources } from '../../wire/audiosource';
+import { editorSym } from '../../wire/editor';
 import interact from 'interactjs';
 import rafThrottle from 'raf-throttle';
+import { selectionSym } from '../../wire/selection';
 
 export default class AudioTrackSegment extends LightningElement {
     @api segment;
@@ -16,6 +17,9 @@ export default class AudioTrackSegment extends LightningElement {
 
     @wire(audioSources, {})
     sources;
+
+    @wire(selectionSym, {})
+    selection;
 
     moveInteract;
     startHandleIneract;
@@ -33,6 +37,22 @@ export default class AudioTrackSegment extends LightningElement {
         const { editor, visibleDuration } = this;
         const width = editor.data.durationToWidth(visibleDuration);
         return `width: ${width}px`;
+    }
+
+    get selections() {
+        return this.selection.data.selections.filter((selection) => {
+            return selection.segmentId === this.segment.id;
+        })
+        .map((selection, index) => {
+            const { range } = selection;
+            const x = this.editor.data.timeToPixel(range.start.minus(this.segment.offset));
+            const width = this.editor.data.timeToPixel(range.duration);
+            const style = `width:${width}px;transform: translateX(${x}px)`
+            return {
+                id: index,
+                style,
+            }
+        })
     }
 
     onStartDrag = (evt) => {

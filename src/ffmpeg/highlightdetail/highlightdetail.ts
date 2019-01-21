@@ -1,6 +1,6 @@
 import { LightningElement, api } from 'lwc';
-import { deleteRange, collapseRange } from './../../wire/audiotrack';
-import { clearHighlight } from './../../wire/highlight';
+import { deleteRange, collapseRange } from '../../wire/audiotrack';
+import { clearHighlight } from '../../wire/highlight';
 
 export default class HighlightDetail extends LightningElement {
     @api highlight;

@@ -60,3 +60,5 @@ export function lt(left, right) {
 export function subtract(first, second) {
     return sum(first, invert(second));
 }
+
+export const timeZero = new Time(0);

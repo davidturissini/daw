@@ -1,5 +1,8 @@
 <template>
     <template if:true={hasSource}>
+        <template for:each={selections} for:item="selection">
+            <div class="selection" key={selection.id} style={selection.style}></div>
+        </template>
         <div class="container" style={containerStyle}>
             <span class="handle handle--start"></span>
             <ffmpeg-waveform

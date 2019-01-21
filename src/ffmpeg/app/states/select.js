@@ -7,12 +7,12 @@ import { stream as editorStream } from './../../../wire/editor';
 import {
     stream as audioTracksStream,
     segmentInTimeRange,
-    setSegmentSelection,
     getSelectedAudioTracks,
 } from './../../../wire/audiotrack';
 import { take } from 'rxjs/operators';
 import { combineLatest as observableCombineLatest } from 'rxjs';
-import { setSelectionFrame, clearSelectionFrame } from './../../../wire/selection';
+import { setSelectionFrame, clearSelectionFrame, setSegmentSelection } from './../../../wire/selection';
+import { getSegments } from './../../../wire/audiotracksegment';
 
 export class SelectState extends BaseState {
     constructor(initialLeft, initialTop) {
@@ -70,7 +70,7 @@ export class SelectState extends BaseState {
                 );
             })
             .forEach((audioTrack) => {
-                audioTrack.segments.filter((segment) => {
+                getSegments(audioTrack.segments).filter((segment) => {
                     return segmentInTimeRange(
                         segment,
                         range.start,

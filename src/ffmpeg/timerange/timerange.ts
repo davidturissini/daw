@@ -1,5 +1,5 @@
 import { LightningElement, api, wire } from 'lwc';
-import { editorSym } from './../../wire/editor';
+import { editorSym } from '../../wire/editor';
 
 export default class TimeRange extends LightningElement {
     @api range;

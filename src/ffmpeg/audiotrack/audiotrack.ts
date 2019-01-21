@@ -1,14 +1,18 @@
 import { LightningElement, api, wire } from 'lwc';
-import { editorSym } from './../../wire/editor';
-import { audioSources } from './../../wire/audiosource';
+import { editorSym } from '../../wire/editor';
+import { audioSources } from '../../wire/audiosource';
 import {
-    deleteSegment,
+    deleteTrackSegment,
     setTrackFrame,
-} from './../../wire/audiotrack';
+} from '../../wire/audiotrack';
+import { audioTrackSegmentsSymbol, mapAudioTrackSegments } from '../../wire/audiotracksegment';
 import { Time } from '../../util/time';
 
 export default class AudioTrack extends LightningElement {
     @api track;
+
+    @wire(audioTrackSegmentsSymbol, {})
+    audioTrackSegments;
 
     @wire(editorSym, {})
     editor;
@@ -16,25 +20,15 @@ export default class AudioTrack extends LightningElement {
     @wire(audioSources, {})
     audioSources;
 
-    get trackSelections() {
-        return this.track.selections.toList().map((selection, index) => {
-            const { range } = selection;
-            const x = this.editor.data.timeToPixel(range.start);
-            const width = this.editor.data.timeToPixel(range.duration);
-            const style = `width:${width}px;transform: translateX(${x}px)`
-            return {
-                id: index,
-                style,
-            }
-        })
-    }
-
     get trackSegments() {
-        return this.track.segments.filter((segment) => {
+        return mapAudioTrackSegments(
+            this.track.segments,
+            this.audioTrackSegments.data
+        )
+        .filter((segment) => {
             const x = this.editor.data.timeToPixel(segment.offset);
             const width = this.editor.data.durationToWidth(segment.duration);
             const frameWidth = this.editor.data.frame.width;
-
 
             const isOnScreenLeft = x > 0 || x + width > 0;
             const isOnScreenRight = x < frameWidth;
@@ -61,6 +55,7 @@ export default class AudioTrack extends LightningElement {
 
             const visibleDuration = this.editor.data.pixelToTime(width);
             const visibleOffset = segment.offset.greaterThan(this.editor.data.visibleRange.start) ? new Time(0) : this.editor.data.visibleRange.start.minus(segment.offset);
+
             return {
                 key: index,
                 frame,
@@ -77,7 +72,7 @@ export default class AudioTrack extends LightningElement {
     onSegmentKeyUp(evt) {
         const { id: segmentId } = evt.target.segment;
         if (evt.which === 8) {
-            deleteSegment(this.track.id, segmentId);
+            deleteTrackSegment(this.track.id, segmentId);
         }
     }
 

@@ -1,5 +1,5 @@
 import { LightningElement, wire, api } from 'lwc';
-import { editorSym } from './../../wire/editor';
+import { editorSym } from '../../wire/editor';
 import interact from 'interactjs';
 
 export default class Cursor extends LightningElement {

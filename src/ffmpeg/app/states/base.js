@@ -10,7 +10,7 @@ export class BaseState {
     onTimelineMouseLeave(app, evt) {}
     onSegmentDragStart(app) {}
     onSegmentDragEnd(app) {}
-    onSegmentDrag(app) {}
+    onSegmentDrag(app, evt) {}
     onSegmentSourceOffsetChange(app, evt) {}
     onDocumentKeyDown(app, evt) {}
     onEditorClick(app, evt) {}
@@ -25,4 +25,5 @@ export class BaseState {
     onStopButtonClick(app, evt) {}
     onDocumentKeyUpEsc(app, evt) {}
     onSilenceDetectButtonClick(app, evt) {}
+    onSegmentDurationChange(app, evt) {}
 }

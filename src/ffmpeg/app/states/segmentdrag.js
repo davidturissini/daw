@@ -2,13 +2,12 @@ import { BaseState } from './base';
 import { IdleState } from './idle';
 import {
     moveSegment,
-} from './../../../wire/audiotrack';
+} from './../../../wire/audiotracksegment';
 
 export class SegmentDragState extends BaseState {
     onSegmentDrag(app, evt) {
-        const { time, segmentId, trackId } = evt.detail;
+        const { time, segmentId } = evt.detail;
         moveSegment(
-            trackId,
             segmentId,
             time,
         );

@@ -1,7 +1,7 @@
 import { LightningElement, wire } from 'lwc';
-import { editorSym } from './../../wire/editor';
-import { audioSources } from './../../wire/audiosource';
-import { playheadSym } from './../../wire/playhead';
+import { editorSym } from '../../wire/editor';
+import { audioSources } from '../../wire/audiosource';
+import { playheadSym } from '../../wire/playhead';
 
 export default class Controls extends LightningElement {
     @wire(editorSym, {})

@@ -99,6 +99,10 @@ export function createAudioSourceFromFile(id, file) {
         });
 }
 
+export function getAudioSource(sourceId) {
+    return audioSourcesSubject.value.get(sourceId);
+}
+
 export const audioSources = Symbol();
 
 register(audioSources, wireObservable(stream));

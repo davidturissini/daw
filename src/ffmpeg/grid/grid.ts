@@ -1,5 +1,5 @@
 import { LightningElement, wire } from 'lwc';
-import { editorSym } from './../../wire/editor';
+import { editorSym } from '../../wire/editor';
 import { Time } from '../../util/time';
 
 function getGridTimes(range, tickDistanceMs) {

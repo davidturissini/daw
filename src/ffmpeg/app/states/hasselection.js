@@ -3,7 +3,7 @@ import { IdleState } from './idle';
 import {
     clearSelections,
     deleteSelections,
-} from './../../../wire/audiotrack';
+} from './../../../wire/selection';
 import {
     highlightRange,
 } from './../../../wire/highlight';

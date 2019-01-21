@@ -4,22 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rollup --config rollup.config.js",
+    "build": "webpack",
     "watch": "yarn build --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@lwc/compiler": "^0.33.26",
-    "@lwc/rollup-plugin": "^0.33.26",
-    "browserify": "^16.2.3",
-    "rollup": "^0.68.0",
-    "rollup-plugin-alias": "^1.5.1",
-    "rollup-plugin-commonjs": "^9.2.0",
-    "rollup-plugin-multi-entry": "^2.1.0",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-resolve": "^4.0.0"
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-proposal-class-properties": "^7.2.3",
+    "@babel/preset-typescript": "^7.1.0",
+    "@lwc/babel-plugin-component": "^0.34.0",
+    "@lwc/compiler": "^0.34.0",
+    "babel-loader": "^8.0.5",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1"
   },
   "dependencies": {
     "@lwc/engine": "^0.33.26",

@@ -1,5 +1,5 @@
 import { LightningElement, api, wire, track } from 'lwc';
-import { waveformSym, WaveformState } from './../../wire/waveform';
+import { waveformSym, WaveformState } from '../../wire/waveform';
 import rafThrottle from 'raf-throttle';
 
 function getWaveformBounds(waveform, sourceOffset, sourceDuration, offset, duration) {

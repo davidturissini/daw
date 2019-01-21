@@ -1,7 +1,4 @@
 <template>
-    <template for:each={trackSelections} for:item="trackSelection">
-        <div class="selection" key={trackSelection.id} style={trackSelection.style}></div>
-    </template>
     <template for:each={trackSegments} for:item="trackSegment">
         <ffmpeg-audiotracksegment
             onkeyup={onSegmentKeyUp}

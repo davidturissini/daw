@@ -1,5 +1,5 @@
 import { LightningElement, wire } from 'lwc';
-import { masterOutSym, setGain } from './../../wire/masterout';
+import { masterOutSym, setGain } from '../../wire/masterout';
 
 export default class MasterOut extends LightningElement {
     @wire(masterOutSym, {})

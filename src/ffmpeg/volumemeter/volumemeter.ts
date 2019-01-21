@@ -1,5 +1,5 @@
 import { LightningElement, track } from 'lwc';
-import { getMasterOutChain } from './../../wire/masterout';
+import { getMasterOutChain } from '../../wire/masterout';
 import { audioContext } from '../../wire/audiosource';
 import rafThrottle from 'raf-throttle';
 
