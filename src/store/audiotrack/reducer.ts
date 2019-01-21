@@ -1,5 +1,5 @@
 import { Record, Map as ImmutableMap } from 'immutable';
-import { AudioTrack, Rect } from './index';
+import { AudioTrack } from './index';
 import {
     CreateTrackAction,
     SetTrackInstrumentAction,
@@ -10,6 +10,9 @@ import {
     SET_TRACK_INSTRUMENT,
     SET_TRACK_RECT,
 } from './const';
+import { Rect } from 'util/geometry';
+import { CREATE_AUDIO_SEGMENT } from 'store/audiosegment/const';
+import { CreateAudioSegmentAction } from 'store/audiosegment/action';
 
 export class AudioTrackState extends Record({
     items: ImmutableMap(),
@@ -44,6 +47,13 @@ function setTrackRectReducer(state: AudioTrackState, action: SetTrackRectAction)
     return state.setIn(['items', trackId, 'rect'], rect);
 }
 
+function createAudioSegmentReducer(state: AudioTrackState, action: CreateAudioSegmentAction): AudioTrackState {
+    const { trackId, id: segmentId } = action.payload;
+    return state.updateIn(['items', trackId, 'segments'], (segments) => {
+        return segments.push(segmentId);
+    });
+}
+
 export function reducer(state = new AudioTrackState(), action) {
     switch(action.type) {
         case CREATE_TRACK:
@@ -52,6 +62,8 @@ export function reducer(state = new AudioTrackState(), action) {
             return setTrackInsertumentReducer(state, action);
         case SET_TRACK_RECT:
             return setTrackRectReducer(state, action);
+        case CREATE_AUDIO_SEGMENT:
+            return createAudioSegmentReducer(state, action);
     }
     return state;
 }

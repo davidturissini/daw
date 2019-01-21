@@ -31,7 +31,7 @@
             </section>
         </section>
         <div class="editor-container">
-            <template if:true={editor.frame}>
+            <template if:true={hasFrame}>
                 <header>
                     <ffmpeg-timeline
                         onmouseenter={onTimelineMouseEnter}
@@ -49,6 +49,7 @@
                             <template for:each={audioTracksArray} for:item="track">
                                 <article class="track" key={track.id}>
                                     <ffmpeg-audiotrack
+                                        onmousedown={onAudioTrackClick}
                                         onsegmentdurationchange={onSegmentDurationChange}
                                         onsegmentsourceoffsetchange={onSegmentSourceOffsetChange}
                                         onsegmentdrag={onSegmentDrag}

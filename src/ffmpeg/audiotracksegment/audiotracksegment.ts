@@ -1,58 +1,52 @@
 import { LightningElement, api, wire } from 'lwc';
-import { audioSources } from '../../wire/audiosource';
-import { editorSym } from '../../wire/editor';
-import interact from 'interactjs';
+import interact, { Interactable } from 'interactjs';
 import rafThrottle from 'raf-throttle';
-import { selectionSym } from '../../wire/selection';
+import { wireSymbol } from 'store/index';
+import { EditorState } from 'store/editor/reducer';
+import { pixelToTime } from 'util/geometry';
+import { AudioSegment } from 'store/audiosegment';
 
-export default class AudioTrackSegment extends LightningElement {
-    @api segment;
+export default class AudioSegmentElement extends LightningElement {
+    @api segment: AudioSegment;
     @api frame;
     @api track;
     @api visibleDuration;
     @api visibleOffset;
 
-    @wire(editorSym, {})
-    editor;
+    @wire(wireSymbol, {
+        paths: {
+            editor: ['editor']
+        }
+    })
+    storeData: {
+        data: {
+            editor: EditorState
+        }
+    };
 
-    @wire(audioSources, {})
-    sources;
+    moveInteract: Interactable | null = null;
+    startHandleIneract: Interactable | null = null;
+    endHandleInteract: Interactable | null = null;
 
-    @wire(selectionSym, {})
-    selection;
-
-    moveInteract;
-    startHandleIneract;
-    endHandleInteract;
-
-    get hasSource() {
-        return !!this.source;
-    }
-
-    get source() {
-        return this.sources.data.get(this.segment.sourceId);
-    }
-
-    get waveformStyle() {
-        const { editor, visibleDuration } = this;
-        const width = editor.data.durationToWidth(visibleDuration);
-        return `width: ${width}px`;
+    get editor() {
+        return this.storeData.data.editor;
     }
 
     get selections() {
-        return this.selection.data.selections.filter((selection) => {
-            return selection.segmentId === this.segment.id;
-        })
-        .map((selection, index) => {
-            const { range } = selection;
-            const x = this.editor.data.timeToPixel(range.start.minus(this.segment.offset));
-            const width = this.editor.data.timeToPixel(range.duration);
-            const style = `width:${width}px;transform: translateX(${x}px)`
-            return {
-                id: index,
-                style,
-            }
-        })
+        return [];
+        // return this.selection.data.selections.filter((selection) => {
+        //     return selection.segmentId === this.segment.id;
+        // })
+        // .map((selection, index) => {
+        //     const { range } = selection;
+        //     const x = this.editor.data.timeToPixel(range.start.minus(this.segment.offset));
+        //     const width = this.editor.data.timeToPixel(range.duration);
+        //     const style = `width:${width}px;transform: translateX(${x}px)`
+        //     return {
+        //         id: index,
+        //         style,
+        //     }
+        // })
     }
 
     onStartDrag = (evt) => {
@@ -67,7 +61,7 @@ export default class AudioTrackSegment extends LightningElement {
     onDrag = (evt) => {
         const { editor, segment } = this;
         const { dx } = evt;
-        const time = editor.data.pixelToTime(dx);
+        const time = pixelToTime(editor.frame, editor.visibleRange, dx);
         const event = new CustomEvent('segmentdrag', {
             composed: true,
             bubbles: true,
@@ -93,7 +87,7 @@ export default class AudioTrackSegment extends LightningElement {
     onStartHandleDrag = rafThrottle((evt) => {
         const { editor, segment } = this;
         const { dx } = evt;
-        const time = editor.data.pixelToTime(dx);
+        const time = pixelToTime(editor.frame, editor.visibleRange, dx);
         const event = new CustomEvent('segmentsourceoffsetchange', {
             composed: true,
             bubbles: true,
@@ -110,7 +104,7 @@ export default class AudioTrackSegment extends LightningElement {
     onEndHandleDrag = rafThrottle((evt) => {
         const { editor, segment } = this;
         const { dx } = evt;
-        const time = editor.data.pixelToTime(dx);
+        const time = pixelToTime(editor.frame, editor.visibleRange, dx);
         const event = new CustomEvent('segmentdurationchange', {
             composed: true,
             bubbles: true,
@@ -118,7 +112,6 @@ export default class AudioTrackSegment extends LightningElement {
                 time,
                 trackId: this.track.id,
                 segmentId: segment.id,
-                sourceId: segment.sourceId,
             }
         });
 
@@ -167,9 +160,17 @@ export default class AudioTrackSegment extends LightningElement {
     }
 
     disconnectedCallback() {
-        this.startHandleIneract.unset();
-        this.endHandleInteract.unset();
-        this.moveInteract.unset();
+        if (this.startHandleIneract) {
+            this.startHandleIneract.unset();
+        }
+
+        if (this.endHandleInteract) {
+            this.endHandleInteract.unset();
+        }
+
+        if (this.moveInteract) {
+            this.moveInteract.unset();
+        }
 
         this.moveInteract = null;
         this.startHandleIneract = null;

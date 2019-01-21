@@ -1,18 +1,10 @@
 <template>
-    <template if:true={hasSource}>
-        <template for:each={selections} for:item="selection">
-            <div class="selection" key={selection.id} style={selection.style}></div>
-        </template>
-        <div class="container" style={containerStyle}>
-            <span class="handle handle--start"></span>
-            <ffmpeg-waveform
-                style={waveformStyle}
-                source-offset={segment.sourceOffset}
-                offset={visibleOffset}
-                duration={visibleDuration}
-                source={source}>
-            </ffmpeg-waveform>
-            <span class="handle handle--end"></span>
-        </div>
+    <template for:each={selections} for:item="selection">
+        <div class="selection" key={selection.id} style={selection.style}></div>
     </template>
+    <div class="container" style={containerStyle}>
+        <span class="handle handle--start"></span>
+
+        <span class="handle handle--end"></span>
+    </div>
 </template>

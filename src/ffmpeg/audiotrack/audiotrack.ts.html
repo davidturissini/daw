@@ -1,6 +1,5 @@
 <template>
-    {instrument.type}
-    <template for:each={trackSegments} for:item="trackSegment">
+    <template for:each={visibleSegments} for:item="trackSegment">
         <ffmpeg-audiotracksegment
             onkeyup={onSegmentKeyUp}
             tabindex="0"

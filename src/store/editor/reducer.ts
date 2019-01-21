@@ -15,23 +15,28 @@ import {
 } from './action';
 import { Frame } from 'util/geometry';
 
-export class EditorState extends Record({
+export class EditorState extends Record<{
+    visibleRange: AudioRange;
+    end: Time;
+    frame: Frame;
+    cursor: Time;
+    virtualCursor: Time;
+    quanitization: number;
+}>({
     visibleRange: new AudioRange(
         timeZero,
         Time.fromSeconds(10)
     ),
     end: Time.fromSeconds(30),
-    frame: null,
+    frame: {
+        height: 0,
+        width: 0,
+    },
     cursor: Time.fromSeconds(1),
     virtualCursor: Time.fromSeconds(2),
     quanitization: 1 / 4
 }) {
-    visibleRange: AudioRange;
-    end: Time;
-    frame: Frame | null;
-    cursor: Time;
-    virtualCursor: Time;
-    quanitization: number;
+
 }
 
 function setEditorFrameReducer(state: EditorState, action: SetEditorFrameAction) {

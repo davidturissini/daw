@@ -30,3 +30,10 @@ export function absolutePixelToTime(frame: Frame, range: AudioRange, pixel: numb
     const time = pixelToTime(frame, range, pixel);
     return time.plus(range.start);
 }
+
+export function durationToWidth(frame: Frame, range: AudioRange, time: Time) {
+    const { width } = frame;
+    const pixelsPerMillisecond = width / range.duration.milliseconds;
+
+    return pixelsPerMillisecond * time.milliseconds
+}

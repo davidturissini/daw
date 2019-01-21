@@ -7,6 +7,7 @@ import { ValueChangedEvent } from 'wire-service';
 import { reducer as audioTrackReducer, AudioTrackState } from './audiotrack/reducer';
 import { reducer as instrumentReducer, InstrumentState } from './instrument/reducer';
 import { reducer as editorReducer, EditorState } from './editor/reducer';
+import { reducer as audioSegmentReducer, AudioSegmentState } from './audiosegment/reducer';
 
 const { keys } = Object;
 
@@ -39,6 +40,7 @@ export interface AppState {
     audiotrack: AudioTrackState;
     instrument: InstrumentState;
     editor: EditorState;
+    audiosegment: AudioSegmentState;
 }
 
 export const appStore = createStore(
@@ -46,6 +48,7 @@ export const appStore = createStore(
         audiotrack: audioTrackReducer,
         instrument: instrumentReducer,
         editor: editorReducer,
+        audiosegment: audioSegmentReducer,
     }),
     applyMiddleware(...middleware),
 );

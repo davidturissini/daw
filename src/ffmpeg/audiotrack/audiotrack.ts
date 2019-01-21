@@ -1,61 +1,69 @@
 import { LightningElement, api, wire } from 'lwc';
-import { editorSym } from '../../wire/editor';
-import { audioSources } from '../../wire/audiosource';
 import {
     deleteTrackSegment,
 } from '../../wire/audiotrack';
-import { audioTrackSegmentsSymbol, mapAudioTrackSegments } from '../../wire/audiotracksegment';
-import { Time } from '../../util/time';
+import { timeZero } from '../../util/time';
 import { wireSymbol, appStore } from 'store/index';
 import { InstrumentState } from 'store/instrument/reducer';
 import { setTrackRect } from 'store/audiotrack/action';
+import { AudioTrack } from 'store/audiotrack';
+import { AudioSegmentState } from 'store/audiosegment/reducer';
+import { AudioSegment } from 'store/audiosegment';
+import { EditorState } from 'store/editor/reducer';
+import { timeToPixel, pixelToTime, durationToWidth } from 'util/geometry';
 
 export default class AudioTrackElement extends LightningElement {
     @api track: AudioTrack;
 
     @wire(wireSymbol, {
         paths: {
-            instruments: ['instrument', 'items']
+            instruments: ['instrument', 'items'],
+            segments: ['audiosegment', 'items'],
+            editor: ['editor']
         }
     })
     storeData: {
         data: {
-            instruments: InstrumentState['items']
+            instruments: InstrumentState['items'];
+            segments: AudioSegmentState['items'];
+            editor: EditorState;
         }
     }
 
     get instrument() {
-        return this.storeData.data.instruments.get(this.track.instrumentId);
+        const { instrumentId } = this.track;
+        if (instrumentId) {
+            return this.storeData.data.instruments.get(instrumentId);
+        }
+        return null;
     }
 
-    @wire(audioTrackSegmentsSymbol, {})
-    audioTrackSegments;
-
-    @wire(editorSym, {})
-    editor;
-
-    @wire(audioSources, {})
-    audioSources;
-
     get trackSegments() {
-        return mapAudioTrackSegments(
-            this.track.segments,
-            this.audioTrackSegments.data
-        )
-        .filter((segment) => {
-            const x = this.editor.data.timeToPixel(segment.offset);
-            const width = this.editor.data.durationToWidth(segment.duration);
-            const frameWidth = this.editor.data.frame.width;
+        const segmentsMap = this.storeData.data.segments;
+        return this.track.segments.map((segmentId) => {
+            return segmentsMap.get(segmentId);
+        });
+    }
+
+    get visibleSegments() {
+        const { editor } = this.storeData.data;
+        const { frame: editorFrame, visibleRange: editorVisibleRange } = editor;
+        return this.trackSegments.filter((segment: AudioSegment) => {
+            const { range } = segment;
+            const x = timeToPixel(editorFrame, editorVisibleRange, range.start);
+            const width = durationToWidth(editorFrame, editorVisibleRange, range.duration);
+            const frameWidth = editorFrame.width;
 
             const isOnScreenLeft = x > 0 || x + width > 0;
             const isOnScreenRight = x < frameWidth;
 
             return isOnScreenLeft && isOnScreenRight;
         })
-        .map((segment, index) => {
-            const frameWidth = this.editor.data.frame.width;
-            const segmentOffset = this.editor.data.timeToPixel(segment.offset);
-            let width = this.editor.data.durationToWidth(segment.duration);
+        .map((segment: AudioSegment, index) => {
+            const { range } = segment;
+            const frameWidth = editorFrame.width;
+            const segmentOffset = timeToPixel(editorFrame, editorVisibleRange, range.start);
+            let width = durationToWidth(editorFrame, editorVisibleRange, range.duration);
             const x = segmentOffset;
             if (x < 0) {
                 width += x;
@@ -70,13 +78,13 @@ export default class AudioTrackElement extends LightningElement {
                 width,
             };
 
-            const visibleDuration = this.editor.data.pixelToTime(width);
-            const visibleOffset = segment.offset.greaterThan(this.editor.data.visibleRange.start) ? new Time(0) : this.editor.data.visibleRange.start.minus(segment.offset);
+            const visibleDuration = pixelToTime(editorFrame, editorVisibleRange, width);
+            const visibleOffset = range.start.greaterThan(editor.visibleRange.start) ? timeZero : editorVisibleRange.start.minus(range.start);
 
             return {
                 key: index,
                 frame,
-                style: `transform: translateX(${frame.x}px); width:${width}px`,
+                style: `transform: translateX(${frame.x}px); width:${width}px; background: ${this.track.color.rgb()}`,
                 segment,
                 visibleDuration,
                 visibleOffset,

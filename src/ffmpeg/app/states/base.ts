@@ -24,7 +24,9 @@ export class BaseState {
     onPlayButtonClick(app, evt) {}
     onStopButtonClick(app, evt) {}
     onDocumentKeyUpEsc(app, evt) {}
+    onDocumentKeyUp(app, evt) {}
     onSilenceDetectButtonClick(app, evt) {}
     onSegmentDurationChange(app, evt) {}
     onEditorMouseLeave(app, evt) {}
+    onAudioTrackMouseDown(app, evt: MouseEvent, trackId: string) {}
 }

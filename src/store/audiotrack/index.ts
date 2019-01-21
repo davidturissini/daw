@@ -17,7 +17,14 @@ class Color {
     }
 }
 
-export class AudioTrack extends Record({
+export class AudioTrack extends Record<{
+    title: string;
+    id: string;
+    segments: List<string>;
+    color: Color;
+    rect: Rect | null;
+    instrumentId: string | null;
+}>({
     title: '',
     id: '',
     segments: List(),
@@ -25,10 +32,5 @@ export class AudioTrack extends Record({
     rect: null,
     instrumentId: null,
 }) {
-    title: string;
-    id: string;
-    segments: List<string>;
-    color: Color;
-    rect: Rect | null;
-    instrumentId: string | null;
+
 }

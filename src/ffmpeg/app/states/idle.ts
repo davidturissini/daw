@@ -28,11 +28,14 @@ import { AudioRange } from '../../../util/audiorange';
 import { appStore } from 'store/index';
 import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
+import { SegmentDrawState } from './segmentdraw';
 
 export class IdleState extends BaseState {
     onDocumentKeyDown(app, evt) {
         if (evt.key === 'Meta') {
             app.enterState(new MetaKeyDownState());
+        } else if (evt.key === 'Alt') {
+            app.enterState(new SegmentDrawState());
         }
     }
 

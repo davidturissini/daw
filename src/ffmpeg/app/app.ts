@@ -27,11 +27,6 @@ export default class App extends LightningElement {
         this.state.enter(this);
     }
 
-    /*
-     *
-     * Audio Tracks
-     *
-    */
     @wire(wireSymbol, {
         paths: {
             audiotracks: ['audiotrack', 'items'],
@@ -195,6 +190,11 @@ export default class App extends LightningElement {
         if (evt.which === 8) {
             this.state.onDocumentKeyUpEsc(this, evt);
         }
+        this.state.onDocumentKeyUp(this, evt);
+    }
+
+    onAudioTrackClick(evt) {
+        this.state.onAudioTrackMouseDown(this, evt, evt.target.track.id);
     }
 
     /*
@@ -202,6 +202,10 @@ export default class App extends LightningElement {
      * Template
      *
     */
+    get hasFrame() {
+        return this.editor.frame.width > 0;
+    }
+
     get hasVirtualCursor() {
         return (
             this.editor && this.editor.virtualCursor !== null &&
@@ -280,7 +284,7 @@ export default class App extends LightningElement {
     }
 
     renderedCallback() {
-        if (this.editor.frame === null) {
+        if (this.editor.frame.width === 0) {
             this.updateFrame();
         }
     }
