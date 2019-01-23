@@ -23,14 +23,14 @@ export class AudioTrack extends Record<{
     segments: List<string>;
     color: Color;
     rect: Rect | null;
-    instrumentId: string | null;
+    instrumentId: string;
 }>({
     title: '',
     id: '',
     segments: List(),
     color: new Color(202, 162, 40),
     rect: null,
-    instrumentId: null,
+    instrumentId: '',
 }) {
 
 }

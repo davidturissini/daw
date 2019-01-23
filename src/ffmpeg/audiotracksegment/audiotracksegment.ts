@@ -5,6 +5,12 @@ import { wireSymbol } from 'store/index';
 import { EditorState } from 'store/editor/reducer';
 import { pixelToTime } from 'util/geometry';
 import { AudioSegment } from 'store/audiosegment';
+import { AudioSourceState } from 'store/audiosource/reducer';
+
+export type SegmentDoubleClickEvent = CustomEvent<{
+    trackId: string;
+    segmentId: string;
+}>;
 
 export default class AudioSegmentElement extends LightningElement {
     @api segment: AudioSegment;
@@ -15,18 +21,25 @@ export default class AudioSegmentElement extends LightningElement {
 
     @wire(wireSymbol, {
         paths: {
-            editor: ['editor']
+            editor: ['editor'],
+            audiosource: ['audiosource', 'items']
         }
     })
     storeData: {
         data: {
             editor: EditorState
+            audiosource: AudioSourceState['items']
         }
     };
 
     moveInteract: Interactable | null = null;
     startHandleIneract: Interactable | null = null;
     endHandleInteract: Interactable | null = null;
+    doubleClickInteract: Interactable | null = null;
+
+    get source() {
+        return this.storeData.data.audiosource.get(this.segment.sourceId);
+    }
 
     get editor() {
         return this.storeData.data.editor;
@@ -84,6 +97,19 @@ export default class AudioSegmentElement extends LightningElement {
         this.dispatchEvent(event);
     }
 
+    onDoubleTap = (evt) => {
+        const event = new CustomEvent('segmentdoubleclick', {
+            composed: true,
+            bubbles: true,
+            detail: {
+                trackId: this.track.id,
+                segmentId: this.segment.id,
+            }
+        });
+
+        this.dispatchEvent(event);
+    }
+
     onStartHandleDrag = rafThrottle((evt) => {
         const { editor, segment } = this;
         const { dx } = evt;
@@ -136,7 +162,9 @@ export default class AudioSegmentElement extends LightningElement {
             onmove: this.onDrag,
             onstart: this.onStartDrag,
             onend: this.onEndDrag,
-        })
+        });
+
+        this.doubleClickInteract = interact(this.template.host).on('doubletap', this.onDoubleTap);
     }
 
     renderedCallback() {
@@ -170,6 +198,10 @@ export default class AudioSegmentElement extends LightningElement {
 
         if (this.moveInteract) {
             this.moveInteract.unset();
+        }
+
+        if (this.doubleClickInteract) {
+            this.doubleClickInteract.unset();
         }
 
         this.moveInteract = null;

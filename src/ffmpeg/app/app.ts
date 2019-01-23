@@ -5,12 +5,15 @@ import { playheadSym } from '../../wire/playhead';
 import { highlightSym } from '../../wire/highlight';
 import { IdleState } from './states/idle';
 import { BaseState } from './states/base';
-import { wireSymbol, appStore } from './../../store/index';
+import { wireSymbol, appStore } from 'store/index';
 import { Map as ImmutableMap } from 'immutable';
 import { AudioTrack } from 'store/audiotrack';
 import { EditorState } from 'store/editor/reducer';
 import { setEditorFrame } from 'store/editor/action';
 import { pixelToTime } from 'util/geometry';
+import { createRouter } from 'store/route/action';
+import { RouterState } from 'store/route/reducer';
+import { RouteNames } from 'store/route';
 
 export default class App extends LightningElement {
     state: BaseState;
@@ -30,11 +33,13 @@ export default class App extends LightningElement {
     @wire(wireSymbol, {
         paths: {
             audiotracks: ['audiotrack', 'items'],
-            editor: ['editor']
+            editor: ['editor'],
+            route: ['router', 'route']
         }
     })
     storeData: {
         data: {
+            route: RouterState['route'];
             editor: EditorState;
             audiotracks: ImmutableMap<string, AudioTrack>;
         }
@@ -50,6 +55,10 @@ export default class App extends LightningElement {
 
     get audioTracksArray() {
        return this.audioTracks.toList().toArray();
+    }
+
+    get route() {
+        return this.storeData.data.route;
     }
 
     onTrackSummaryKeyUp(evt) {
@@ -193,8 +202,35 @@ export default class App extends LightningElement {
         this.state.onDocumentKeyUp(this, evt);
     }
 
-    onAudioTrackClick(evt) {
+    onAudioTrackMouseDown(evt) {
         this.state.onAudioTrackMouseDown(this, evt, evt.target.track.id);
+    }
+
+    onAudioTrackMouseMove(evt) {
+        this.state.onAudioTrackMouseMove(this, evt, evt.target.track.id);
+    }
+
+    onSegmentDoubleClick(evt) {
+        this.state.onSegmentDoubleClick(this, evt);
+    }
+
+    /*
+     *
+     * Routing
+     *
+    */
+    get isEditorRoute() {
+        if (this.route) {
+            return this.route.name === RouteNames.Home;
+        }
+        return false;
+    }
+
+    get isSegmentEditRoute() {
+        if (this.route) {
+            return this.route.name === RouteNames.SegmentEdit;
+        }
+        return false;
     }
 
     /*
@@ -268,6 +304,8 @@ export default class App extends LightningElement {
      *
     */
     connectedCallback() {
+        appStore.dispatch(createRouter());
+        window.history.replaceState(history.state, '', window.location.pathname);
         window.addEventListener('resize', this.updateFrame);
         document.addEventListener('keyup', this.onDocumentKeyUp);
 

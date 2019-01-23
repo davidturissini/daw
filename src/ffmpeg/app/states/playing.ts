@@ -3,6 +3,14 @@ import { IdleState } from './idle';
 import { stop } from '../../../wire/playhead';
 import { AudioRange } from '../../../util/audiorange';
 import { audioContext } from './../../../wire/audiosource';
+import { appStore } from 'store/index';
+import { AudioSegment } from 'store/audiosegment';
+import { AudioSource } from 'store/audiosource';
+import { AudioTrack } from 'store/audiotrack';
+import { Arpeggiator } from './../../../sequencer/Arpeggiator';
+import { Time } from 'util/time';
+
+const ctx = audioContext as AudioContext;
 
 export class PlayingState extends BaseState {
     range: AudioRange;
@@ -11,11 +19,19 @@ export class PlayingState extends BaseState {
         this.range = range;
     }
     enter() {
-        const node = audioContext.createOscillator();
-        node.type = 'triangle';
-        node.frequency.setValueAtTime(440, audioContext.currentTime); // value in hertz
-        node.connect(audioContext.destination);
-        node.start();
+        const {
+            audiosegment,
+            audiosource,
+            audiotrack,
+            instrument,
+        } = appStore.getState();
+        audiosegment.items.forEach((audioSegment: AudioSegment) => {
+            const track = audiotrack.items.get(audioSegment.trackId) as AudioTrack;
+            const trackInstrument = instrument.items.get(track.instrumentId);
+            const source = audiosource.items.get(audioSegment.sourceId) as AudioSource;
+            const arpeggiator = new Arpeggiator(ctx, trackInstrument);
+            arpeggiator.start(new Time(0));
+        })
     }
 
     exit() {

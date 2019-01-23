@@ -17,23 +17,23 @@ import { Frame } from 'util/geometry';
 
 export class EditorState extends Record<{
     visibleRange: AudioRange;
-    end: Time;
     frame: Frame;
     cursor: Time;
-    virtualCursor: Time;
+    duration: Time;
+    virtualCursor: Time | null;
     quanitization: number;
 }>({
     visibleRange: new AudioRange(
         timeZero,
         Time.fromSeconds(10)
     ),
-    end: Time.fromSeconds(30),
+    duration: Time.fromSeconds(30),
     frame: {
         height: 0,
         width: 0,
     },
     cursor: Time.fromSeconds(1),
-    virtualCursor: Time.fromSeconds(2),
+    virtualCursor: null,
     quanitization: 1 / 4
 }) {
 

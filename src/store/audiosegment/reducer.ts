@@ -16,11 +16,12 @@ export class AudioSegmentState extends Record<{
 }) {}
 
 function createAudioSegmentReducer(state: AudioSegmentState, action: CreateAudioSegmentAction) {
-    const { id, trackId, range } = action.payload;
+    const { id, trackId, range, sourceId } = action.payload;
     const segment = new AudioSegment({
         id,
         trackId,
         range,
+        sourceId,
     });
     return state.setIn(['items', id], segment);
 }

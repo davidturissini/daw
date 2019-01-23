@@ -29,6 +29,9 @@ import { appStore } from 'store/index';
 import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { SegmentDrawState } from './segmentdraw';
+import { SegmentDoubleClickEvent } from './../../audiotracksegment/audiotracksegment';
+import { navigate } from 'store/route/action';
+import { RouteNames, SegmentEditRouteParams } from 'store/route';
 
 export class IdleState extends BaseState {
     onDocumentKeyDown(app, evt) {
@@ -126,5 +129,16 @@ export class IdleState extends BaseState {
             const range = getTracksRange(audioTracks);
             app.enterState(new HighlightSilencesState(range));
         });
+    }
+
+    onSegmentDoubleClick(app, evt: SegmentDoubleClickEvent) {
+        const { segmentId } = evt.detail;
+        const path = `/segments/${segmentId}/edit`;
+        appStore.dispatch(
+            navigate<SegmentEditRouteParams>(RouteNames.SegmentEdit, {
+                segment_id: segmentId,
+            })
+        )
+        window.history.pushState({ hello: 'world' }, 'foo', path);
     }
 }

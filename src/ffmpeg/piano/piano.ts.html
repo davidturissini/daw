@@ -1,0 +1,14 @@
+<template>
+    <template for:each={notes} for:item="note">
+        <button
+            class={note.className}
+            data-note-name={note.name}
+            onmouseenter={onKeyMouseEnter}
+            onmousedown={onKeyMouseDown}
+            onmouseleave={onKeyMouseLeave}
+            key={note.name}
+        >
+            <h5 class="key__name">{note.name}</h5>
+        </button>
+    </template>
+</template>

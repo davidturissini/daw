@@ -29,4 +29,6 @@ export class BaseState {
     onSegmentDurationChange(app, evt) {}
     onEditorMouseLeave(app, evt) {}
     onAudioTrackMouseDown(app, evt: MouseEvent, trackId: string) {}
+    onAudioTrackMouseMove(app, evt: MouseEvent, trackId: string) {}
+    onSegmentDoubleClick(app, evt) {}
 }

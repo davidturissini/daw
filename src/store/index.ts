@@ -1,17 +1,33 @@
-import { Store, combineReducers, createStore, applyMiddleware } from 'redux';
+import { Store, combineReducers, createStore, applyMiddleware, Middleware } from 'redux';
 import { createLogger } from 'redux-logger'
 import { register } from 'wire-service';
 import { ValueChangedEvent } from 'wire-service';
+import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
 // Reducers
 import { reducer as audioTrackReducer, AudioTrackState } from './audiotrack/reducer';
 import { reducer as instrumentReducer, InstrumentState } from './instrument/reducer';
 import { reducer as editorReducer, EditorState } from './editor/reducer';
 import { reducer as audioSegmentReducer, AudioSegmentState } from './audiosegment/reducer';
+import { reducer as audioSourceReducer, AudioSourceState } from './audiosource/reducer';
+import { reducer as projectReducer, ProjectState } from './project/reducer';
+import { reducer as routerReducer, RouterState } from './route/reducer';
+import { reducer as pianoReducer, PianoState } from './piano/reducer';
+
+// Epics
+import { createRouterEpic, navigateEpic } from './route/epic';
+import { playKeyEpic } from './piano/epic';
 
 const { keys } = Object;
 
-const middleware: any[] = [];
+const rootEpic = combineEpics(
+    createRouterEpic,
+    navigateEpic,
+    playKeyEpic,
+);
+const epicMiddleware = createEpicMiddleware();
+const middleware: Middleware[] = [epicMiddleware];
+
 
 if (process.env.NODE_ENV !== 'production') {
     middleware.push(
@@ -41,6 +57,10 @@ export interface AppState {
     instrument: InstrumentState;
     editor: EditorState;
     audiosegment: AudioSegmentState;
+    audiosource: AudioSourceState;
+    project: ProjectState;
+    router: RouterState;
+    piano: PianoState;
 }
 
 export const appStore = createStore(
@@ -49,9 +69,14 @@ export const appStore = createStore(
         instrument: instrumentReducer,
         editor: editorReducer,
         audiosegment: audioSegmentReducer,
+        audiosource: audioSourceReducer,
+        project: projectReducer,
+        router: routerReducer,
+        piano: pianoReducer,
     }),
     applyMiddleware(...middleware),
 );
+epicMiddleware.run(rootEpic);
 
 export const wireSymbol = () => {}
 

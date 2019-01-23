@@ -21,9 +21,9 @@ export function setVisibleRange(range: AudioRange): SetVisibleRangeAction {
 }
 
 export type SetCursorTimeAction = Action<{
-    time: Time | null;
+    time: Time;
 }>
-export function setCursorTime(time: Time | null): SetCursorTimeAction {
+export function setCursorTime(time: Time): SetCursorTimeAction {
     return {
         type: SET_CURSOR_TIME,
         payload: {

@@ -17,12 +17,23 @@ export interface InstrumentDataOscillator {
     type: OscillatorNodeTypes;
 }
 
-export class Instrument<T> extends Record({
-    type: InstrumentType.Oscillator,
-    data: {},
-    id: '',
-}) {
+export class Instrument extends Record<{
     id: string;
     type: InstrumentType;
-    data: T
+    data: InstrumentDataOscillator;
+}>({
+    type: InstrumentType.Oscillator,
+    data: {
+        detune: 0,
+        type: OscillatorNodeTypes.sine
+    },
+    id: '',
+}) {
+
+}
+
+export function createOscillator(audioContext: AudioContext, frequency: number) {
+    const oscillator = audioContext.createOscillator();
+    oscillator.frequency.setValueAtTime(frequency, 0);
+    return oscillator;
 }

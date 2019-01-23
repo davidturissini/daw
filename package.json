@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "watch": "yarn build --watch",
+    "watch": "webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -39,6 +39,9 @@
     "parse-ms": "^2.0.0",
     "raf-throttle": "^2.0.3",
     "redux": "^4.0.1",
+    "redux-observable": "^1.0.0",
+    "router5": "^7.0.1",
+    "router5-plugin-browser": "^7.0.1",
     "rxjs": "^6.3.3"
   }
 }

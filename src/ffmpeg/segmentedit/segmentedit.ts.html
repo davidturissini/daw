@@ -1,0 +1,11 @@
+<template>
+    <template if:true={hasPiano}>
+        <ffmpeg-piano
+            piano-id={pianoId}
+            onpianomouseenter={onPianoMouseEnter}
+            onpianomousedown={onPianoMouseDown}
+            onpianomouseleave={onPianoMouseLeave}
+        >
+        </ffmpeg-piano>
+    </template>
+</template>

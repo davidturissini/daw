@@ -109,7 +109,7 @@ export default class AudioTrackElement extends LightningElement {
     renderedCallback() {
         if (!this.track.rect) {
             const { host } = this.template;
-            const rect = this.template.host.getBoundingClientRect();
+            const rect = host.getBoundingClientRect();
             appStore.dispatch(
                 setTrackRect(
                     this.track.id,
