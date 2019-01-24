@@ -4,37 +4,18 @@ import { MetaKeyDownState } from './metakeydown';
 import { SegmentDragState } from './segmentdrag';
 import { EditorDragState } from './editordrag';
 import { PlayingState } from './playing';
-import { HighlightSilencesState } from './highlightsilences';
-import {
-    getTracksDuration,
-    stream as audioTracksStream,
-    getTracksRange,
-} from './../../../wire/audiotrack';
-import {
-    setSegmentDuration,
-    moveSegmentSourceOffset,
-} from './../../../wire/audiotracksegment';
-import {
-    stream as editorStream,
-} from './../../../wire/editor';
-import { take } from 'rxjs/operators';
-import {
-    stream as playheadStream,
-    setPlaybackDuration,
-    incrementPlaybackDuration,
-} from './../../../wire/playhead';
-import { zip } from 'rxjs';
 import { AudioRange } from '../../../util/audiorange';
 import { appStore } from 'store/index';
 import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { SegmentDrawState } from './segmentdraw';
-import { SegmentDoubleClickEvent } from './../../audiotracksegment/audiotracksegment';
 import { navigate } from 'store/route/action';
 import { RouteNames, SegmentEditRouteParams } from 'store/route';
+import { RangeDragStartEvent, RangeSourceOffsetChangeEvent, RangeDoubleClickEvent } from 'cmp/audiorange/audiorange';
+import AppElement from 'cmp/app/app';
 
 export class IdleState extends BaseState {
-    onDocumentKeyDown(app, evt) {
+    onDocumentKeyDown(app: AppElement, evt) {
         if (evt.key === 'Meta') {
             app.enterState(new MetaKeyDownState());
         } else if (evt.key === 'Alt') {
@@ -42,23 +23,19 @@ export class IdleState extends BaseState {
         }
     }
 
-    onTimelineDragStart(app) {
+    onTimelineDragStart(app: AppElement) {
         app.enterState(new TimelineDragState());
     }
 
-    onSegmentDragStart(app) {
-        app.enterState(new SegmentDragState());
+    onSegmentDragStart(app: AppElement, evt: RangeDragStartEvent, segmentId: string) {
+        app.enterState(new SegmentDragState(segmentId));
     }
 
-    onSegmentSourceOffsetChange(app, evt) {
-        const { time, segmentId } = evt.detail;
-        moveSegmentSourceOffset(
-            segmentId,
-            time,
-        );
+    onSegmentSourceOffsetChange(app: AppElement, evt: RangeSourceOffsetChangeEvent, segmentId: string) {
+        throw new Error('not implemented')
     }
 
-    onEditorMouseMove(app, evt) {
+    onEditorMouseMove(app: AppElement, evt) {
         const { editor } = appStore.getState()
         const { offsetX } = evt;
         const time = pixelToTime(editor.frame, editor.visibleRange, offsetX);
@@ -66,25 +43,21 @@ export class IdleState extends BaseState {
         appStore.dispatch(setVirtualCursorTime(next));
     }
 
-    onEditorMouseLeave(app, evt) {
+    onEditorMouseLeave(app: AppElement, evt) {
         appStore.dispatch(setVirtualCursorTime(null));
     }
 
-    onSegmentDurationChange(app, evt) {
-        const { time, segmentId } = evt.detail;
-        setSegmentDuration(
-            segmentId,
-            time,
-        );
+    onSegmentDurationChange(app: AppElement, evt, segmentId: string) {
+        throw new Error('not implemented')
     }
 
-    onEditorClick(app, evt) {
+    onEditorClick(app: AppElement, evt) {
         const { editor } = appStore.getState();
         const next = absolutePixelToTime(editor.frame, editor.visibleRange, evt.offsetX);
         appStore.dispatch(setCursorTime(next));
     }
 
-    onEditorDragOver(app, evt) {
+    onEditorDragOver(app: AppElement, evt) {
         evt.preventDefault();
         app.enterState(new EditorDragState())
     }
@@ -98,24 +71,11 @@ export class IdleState extends BaseState {
     }
 
     onPlaybackDurationCursorDoubleTap(app, evt) {
-        zip(
-            playheadStream,
-            audioTracksStream,
-        )
-        .pipe(take(1)).subscribe(([playhead, audioTracks]) => {
-            const duration = getTracksDuration(audioTracks);
-            if (duration.greaterThan(playhead.playbackRange.duration)) {
-                setPlaybackDuration(duration);
-            }
-        });
+        throw new Error('not implemented')
     }
 
     onPlaybackDurationCursorDrag(app, evt) {
-        editorStream.pipe(take(1)).subscribe((editor) => {
-            const { dx } = evt.detail;
-            const time = editor.pixelToTime(dx);
-            incrementPlaybackDuration(time);
-        });
+        throw new Error('not implemented')
     }
 
     onPlayButtonClick(app, evt) {
@@ -125,14 +85,10 @@ export class IdleState extends BaseState {
     }
 
     onSilenceDetectButtonClick(app, evt) {
-        audioTracksStream.pipe(take(1)).subscribe((audioTracks) => {
-            const range = getTracksRange(audioTracks);
-            app.enterState(new HighlightSilencesState(range));
-        });
+        throw new Error('not implemented')
     }
 
-    onSegmentDoubleClick(app, evt: SegmentDoubleClickEvent) {
-        const { segmentId } = evt.detail;
+    onSegmentDoubleClick(app, evt: RangeDoubleClickEvent, segmentId: string) {
         const path = `/segments/${segmentId}/edit`;
         appStore.dispatch(
             navigate<SegmentEditRouteParams>(RouteNames.SegmentEdit, {

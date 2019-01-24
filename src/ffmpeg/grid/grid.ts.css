@@ -1,5 +1,6 @@
 :host {
-    display: block;
+    display: flex;
+    flex-direction: column;
     position: absolute;
     top: 0;
     left: 0;
@@ -22,4 +23,10 @@ li {
     background: rgba(56, 56, 56);
     z-index: 1;
     list-style-type: none;
+}
+
+.grid-container {
+    flex: 1 0 auto;
+    position: relative;
+    z-index: 1;
 }

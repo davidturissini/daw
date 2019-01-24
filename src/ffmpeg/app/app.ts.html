@@ -33,36 +33,42 @@
             </section>
             <div class="editor-container">
                 <template if:true={hasFrame}>
-                    <header>
-                        <ffmpeg-timeline
-                            onmouseenter={onTimelineMouseEnter}
-                            onmouseleave={onTimelineMouseLeave}
-                            ontimelinedrag={onTimelineDrag}
-                            ontimelinedragstart={onTimelineDragStart}
-                            ontimelinedragend={onTimelineDragEnd}>
-                        </ffmpeg-timeline>
-                    </header>
                     <section class="editor" onmousedown={onEditorMouseDown} onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
                         <ffmpeg-selection></ffmpeg-selection>
                         <div onclick={onEditorClick}>
-                            <ffmpeg-grid></ffmpeg-grid>
-                            <section class="waveforms-container" id="tracks">
-                                <template for:each={audioTracksArray} for:item="track">
-                                    <article class="track" key={track.id}>
-                                        <ffmpeg-audiotrack
-                                            onsegmentdoubleclick={onSegmentDoubleClick}
-                                            onmousemove={onAudioTrackMouseMove}
-                                            onmousedown={onAudioTrackMouseDown}
-                                            onsegmentdurationchange={onSegmentDurationChange}
-                                            onsegmentsourceoffsetchange={onSegmentSourceOffsetChange}
-                                            onsegmentdrag={onSegmentDrag}
-                                            onsegmentdragend={onSegmentDragEnd}
-                                            onsegmentdragstart={onSegmentDragStart}
-                                            track={track}>
-                                        </ffmpeg-audiotrack>
-                                    </article>
+                            <ffmpeg-grid
+                                ontimelinemouseenter={onTimelineMouseEnter}
+                                ontimelinemouseleave={onTimelineMouseLeave}
+                                ontimelinedrag={onTimelineDrag}
+                                ontimelinedragstart={onTimelineDragStart}
+                                ontimelinedragend={onTimelineDragEnd}
+                            >
+                                <template for:each={trackRows} for:item="row">
+                                    <ffmpeg-gridrow
+                                        data-track-id={row.trackId}
+                                        onmousemove={onAudioTrackMouseMove}
+                                        onmousedown={onAudioTrackMouseDown}
+                                        onrangedrag={onSegmentDrag}
+                                        onrangedragend={onSegmentDragEnd}
+                                        onrangedragstart={onSegmentDragStart}
+                                        onrangedoubleclick={onSegmentDoubleClick}
+                                        onrangedurationchange={onSegmentDurationChange}
+                                        onrangesourceoffsetchange={onSegmentSourceOffsetChange}
+                                        height={row.height}
+                                        key={row.key}>
+                                        <template for:each={row.ranges} for:item="range">
+                                            <ffmpeg-audiorange
+                                                data-segment-id={range.segmentId}
+                                                color={row.color}
+                                                audio-window={editor}
+                                                key={range.key}
+                                                range={range.data}
+                                            >
+                                        </ffmpeg-audiorange>
+                                        </template>
+                                    </ffmpeg-gridrow>
                                 </template>
-                            </section>
+                            </ffmpeg-grid>
                         </div>
                         <template if:true={cursorInWindow}>
                             <ffmpeg-cursor time={editor.cursor}></ffmpeg-cursor>

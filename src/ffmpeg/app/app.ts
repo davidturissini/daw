@@ -14,8 +14,11 @@ import { pixelToTime } from 'util/geometry';
 import { createRouter } from 'store/route/action';
 import { RouterState } from 'store/route/reducer';
 import { RouteNames } from 'store/route';
+import { AudioSegmentState } from 'store/audiosegment/reducer';
+import { AudioSegment } from 'store/audiosegment';
+import { Color } from 'util/color';
 
-export default class App extends LightningElement {
+export default class AppElement extends LightningElement {
     state: BaseState;
     constructor() {
         super();
@@ -34,11 +37,13 @@ export default class App extends LightningElement {
         paths: {
             audiotracks: ['audiotrack', 'items'],
             editor: ['editor'],
-            route: ['router', 'route']
+            route: ['router', 'route'],
+            segments: ['audiosegment', 'items'],
         }
     })
     storeData: {
         data: {
+            segments: AudioSegmentState['items'];
             route: RouterState['route'];
             editor: EditorState;
             audiotracks: ImmutableMap<string, AudioTrack>;
@@ -64,7 +69,7 @@ export default class App extends LightningElement {
     onTrackSummaryKeyUp(evt) {
         if (evt.which === 8) {
             const trackId = evt.target.getAttribute('data-track-id');
-            deleteTrack(trackId);
+            //deleteTrack(trackId);
         }
     }
 
@@ -108,8 +113,8 @@ export default class App extends LightningElement {
      * Events
      *
     */
-    onSegmentDragStart() {
-        this.state.onSegmentDragStart(this);
+    onSegmentDragStart(evt) {
+        this.state.onSegmentDragStart(this, evt, evt.target.getAttribute('data-segment-id'));
     }
 
     onSegmentDragEnd() {
@@ -121,11 +126,11 @@ export default class App extends LightningElement {
     }
 
     onSegmentSourceOffsetChange(evt) {
-        this.state.onSegmentSourceOffsetChange(this, evt);
+        this.state.onSegmentSourceOffsetChange(this, evt, evt.target.getAttribute('data-segment-id'));
     }
 
     onSegmentDurationChange(evt) {
-        this.state.onSegmentDurationChange(this, evt);
+        this.state.onSegmentDurationChange(this, evt, evt.target.getAttribute('data-segment-id'));
     }
 
     onEditorMouseMove = (evt) => {
@@ -203,15 +208,15 @@ export default class App extends LightningElement {
     }
 
     onAudioTrackMouseDown(evt) {
-        this.state.onAudioTrackMouseDown(this, evt, evt.target.track.id);
+        this.state.onAudioTrackMouseDown(this, evt, evt.target.getAttribute('data-track-id'));
     }
 
     onAudioTrackMouseMove(evt) {
-        this.state.onAudioTrackMouseMove(this, evt, evt.target.track.id);
+        this.state.onAudioTrackMouseMove(this, evt, evt.target.getAttribute('data-track-id'));
     }
 
     onSegmentDoubleClick(evt) {
-        this.state.onSegmentDoubleClick(this, evt);
+        this.state.onSegmentDoubleClick(this, evt, evt.target.getAttribute('data-segment-id'));
     }
 
     /*
@@ -247,6 +252,28 @@ export default class App extends LightningElement {
             this.editor && this.editor.virtualCursor !== null &&
             this.timeInWindow(this.editor.virtualCursor)
         );
+    }
+
+    get trackRows() {
+        return this.audioTracksArray.map((audioTrack) => {
+            const ranges = audioTrack.segments.map((segmentId) => {
+                const segment = this.storeData.data.segments.get(segmentId) as AudioSegment;
+                return {
+                    segmentId: segment.id,
+                    key: segment.id,
+                    data: segment.range,
+                };
+            })
+            .toArray();
+
+            return {
+                color: new Color(255, 0, 0),
+                trackId: audioTrack.id,
+                key: audioTrack.id,
+                height: 60,
+                ranges,
+            };
+        });
     }
 
     get hasPlaybackCursor() {

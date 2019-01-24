@@ -26,6 +26,7 @@ module.exports = {
             lwc: '@lwc/engine',
             'wire-service': '@lwc/wire-service',
             ...lwcAliases,
+            cmp: path.resolve('./src/ffmpeg'),
         }
     },
     module: {

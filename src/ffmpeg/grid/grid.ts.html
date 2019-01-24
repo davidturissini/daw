@@ -1,7 +1,17 @@
 <template>
-    <ul>
-        <template for:each={gridLines} for:item="gridLine">
-            <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
-        </template>
-    </ul>
+    <ffmpeg-timeline
+        onmouseenter={onTimelineMouseEnter}
+        onmouseleave={onTimelineMouseLeave}
+        ontimelinedrag={onTimelineDrag}
+        ontimelinedragstart={onTimelineDragStart}
+        ontimelinedragend={onTimelineDragEnd}>
+    </ffmpeg-timeline>
+    <div class="grid-container">
+        <ul>
+            <template for:each={gridLines} for:item="gridLine">
+                <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
+            </template>
+        </ul>
+        <slot></slot>
+    </div>
 </template>

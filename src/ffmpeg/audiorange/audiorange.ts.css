@@ -1,9 +1,6 @@
 :host {
-    display: block;
-    position: relative;
-    z-index: 1;
-    border-radius: 0.2rem;
-    overflow: hidden;
+    display: inline-block;
+    height: 100%;
 }
 
 :host(:focus) {
@@ -16,6 +13,10 @@
 
 :host(:hover) .handle {
     opacity: 1;
+}
+
+.container {
+    height: 100%;
 }
 
 .handle {
@@ -36,17 +37,4 @@
 .handle--end {
     left: auto;
     right: 0;
-}
-
-.container {
-    height: 100%;
-}
-
-.selection {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 4;
-    background: rgba(96, 130, 171, 0.4);
 }

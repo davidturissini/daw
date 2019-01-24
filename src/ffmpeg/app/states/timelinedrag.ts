@@ -6,6 +6,8 @@ import { pixelToTime } from 'util/geometry';
 import { setVisibleRange } from 'store/editor/action';
 import { AudioRange } from 'util/audiorange';
 
+import { TimelineDragEvent } from './../../grid/grid';
+
 export class TimelineDragState extends BaseState {
     enter(app) {
         app.template.host.classList.add('editor--drag');
@@ -19,7 +21,7 @@ export class TimelineDragState extends BaseState {
         app.enterState(new IdleState());
     }
 
-    onTimelineDrag(app, evt) {
+    onTimelineDrag(app, evt: TimelineDragEvent) {
         const { editor } = appStore.getState();
         const time = pixelToTime(editor.frame, editor.visibleRange, evt.detail.dx);
         let start = editor.visibleRange.start.minus(time);
