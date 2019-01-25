@@ -1,16 +1,10 @@
 :host {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto 100fr;
+    grid-template-columns: 200px 100fr 50px;
     font-family: Arial;
     height: 100vh;
-}
-
-:host(.editor--draggable) main {
-    cursor: -webkit-grab;
-}
-
-:host(.editor--drag) main {
-    cursor: -webkit-grabbing;
+    overflow: hidden;
 }
 
 .header {
@@ -18,16 +12,29 @@
     padding: 0.4rem;
     display: flex;
     align-items: center;
+    grid-row: 1;
+    grid-column-start: span 3;
 }
 
-ffmpeg-audioscroll {
-    flex: 1 0 auto;
+.selections {
+    flex: 0 1 150px;
+    background: rgb(96, 96, 96);
+    border-right: 1px solid rgb(52, 52, 52);
+    grid-column: 1;
 }
 
 main {
-    background: rgb(96, 96, 96);
+    grid-column: 2;
+    display: grid;
+    grid-template-rows: 100fr;
+}
+
+.master-out {
     display: flex;
-    cursor: auto;
+    grid-column: 3;
+}
+
+ffmpeg-audioscroll {
     flex: 1 0 auto;
 }
 
@@ -56,23 +63,6 @@ main {
     align-items: center;
 }
 
-.tracks-summary {
-    flex: 0 0 200px;
-    border-left: 1px solid rgb(52, 52, 52);
-    margin-left: 2px;
-}
-
-.tracks-summary__header {
-    height: 2rem;
-    background: rgb(52, 52, 52);
-}
-
-.selections {
-    flex: 0 1 150px;
-    background: rgb(96, 96, 96);
-    border-right: 1px solid rgb(52, 52, 52);
-}
-
 .tracks-summary__body {
     display: flex;
 }
@@ -81,19 +71,13 @@ main {
     position: relative;
     z-index: 1;
     flex: 1 0 auto;
-    background: rgb(46, 46, 46);
+    display: flex;
 }
 
 .editor--selecting {
     cursor: crosshair;
 }
 
-.editor-container {
+.track-grid {
     flex: 1 0 auto;
-    display: flex;
-    flex-direction: column;
-}
-
-.waveforms-container {
-    overflow: hidden;
 }

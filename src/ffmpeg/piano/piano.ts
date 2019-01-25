@@ -3,6 +3,7 @@ import { notes } from 'util/sound';
 import { wireSymbol } from 'store/index';
 import { PianoState } from 'store/piano/reducer';
 import { Piano } from 'store/piano';
+import { Frame } from 'util/geometry';
 
 export type PianoMouseDownEvent = CustomEvent<{
     name: string;
@@ -22,22 +23,28 @@ export type PianoMouseLeaveEvent = CustomEvent<{
     pianoId: string;
 }>
 
-const { keys } = Object;
-const notesView: Array<{ name: string; frequency: number }> = keys(notes).map((key) => {
-    const note = notes[key];
-    const classNames = ['key'];
-    if (note.sharp === true) {
-        classNames.push('key--sharp');
-    }
-    return {
-        name: key,
-        frequency: note.frequency,
-        className: classNames.join(' '),
-    };
-});
+const notesSym = Symbol();
 
 export default class PianoElement extends LightningElement {
     @api pianoId: string;
+    octaveFrames: { [key: string]: Frame };
+
+    @api
+    set notes(value: Array<{ sharp: boolean, height: number, name: string }>) {
+        const frames = value.reduce((seed, note) => {
+            const frame: Frame = {
+                height: note.sharp === true ? note.height : note.height / 2,
+                width: 0,
+            }
+        });
+        console.log(frames);
+        this[notesSym] = value;
+    }
+
+    get notes() {
+        return this[notesSym];
+    }
+
 
     @wire(wireSymbol, {
         paths: {
@@ -54,8 +61,25 @@ export default class PianoElement extends LightningElement {
         return this.storeData.data.pianos.get(this.pianoId) as Piano;
     }
 
-    get notes(): Array<{ name: string; frequency: number }> {
-        return notesView;
+    get noteViewModels() {
+        return this.notes.map((note) => {
+            const classNames = ['key'];
+            const styles = [
+                `height: ${note.height}px`
+            ];
+            if (note.sharp === true) {
+                classNames.push('key--sharp');
+                styles.push(`margin: ${-note.height / 2}px 0`)
+            }
+
+
+
+            return {
+                name: note.name,
+                className: classNames.join(' '),
+                style: styles.join(';')
+            };
+        })
     }
 
     onKeyMouseLeave(evt: MouseEvent) {

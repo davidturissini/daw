@@ -1,14 +1,31 @@
 <template>
-    <template for:each={notes} for:item="note">
-        <button
-            class={note.className}
-            data-note-name={note.name}
-            onmouseenter={onKeyMouseEnter}
-            onmousedown={onKeyMouseDown}
-            onmouseleave={onKeyMouseLeave}
-            key={note.name}
-        >
-            <h5 class="key__name">{note.name}</h5>
-        </button>
-    </template>
+    <ffmpeg-grid>
+        <div slot="col-left">
+            <template for:each={noteViewModels} for:item="note">
+                <button
+                    class={note.className}
+                    style={note.style}
+                    data-note-name={note.name}
+                    onmouseenter={onKeyMouseEnter}
+                    onmousedown={onKeyMouseDown}
+                    onmouseleave={onKeyMouseLeave}
+                    key={note.name}
+                >
+                    <h5 class="key__name">{note.name}</h5>
+                </button>
+            </template>
+        </div>
+        <!-- <template for:each={octaveNotes} for:item="octave">
+            <ffmpeg-gridrow key={octave.octave} height={octave.height}>
+                <template for:each={octave.notes} for:item="note">
+                    <ffmpeg-audiorange
+                        audio-window={audioWindow}
+                        color={note.color}
+                        range={note.range}
+                        key={note.key}>
+                    </ffmpeg-audiorange>
+                </template>
+            </ffmpeg-gridrow>
+        </template> -->
+    </ffmpeg-grid>
 </template>

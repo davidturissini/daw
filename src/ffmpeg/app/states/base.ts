@@ -1,4 +1,6 @@
 import { TimelineDragState } from './timelinedrag';
+import { GridRowMouseDownEvent } from 'cmp/grid/grid';
+import { RangeDurationChangeEvent, RangeSourceOffsetChangeEvent, RangeDragEvent, RangeDragEndEvent, RangeDragStartEvent } from 'cmp/audiorange/audiorange';
 
 export class BaseState {
     enter(app) {}
@@ -8,10 +10,10 @@ export class BaseState {
     onTimelineDragEnd(app) {}
     onTimelineMouseEnter(app, evt) {}
     onTimelineMouseLeave(app, evt) {}
-    onSegmentDragStart(app, evt, segmentId: string) {}
-    onSegmentDragEnd(app) {}
-    onSegmentDrag(app, evt) {}
-    onSegmentSourceOffsetChange(app, evt, segmentId: string) {}
+    onSegmentDragStart(app, evt: RangeDragStartEvent) {}
+    onSegmentDragEnd(app, evt: RangeDragEndEvent) {}
+    onSegmentDrag(app, evt: RangeDragEvent) {}
+    onSegmentSourceOffsetChange(app, evt: RangeSourceOffsetChangeEvent) {}
     onDocumentKeyDown(app, evt) {}
     onEditorClick(app, evt) {}
     onEditorMouseDown(app, evt) {}
@@ -26,9 +28,9 @@ export class BaseState {
     onDocumentKeyUpEsc(app, evt) {}
     onDocumentKeyUp(app, evt) {}
     onSilenceDetectButtonClick(app, evt) {}
-    onSegmentDurationChange(app, evt, segmentId: string) {}
+    onSegmentDurationChange(app, evt: RangeDurationChangeEvent) {}
     onEditorMouseLeave(app, evt) {}
-    onAudioTrackMouseDown(app, evt: MouseEvent, trackId: string) {}
+    onAudioTrackMouseDown(app, evt: GridRowMouseDownEvent) {}
     onAudioTrackMouseMove(app, evt: MouseEvent, trackId: string) {}
     onSegmentDoubleClick(app, evt, segmentId: string) {}
 }

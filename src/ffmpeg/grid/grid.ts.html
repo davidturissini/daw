@@ -1,17 +1,37 @@
 <template>
+    <header class="toolbar">
+        <button onclick={onEditButtonClick}>Edit</button>
+    </header>
     <ffmpeg-timeline
+        if:true={hasAudioWindow}
+        class="timeline"
+        audio-window={audioWindow}
         onmouseenter={onTimelineMouseEnter}
         onmouseleave={onTimelineMouseLeave}
         ontimelinedrag={onTimelineDrag}
         ontimelinedragstart={onTimelineDragStart}
         ontimelinedragend={onTimelineDragEnd}>
     </ffmpeg-timeline>
+    <div class="col-left">
+        <slot name="col-left"></slot>
+    </div>
     <div class="grid-container">
         <ul>
             <template for:each={gridLines} for:item="gridLine">
                 <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
             </template>
         </ul>
+        <template for:each={rows} for:item="row">
+            <div
+                data-row-id={row.id}
+                onmouseup={onGridRowMouseUp}
+                onmousedown={onGridRowMouseDown}
+                onmousemove={onGridRowMouseMove}
+                class="row"
+                key={row.id}
+                style="height: 60px">
+            </div>
+        </template>
         <slot></slot>
     </div>
 </template>

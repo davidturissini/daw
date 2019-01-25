@@ -1,4 +1,4 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, wire, track } from 'lwc';
 import { incrementEnd } from '../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
 import { playheadSym } from '../../wire/playhead';
@@ -9,17 +9,25 @@ import { wireSymbol, appStore } from 'store/index';
 import { Map as ImmutableMap } from 'immutable';
 import { AudioTrack } from 'store/audiotrack';
 import { EditorState } from 'store/editor/reducer';
-import { setEditorFrame } from 'store/editor/action';
-import { pixelToTime } from 'util/geometry';
+import { pixelToTime, Frame } from 'util/geometry';
 import { createRouter } from 'store/route/action';
 import { RouterState } from 'store/route/reducer';
 import { RouteNames } from 'store/route';
 import { AudioSegmentState } from 'store/audiosegment/reducer';
 import { AudioSegment } from 'store/audiosegment';
 import { Color } from 'util/color';
+import { GridElementRow, GridAudioWindowCreatedEvent, AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
+import { generateId } from 'util/uniqueid';
+import { createAudioWindow } from 'store/audiowindow/action';
+import { AudioRange } from 'util/audiorange';
+import { timeZero, Time } from 'util/time';
+import { AudioWindowState } from 'store/audiowindow/reducer';
+import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
+import { createAudioSource } from 'store/audiosource/action';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
+    @track audioTrackWindowId: string | null = null;
     constructor() {
         super();
         this.enterState(new IdleState());
@@ -35,6 +43,7 @@ export default class AppElement extends LightningElement {
 
     @wire(wireSymbol, {
         paths: {
+            audiowindow: ['audiowindow', 'items'],
             audiotracks: ['audiotrack', 'items'],
             editor: ['editor'],
             route: ['router', 'route'],
@@ -47,6 +56,7 @@ export default class AppElement extends LightningElement {
             route: RouterState['route'];
             editor: EditorState;
             audiotracks: ImmutableMap<string, AudioTrack>;
+            audiowindow: AudioWindowState['items'];
         }
     }
 
@@ -95,17 +105,20 @@ export default class AppElement extends LightningElement {
 
     /*
      *
-     * Frame
+     * Track Segment Grid Events
      *
     */
-    updateFrame = () => {
-        const rect = this.template.querySelector('.editor-container')!.getBoundingClientRect();
-        appStore.dispatch(
-            setEditorFrame(
-                rect.height,
-                rect.width,
-            )
-        );
+    onTrackSegmentCreated(evt: AudioRangeCreatedEvent) {
+        const { id, parentId, range } = evt.detail;
+        const sourceId = generateId();
+
+        appStore.dispatch(createAudioSource(sourceId));
+        appStore.dispatch(createAudioSegment(id, parentId, range, sourceId));
+    }
+
+    onTrackSegmentRangeChange(evt: AudioRangeChangeEvent) {
+        const { id, range } = evt.detail;
+        appStore.dispatch(setAudioSegmentRange(id, range));
     }
 
     /*
@@ -114,7 +127,7 @@ export default class AppElement extends LightningElement {
      *
     */
     onSegmentDragStart(evt) {
-        this.state.onSegmentDragStart(this, evt, evt.target.getAttribute('data-segment-id'));
+        this.state.onSegmentDragStart(this, evt);
     }
 
     onSegmentDragEnd() {
@@ -126,11 +139,11 @@ export default class AppElement extends LightningElement {
     }
 
     onSegmentSourceOffsetChange(evt) {
-        this.state.onSegmentSourceOffsetChange(this, evt, evt.target.getAttribute('data-segment-id'));
+        this.state.onSegmentSourceOffsetChange(this, evt);
     }
 
     onSegmentDurationChange(evt) {
-        this.state.onSegmentDurationChange(this, evt, evt.target.getAttribute('data-segment-id'));
+        this.state.onSegmentDurationChange(this, evt);
     }
 
     onEditorMouseMove = (evt) => {
@@ -207,8 +220,8 @@ export default class AppElement extends LightningElement {
         this.state.onDocumentKeyUp(this, evt);
     }
 
-    onAudioTrackMouseDown(evt) {
-        this.state.onAudioTrackMouseDown(this, evt, evt.target.getAttribute('data-track-id'));
+    onGridRowMouseDown(evt) {
+        this.state.onAudioTrackMouseDown(this, evt);
     }
 
     onAudioTrackMouseMove(evt) {
@@ -325,6 +338,48 @@ export default class AppElement extends LightningElement {
         return this.template.querySelector('.editor');
     }
 
+    get trackGridRows(): GridElementRow[] {
+        return this.audioTracks.map((audioTrack: AudioTrack, id: string) => {
+            return {
+                id,
+                height: 60,
+            } as GridElementRow;
+        })
+        .toList()
+        .toArray();
+    }
+
+    get trackSegments(): Array<{ segment: AudioSegment, rowIndex: number, color: Color }> {
+        return this.audioTracks.toList().reduce((seed: Array<{ segment: AudioSegment, rowIndex: number, color: Color }>, audioTrack: AudioTrack, index: number) => {
+            const segments: Array<{ segment: AudioSegment, rowIndex: number, color: Color }> = audioTrack.segments.map((segmentId: string) => {
+                return {
+                    segment: this.storeData.data.segments.get(segmentId) as AudioSegment,
+                    rowIndex: index,
+                    color: audioTrack.color,
+                };
+            })
+            .toArray();
+            return seed.concat(segments)
+        }, []);
+    }
+
+    get hasAudioTrackWindowId() {
+        return this.audioTrackWindowId !== null;
+    }
+
+    get audioTrackWindow() {
+        const { audioTrackWindowId } = this;
+        if (audioTrackWindowId) {
+            return this.storeData.data.audiowindow.get(audioTrackWindowId);
+        }
+        return null;
+    }
+
+    onAudioTrackWindowCreated(evt: GridAudioWindowCreatedEvent) {
+        const { windowId } = evt.detail;
+        this.audioTrackWindowId = windowId;
+    }
+
     /*
      *
      * Lifecycle
@@ -333,7 +388,6 @@ export default class AppElement extends LightningElement {
     connectedCallback() {
         appStore.dispatch(createRouter());
         window.history.replaceState(history.state, '', window.location.pathname);
-        window.addEventListener('resize', this.updateFrame);
         document.addEventListener('keyup', this.onDocumentKeyUp);
 
         observableFromEvent(document, 'keydown').subscribe((evt) => {
@@ -348,13 +402,9 @@ export default class AppElement extends LightningElement {
         this.addEventListener('drop', this.onDrop);
     }
 
-    renderedCallback() {
-        if (this.editor.frame.width === 0) {
-            this.updateFrame();
-        }
-    }
-
     disconnectedCallback() {
-        window.removeEventListener('resize', this.updateFrame);
+        document.removeEventListener('keyup', this.onDocumentKeyUp);
+        this.removeEventListener('dragover', this.onDragOver);
+        this.removeEventListener('drop', this.onDrop);
     }
 }

@@ -5,13 +5,11 @@ import {
     SET_EDITOR_FRAME,
     SET_VIRTUAL_CURSOR_TIME,
     SET_CURSOR_TIME,
-    SET_VISIBLE_RANGE,
 } from './const';
 import {
     SetEditorFrameAction,
     SetCursorTimeAction,
     SetVirtualCursorTimeAction,
-    SetVisibleRangeAction,
 } from './action';
 import { Frame } from 'util/geometry';
 
@@ -58,11 +56,6 @@ function setCursorTimeReducer(state: EditorState, action: SetCursorTimeAction) {
     return state.set('cursor', time);
 }
 
-function setVisibleRangeReducer(state: EditorState, action: SetVisibleRangeAction) {
-    const { range } = action.payload;
-    return state.set('visibleRange', range);
-}
-
 export function reducer(state = new EditorState(), action) {
     switch (action.type) {
         case SET_EDITOR_FRAME:
@@ -71,8 +64,6 @@ export function reducer(state = new EditorState(), action) {
             return setVirtualCursorTimeReducer(state, action);
         case SET_CURSOR_TIME:
             return setCursorTimeReducer(state, action);
-        case SET_VISIBLE_RANGE:
-            return setVisibleRangeReducer(state, action);
     }
     return state;
 }

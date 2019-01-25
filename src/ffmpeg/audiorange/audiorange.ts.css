@@ -1,6 +1,9 @@
 :host {
-    display: inline-block;
-    height: 100%;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
 }
 
 :host(:focus) {
@@ -13,10 +16,6 @@
 
 :host(:hover) .handle {
     opacity: 1;
-}
-
-.container {
-    height: 100%;
 }
 
 .handle {

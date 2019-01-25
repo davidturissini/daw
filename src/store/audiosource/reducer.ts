@@ -4,7 +4,6 @@ import { CREATE_AUDIO_SOURCE } from './const';
 import { CreateAudioSourceAction } from './action';
 import { AudioRange } from 'util/audiorange';
 import { Time, timeZero } from 'util/time';
-import { notes } from 'util/sound';
 
 export class AudioSourceState extends Record<{
     items: ImmutableMap<string, AudioSource>
@@ -20,55 +19,12 @@ function createAudioSourceReducer(state: AudioSourceState, action: CreateAudioSo
     const source = new AudioSource({
         id,
         notes: [{
-            range: new AudioRange(timeZero, Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['a4'],
-            }
-        },{
-            range: new AudioRange(timeZero, Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['c4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['a4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['c4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base * 2), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['a4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base * 2), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['c4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base * 3), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['a4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base * 3), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['c4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base * 4), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['a4'],
-            }
-        },{
-            range: new AudioRange(Time.fromSeconds(base * 4), Time.fromSeconds(eighth)),
-            data: {
-                frequency: notes['c4'],
-            }
+            range: new AudioRange(timeZero, Time.fromSeconds(1)),
+            octave: 'a4',
+        },
+        {
+            range: new AudioRange(timeZero, Time.fromSeconds(1)),
+            octave: 'e4',
         }]
     });
     return state.setIn(['items', '4'], source);

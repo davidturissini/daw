@@ -11,7 +11,7 @@ import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { SegmentDrawState } from './segmentdraw';
 import { navigate } from 'store/route/action';
 import { RouteNames, SegmentEditRouteParams } from 'store/route';
-import { RangeDragStartEvent, RangeSourceOffsetChangeEvent, RangeDoubleClickEvent } from 'cmp/audiorange/audiorange';
+import { RangeDragStartEvent, RangeSourceOffsetChangeEvent, RangeDoubleClickEvent, RangeDurationChangeEvent } from 'cmp/audiorange/audiorange';
 import AppElement from 'cmp/app/app';
 
 export class IdleState extends BaseState {
@@ -27,11 +27,12 @@ export class IdleState extends BaseState {
         app.enterState(new TimelineDragState());
     }
 
-    onSegmentDragStart(app: AppElement, evt: RangeDragStartEvent, segmentId: string) {
+    onSegmentDragStart(app: AppElement, evt: RangeDragStartEvent) {
+        const { itemId: segmentId } = evt.detail;
         app.enterState(new SegmentDragState(segmentId));
     }
 
-    onSegmentSourceOffsetChange(app: AppElement, evt: RangeSourceOffsetChangeEvent, segmentId: string) {
+    onSegmentSourceOffsetChange(app: AppElement, evt: RangeSourceOffsetChangeEvent) {
         throw new Error('not implemented')
     }
 
@@ -47,7 +48,7 @@ export class IdleState extends BaseState {
         appStore.dispatch(setVirtualCursorTime(null));
     }
 
-    onSegmentDurationChange(app: AppElement, evt, segmentId: string) {
+    onSegmentDurationChange(app: AppElement, evt: RangeDurationChangeEvent) {
         throw new Error('not implemented')
     }
 

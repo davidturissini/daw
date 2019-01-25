@@ -8,95 +8,78 @@
         <ffmpeg-audioscroll></ffmpeg-audioscroll>
         <ffmpeg-instruments></ffmpeg-instruments>
     </header>
-    <main>
-        <aside class="selections">
-            <section class="highlights">
-                <template for:each={highlights} for:item="highlight">
-                    <ffmpeg-highlightdetail
-                        key={highlight.id}
-                        highlight={highlight}>
-                    </ffmpeg-highlightdetail>
-                </template>
-            </section>
-        </aside>
+    <aside class="selections">
+        <section class="highlights">
+            <template for:each={highlights} for:item="highlight">
+                <ffmpeg-highlightdetail
+                    key={highlight.id}
+                    highlight={highlight}>
+                </ffmpeg-highlightdetail>
+            </template>
+        </section>
+    </aside>
+    <main class="body">
         <template if:true={isEditorRoute}>
-            <section class="tracks-summary">
-                <header class="tracks-summary__header"></header>
-                <section class="tracks">
-                    <template for:each={audioTracksArray} for:item="track" for:index="index">
-                        <article data-track-id={track.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.id}>
-                            <span class="track-index">{index}</span>
-                            <h4 class="track__title">{track.title}</h4>
-                        </article>
-                    </template>
-                </section>
-            </section>
-            <div class="editor-container">
-                <template if:true={hasFrame}>
-                    <section class="editor" onmousedown={onEditorMouseDown} onmousemove={onEditorMouseMove} onmouseleave={onEditorMouseLeave}>
-                        <ffmpeg-selection></ffmpeg-selection>
-                        <div onclick={onEditorClick}>
-                            <ffmpeg-grid
-                                ontimelinemouseenter={onTimelineMouseEnter}
-                                ontimelinemouseleave={onTimelineMouseLeave}
-                                ontimelinedrag={onTimelineDrag}
-                                ontimelinedragstart={onTimelineDragStart}
-                                ontimelinedragend={onTimelineDragEnd}
-                            >
-                                <template for:each={trackRows} for:item="row">
-                                    <ffmpeg-gridrow
-                                        data-track-id={row.trackId}
-                                        onmousemove={onAudioTrackMouseMove}
-                                        onmousedown={onAudioTrackMouseDown}
-                                        onrangedrag={onSegmentDrag}
-                                        onrangedragend={onSegmentDragEnd}
-                                        onrangedragstart={onSegmentDragStart}
-                                        onrangedoubleclick={onSegmentDoubleClick}
-                                        onrangedurationchange={onSegmentDurationChange}
-                                        onrangesourceoffsetchange={onSegmentSourceOffsetChange}
-                                        height={row.height}
-                                        key={row.key}>
-                                        <template for:each={row.ranges} for:item="range">
-                                            <ffmpeg-audiorange
-                                                data-segment-id={range.segmentId}
-                                                color={row.color}
-                                                audio-window={editor}
-                                                key={range.key}
-                                                range={range.data}
-                                            >
-                                        </ffmpeg-audiorange>
-                                        </template>
-                                    </ffmpeg-gridrow>
-                                </template>
-                            </ffmpeg-grid>
-                        </div>
-                        <template if:true={cursorInWindow}>
-                            <ffmpeg-cursor time={editor.cursor}></ffmpeg-cursor>
-                        </template>
-                        <template if:true={hasVirtualCursor}>
-                            <ffmpeg-cursor time={editor.virtualCursor} virtual></ffmpeg-cursor>
-                        </template>
-                        <template if:true={hasPlaybackCursor}>
-                            <ffmpeg-cursor time={playhead.currentTime} playhead></ffmpeg-cursor>
-                        </template>
-                        <template if:true={hasPlaybackDurationCursor}>
-                            <ffmpeg-cursor
-                                oncursordoubletap={onPlaybackDurationCursorDoubleTap}
-                                oncursordrag={onPlaybackDurationCursorDrag}
-                                time={playhead.playbackRange.duration}
-                                user-drag>
-                            </ffmpeg-cursor>
-                        </template>
-                        <template for:each={highlights} for:item="highlight">
-                            <ffmpeg-highlight key={highlight.id} highlight={highlight}></ffmpeg-highlight>
+            <ffmpeg-selection></ffmpeg-selection>
+            <ffmpeg-grid
+                ongridaudiowindowcreated={onAudioTrackWindowCreated}
+                class="track-grid"
+                onaudiorangecreated={onTrackSegmentCreated}
+                onaudiorangechange={onTrackSegmentRangeChange}
+                rows={trackGridRows}
+            >
+                <section slot="col-left" class="tracks-summary">
+                    <section class="tracks">
+                        <template for:each={audioTracksArray} for:item="track" for:index="index">
+                            <article data-track-id={track.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.id}>
+                                <span class="track-index">{index}</span>
+                                <h4 class="track__title">{track.title}</h4>
+                            </article>
                         </template>
                     </section>
+                </section>
+                <template if:true={hasAudioTrackWindowId} for:each={trackSegments} for:item="trackSegment">
+                    <ffmpeg-audiorange
+                        item-id={trackSegment.segment.id}
+                        onrangedragstart={onSegmentDragStart}
+                        onrangedragend={onSegmentDragEnd}
+                        onrangedrag={onSegmentDrag}
+                        color={trackSegment.color}
+                        rows={trackGridRows}
+                        row-index={trackSegment.rowIndex}
+                        audio-window={audioTrackWindow}
+                        key={trackSegment.segment.id}
+                        range={trackSegment.segment.range}
+                    >
+                    </ffmpeg-audiorange>
                 </template>
-            </div>
+            </ffmpeg-grid>
+            <template if:true={cursorInWindow}>
+                <ffmpeg-cursor time={editor.cursor}></ffmpeg-cursor>
+            </template>
+            <template if:true={hasVirtualCursor}>
+                <ffmpeg-cursor time={editor.virtualCursor} virtual></ffmpeg-cursor>
+            </template>
+            <template if:true={hasPlaybackCursor}>
+                <ffmpeg-cursor time={playhead.currentTime} playhead></ffmpeg-cursor>
+            </template>
+            <template if:true={hasPlaybackDurationCursor}>
+                <ffmpeg-cursor
+                    oncursordoubletap={onPlaybackDurationCursorDoubleTap}
+                    oncursordrag={onPlaybackDurationCursorDrag}
+                    time={playhead.playbackRange.duration}
+                    user-drag>
+                </ffmpeg-cursor>
+            </template>
+            <template for:each={highlights} for:item="highlight">
+                <ffmpeg-highlight key={highlight.id} highlight={highlight}></ffmpeg-highlight>
+            </template>
         </template>
         <template if:true={isSegmentEditRoute}>
             <ffmpeg-segmentedit segment-id={route.params.segment_id}></ffmpeg-segmentedit>
         </template>
-        <ffmpeg-masterout></ffmpeg-masterout>
     </main>
+    <section class="master-out">
+        <ffmpeg-masterout></ffmpeg-masterout>
+    </section>
 </template>

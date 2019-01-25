@@ -13,6 +13,7 @@ import { reducer as audioSourceReducer, AudioSourceState } from './audiosource/r
 import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
 import { reducer as pianoReducer, PianoState } from './piano/reducer';
+import { reducer as audioWindowReducer, AudioWindowState } from './audiowindow/reducer';
 
 // Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
@@ -34,7 +35,8 @@ if (process.env.NODE_ENV !== 'production') {
         createLogger({
             predicate: (getState, action) => {
                 return (
-                    action.type !== 'SET_VIRTUAL_CURSOR_TIME'
+                    action.type !== 'SET_VIRTUAL_CURSOR_TIME' &&
+                    action.type !== 'SET_AUDIO_WINDOW_VISIBLE_RANGE'
                 );
             },
             stateTransformer: (state) => {
@@ -61,10 +63,12 @@ export interface AppState {
     project: ProjectState;
     router: RouterState;
     piano: PianoState;
+    audiowindow: AudioWindowState;
 }
 
 export const appStore = createStore(
     combineReducers({
+        audiowindow: audioWindowReducer,
         audiotrack: audioTrackReducer,
         instrument: instrumentReducer,
         editor: editorReducer,

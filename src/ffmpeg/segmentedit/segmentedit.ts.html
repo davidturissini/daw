@@ -1,14 +1,12 @@
 <template>
     <template if:true={hasPiano}>
         <ffmpeg-piano
+            notes={pianoNotes}
             piano-id={pianoId}
             onpianomouseenter={onPianoMouseEnter}
             onpianomousedown={onPianoMouseDown}
             onpianomouseleave={onPianoMouseLeave}
         >
         </ffmpeg-piano>
-        <section class="grid-container">
-            <ffmpeg-grid></ffmpeg-grid>
-        </section>
     </template>
 </template>

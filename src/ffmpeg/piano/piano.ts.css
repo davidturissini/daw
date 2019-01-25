@@ -1,13 +1,13 @@
 :host {
     display: block;
     width: 200px;
+    display: flex;
 }
 
 .key {
     background: #fff;
     position: relative;
     z-index: 1;
-    height: 4rem;
     border: 0;
     border-bottom: 1px solid #000;
     display: block;
@@ -19,9 +19,6 @@
 .key--sharp {
     background: #000;
     color: #fff;
-    height: 2rem;
-    margin-top: -1rem;
-    margin-bottom: -1rem;
     width: 150px;
     position: relative;
     z-index: 2;
@@ -33,4 +30,10 @@
     right: 0.5rem;
     bottom: 0.5rem;
     margin: 0;
+}
+
+.grid-container {
+    position: relative;
+    z-index: 1;
+    flex: 1 0 auto;
 }

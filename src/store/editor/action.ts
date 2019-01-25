@@ -3,22 +3,8 @@ import {
     SET_EDITOR_FRAME,
     SET_VIRTUAL_CURSOR_TIME,
     SET_CURSOR_TIME,
-    SET_VISIBLE_RANGE,
 } from './const';
 import { Time } from 'util/time';
-import { AudioRange } from 'util/audiorange';
-
-export type SetVisibleRangeAction = Action<{
-    range: AudioRange;
-}>
-export function setVisibleRange(range: AudioRange): SetVisibleRangeAction {
-    return {
-        type: SET_VISIBLE_RANGE,
-        payload: {
-            range,
-        }
-    }
-}
 
 export type SetCursorTimeAction = Action<{
     time: Time;

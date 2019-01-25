@@ -1,23 +1,12 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, api } from 'lwc';
 import interact, { Interactable } from 'interactjs';
 import { Time } from '../../util/time';
 import rafThrottle from 'raf-throttle';
-import { wireSymbol } from 'store/index';
-import { EditorState } from 'store/editor/reducer';
-import { timeToPixel } from 'util/geometry';
+import { timeToPixel, AudioWindow } from 'util/geometry';
 
 export default class Timeline extends LightningElement {
     interact: Interactable;
-    @wire(wireSymbol, {
-        paths: {
-            editor: ['editor']
-        }
-    })
-    reduxData: {
-        data: {
-            editor: EditorState
-        }
-    }
+    @api audioWindow: AudioWindow;
 
     getTickValues(range, tickDistanceMs) {
         const remainder = (range.start.milliseconds % tickDistanceMs);
@@ -32,8 +21,8 @@ export default class Timeline extends LightningElement {
     }
 
     get ticks() {
-        const { editor } = this.reduxData.data;
-        const { frame, visibleRange, quanitization } = editor;
+        const { audioWindow } = this;
+        const { frame, visibleRange, quanitization } = audioWindow;
         if (!frame) {
             return [];
         }
