@@ -135,6 +135,15 @@ export default class GridElement extends LightningElement {
         }
     }
 
+    get rowViewModels() {
+        return this.rows.map((row) => {
+            return {
+                id: row.id,
+                style: `height: ${row.height}px`
+            }
+        })
+    }
+
     /*
      *
      * States
@@ -201,7 +210,6 @@ export default class GridElement extends LightningElement {
                 }
             }
             [GridStateInputs.DocumentMouseUp](cmp: GridElement, evt: MouseEvent) {
-                console.log('uppuup')
                 cmp.enterState(GridStateNames.DrawRange, []);
             }
             [GridStateInputs.EditButtonClick](cmp: GridElement) {

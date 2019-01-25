@@ -9,7 +9,6 @@ import { reducer as audioTrackReducer, AudioTrackState } from './audiotrack/redu
 import { reducer as instrumentReducer, InstrumentState } from './instrument/reducer';
 import { reducer as editorReducer, EditorState } from './editor/reducer';
 import { reducer as audioSegmentReducer, AudioSegmentState } from './audiosegment/reducer';
-import { reducer as audioSourceReducer, AudioSourceState } from './audiosource/reducer';
 import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
 import { reducer as pianoReducer, PianoState } from './piano/reducer';
@@ -59,7 +58,6 @@ export interface AppState {
     instrument: InstrumentState;
     editor: EditorState;
     audiosegment: AudioSegmentState;
-    audiosource: AudioSourceState;
     project: ProjectState;
     router: RouterState;
     piano: PianoState;
@@ -73,7 +71,6 @@ export const appStore = createStore(
         instrument: instrumentReducer,
         editor: editorReducer,
         audiosegment: audioSegmentReducer,
-        audiosource: audioSourceReducer,
         project: projectReducer,
         router: routerReducer,
         piano: pianoReducer,

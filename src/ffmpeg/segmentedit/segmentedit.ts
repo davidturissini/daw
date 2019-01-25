@@ -12,13 +12,7 @@ import { BaseState } from './bsm/base';
 import { IdleState } from './bsm/idle';
 import { createPiano } from 'store/piano/action';
 import { generateId } from 'util/uniqueid';
-import { AudioSourceState } from 'store/audiosource/reducer';
-import { AudioSource } from 'store/audiosource';
-import { notes } from 'util/sound';
-import { Color } from 'util/color';
-import { EditorState } from 'store/editor/reducer';
-
-const { keys } = Object;
+import { MidiNote } from 'util/sound';
 
 export default class SegmentEdit extends LightningElement {
     bsm: BehaviorStateMachine<BaseState> = new BehaviorStateMachine(new IdleState());
@@ -30,17 +24,13 @@ export default class SegmentEdit extends LightningElement {
             segments: ['audiosegment', 'items'],
             tracks: ['audiotrack', 'items'],
             instruments: ['instrument', 'items'],
-            sources: ['audiosource', 'items'],
-            editor: ['editor'],
         },
     })
     storeData: {
         data: {
-            editor: EditorState;
             segments: AudioSegmentState['items'];
             tracks: AudioTrackState['items'];
             instruments: InstrumentState['items'];
-            sources: AudioSourceState['items'];
         }
     }
 
@@ -56,12 +46,13 @@ export default class SegmentEdit extends LightningElement {
         return this.storeData.data.instruments.get(this.track.instrumentId) as Instrument;
     }
 
-    get source(): AudioSource {
-        return this.storeData.data.sources.get(this.segment.sourceId) as AudioSource;
-    }
-
     get hasPiano(): boolean {
         return !!this.pianoId;
+    }
+
+    get pianoMidiNotes() {
+        console.log(this.segment.notes.toJS());
+        return this.segment.notes.toJS();
     }
 
     onPianoMouseDown(evt: PianoMouseDownEvent) {
@@ -78,48 +69,6 @@ export default class SegmentEdit extends LightningElement {
 
     onDocumentMouseUp = (evt) => {
         this.bsm.state.onDocumentMouseUp(this.bsm, evt);
-    }
-
-    /*
-     *
-     *  Template
-     *
-     */
-    get pianoNotes() {
-        return keys(notes).map((key) => {
-            const note = notes[key];
-            return {
-                name: key,
-                frequency: note.frequency,
-                sharp: note.sharp,
-                height: note.sharp ? 30 : 60,
-            };
-        });
-    }
-    get octaveNotes() {
-        const obj = Object.keys(notes).reduce((seed, key) => {
-            const note = notes[key];
-            seed[key] = {
-                octave: key,
-                notes: [],
-                height: note.sharp ? 30 : 60,
-            };
-            return seed;
-        }, {});
-
-        const grouped = this.source.notes.reduce((seed, note, index) => {
-            seed[note.octave].notes.push({
-                key: index,
-                range: note.range,
-                color: new Color(0, 255, 0),
-            })
-            return seed;
-        }, obj);
-        return Object.values(grouped);
-    }
-
-    get audioWindow() {
-        return this.storeData.data.editor;
     }
 
     /*

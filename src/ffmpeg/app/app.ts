@@ -9,7 +9,7 @@ import { wireSymbol, appStore } from 'store/index';
 import { Map as ImmutableMap } from 'immutable';
 import { AudioTrack } from 'store/audiotrack';
 import { EditorState } from 'store/editor/reducer';
-import { pixelToTime, Frame } from 'util/geometry';
+import { pixelToTime } from 'util/geometry';
 import { createRouter } from 'store/route/action';
 import { RouterState } from 'store/route/reducer';
 import { RouteNames } from 'store/route';
@@ -18,12 +18,8 @@ import { AudioSegment } from 'store/audiosegment';
 import { Color } from 'util/color';
 import { GridElementRow, GridAudioWindowCreatedEvent, AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
 import { generateId } from 'util/uniqueid';
-import { createAudioWindow } from 'store/audiowindow/action';
-import { AudioRange } from 'util/audiorange';
-import { timeZero, Time } from 'util/time';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
-import { createAudioSource } from 'store/audiosource/action';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
@@ -110,15 +106,21 @@ export default class AppElement extends LightningElement {
     */
     onTrackSegmentCreated(evt: AudioRangeCreatedEvent) {
         const { id, parentId, range } = evt.detail;
-        const sourceId = generateId();
-
-        appStore.dispatch(createAudioSource(sourceId));
-        appStore.dispatch(createAudioSegment(id, parentId, range, sourceId));
+        appStore.dispatch(createAudioSegment(id, parentId, range));
     }
 
     onTrackSegmentRangeChange(evt: AudioRangeChangeEvent) {
         const { id, range } = evt.detail;
         appStore.dispatch(setAudioSegmentRange(id, range));
+    }
+
+    /*
+     *
+     * Track Segment Events
+     *
+    */
+    onSegmentDoubleClick(evt) {
+        this.state.onSegmentDoubleClick(this, evt);
     }
 
     /*
@@ -130,8 +132,8 @@ export default class AppElement extends LightningElement {
         this.state.onSegmentDragStart(this, evt);
     }
 
-    onSegmentDragEnd() {
-        this.state.onSegmentDragEnd(this);
+    onSegmentDragEnd(evt) {
+        this.state.onSegmentDragEnd(this, evt);
     }
 
     onSegmentDrag(evt) {
@@ -228,9 +230,6 @@ export default class AppElement extends LightningElement {
         this.state.onAudioTrackMouseMove(this, evt, evt.target.getAttribute('data-track-id'));
     }
 
-    onSegmentDoubleClick(evt) {
-        this.state.onSegmentDoubleClick(this, evt, evt.target.getAttribute('data-segment-id'));
-    }
 
     /*
      *

@@ -20,7 +20,9 @@ export type RangeDragEvent = CustomEvent<{
     itemId: string;
 }>;
 export type RangeDragEndEvent = CustomEvent<{}>;
-export type RangeDoubleClickEvent = CustomEvent<{}>;
+export type RangeDoubleClickEvent = CustomEvent<{
+    id: string;
+}>;
 
 export type RangeSourceOffsetChangeEvent = CustomEvent<{
     time: Time;
@@ -121,6 +123,9 @@ export default class AudioRangeElement extends LightningElement {
         const event: RangeDoubleClickEvent = new CustomEvent('rangedoubleclick', {
             composed: true,
             bubbles: true,
+            detail: {
+                id: this.itemId,
+            }
         });
 
         this.dispatchEvent(event);

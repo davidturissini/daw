@@ -42,17 +42,15 @@ export type CreateAudioSegmentAction = Action<{
     id: string;
     trackId: string;
     range: AudioRange;
-    sourceId: string;
 }>
 
-export function createAudioSegment(id: string, trackId: string, range: AudioRange, sourceId: string): CreateAudioSegmentAction {
+export function createAudioSegment(id: string, trackId: string, range: AudioRange): CreateAudioSegmentAction {
     return {
         type: CREATE_AUDIO_SEGMENT,
         payload: {
             id,
             trackId,
             range,
-            sourceId,
         }
     }
 }

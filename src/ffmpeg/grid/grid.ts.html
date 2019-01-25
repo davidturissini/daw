@@ -21,7 +21,7 @@
                 <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
             </template>
         </ul>
-        <template for:each={rows} for:item="row">
+        <template for:each={rowViewModels} for:item="row">
             <div
                 data-row-id={row.id}
                 onmouseup={onGridRowMouseUp}
@@ -29,7 +29,7 @@
                 onmousemove={onGridRowMouseMove}
                 class="row"
                 key={row.id}
-                style="height: 60px">
+                style={row.style}>
             </div>
         </template>
         <slot></slot>

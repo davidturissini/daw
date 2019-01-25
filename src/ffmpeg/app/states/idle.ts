@@ -8,7 +8,6 @@ import { AudioRange } from '../../../util/audiorange';
 import { appStore } from 'store/index';
 import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
-import { SegmentDrawState } from './segmentdraw';
 import { navigate } from 'store/route/action';
 import { RouteNames, SegmentEditRouteParams } from 'store/route';
 import { RangeDragStartEvent, RangeSourceOffsetChangeEvent, RangeDoubleClickEvent, RangeDurationChangeEvent } from 'cmp/audiorange/audiorange';
@@ -18,8 +17,6 @@ export class IdleState extends BaseState {
     onDocumentKeyDown(app: AppElement, evt) {
         if (evt.key === 'Meta') {
             app.enterState(new MetaKeyDownState());
-        } else if (evt.key === 'Alt') {
-            app.enterState(new SegmentDrawState());
         }
     }
 
@@ -89,13 +86,14 @@ export class IdleState extends BaseState {
         throw new Error('not implemented')
     }
 
-    onSegmentDoubleClick(app, evt: RangeDoubleClickEvent, segmentId: string) {
+    onSegmentDoubleClick(app, evt: RangeDoubleClickEvent) {
+        const { id: segmentId } = evt.detail;
         const path = `/segments/${segmentId}/edit`;
         appStore.dispatch(
             navigate<SegmentEditRouteParams>(RouteNames.SegmentEdit, {
                 segment_id: segmentId,
             })
         )
-        window.history.pushState({ hello: 'world' }, 'foo', path);
+        window.history.pushState({}, '', path);
     }
 }

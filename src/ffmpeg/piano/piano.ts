@@ -1,9 +1,11 @@
-import { LightningElement, api, wire } from 'lwc';
-import { notes } from 'util/sound';
+import { LightningElement, api, wire, track } from 'lwc';
+import { notes, MidiNote } from 'util/sound';
 import { wireSymbol } from 'store/index';
 import { PianoState } from 'store/piano/reducer';
 import { Piano } from 'store/piano';
-import { Frame } from 'util/geometry';
+import { GridElementRow, AudioRangeCreatedEvent, AudioRangeChangeEvent, GridAudioWindowCreatedEvent } from 'cmp/grid/grid';
+import { AudioWindowState } from 'store/audiowindow/reducer';
+import { Color } from 'util/color';
 
 export type PianoMouseDownEvent = CustomEvent<{
     name: string;
@@ -23,65 +25,112 @@ export type PianoMouseLeaveEvent = CustomEvent<{
     pianoId: string;
 }>
 
-const notesSym = Symbol();
+const gridRowNoteMap: { [key: string]: GridElementRow } = Object.keys(notes).reduce((seed, octave) => {
+    const note = notes[octave];
+    const row: GridElementRow = {
+        height: note.sharp ? 30 : 45,
+        id: octave,
+    };
+    seed[octave] = row;
+    return seed;
+}, {});
 
 export default class PianoElement extends LightningElement {
     @api pianoId: string;
-    octaveFrames: { [key: string]: Frame };
-
-    @api
-    set notes(value: Array<{ sharp: boolean, height: number, name: string }>) {
-        const frames = value.reduce((seed, note) => {
-            const frame: Frame = {
-                height: note.sharp === true ? note.height : note.height / 2,
-                width: 0,
-            }
-        });
-        console.log(frames);
-        this[notesSym] = value;
-    }
-
-    get notes() {
-        return this[notesSym];
-    }
-
-
+    @api midiNotes: { [key: string]: MidiNote[] };
+    @track gridWindowId: string | null = null;
     @wire(wireSymbol, {
         paths: {
-            pianos: ['piano', 'items']
+            pianos: ['piano', 'items'],
+            audiowindow: ['audiowindow', 'items'],
         }
     })
     storeData: {
         data: {
             pianos: PianoState['items'];
+            audiowindow: AudioWindowState['items'];
         }
+    }
+
+    get gridRows(): GridElementRow[] {
+        return Object.values(gridRowNoteMap);
     }
 
     get piano(): Piano {
         return this.storeData.data.pianos.get(this.pianoId) as Piano;
     }
 
-    get noteViewModels() {
-        return this.notes.map((note) => {
+    get pianoKeyViewModels() {
+        return Object.keys(notes).map((key) => {
+            const note = notes[key];
             const classNames = ['key'];
+            const gridRow = gridRowNoteMap[key];
             const styles = [
-                `height: ${note.height}px`
+                `height: ${gridRow.height}px`
             ];
             if (note.sharp === true) {
                 classNames.push('key--sharp');
-                styles.push(`margin: ${-note.height / 2}px 0`)
             }
 
-
-
             return {
-                name: note.name,
+                name: key,
                 className: classNames.join(' '),
                 style: styles.join(';')
             };
         })
     }
 
+    get hasGridWindow() {
+        return this.gridWindowId !== null;
+    }
+
+    get gridWindow() {
+        const { gridWindowId } = this;
+        if (gridWindowId) {
+            return this.storeData.data.audiowindow.get(gridWindowId);
+        }
+
+        return null;
+    }
+
+    get noteViewModels() {
+        return Object.keys(this.midiNotes).reduce((seed: any[], octave: string) => {
+            const notes = this.midiNotes[octave];
+            const midiNotes = notes.map((note) => {
+                return {
+                    octave,
+                    color: new Color(0, 255, 0),
+                    rowIndex: 12,
+                    range: note.range,
+                };
+            });
+
+            return seed.concat(midiNotes);
+        }, []);
+    }
+
+    /*
+     *
+     *  Grid Events
+     *
+     */
+    onGridAudioWindowCreated(evt: GridAudioWindowCreatedEvent) {
+        this.gridWindowId = evt.detail.windowId;
+    }
+
+    onNoteCreated(evt: AudioRangeCreatedEvent) {
+        console.log('created', evt)
+    }
+
+    onNoteChanged(evt: AudioRangeChangeEvent) {
+        console.log('changed', evt)
+    }
+
+    /*
+     *
+     *  Piano Key Events
+     *
+     */
     onKeyMouseLeave(evt: MouseEvent) {
         evt.stopPropagation();
         const target = (evt.target as Element);

@@ -32,5 +32,5 @@ export class BaseState {
     onEditorMouseLeave(app, evt) {}
     onAudioTrackMouseDown(app, evt: GridRowMouseDownEvent) {}
     onAudioTrackMouseMove(app, evt: MouseEvent, trackId: string) {}
-    onSegmentDoubleClick(app, evt, segmentId: string) {}
+    onSegmentDoubleClick(app, evt) {}
 }

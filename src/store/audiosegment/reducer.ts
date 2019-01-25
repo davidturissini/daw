@@ -1,4 +1,4 @@
-import { Record, Map as ImmutableMap } from 'immutable';
+import { Record, Map as ImmutableMap, List } from 'immutable';
 import { AudioSegment } from './index';
 import {
     CREATE_AUDIO_SEGMENT,
@@ -6,7 +6,7 @@ import {
     MOVE_SEGMENT,
 } from './const';
 import { CreateAudioSegmentAction, SetAudioSegmentRangeAction, MoveSegmentAction } from './action';
-import { timeZero } from 'util/time';
+import { timeZero, Time } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 
 export class AudioSegmentState extends Record<{
@@ -16,12 +16,17 @@ export class AudioSegmentState extends Record<{
 }) {}
 
 function createAudioSegmentReducer(state: AudioSegmentState, action: CreateAudioSegmentAction) {
-    const { id, trackId, range, sourceId } = action.payload;
+    const { id, trackId, range } = action.payload;
     const segment = new AudioSegment({
         id,
         trackId,
         range,
-        sourceId,
+        notes: ImmutableMap({
+            'c4': List([{
+                note: 'c4',
+                range: new AudioRange(timeZero, new Time(2000)),
+            }])
+        })
     });
     return state.setIn(['items', id], segment);
 }
