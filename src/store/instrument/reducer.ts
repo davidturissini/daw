@@ -10,7 +10,7 @@ import {
 export class InstrumentState extends Record({
     items: ImmutableMap(),
 }) {
-    items: ImmutableMap<string, Instrument<any>>
+    items: ImmutableMap<string, Instrument>
 }
 
 function createInstrumentReducer(state: InstrumentState, action: CreateInstrumentAction<any>) {

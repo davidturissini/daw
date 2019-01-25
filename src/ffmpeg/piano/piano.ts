@@ -53,7 +53,22 @@ export default class PianoElement extends LightningElement {
     }
 
     get gridRows(): GridElementRow[] {
-        return Object.values(gridRowNoteMap);
+        return Object.keys(notes).map((octave) => {
+            const note = notes[octave];
+            const midiNotes = this.midiNotes[octave] || [];
+            const row: GridElementRow = {
+                height: note.sharp ? 30 : 45,
+                id: octave,
+                ranges: midiNotes.map((midiNote, index) => {
+                    return {
+                        range: midiNote.range,
+                        color: new Color(0, 255, 0),
+                        itemId: index,
+                    };
+                })
+            };
+            return row;
+        }, {});
     }
 
     get piano(): Piano {
@@ -114,10 +129,6 @@ export default class PianoElement extends LightningElement {
      *  Grid Events
      *
      */
-    onGridAudioWindowCreated(evt: GridAudioWindowCreatedEvent) {
-        this.gridWindowId = evt.detail.windowId;
-    }
-
     onNoteCreated(evt: AudioRangeCreatedEvent) {
         console.log('created', evt)
     }

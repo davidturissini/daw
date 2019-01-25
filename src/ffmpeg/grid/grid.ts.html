@@ -6,8 +6,6 @@
         if:true={hasAudioWindow}
         class="timeline"
         audio-window={audioWindow}
-        onmouseenter={onTimelineMouseEnter}
-        onmouseleave={onTimelineMouseLeave}
         ontimelinedrag={onTimelineDrag}
         ontimelinedragstart={onTimelineDragStart}
         ontimelinedragend={onTimelineDragEnd}>
@@ -29,7 +27,18 @@
                 onmousemove={onGridRowMouseMove}
                 class="row"
                 key={row.id}
-                style={row.style}>
+                style={row.style}
+            >
+                <template if:true={hasAudioWindow} for:each={row.ranges} for:item="range">
+                    <ffmpeg-audiorange
+                        item-id={range.itemId}
+                        color={range.color}
+                        audio-window={audioWindow}
+                        key={range.itemId}
+                        range={range.range}
+                    >
+                    </ffmpeg-audiorange>
+                </template>
             </div>
         </template>
         <slot></slot>

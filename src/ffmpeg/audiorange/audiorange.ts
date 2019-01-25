@@ -5,7 +5,6 @@ import { Color } from 'util/color';
 import interact, { Interactable } from 'interactjs';
 import rafThrottle from 'raf-throttle';
 import { Time } from 'util/time';
-import { GridElementRow } from 'cmp/grid/grid';
 
 interface AudioWindow {
     frame: Frame;
@@ -34,16 +33,11 @@ export type RangeDurationChangeEvent = CustomEvent<{
 }>;
 
 
-function calcStyle(audioWindow: AudioWindow, range: AudioRange, rows: GridElementRow[], rowIndex: number, color: Color) {
+function calcStyle(audioWindow: AudioWindow, range: AudioRange, color: Color) {
     const { frame, visibleRange } = audioWindow;
     const frameWidth = frame.width;
     const segmentOffset = timeToPixel(frame, visibleRange, range.start);
     let width = durationToWidth(frame, visibleRange, range.duration);
-
-    let y = 0;
-    for(let i = 0; i < rowIndex; i += 1) {
-        y += rows[i].height;
-    }
 
     const x = segmentOffset;
     if (x < 0) {
@@ -55,16 +49,14 @@ function calcStyle(audioWindow: AudioWindow, range: AudioRange, rows: GridElemen
         width = width - diff;
     }
     return {
-        transform: `translate3d(${Math.max(x, 0)}px, ${y}px, 0)`,
+        transform: `translate3d(${Math.max(x, 0)}px, 0px, 0)`,
         width: `${width}px`,
-        height: rows[rowIndex].height,
         background: color.rgb(),
     };
 }
 
 export default class AudioRangeElement extends LightningElement {
     @api rowIndex: number;
-    @api rows: GridElementRow[];
     @api range: AudioRange;
     @api color: Color;
     @api audioWindow: AudioWindow;
@@ -164,8 +156,8 @@ export default class AudioRangeElement extends LightningElement {
     })
 
     get divStyle(): string {
-        const obj = calcStyle(this.audioWindow, this.range, this.rows, this.rowIndex, this.color);
-        return `transform:${obj.transform};width:${obj.width};height:${obj.height}px;background:${obj.background}`;
+        const obj = calcStyle(this.audioWindow, this.range, this.color);
+        return `transform:${obj.transform};width:${obj.width};background:${obj.background}`;
     }
 
     /*

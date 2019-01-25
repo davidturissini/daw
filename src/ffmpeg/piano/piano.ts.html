@@ -2,8 +2,7 @@
     <ffmpeg-grid
         onaudiorangecreated={onNoteCreated}
         onaudiorangechange={onNoteChanged}
-        rows={gridRows}
-        ongridaudiowindowcreated={onGridAudioWindowCreated}>
+        rows={gridRows}>
         <div slot="col-left">
             <template for:each={pianoKeyViewModels} for:item="pianoKey">
                 <button
@@ -19,17 +18,5 @@
                 </button>
             </template>
         </div>
-        <template if:true={hasGridWindow} for:each={noteViewModels} for:item="note">
-            <ffmpeg-audiorange
-                item-id={note.octave}
-                color={note.color}
-                rows={gridRows}
-                row-index={note.rowIndex}
-                audio-window={gridWindow}
-                key={note.octave}
-                range={note.range}
-            >
-            </ffmpeg-audiorange>
-        </template>
     </ffmpeg-grid>
 </template>

@@ -22,10 +22,13 @@
         <template if:true={isEditorRoute}>
             <ffmpeg-selection></ffmpeg-selection>
             <ffmpeg-grid
-                ongridaudiowindowcreated={onAudioTrackWindowCreated}
                 class="track-grid"
                 onaudiorangecreated={onTrackSegmentCreated}
                 onaudiorangechange={onTrackSegmentRangeChange}
+                onrangedoubleclick={onSegmentDoubleClick}
+                onrangedragstart={onSegmentDragStart}
+                onrangedragend={onSegmentDragEnd}
+                onrangedrag={onSegmentDrag}
                 rows={trackGridRows}
             >
                 <section slot="col-left" class="tracks-summary">
@@ -38,22 +41,6 @@
                         </template>
                     </section>
                 </section>
-                <template if:true={hasAudioTrackWindowId} for:each={trackSegments} for:item="trackSegment">
-                    <ffmpeg-audiorange
-                        item-id={trackSegment.segment.id}
-                        onrangedragstart={onSegmentDragStart}
-                        onrangedragend={onSegmentDragEnd}
-                        onrangedrag={onSegmentDrag}
-                        onrangedoubleclick={onSegmentDoubleClick}
-                        color={trackSegment.color}
-                        rows={trackGridRows}
-                        row-index={trackSegment.rowIndex}
-                        audio-window={audioTrackWindow}
-                        key={trackSegment.segment.id}
-                        range={trackSegment.segment.range}
-                    >
-                    </ffmpeg-audiorange>
-                </template>
             </ffmpeg-grid>
             <template if:true={cursorInWindow}>
                 <ffmpeg-cursor time={editor.cursor}></ffmpeg-cursor>

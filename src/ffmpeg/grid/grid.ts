@@ -1,11 +1,12 @@
 import { LightningElement, track, wire, api } from 'lwc';
 import { Time, timeZero } from '../../util/time';
-import { timeToPixel, AudioWindow, Frame, pixelToTime } from 'util/geometry';
+import { timeToPixel, AudioWindow, Frame, pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
 import { generateId } from 'util/uniqueid';
 import { wireSymbol, appStore } from 'store/index';
 import { AudioWindowState } from 'store/audiowindow/reducer';
-import { createAudioWindow } from 'store/audiowindow/action';
+import { createAudioWindow, setAudioWindowVisibleRange } from 'store/audiowindow/action';
+import { Color } from 'util/color';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
 export type TimelineMouseLeaveEvent = CustomEvent<{}>;
@@ -36,9 +37,16 @@ export type GridAudioWindowCreatedEvent = CustomEvent<{
     windowId: string;
 }>
 
+export interface GridRange {
+    itemId: string;
+    range: AudioRange;
+    color: Color;
+}
+
 export interface GridElementRow {
     id: string;
     height: number;
+    ranges: GridRange[];
 }
 
 function getGridTimes(range, tickDistanceMs) {
@@ -138,6 +146,7 @@ export default class GridElement extends LightningElement {
     get rowViewModels() {
         return this.rows.map((row) => {
             return {
+                ranges: row.ranges,
                 id: row.id,
                 style: `height: ${row.height}px`
             }
@@ -172,7 +181,7 @@ export default class GridElement extends LightningElement {
                 }
                 const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
                 this.startX = evt.x;
-                const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, evt.x - rect.left);
+                const time = absolutePixelToTime(audioWindow.frame, audioWindow.visibleRange, evt.x - rect.left);
                 const range = this.range = new AudioRange(time, timeZero);
                 const id = this.rangeId = generateId();
                 const parentId = this.parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
@@ -242,15 +251,21 @@ export default class GridElement extends LightningElement {
      *
      */
     onGridRowMouseDown(evt) {
-        this.stateInput(GridStateInputs.GridRowMouseDown, evt);
+        if (evt.target.classList.contains('row')) {
+            this.stateInput(GridStateInputs.GridRowMouseDown, evt);
+        }
     }
 
     onGridRowMouseMove(evt) {
-        this.stateInput(GridStateInputs.GridRowMouseMove, evt);
+        if (evt.target.classList.contains('row')) {
+            this.stateInput(GridStateInputs.GridRowMouseMove, evt);
+        }
     }
 
     onGridRowMouseUp(evt) {
-        this.stateInput(GridStateInputs.GridRowMouseUp, evt);
+        if (evt.target.classList.contains('row')) {
+            this.stateInput(GridStateInputs.GridRowMouseUp, evt);
+        }
     }
 
     /*
@@ -271,36 +286,19 @@ export default class GridElement extends LightningElement {
      * Events
      *
      */
-    onTimelineMouseEnter(evt) {
-        const event: TimelineMouseEnterEvent = new CustomEvent('timelinemouseenter', {
-            bubbles: true,
-            composed: true,
-        });
-        this.dispatchEvent(event);
-    }
-
-    onTimelineMouseLeave(evt) {
-        const event: TimelineMouseLeaveEvent = new CustomEvent('timelinemouseleave', {
-            bubbles: true,
-            composed: true,
-        });
-        this.dispatchEvent(event);
-    }
-
     onTimelineDrag(evt) {
-        const { windowId } = this;
-        if (windowId === null) {
+        const { audioWindow, windowId } = this;
+        if (audioWindow === null || windowId === null) {
             return;
         }
-        const event: TimelineDragEvent = new CustomEvent('timelinedrag', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                dx: evt.detail.dx,
-                windowId,
-            },
-        });
-        this.dispatchEvent(event);
+
+        const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, evt.detail.dx);
+        let start = audioWindow.visibleRange.start.minus(time);
+        if (start.milliseconds < 0) {
+            start = timeZero;
+        }
+        const range = new AudioRange(start, audioWindow.visibleRange.duration);
+        appStore.dispatch(setAudioWindowVisibleRange(windowId, range));
     }
 
     onTimelineDragStart(evt) {

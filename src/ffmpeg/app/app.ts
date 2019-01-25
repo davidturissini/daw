@@ -1,4 +1,4 @@
-import { LightningElement, wire, track } from 'lwc';
+import { LightningElement, wire } from 'lwc';
 import { incrementEnd } from '../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
 import { playheadSym } from '../../wire/playhead';
@@ -16,14 +16,12 @@ import { RouteNames } from 'store/route';
 import { AudioSegmentState } from 'store/audiosegment/reducer';
 import { AudioSegment } from 'store/audiosegment';
 import { Color } from 'util/color';
-import { GridElementRow, GridAudioWindowCreatedEvent, AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
-import { generateId } from 'util/uniqueid';
+import { GridElementRow, AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
-    @track audioTrackWindowId: string | null = null;
     constructor() {
         super();
         this.enterState(new IdleState());
@@ -342,41 +340,19 @@ export default class AppElement extends LightningElement {
             return {
                 id,
                 height: 60,
+                ranges: audioTrack.segments.map((segmentId) => {
+                    const segment = this.storeData.data.segments.get(segmentId) as AudioSegment;
+                    return {
+                        itemId: segmentId,
+                        range: segment.range,
+                        color: audioTrack.color,
+                    }
+                })
+                .toArray()
             } as GridElementRow;
         })
         .toList()
         .toArray();
-    }
-
-    get trackSegments(): Array<{ segment: AudioSegment, rowIndex: number, color: Color }> {
-        return this.audioTracks.toList().reduce((seed: Array<{ segment: AudioSegment, rowIndex: number, color: Color }>, audioTrack: AudioTrack, index: number) => {
-            const segments: Array<{ segment: AudioSegment, rowIndex: number, color: Color }> = audioTrack.segments.map((segmentId: string) => {
-                return {
-                    segment: this.storeData.data.segments.get(segmentId) as AudioSegment,
-                    rowIndex: index,
-                    color: audioTrack.color,
-                };
-            })
-            .toArray();
-            return seed.concat(segments)
-        }, []);
-    }
-
-    get hasAudioTrackWindowId() {
-        return this.audioTrackWindowId !== null;
-    }
-
-    get audioTrackWindow() {
-        const { audioTrackWindowId } = this;
-        if (audioTrackWindowId) {
-            return this.storeData.data.audiowindow.get(audioTrackWindowId);
-        }
-        return null;
-    }
-
-    onAudioTrackWindowCreated(evt: GridAudioWindowCreatedEvent) {
-        const { windowId } = evt.detail;
-        this.audioTrackWindowId = windowId;
     }
 
     /*

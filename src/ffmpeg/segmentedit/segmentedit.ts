@@ -12,7 +12,6 @@ import { BaseState } from './bsm/base';
 import { IdleState } from './bsm/idle';
 import { createPiano } from 'store/piano/action';
 import { generateId } from 'util/uniqueid';
-import { MidiNote } from 'util/sound';
 
 export default class SegmentEdit extends LightningElement {
     bsm: BehaviorStateMachine<BaseState> = new BehaviorStateMachine(new IdleState());
