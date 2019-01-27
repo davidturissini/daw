@@ -16,6 +16,40 @@ interface TimelineTick {
     beat?: number;
 }
 
+const quanitizationValues = [
+    1 / 64,
+    1 / 32,
+    1 / 16,
+    1 / 8,
+    1 / 4,
+    1 / 2,
+    1,
+    2,
+    4,
+    5,
+    10,
+    30,
+    60,
+    120,
+    240,
+];
+
+export function getResolution(duration): number {
+    const max = 40;
+    let value: number | null = null;
+    for(let i = 0; i < quanitizationValues.length; i += 1) {
+        const ticks = duration.seconds / quanitizationValues[i];
+        if (ticks <= max) {
+            value = quanitizationValues[i];
+            break;
+        }
+    }
+    if (value === null) {
+        value = quanitizationValues[quanitizationValues.length - 1];
+    }
+    return value;
+}
+
 
 export default class Timeline extends LightningElement {
     interact: Interactable;
@@ -34,7 +68,7 @@ export default class Timeline extends LightningElement {
     get ticks(): TimelineTick[] {
         const { audioWindow, bpm } = this;
         const { frame, visibleRange } = audioWindow;
-        const resolution = Time.fromSeconds(audioWindow.quanitization * 4);
+        const resolution = Time.fromSeconds(getResolution(visibleRange.duration) * 4);
         if (this.variant === TimelineVariant.Time) {
             return mapTimeMarks<TimelineTick>(audioWindow, resolution, (time: Time) => {
                 const translateX = timeToPixel(frame, visibleRange, time);

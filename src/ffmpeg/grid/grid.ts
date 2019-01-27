@@ -13,8 +13,6 @@ import { IdleState } from './states/idle';
 import { DrawRangeState } from './states/drawrange';
 import { TimelineDragStartEvent, TimelineDragEndEvent, GridAudioWindowCreatedEvent } from './events';
 
-
-
 export interface GridRange {
     itemId: string;
     range: AudioRange;

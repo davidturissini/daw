@@ -27,8 +27,8 @@
 
 main {
     grid-column: 2;
-    display: grid;
-    grid-template-rows: 100fr;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
@@ -83,11 +83,11 @@ ffmpeg-audioscroll {
 }
 
 .track-grid {
-    flex: 1 0 auto;
+    flex: 1 0 50%;
 }
 
 .resizer {
-    height: 0.5rem;
+    height: 1rem;
     cursor: ns-resize;
     background: rgb(140, 140, 140);
 }
