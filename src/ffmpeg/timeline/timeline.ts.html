@@ -1,7 +1,12 @@
 <template>
     <template for:each={ticks} for:item="tick">
         <span class="tick" style={tick.style} key={tick.time.milliseconds}>
+            <template if:true={isTimeVariant}>
                 <ffmpeg-timelabel class="tick-label" time={tick.time}></ffmpeg-timelabel>
+            </template>
+            <template if:true={isBeatVariant}>
+                {tick.beat}
+            </template>
         </span>
     </template>
 </template>

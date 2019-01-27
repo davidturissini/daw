@@ -6,7 +6,6 @@ import { wireSymbol, appStore } from 'store/index';
 import { Map as ImmutableMap } from 'immutable';
 import { AudioTrack } from 'store/audiotrack';
 import { EditorState } from 'store/editor/reducer';
-import { pixelToTime } from 'util/geometry';
 import { createRouter } from 'store/route/action';
 import { RouterState } from 'store/route/reducer';
 import { RouteNames } from 'store/route';
@@ -16,6 +15,7 @@ import { Color } from 'util/color';
 import { GridElementRow, AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
+import { ProjectState } from 'store/project/reducer';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
@@ -39,6 +39,7 @@ export default class AppElement extends LightningElement {
             editor: ['editor'],
             route: ['router', 'route'],
             segments: ['audiosegment', 'items'],
+            project: ['project'],
         }
     })
     storeData: {
@@ -48,6 +49,7 @@ export default class AppElement extends LightningElement {
             editor: EditorState;
             audiotracks: ImmutableMap<string, AudioTrack>;
             audiowindow: AudioWindowState['items'];
+            project: ProjectState;
         }
     }
 
@@ -72,6 +74,15 @@ export default class AppElement extends LightningElement {
             const trackId = evt.target.getAttribute('data-track-id');
             //deleteTrack(trackId);
         }
+    }
+
+    /*
+     *
+     * Project
+     *
+    */
+    get projectBpm() {
+        return this.storeData.data.project.bpm;
     }
 
     /*

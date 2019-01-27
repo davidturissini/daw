@@ -2,42 +2,58 @@ import { LightningElement, api } from 'lwc';
 import interact, { Interactable } from 'interactjs';
 import { Time } from '../../util/time';
 import rafThrottle from 'raf-throttle';
-import { timeToPixel, AudioWindow } from 'util/geometry';
+import { timeToPixel } from 'util/geometry';
+import { AudioWindow, mapTimeMarks, mapBeatMarks } from 'store/audiowindow';
+
+export enum TimelineVariant {
+    Time = 'time',
+    Beats = 'beats',
+}
+
+interface TimelineTick {
+    time: Time;
+    style: string;
+    beat?: number;
+}
+
 
 export default class Timeline extends LightningElement {
     interact: Interactable;
     @api audioWindow: AudioWindow;
+    @api bpm: number;
+    @api variant: TimelineVariant = TimelineVariant.Time;
 
-    getTickValues(range, tickDistanceMs) {
-        const remainder = (range.start.milliseconds % tickDistanceMs);
-        const lower = remainder === 0 ? range.start.milliseconds : range.start.milliseconds + (tickDistanceMs - (range.start.milliseconds % tickDistanceMs));
-        const upper = Math.floor(range.start.milliseconds + range.duration.milliseconds);
-        const numberOfTicks = (upper - lower) / tickDistanceMs;
-        const values: number[] = [];
-        for(let i = 0; i < numberOfTicks; i += 1) {
-            values.push(lower + (i * tickDistanceMs));
-        }
-        return values;
+    get isTimeVariant() {
+        return this.variant === TimelineVariant.Time;
     }
 
-    get ticks() {
-        const { audioWindow } = this;
-        const { frame, visibleRange, quanitization } = audioWindow;
-        if (!frame) {
-            return [];
-        }
-        const tickDistanceMs = (quanitization * 4) * 1000;
-        const tickValues = this.getTickValues(visibleRange, tickDistanceMs);
-        const ticks: Array<{ time: Time, style: string }> = [];
-        for(let i = 0; i < tickValues.length; i += 1) {
-            const time = new Time(tickValues[i]);
-            const translateX = timeToPixel(frame, visibleRange, time);
-            ticks.push({
-                time,
-                style: `transform: translateX(${translateX}px)`,
+    get isBeatVariant() {
+        return this.variant === TimelineVariant.Beats;
+    }
+
+    get ticks(): TimelineTick[] {
+        const { audioWindow, bpm } = this;
+        const { frame, visibleRange } = audioWindow;
+        const resolution = Time.fromSeconds(audioWindow.quanitization * 4);
+        if (this.variant === TimelineVariant.Time) {
+            return mapTimeMarks<TimelineTick>(audioWindow, resolution, (time: Time) => {
+                const translateX = timeToPixel(frame, visibleRange, time);
+                return {
+                    time,
+                    style: `transform: translateX(${translateX}px)`,
+                };
             });
         }
-        return ticks;
+
+        return mapBeatMarks<TimelineTick>(audioWindow, bpm, (beat: number, time: Time) => {
+            const label = (beat % 4 === 0) ? beat / 4 : undefined;
+            const translateX = timeToPixel(frame, visibleRange, time);
+            return {
+                time,
+                beat: label,
+                style: `transform: translateX(${translateX}px)`,
+            };
+        });
     }
 
     /*
@@ -77,5 +93,9 @@ export default class Timeline extends LightningElement {
             onmove: this.onDrag,
             onend: this.onDragEnd
         });
+    }
+
+    disconnectedCallback() {
+        (this.interact as any).unset();
     }
 }

@@ -5,6 +5,8 @@
     font-family: Arial;
     height: 100vh;
     overflow: hidden;
+    font-size: 0.8rem;
+    color: rgb(52, 52, 52);
 }
 
 .header {
@@ -36,6 +38,7 @@ main {
 
 ffmpeg-audioscroll {
     flex: 1 0 auto;
+    margin-right: 0.5rem;
 }
 
 .track {

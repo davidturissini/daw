@@ -1,10 +1,17 @@
 <template>
     <header class="toolbar">
-        <button onclick={onEditButtonClick}>Edit</button>
+        <button onclick={onEditButtonClick}>
+            <ffmpeg-icon variant="EditPencil"></ffmpeg-icon>
+        </button>
+        <button onclick={onEditButtonClick}>
+                <ffmpeg-icon variant="HandPaper"></ffmpeg-icon>
+            </button>
     </header>
     <ffmpeg-timeline
         if:true={hasAudioWindow}
         class="timeline"
+        variant={timelineVariant}
+        bpm={timelineBpm}
         audio-window={audioWindow}
         ontimelinedrag={onTimelineDrag}
         ontimelinedragstart={onTimelineDragStart}

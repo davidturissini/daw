@@ -11,12 +11,6 @@ export interface Rect extends Frame {
     y: number;
 }
 
-export interface AudioWindow {
-    frame: Frame;
-    visibleRange: AudioRange;
-    quanitization: number;
-}
-
 export function pixelToTime(frame: Frame, range: AudioRange, pixel: number): Time {
     const { width } = frame;
     const percent = (pixel / width);
