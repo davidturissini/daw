@@ -1,6 +1,7 @@
 <template>
     <ffmpeg-grid
         class="grid"
+        can-close={canCloseGrid}
         rows={gridRows}>
         <div slot="col-left">
             <template for:each={pianoKeyViewModels} for:item="pianoKey">

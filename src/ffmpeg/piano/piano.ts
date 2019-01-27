@@ -38,6 +38,7 @@ const gridRowNoteMap: { [key: string]: GridElementRow } = Object.keys(notes).red
 export default class PianoElement extends LightningElement {
     @api pianoId: string;
     @api midiNotes: { [key: string]: MidiNote[] };
+    @api canCloseGrid: boolean = false;
     @track gridWindowId: string | null = null;
     @wire(wireSymbol, {
         paths: {

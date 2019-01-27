@@ -1,17 +1,16 @@
 import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
+import { BaseState } from './base';
 import { AudioRange } from 'util/audiorange';
 import { AudioRangeChangeEvent, AudioRangeCreatedEvent } from '../grid';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { timeZero } from 'util/time';
 import { generateId } from 'util/uniqueid';
 
-export class DrawRangeState implements GridState {
+export class DrawRangeState extends BaseState implements GridState {
     parentId: string | null = null;
     startX: number | null = null;
     rangeId: string | null = null;
     range: AudioRange | null = null;
-    enter() {}
-    exit() {}
     [GridStateInputs.GridRowMouseDown](cmp: GridFSM, evt: MouseEvent) {
         evt.preventDefault();
         const { audioWindow } = cmp;

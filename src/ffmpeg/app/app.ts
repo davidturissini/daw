@@ -12,10 +12,11 @@ import { RouteNames } from 'store/route';
 import { AudioSegmentState } from 'store/audiosegment/reducer';
 import { AudioSegment } from 'store/audiosegment';
 import { Color } from 'util/color';
-import { GridElementRow, AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
+import { GridElementRow } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
 import { ProjectState } from 'store/project/reducer';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
 
 export default class AppElement extends LightningElement {
     state: BaseState;

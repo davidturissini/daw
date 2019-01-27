@@ -11,35 +11,9 @@ import { AudioWindow, mapBeatMarks, mapTimeMarks } from 'store/audiowindow';
 import { GridStateNames, GridState, GridStateInputs, GridFSM, GridStateCtor } from './states/types';
 import { IdleState } from './states/idle';
 import { DrawRangeState } from './states/drawrange';
+import { TimelineDragStartEvent, TimelineDragEndEvent, GridAudioWindowCreatedEvent } from './events';
 
-export type TimelineMouseEnterEvent = CustomEvent<{}>;
-export type TimelineMouseLeaveEvent = CustomEvent<{}>;
-export type TimelineDragEvent = CustomEvent<{
-    dx: number;
-    windowId: string;
-}>;
-export type TimelineDragStartEvent = CustomEvent<{
-    windowId: string;
-}>;
-export type TimelineDragEndEvent = CustomEvent<{
-    windowId: string;
-}>;
 
-export type AudioRangeCreatedEvent = CustomEvent<{
-    range: AudioRange;
-    parentId: string;
-    id: string;
-}>;
-
-export type AudioRangeChangeEvent = CustomEvent<{
-    range: AudioRange;
-    id: string;
-    parentId: string;
-}>
-
-export type GridAudioWindowCreatedEvent = CustomEvent<{
-    windowId: string;
-}>
 
 export interface GridRange {
     itemId: string;
@@ -80,6 +54,11 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
     }
 
+    /*
+     *
+     * States
+     *
+     */
     state: GridState;
 
     enterState(name: GridStateNames, ...args: any[]) {
@@ -99,6 +78,16 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
     }
 
+    states = {
+        [GridStateNames.Idle]: IdleState,
+        [GridStateNames.DrawRange]: DrawRangeState,
+    }
+
+    /*
+     *
+     * Grid Lines
+     *
+     */
     get rowViewModels() {
         return this.rows.map((row) => {
             return {
@@ -107,16 +96,6 @@ export default class GridElement extends LightningElement implements GridFSM {
                 style: `height: ${row.height}px`
             }
         })
-    }
-
-    /*
-     *
-     * States
-     *
-     */
-    states = {
-        [GridStateNames.Idle]: IdleState,
-        [GridStateNames.DrawRange]: DrawRangeState,
     }
 
     get gridLines(): GridLine[] {
@@ -168,6 +147,10 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     onIdleButtonClick(evt: MouseEvent) {
         this.stateInput<MouseEvent>(GridStateInputs.PanButtonClick, evt);
+    }
+
+    onCloseButtonClick(evt: MouseEvent) {
+        this.stateInput<MouseEvent>(GridStateInputs.CloseButtonClick, evt);
     }
 
     /*
@@ -313,7 +296,7 @@ export default class GridElement extends LightningElement implements GridFSM {
                 };
 
                 appStore.dispatch(
-                    createAudioWindow(windowId, frame, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(9))),
+                    createAudioWindow(windowId, frame, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(30))),
                 );
                 this.windowId = windowId;
 

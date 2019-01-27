@@ -3,6 +3,8 @@ import { AudioWindow } from "store/audiowindow";
 export enum GridStateInputs {
     EditButtonClick = 'EditButtonClick',
     PanButtonClick = 'PanButtonClick',
+    CloseButtonClick = 'CloseButtonClick',
+
     GridRowMouseDown = 'GridRowMouseDown',
     GridRowMouseMove = 'GridRowMouseMove',
     GridRowMouseUp = 'GridRowMouseUp',

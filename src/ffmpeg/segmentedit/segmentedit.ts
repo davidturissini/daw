@@ -12,9 +12,10 @@ import { BaseState } from './bsm/base';
 import { IdleState } from './bsm/idle';
 import { createPiano } from 'store/piano/action';
 import { generateId } from 'util/uniqueid';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridCloseEvent } from 'cmp/grid/events';
 import { addNote, setNoteRange } from 'store/audiosegment/action';
-import { MidiNote } from 'util/sound';
+import { navigate } from 'store/route/action';
+import { RouteNames } from 'store/route';
 
 export default class SegmentEdit extends LightningElement {
     bsm: BehaviorStateMachine<BaseState> = new BehaviorStateMachine(new IdleState());
@@ -48,18 +49,30 @@ export default class SegmentEdit extends LightningElement {
         return this.storeData.data.instruments.get(this.track.instrumentId) as Instrument;
     }
 
+    /*
+     *
+     *  Piano
+     *
+     */
     get hasPiano(): boolean {
         return !!this.pianoId;
     }
 
-    get pianoMidiNotes() {
-        const n = this.segment.notes.map((notes) => {
-            return notes.toList().toJS();
-        }, []).toJS();
-        console.log('notes', n)
-        return n;
+    get canClosePianoGrid() {
+        return true;
     }
 
+    get pianoMidiNotes() {
+        return this.segment.notes.map((notes) => {
+            return notes.toList().toJS();
+        }, []).toJS();
+    }
+
+    /*
+     *
+     *  Piano Events
+     *
+     */
     onPianoMouseDown(evt: PianoMouseDownEvent) {
         this.bsm.state.onPianoMouseDown(this.bsm, evt)
     }
@@ -72,6 +85,17 @@ export default class SegmentEdit extends LightningElement {
         this.bsm.state.onPianoMouseLeave(this.bsm, evt)
     }
 
+    onPianoGridClose(evt: GridCloseEvent) {
+        appStore.dispatch(
+            navigate(RouteNames.Home, {})
+        );
+    }
+
+    /*
+     *
+     *  Document Events
+     *
+     */
     onDocumentMouseUp = (evt) => {
         this.bsm.state.onDocumentMouseUp(this.bsm, evt);
     }
@@ -81,7 +105,6 @@ export default class SegmentEdit extends LightningElement {
      *  Audio Range Events
      *
      */
-
     onAudioRangeCreated(evt: AudioRangeCreatedEvent) {
         const { id, parentId: octave, range } = evt.detail;
         appStore.dispatch(

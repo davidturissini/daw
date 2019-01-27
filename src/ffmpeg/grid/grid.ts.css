@@ -3,6 +3,7 @@
     grid-template-columns: 20fr 80fr;
     grid-template-rows: auto auto 100fr 2rem;
     background: rgb(52, 52, 52);
+    color: rgb(153, 153, 153);
 }
 
 ul {
