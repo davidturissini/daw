@@ -1,24 +1,13 @@
-import { LightningElement, wire } from 'lwc';
-import { editorSym } from '../../wire/editor';
-import { audioSources } from '../../wire/audiosource';
-import { playheadSym } from '../../wire/playhead';
+import { LightningElement } from 'lwc';
+import { timeZero } from 'util/time';
 
 export default class Controls extends LightningElement {
-    @wire(editorSym, {})
-    editor;
-
-    @wire(audioSources, {})
-    audioSources
-
-    @wire(playheadSym, {})
-    playhead
-
     get isPlaying() {
-        return this.playhead.data.currentTime !== null;
+        return false;
     }
 
     get displayTime() {
-        return this.isPlaying ? this.playhead.data.currentTime : this.editor.data.cursor;
+        return timeZero;
     }
 
     get playButtonClass() {

@@ -12,6 +12,9 @@ import { BaseState } from './bsm/base';
 import { IdleState } from './bsm/idle';
 import { createPiano } from 'store/piano/action';
 import { generateId } from 'util/uniqueid';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/grid';
+import { addNote, setNoteRange } from 'store/audiosegment/action';
+import { MidiNote } from 'util/sound';
 
 export default class SegmentEdit extends LightningElement {
     bsm: BehaviorStateMachine<BaseState> = new BehaviorStateMachine(new IdleState());
@@ -50,8 +53,11 @@ export default class SegmentEdit extends LightningElement {
     }
 
     get pianoMidiNotes() {
-        console.log(this.segment.notes.toJS());
-        return this.segment.notes.toJS();
+        const n = this.segment.notes.map((notes) => {
+            return notes.toList().toJS();
+        }, []).toJS();
+        console.log('notes', n)
+        return n;
     }
 
     onPianoMouseDown(evt: PianoMouseDownEvent) {
@@ -68,6 +74,26 @@ export default class SegmentEdit extends LightningElement {
 
     onDocumentMouseUp = (evt) => {
         this.bsm.state.onDocumentMouseUp(this.bsm, evt);
+    }
+
+    /*
+     *
+     *  Audio Range Events
+     *
+     */
+
+    onAudioRangeCreated(evt: AudioRangeCreatedEvent) {
+        const { id, parentId: octave, range } = evt.detail;
+        appStore.dispatch(
+            addNote(this.segment.id, octave, id, range)
+        );
+    }
+
+    onAudioRangeChange(evt: AudioRangeChangeEvent) {
+        const { id: noteId, parentId: octave, range } = evt.detail;
+        appStore.dispatch(
+            setNoteRange(this.segment.id, octave, noteId, range)
+        );
     }
 
     /*

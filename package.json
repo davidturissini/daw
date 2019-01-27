@@ -42,6 +42,7 @@
     "redux-observable": "^1.0.0",
     "router5": "^7.0.1",
     "router5-plugin-browser": "^7.0.1",
-    "rxjs": "^6.3.3"
+    "rxjs": "^6.3.3",
+    "shortid": "^2.2.14"
   }
 }

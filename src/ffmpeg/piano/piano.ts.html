@@ -1,7 +1,6 @@
 <template>
     <ffmpeg-grid
-        onaudiorangecreated={onNoteCreated}
-        onaudiorangechange={onNoteChanged}
+        class="grid"
         rows={gridRows}>
         <div slot="col-left">
             <template for:each={pianoKeyViewModels} for:item="pianoKey">

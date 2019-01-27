@@ -1,8 +1,5 @@
 import { LightningElement, wire } from 'lwc';
-import { incrementEnd } from '../../wire/editor';
 import { fromEvent as observableFromEvent } from 'rxjs';
-import { playheadSym } from '../../wire/playhead';
-import { highlightSym } from '../../wire/highlight';
 import { IdleState } from './states/idle';
 import { BaseState } from './states/base';
 import { wireSymbol, appStore } from 'store/index';
@@ -75,26 +72,6 @@ export default class AppElement extends LightningElement {
             const trackId = evt.target.getAttribute('data-track-id');
             //deleteTrack(trackId);
         }
-    }
-
-    /*
-     *
-     * Playhead
-     *
-    */
-    @wire(playheadSym, {})
-    playhead;
-
-    /*
-     *
-     * Highlights
-     *
-    */
-    @wire(highlightSym, {})
-    highlightData;
-
-    get highlights() {
-        return this.highlightData.data.items.toList().toArray();
     }
 
     /*
@@ -286,14 +263,6 @@ export default class AppElement extends LightningElement {
         });
     }
 
-    get hasPlaybackCursor() {
-        return this.playhead.data.currentTime !== null;
-    }
-
-    get hasPlaybackDurationCursor() {
-        return this.timeInWindow(this.playhead.data.playbackRange.duration);
-    }
-
     timeInWindow(time) {
         if(this.editor) {
             const { visibleRange } = this.editor;
@@ -319,16 +288,7 @@ export default class AppElement extends LightningElement {
     }
 
     handleEditorEndDrag(evt) {
-        const { editor } = this;
-        const { frame } = editor;
-        if (frame) {
-            const time = pixelToTime(
-                frame,
-                editor.visibleRange,
-                evt.detail.dx,
-            );
-            incrementEnd(time);
-        }
+        throw new Error('Not implemented');
     }
 
     get editorElement() {

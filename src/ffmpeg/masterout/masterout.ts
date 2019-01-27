@@ -1,15 +1,12 @@
-import { LightningElement, wire } from 'lwc';
-import { masterOutSym, setGain } from '../../wire/masterout';
+import { LightningElement } from 'lwc';
 
 export default class MasterOut extends LightningElement {
-    @wire(masterOutSym, {})
-    masterOut;
 
     get masterGain() {
-        return this.masterOut.data.gain;
+        return 0;
     }
 
     handleGainChange(evt) {
-        setGain(parseFloat(evt.target.value));
+
     }
 }

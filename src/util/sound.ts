@@ -6,6 +6,7 @@ interface Note {
 }
 
 export interface MidiNote {
+    id: string;
     note: string;
     range: AudioRange;
 }

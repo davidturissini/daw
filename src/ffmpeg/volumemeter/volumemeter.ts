@@ -1,19 +1,17 @@
 import { LightningElement, track } from 'lwc';
-import { getMasterOutChain } from '../../wire/masterout';
-import { audioContext } from '../../wire/audiosource';
 import rafThrottle from 'raf-throttle';
 
 export default class VolumeMeter extends LightningElement {
-    @track channels = [];
+    @track channels: Array<{
+        volume: number;
+        lastClip: number | null;
+    }> = [];
+    processor: ScriptProcessorNode;
     averaging = 0.95;
     clipLevel = 0.98;
     clipLag = 250;
     constructor() {
         super();
-        const chain = getMasterOutChain(audioContext);
-        this.processor = audioContext.createScriptProcessor(2048, 2, 2);
-        this.processor.connect(audioContext.destination);
-        chain.master.connect(this.processor);
     }
 
     connectedCallback() {
@@ -24,7 +22,7 @@ export default class VolumeMeter extends LightningElement {
             volume: 0,
             lastClip: null,
         }];
-        this.processor.onaudioprocess = this.draw;
+        //this.processor.onaudioprocess = this.draw;
     }
 
     draw = rafThrottle((evt) => {

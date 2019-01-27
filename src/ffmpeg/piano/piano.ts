@@ -3,7 +3,7 @@ import { notes, MidiNote } from 'util/sound';
 import { wireSymbol } from 'store/index';
 import { PianoState } from 'store/piano/reducer';
 import { Piano } from 'store/piano';
-import { GridElementRow, AudioRangeCreatedEvent, AudioRangeChangeEvent, GridAudioWindowCreatedEvent } from 'cmp/grid/grid';
+import { GridElementRow } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { Color } from 'util/color';
 
@@ -59,11 +59,11 @@ export default class PianoElement extends LightningElement {
             const row: GridElementRow = {
                 height: note.sharp ? 30 : 45,
                 id: octave,
-                ranges: midiNotes.map((midiNote, index) => {
+                ranges: midiNotes.map((midiNote) => {
                     return {
                         range: midiNote.range,
                         color: new Color(0, 255, 0),
-                        itemId: index,
+                        itemId: midiNote.id,
                     };
                 })
             };
@@ -122,19 +122,6 @@ export default class PianoElement extends LightningElement {
 
             return seed.concat(midiNotes);
         }, []);
-    }
-
-    /*
-     *
-     *  Grid Events
-     *
-     */
-    onNoteCreated(evt: AudioRangeCreatedEvent) {
-        console.log('created', evt)
-    }
-
-    onNoteChanged(evt: AudioRangeChangeEvent) {
-        console.log('changed', evt)
     }
 
     /*

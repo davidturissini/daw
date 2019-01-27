@@ -1,6 +1,5 @@
-let id = 0;
+import shortid from 'shortid';
 
 export function generateId(): string {
-    id += 1;
-    return id + '';
+    return shortid.generate();
 }

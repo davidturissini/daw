@@ -16,7 +16,7 @@
     grid-column-start: span 3;
 }
 
-.selections {
+.left-col {
     flex: 0 1 150px;
     background: rgb(96, 96, 96);
     border-right: 1px solid rgb(52, 52, 52);

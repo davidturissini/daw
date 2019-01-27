@@ -1,9 +1,5 @@
-import { TimelineDragState } from './timelinedrag';
 import { BaseState } from './base';
-import { MetaKeyDownState } from './metakeydown';
 import { SegmentDragState } from './segmentdrag';
-import { EditorDragState } from './editordrag';
-import { PlayingState } from './playing';
 import { AudioRange } from '../../../util/audiorange';
 import { appStore } from 'store/index';
 import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
@@ -14,16 +10,6 @@ import { RangeDragStartEvent, RangeSourceOffsetChangeEvent, RangeDoubleClickEven
 import AppElement from 'cmp/app/app';
 
 export class IdleState extends BaseState {
-    onDocumentKeyDown(app: AppElement, evt) {
-        if (evt.key === 'Meta') {
-            app.enterState(new MetaKeyDownState());
-        }
-    }
-
-    onTimelineDragStart(app: AppElement) {
-        app.enterState(new TimelineDragState());
-    }
-
     onSegmentDragStart(app: AppElement, evt: RangeDragStartEvent) {
         const { itemId: segmentId } = evt.detail;
         app.enterState(new SegmentDragState(segmentId));
@@ -55,11 +41,6 @@ export class IdleState extends BaseState {
         appStore.dispatch(setCursorTime(next));
     }
 
-    onEditorDragOver(app: AppElement, evt) {
-        evt.preventDefault();
-        app.enterState(new EditorDragState())
-    }
-
     onTimelineMouseEnter(app, evt) {
         app.template.host.classList.add('editor--draggable');
     }
@@ -74,12 +55,6 @@ export class IdleState extends BaseState {
 
     onPlaybackDurationCursorDrag(app, evt) {
         throw new Error('not implemented')
-    }
-
-    onPlayButtonClick(app, evt) {
-        const { editor } = appStore.getState();
-        const range = new AudioRange(editor.cursor, editor.duration);
-        app.enterState(new PlayingState(range));
     }
 
     onSilenceDetectButtonClick(app, evt) {
