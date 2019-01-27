@@ -1,0 +1,18 @@
+:host {
+    display: inline-block;
+}
+
+button {
+    background: rgb(61, 61, 61);
+    border: 0;
+    display: flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    color: rgb(251, 251, 251);
+    border-radius: 0.4rem;
+}
+
+.selected {
+    background: rgb(58, 103, 160);
+}

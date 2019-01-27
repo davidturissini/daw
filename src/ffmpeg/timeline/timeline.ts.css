@@ -1,12 +1,13 @@
 :host {
     display: block;
-    height: 1.5rem;
+    height: 1rem;
     user-select: none;
     position: relative;
     z-index: 1;
     padding: 0.25rem 0;
     background: rgb(52, 52, 52);
     color: rgb(150, 150, 150);
+    font-size: 0.6rem;
 }
 
 .tick {
@@ -22,4 +23,8 @@
 .tick-label {
     transform: translateX(-50%);
     margin-bottom: 0.5rem;
+}
+
+.beat-label {
+    transform: translateX(-50%);
 }

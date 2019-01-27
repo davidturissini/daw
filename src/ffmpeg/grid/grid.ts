@@ -7,7 +7,6 @@ import { wireSymbol, appStore } from 'store/index';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioWindow, setAudioWindowVisibleRange } from 'store/audiowindow/action';
 import { Color } from 'util/color';
-import { TimelineVariant } from 'cmp/timeline/timeline';
 import { AudioWindow, mapBeatMarks, mapTimeMarks } from 'store/audiowindow';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
@@ -236,18 +235,24 @@ export default class GridElement extends LightningElement {
 
     /*
      *
+     * Toolbar
+     *
+     */
+    get isEditingGrid() {
+        return this.state instanceof this.states[GridStateNames.DrawRange];
+    }
+
+    get isMovingGrid() {
+        return this.state instanceof this.states[GridStateNames.Idle];
+    }
+
+    /*
+     *
      * Timeline
      *
      */
     get timelineBpm() {
         return 128;
-    }
-
-    get timelineVariant() {
-        if (this.timeVariant === GridTimeVariant.Time) {
-            return TimelineVariant.Time;
-        }
-        return TimelineVariant.Beats;
     }
 
     /*

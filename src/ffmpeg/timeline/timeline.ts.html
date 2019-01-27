@@ -5,7 +5,7 @@
                 <ffmpeg-timelabel class="tick-label" time={tick.time}></ffmpeg-timelabel>
             </template>
             <template if:true={isBeatVariant}>
-                {tick.beat}
+                <span class="beat-label">{tick.beat}</span>
             </template>
         </span>
     </template>
