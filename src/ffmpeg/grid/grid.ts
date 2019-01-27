@@ -1,6 +1,6 @@
 import { LightningElement, track, wire, api } from 'lwc';
 import { Time, timeZero } from '../../util/time';
-import { timeToPixel, Frame, pixelToTime, absolutePixelToTime } from 'util/geometry';
+import { timeToPixel, Frame, pixelToTime } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
 import { generateId } from 'util/uniqueid';
 import { wireSymbol, appStore } from 'store/index';
@@ -8,6 +8,9 @@ import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioWindow, setAudioWindowVisibleRange } from 'store/audiowindow/action';
 import { Color } from 'util/color';
 import { AudioWindow, mapBeatMarks, mapTimeMarks } from 'store/audiowindow';
+import { GridStateNames, GridState, GridStateInputs, GridFSM, GridStateCtor } from './states/types';
+import { IdleState } from './states/idle';
+import { DrawRangeState } from './states/drawrange';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
 export type TimelineMouseLeaveEvent = CustomEvent<{}>;
@@ -60,40 +63,11 @@ interface GridLine {
     style: string;
 }
 
-enum GridStateInputs {
-    EditButtonClick = 'EditButtonClick',
-    GridRowMouseDown = 'GridRowMouseDown',
-    GridRowMouseMove = 'GridRowMouseMove',
-    GridRowMouseUp = 'GridRowMouseUp',
-
-    DocumentMouseMove = 'DocumentMouseMove',
-    DocumentMouseUp = 'DocumentMouseUp',
-}
-
-enum GridStateNames {
-    Idle = 'idle',
-    DrawRange = 'drawRange',
-}
-
-interface GridStateCtor {
-    new(...args): GridState;
-}
-
-interface GridState {
-    enter: () => void;
-    exit: () => void;
-    [GridStateInputs.EditButtonClick]?: (fsm: GridElement, evt: MouseEvent) => void;
-    [GridStateInputs.GridRowMouseDown]?: (fsm: GridElement, evt: MouseEvent) => void;
-    [GridStateInputs.GridRowMouseMove]?: (fsm: GridElement, evt: MouseEvent) => void;
-    [GridStateInputs.GridRowMouseUp]?: (fsm: GridElement, evt: MouseEvent) => void;
-
-    [GridStateInputs.DocumentMouseMove]?: (fsm: GridElement, evt: MouseEvent) => void;
-    [GridStateInputs.DocumentMouseUp]?: (fsm: GridElement, evt: MouseEvent) => void;
-}
-
-export default class GridElement extends LightningElement {
+export default class GridElement extends LightningElement implements GridFSM {
     @api rows: GridElementRow[] = [];
+    @api canClose: boolean = false;
     @track timeVariant: GridTimeVariant = GridTimeVariant.Beats;
+    @track interactionStateName: GridStateNames;
     @track windowId: string | null;
     @wire(wireSymbol, {
         paths: {
@@ -112,15 +86,16 @@ export default class GridElement extends LightningElement {
         if(this.state) {
             this.state.exit()
         }
-        const Ctor = this.states[name];
+        const Ctor = this.states[name] as GridStateCtor;
         this.state = new Ctor(...args);
+        this.interactionStateName = name;
         this.state.enter();
     }
 
-    stateInput(name: GridStateInputs, ...args: any[]) {
+    stateInput<T>(name: GridStateInputs, evt: T, ...args: any[]) {
         const method = this.state[name];
         if (method) {
-            method.apply(this.state, [this, ...args]);
+            method.apply(this.state, [this, evt, ...args]);
         }
     }
 
@@ -139,73 +114,9 @@ export default class GridElement extends LightningElement {
      * States
      *
      */
-    states: {[key in GridStateNames]: GridStateCtor} = {
-        [GridStateNames.Idle]: class IdleState {
-            enter() {}
-            exit() {}
-            [GridStateInputs.EditButtonClick](cmp: GridElement) {
-                cmp.enterState(GridStateNames.DrawRange);
-            }
-        },
-        [GridStateNames.DrawRange]: class DrawRangeState {
-            parentId: string | null = null;
-            startX: number | null = null;
-            rangeId: string | null = null;
-            range: AudioRange | null = null;
-            enter() {}
-            exit() {}
-            [GridStateInputs.GridRowMouseDown](cmp: GridElement, evt: MouseEvent) {
-                evt.preventDefault();
-                const { audioWindow } = cmp;
-                if (audioWindow === null) {
-                    return;
-                }
-                const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
-                this.startX = evt.x;
-                const time = absolutePixelToTime(audioWindow.frame, audioWindow.visibleRange, evt.x - rect.left);
-                const range = this.range = new AudioRange(time, timeZero);
-                const id = this.rangeId = generateId();
-                const parentId = this.parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
-                const event: AudioRangeCreatedEvent = new CustomEvent('audiorangecreated', {
-                    bubbles: true,
-                    composed: true,
-                    detail: {
-                        id,
-                        range,
-                        parentId,
-                    },
-                });
-                cmp.dispatchEvent(event);
-            }
-            [GridStateInputs.DocumentMouseMove](cmp: GridElement, evt: MouseEvent) {
-                if (this.startX && this.rangeId && this.range && this.parentId) {
-                    const { audioWindow } = cmp;
-                    if (audioWindow === null) {
-                        return;
-                    }
-                    const diff = evt.x - this.startX;
-                    const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, diff);
-                    const next = new AudioRange(this.range.start, time);
-
-                    const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {
-                        bubbles: true,
-                        composed: true,
-                        detail: {
-                            range: next,
-                            id: this.rangeId,
-                            parentId: this.parentId,
-                        },
-                    });
-                    cmp.dispatchEvent(event);
-                }
-            }
-            [GridStateInputs.DocumentMouseUp](cmp: GridElement, evt: MouseEvent) {
-                cmp.enterState(GridStateNames.DrawRange, []);
-            }
-            [GridStateInputs.EditButtonClick](cmp: GridElement) {
-                cmp.enterState(GridStateNames.Idle, []);
-            }
-        }
+    states = {
+        [GridStateNames.Idle]: IdleState,
+        [GridStateNames.DrawRange]: DrawRangeState,
     }
 
     get gridLines(): GridLine[] {
@@ -238,12 +149,25 @@ export default class GridElement extends LightningElement {
      * Toolbar
      *
      */
-    get isEditingGrid() {
-        return this.state instanceof this.states[GridStateNames.DrawRange];
+    get isDrawingState() {
+        return this.interactionStateName === GridStateNames.DrawRange;
     }
 
-    get isMovingGrid() {
-        return this.state instanceof this.states[GridStateNames.Idle];
+    get isIdleState() {
+        return this.interactionStateName === GridStateNames.Idle;
+    }
+
+    /*
+     *
+     * Toolbar Events
+     *
+     */
+    onEditButtonClick(evt: MouseEvent) {
+        this.stateInput<MouseEvent>(GridStateInputs.EditButtonClick, evt);
+    }
+
+    onIdleButtonClick(evt: MouseEvent) {
+        this.stateInput<MouseEvent>(GridStateInputs.PanButtonClick, evt);
     }
 
     /*
@@ -257,32 +181,23 @@ export default class GridElement extends LightningElement {
 
     /*
      *
-     * Toolbar Events
-     *
-     */
-    onEditButtonClick(evt) {
-        this.stateInput(GridStateInputs.EditButtonClick, evt);
-    }
-
-    /*
-     *
      * Grid Events
      *
      */
-    onGridRowMouseDown(evt) {
-        if (evt.target.classList.contains('row')) {
-            this.stateInput(GridStateInputs.GridRowMouseDown, evt);
+    onGridRowMouseDown(evt: MouseEvent) {
+        if ((evt.target as HTMLElement).classList.contains('row')) {
+            this.stateInput<MouseEvent>(GridStateInputs.GridRowMouseDown, evt);
         }
     }
 
-    onGridRowMouseMove(evt) {
-        if (evt.target.classList.contains('row')) {
+    onGridRowMouseMove(evt: MouseEvent) {
+        if ((evt.target as HTMLElement).classList.contains('row')) {
             this.stateInput(GridStateInputs.GridRowMouseMove, evt);
         }
     }
 
-    onGridRowMouseUp(evt) {
-        if (evt.target.classList.contains('row')) {
+    onGridRowMouseUp(evt: MouseEvent) {
+        if ((evt.target as HTMLElement).classList.contains('row')) {
             this.stateInput(GridStateInputs.GridRowMouseUp, evt);
         }
     }

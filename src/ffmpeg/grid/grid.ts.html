@@ -1,15 +1,23 @@
 <template>
     <header class="toolbar">
         <ffmpeg-button
-            selected={isEditingGrid}
+            selected={isDrawingState}
             class="toolbar__button"
             onclick={onEditButtonClick}
             icon-variant="EditPencil">
         </ffmpeg-button>
         <ffmpeg-button
-            selected={isMovingGrid}
+            onclick={onIdleButtonClick}
+            selected={isIdleState}
             class="toolbar__button"
             icon-variant="HandPaper">
+        </ffmpeg-button>
+        <ffmpeg-button
+            if:true={canClose}
+            onclick={onCloseButtonClick}
+            selected={isIdleState}
+            class="toolbar__button"
+            icon-variant="Times">
         </ffmpeg-button>
     </header>
     <ffmpeg-timeline

@@ -57,7 +57,7 @@ main {
     grid-row: 1;
     display: flex;
     background: rgb(72, 72, 72);
-    padding: 0.1rem 0.5rem;
+    padding: 0.2rem 0.5rem;
     align-items: center;
     justify-content: flex-end;
 }
