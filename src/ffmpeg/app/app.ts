@@ -1,4 +1,4 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, wire, track } from 'lwc';
 import { fromEvent as observableFromEvent } from 'rxjs';
 import { IdleState } from './states/idle';
 import { BaseState } from './states/base';
@@ -16,10 +16,12 @@ import { GridElementRow } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
 import { ProjectState } from 'store/project/reducer';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridClickEvent } from 'cmp/grid/events';
+import { Time } from 'util/time';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
+    @track cursor: Time | null = null;
     constructor() {
         super();
         this.enterState(new IdleState());
@@ -112,6 +114,49 @@ export default class AppElement extends LightningElement {
 
     /*
      *
+     * Track Grid Events
+     *
+    */
+    onTrackGridClick(evt: GridClickEvent) {
+        this.cursor = evt.detail.time;
+    }
+
+    /*
+     *
+     * Track Grid Getters
+     *
+    */
+    get trackGridRows(): GridElementRow[] {
+        return this.audioTracks.map((audioTrack: AudioTrack, id: string) => {
+            return {
+                id,
+                height: 60,
+                ranges: audioTrack.segments.map((segmentId) => {
+                    const segment = this.storeData.data.segments.get(segmentId) as AudioSegment;
+                    return {
+                        itemId: segmentId,
+                        range: segment.range,
+                        color: audioTrack.color,
+                    }
+                })
+                .toArray()
+            } as GridElementRow;
+        })
+        .toList()
+        .toArray();
+    }
+
+    /*
+     *
+     * Playback Control Events
+     *
+    */
+    onPlayButtonClick(evt: MouseEvent) {
+        this.state.onPlayButtonClick(this, evt);
+    }
+
+    /*
+     *
      * Events
      *
     */
@@ -185,10 +230,6 @@ export default class AppElement extends LightningElement {
 
     onPlaybackDurationCursorDoubleTap(evt) {
         this.state.onPlaybackDurationCursorDoubleTap(this, evt);
-    }
-
-    onPlayButtonClick(evt) {
-        this.state.onPlayButtonClick(this, evt);
     }
 
     onSilenceDetectButtonClick(evt) {
@@ -305,26 +346,6 @@ export default class AppElement extends LightningElement {
 
     get editorElement() {
         return this.template.querySelector('.editor');
-    }
-
-    get trackGridRows(): GridElementRow[] {
-        return this.audioTracks.map((audioTrack: AudioTrack, id: string) => {
-            return {
-                id,
-                height: 60,
-                ranges: audioTrack.segments.map((segmentId) => {
-                    const segment = this.storeData.data.segments.get(segmentId) as AudioSegment;
-                    return {
-                        itemId: segmentId,
-                        range: segment.range,
-                        color: audioTrack.color,
-                    }
-                })
-                .toArray()
-            } as GridElementRow;
-        })
-        .toList()
-        .toArray();
     }
 
     /*

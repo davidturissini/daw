@@ -23,7 +23,7 @@ export class BaseState {
     onDocumentMouseUp(app, evt) {}
     onPlaybackDurationCursorDoubleTap(app, evt) {}
     onPlaybackDurationCursorDrag(app, evt) {}
-    onPlayButtonClick(app, evt) {}
+    onPlayButtonClick(app, evt: MouseEvent) {}
     onStopButtonClick(app, evt) {}
     onDocumentKeyUpEsc(app, evt) {}
     onDocumentKeyUp(app, evt) {}

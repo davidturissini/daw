@@ -17,6 +17,7 @@ import { reducer as audioWindowReducer, AudioWindowState } from './audiowindow/r
 // Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
 import { playKeyEpic } from './piano/epic';
+import { startPlaybackEpic } from './player/epic';
 
 const { keys } = Object;
 
@@ -24,6 +25,7 @@ const rootEpic = combineEpics(
     createRouterEpic,
     navigateEpic,
     playKeyEpic,
+    startPlaybackEpic,
 );
 const epicMiddleware = createEpicMiddleware();
 const middleware: Middleware[] = [epicMiddleware];
