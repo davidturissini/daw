@@ -1,23 +1,31 @@
 import { Record } from 'immutable';
-import { Frame } from 'util/geometry';
+import { Rect, Frame } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
 import { timeZero, Time } from 'util/time';
 
 export class AudioWindow extends Record<{
     id: string;
-    frame: Frame;
+    rect: Rect;
     visibleRange: AudioRange;
     quanitization: number;
 }>({
     id: '',
-    frame: {
+    rect: {
+        x: 0,
+        y: 0,
         height: 0,
         width: 0,
     },
     visibleRange: new AudioRange(timeZero, timeZero),
     quanitization: 1 / 4,
 }) {
-
+    get frame(): Frame {
+        console.error('Deprecated audioWindow.frame');
+        return {
+            height: this.rect.height,
+            width: this.rect.width,
+        };
+    }
 }
 
 export function mapBeatMarks<T>(audioWindow: AudioWindow, bpm: number, cb: (beat: number, time: Time) => T): T[] {

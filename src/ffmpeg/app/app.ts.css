@@ -65,6 +65,7 @@ ffmpeg-audioscroll {
     display: flex;
     padding: 0 1rem;
     align-items: center;
+    font-weight: normal;
 }
 
 .tracks-summary__body {

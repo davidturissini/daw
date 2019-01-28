@@ -1,6 +1,5 @@
 import { AudioRange } from 'util/audiorange';
-
-
+import { Time } from 'util/time';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
 export type TimelineMouseLeaveEvent = CustomEvent<{}>;
@@ -32,3 +31,7 @@ export type GridAudioWindowCreatedEvent = CustomEvent<{
 }>
 
 export type GridCloseEvent = CustomEvent<{}>;
+
+export type GridClickEvent = CustomEvent<{
+    time: Time;
+}>

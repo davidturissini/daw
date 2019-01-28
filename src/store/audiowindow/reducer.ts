@@ -13,10 +13,10 @@ export class AudioWindowState extends Record<{
 }) {}
 
 function createAudioWindowReducer(state: AudioWindowState, action: CreateAudioWindowAction): AudioWindowState {
-    const { id, frame, quanitization, visibleRange } = action.payload;
+    const { id, rect, quanitization, visibleRange } = action.payload;
     const audioWindow = new AudioWindow({
         id,
-        frame,
+        rect,
         quanitization,
         visibleRange,
     });

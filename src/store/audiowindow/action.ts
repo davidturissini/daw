@@ -3,7 +3,7 @@ import {
     SET_AUDIO_WINDOW_VISIBLE_RANGE,
  } from './const';
 import { Action } from 'store/index';
-import { Frame } from 'util/geometry';
+import { Rect } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
 
 export type SetAudioWindowVisibleRangeAction = Action<{
@@ -22,17 +22,17 @@ export function setAudioWindowVisibleRange(windowId: string, range: AudioRange):
 
 export type CreateAudioWindowAction = Action<{
     id: string;
-    frame: Frame;
+    rect: Rect;
     quanitization: number;
     visibleRange: AudioRange;
 }>
 
-export function createAudioWindow(id: string, frame: Frame, quanitization: number, visibleRange: AudioRange): CreateAudioWindowAction {
+export function createAudioWindow(id: string, rect: Rect, quanitization: number, visibleRange: AudioRange): CreateAudioWindowAction {
     return {
         type: CREATE_AUDIO_WINDOW,
         payload: {
             id,
-            frame,
+            rect,
             quanitization,
             visibleRange,
         }

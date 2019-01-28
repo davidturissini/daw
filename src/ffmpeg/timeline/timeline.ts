@@ -67,11 +67,11 @@ export default class Timeline extends LightningElement {
 
     get ticks(): TimelineTick[] {
         const { audioWindow, bpm } = this;
-        const { frame, visibleRange } = audioWindow;
+        const { rect, visibleRange } = audioWindow;
         const resolution = Time.fromSeconds(getResolution(visibleRange.duration) * 4);
         if (this.variant === TimelineVariant.Time) {
             return mapTimeMarks<TimelineTick>(audioWindow, resolution, (time: Time) => {
-                const translateX = timeToPixel(frame, visibleRange, time);
+                const translateX = timeToPixel(rect, visibleRange, time);
                 return {
                     time,
                     style: `transform: translateX(${translateX}px)`,
@@ -81,7 +81,7 @@ export default class Timeline extends LightningElement {
 
         return mapBeatMarks<TimelineTick>(audioWindow, bpm, (beat: number, time: Time) => {
             const label = (beat % 4 === 0) ? beat / 4 : undefined;
-            const translateX = timeToPixel(frame, visibleRange, time);
+            const translateX = timeToPixel(rect, visibleRange, time);
             return {
                 time,
                 beat: label,

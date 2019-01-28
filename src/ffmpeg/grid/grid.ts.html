@@ -33,7 +33,7 @@
         <div class="col-left">
             <slot name="col-left"></slot>
         </div>
-        <div class="grid-container">
+        <div class="grid-container" onclick={onGridContainerClick}>
             <ul>
                 <template for:each={gridLines} for:item="gridLine">
                     <li style={gridLine.style} key={gridLine.time.milliseconds}></li>

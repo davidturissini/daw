@@ -1,7 +1,7 @@
 import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
 import { BaseState } from './base';
 import { AudioRange } from 'util/audiorange';
-import { AudioRangeChangeEvent, AudioRangeCreatedEvent } from '../grid';
+import { AudioRangeChangeEvent, AudioRangeCreatedEvent } from '../events';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { timeZero } from 'util/time';
 import { generateId } from 'util/uniqueid';
@@ -19,7 +19,7 @@ export class DrawRangeState extends BaseState implements GridState {
         }
         const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
         this.startX = evt.x;
-        const time = absolutePixelToTime(audioWindow.frame, audioWindow.visibleRange, evt.x - rect.left);
+        const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.x - rect.left);
         const range = this.range = new AudioRange(time, timeZero);
         const id = this.rangeId = generateId();
         const parentId = this.parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
@@ -41,7 +41,7 @@ export class DrawRangeState extends BaseState implements GridState {
                 return;
             }
             const diff = evt.x - this.startX;
-            const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, diff);
+            const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, diff);
             const next = new AudioRange(this.range.start, time);
 
             const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {

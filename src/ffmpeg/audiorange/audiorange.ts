@@ -1,15 +1,11 @@
 import { LightningElement, api } from 'lwc';
 import { AudioRange } from 'util/audiorange';
-import { Frame, timeToPixel, durationToWidth, pixelToTime } from 'util/geometry';
+import { timeToPixel, durationToWidth, pixelToTime } from 'util/geometry';
 import { Color } from 'util/color';
 import interact, { Interactable } from 'interactjs';
 import rafThrottle from 'raf-throttle';
 import { Time } from 'util/time';
-
-interface AudioWindow {
-    frame: Frame;
-    visibleRange: AudioRange;
-}
+import { AudioWindow } from 'store/audiowindow';
 
 export type RangeDragStartEvent = CustomEvent<{
     itemId: string;
@@ -34,10 +30,10 @@ export type RangeDurationChangeEvent = CustomEvent<{
 
 
 function calcStyle(audioWindow: AudioWindow, range: AudioRange, color: Color) {
-    const { frame, visibleRange } = audioWindow;
-    const frameWidth = frame.width;
-    const segmentOffset = timeToPixel(frame, visibleRange, range.start);
-    let width = durationToWidth(frame, visibleRange, range.duration);
+    const { rect, visibleRange } = audioWindow;
+    const frameWidth = rect.width;
+    const segmentOffset = timeToPixel(rect, visibleRange, range.start);
+    let width = durationToWidth(rect, visibleRange, range.duration);
 
     const x = segmentOffset;
     if (x < 0) {
@@ -89,7 +85,7 @@ export default class AudioRangeElement extends LightningElement {
     onDrag = rafThrottle((evt) => {
         const { audioWindow, itemId } = this;
         const { dx } = evt;
-        const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, dx);
+        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, dx);
         const event: RangeDragEvent = new CustomEvent('rangedrag', {
             composed: true,
             bubbles: true,
@@ -126,7 +122,7 @@ export default class AudioRangeElement extends LightningElement {
     onStartHandleDrag = rafThrottle((evt) => {
         const { audioWindow, itemId } = this;
         const { dx } = evt;
-        const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, dx);
+        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, dx);
         const event: RangeSourceOffsetChangeEvent = new CustomEvent('rangesourceoffsetchange', {
             composed: true,
             bubbles: true,
@@ -142,7 +138,7 @@ export default class AudioRangeElement extends LightningElement {
     onEndHandleDrag = rafThrottle((evt) => {
         const { audioWindow, itemId } = this;
         const { dx } = evt;
-        const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, dx);
+        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, dx);
         const event: RangeDurationChangeEvent = new CustomEvent('rangedurationchange', {
             composed: true,
             bubbles: true,

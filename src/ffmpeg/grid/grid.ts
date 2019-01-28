@@ -1,6 +1,6 @@
 import { LightningElement, track, wire, api } from 'lwc';
 import { Time, timeZero } from '../../util/time';
-import { timeToPixel, Frame, pixelToTime } from 'util/geometry';
+import { timeToPixel, pixelToTime, Rect } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
 import { generateId } from 'util/uniqueid';
 import { wireSymbol, appStore } from 'store/index';
@@ -104,7 +104,7 @@ export default class GridElement extends LightningElement implements GridFSM {
 
         if (this.timeVariant === GridTimeVariant.Time) {
             return mapTimeMarks<GridLine>(audioWindow, Time.fromSeconds(audioWindow.quanitization), (time: Time) => {
-                const translateX = timeToPixel(audioWindow.frame, audioWindow.visibleRange, time);
+                const translateX = timeToPixel(audioWindow.rect, audioWindow.visibleRange, time);
                 return {
                     time,
                     style: `transform: translateX(${translateX}px)`,
@@ -113,7 +113,7 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
 
         return mapBeatMarks<GridLine>(audioWindow, this.timelineBpm, (beat: Number, time: Time) => {
-            const translateX = timeToPixel(audioWindow.frame, audioWindow.visibleRange, time);
+            const translateX = timeToPixel(audioWindow.rect, audioWindow.visibleRange, time);
             return {
                 time,
                 style: `transform: translateX(${translateX}px)`,
@@ -183,6 +183,10 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
     }
 
+    onGridContainerClick(evt: MouseEvent) {
+        this.stateInput(GridStateInputs.GridContainerClick, evt);
+    }
+
     /*
      *
      * Document Events
@@ -207,7 +211,7 @@ export default class GridElement extends LightningElement implements GridFSM {
             return;
         }
 
-        const time = pixelToTime(audioWindow.frame, audioWindow.visibleRange, evt.detail.dx);
+        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.detail.dx);
         let start = audioWindow.visibleRange.start.minus(time);
         if (start.milliseconds < 0) {
             start = timeZero;
@@ -288,13 +292,15 @@ export default class GridElement extends LightningElement implements GridFSM {
             requestAnimationFrame(() => {
                 const windowId = generateId();
                 const bounds: ClientRect = this.gridContainerElement.getBoundingClientRect();
-                const frame: Frame = {
+                const rect: Rect = {
                     height: bounds.height,
                     width: bounds.width,
+                    x: bounds.left,
+                    y: bounds.top,
                 };
 
                 appStore.dispatch(
-                    createAudioWindow(windowId, frame, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(30))),
+                    createAudioWindow(windowId, rect, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(30))),
                 );
                 this.windowId = windowId;
 

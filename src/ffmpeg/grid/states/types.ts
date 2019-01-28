@@ -8,6 +8,7 @@ export enum GridStateInputs {
     GridRowMouseDown = 'GridRowMouseDown',
     GridRowMouseMove = 'GridRowMouseMove',
     GridRowMouseUp = 'GridRowMouseUp',
+    GridContainerClick = 'GridContainerClick',
 
     DocumentMouseMove = 'DocumentMouseMove',
     DocumentMouseUp = 'DocumentMouseUp',
@@ -29,7 +30,7 @@ export interface GridState {
     [GridStateInputs.GridRowMouseDown]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridRowMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridRowMouseUp]?: (fsm: GridFSM, evt: MouseEvent) => void;
-
+    [GridStateInputs.GridContainerClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.DocumentMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.DocumentMouseUp]?: (fsm: GridFSM, evt: MouseEvent) => void;
 
