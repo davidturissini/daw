@@ -1,4 +1,5 @@
 import { AudioWindow } from "store/audiowindow";
+import { RangeDragStartEvent, RangeDragEvent } from "cmp/audiorange/audiorange";
 
 export enum GridStateInputs {
     EditButtonClick = 'EditButtonClick',
@@ -12,11 +13,15 @@ export enum GridStateInputs {
 
     DocumentMouseMove = 'DocumentMouseMove',
     DocumentMouseUp = 'DocumentMouseUp',
+
+    RangeDragStart = 'RangeDragStart',
+    RangeDrag = 'RangeDrag',
 }
 
 export enum GridStateNames {
     Idle = 'idle',
     DrawRange = 'drawRange',
+    RangeDrag = 'rangeDrag',
 }
 
 export interface GridStateCtor {
@@ -35,6 +40,9 @@ export interface GridState {
     [GridStateInputs.DocumentMouseUp]?: (fsm: GridFSM, evt: MouseEvent) => void;
 
     [GridStateInputs.PanButtonClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
+
+    [GridStateInputs.RangeDragStart]?: (fsm: GridFSM, evt: RangeDragStartEvent) => void;
+    [GridStateInputs.RangeDrag]?: (fsm: GridFSM, evt: RangeDragEvent) => void;
 }
 
 export interface GridFSM {

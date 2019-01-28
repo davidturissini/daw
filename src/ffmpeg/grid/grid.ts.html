@@ -51,6 +51,9 @@
                 >
                     <template if:true={hasAudioWindow} for:each={row.ranges} for:item="range">
                         <ffmpeg-audiorange
+                            data-row-id={row.id}
+                            onrangedragstart={onRangeDragStart}
+                            onrangedrag={onRangeDrag}
                             item-id={range.itemId}
                             color={range.color}
                             audio-window={audioWindow}

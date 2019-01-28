@@ -9,6 +9,7 @@ import { AudioWindow } from 'store/audiowindow';
 
 export type RangeDragStartEvent = CustomEvent<{
     itemId: string;
+    range: AudioRange;
 }>;
 export type RangeDragEvent = CustomEvent<{
     time: Time;
@@ -76,6 +77,7 @@ export default class AudioRangeElement extends LightningElement {
             bubbles: true,
             detail: {
                 itemId: this.itemId,
+                range: this.range,
             }
         });
 

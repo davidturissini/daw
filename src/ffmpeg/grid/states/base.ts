@@ -1,5 +1,6 @@
-import { GridStateInputs, GridState, GridFSM } from './types';
+import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
 import { GridCloseEvent } from './../events';
+import { RangeDragStartEvent } from 'cmp/audiorange/audiorange';
 
 export class BaseState implements GridState {
     enter() {}
@@ -11,5 +12,13 @@ export class BaseState implements GridState {
             detail: {}
         });
         cmp.dispatchEvent(event);
+    }
+    [GridStateInputs.RangeDragStart](cmp: GridFSM, evt: RangeDragStartEvent) {
+        const parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
+        cmp.enterState(GridStateNames.RangeDrag,
+            parentId,
+            evt.detail.itemId,
+            evt.detail.range
+        );
     }
 }

@@ -12,6 +12,8 @@ import { GridStateNames, GridState, GridStateInputs, GridFSM, GridStateCtor } fr
 import { IdleState } from './states/idle';
 import { DrawRangeState } from './states/drawrange';
 import { TimelineDragStartEvent, TimelineDragEndEvent, GridAudioWindowCreatedEvent } from './events';
+import { RangeDragEvent, RangeDragStartEvent } from 'cmp/audiorange/audiorange';
+import { RangeDragState } from './states/rangedrag';
 
 export interface GridRange {
     itemId: string;
@@ -79,6 +81,7 @@ export default class GridElement extends LightningElement implements GridFSM {
     states = {
         [GridStateNames.Idle]: IdleState,
         [GridStateNames.DrawRange]: DrawRangeState,
+        [GridStateNames.RangeDrag]: RangeDragState,
     }
 
     /*
@@ -199,6 +202,19 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     onDocumentMouseUp = (evt) => {
         this.stateInput(GridStateInputs.DocumentMouseUp, evt);
+    }
+
+    /*
+     *
+     * Range Events
+     *
+     */
+
+    onRangeDragStart(evt: RangeDragStartEvent) {
+        this.stateInput(GridStateInputs.RangeDragStart, evt);
+    }
+    onRangeDrag(evt: RangeDragEvent) {
+        this.stateInput(GridStateInputs.RangeDrag, evt);
     }
 
     /*

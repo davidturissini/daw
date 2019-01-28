@@ -1,23 +1,17 @@
 import { BaseState } from './base';
-import { SegmentDragState } from './segmentdrag';
 import { AudioRange } from '../../../util/audiorange';
 import { appStore } from 'store/index';
 import { setVirtualCursorTime, setCursorTime } from 'store/editor/action';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { navigate } from 'store/route/action';
 import { RouteNames, SegmentEditRouteParams } from 'store/route';
-import { RangeDragStartEvent, RangeSourceOffsetChangeEvent, RangeDoubleClickEvent, RangeDurationChangeEvent } from 'cmp/audiorange/audiorange';
+import { RangeSourceOffsetChangeEvent, RangeDoubleClickEvent, RangeDurationChangeEvent } from 'cmp/audiorange/audiorange';
 import AppElement from 'cmp/app/app';
 import { startPlayback } from 'store/player/action';
 import { timeZero, Time } from 'util/time';
 import { audioContext } from 'util/sound';
 
 export class IdleState extends BaseState {
-    onSegmentDragStart(app: AppElement, evt: RangeDragStartEvent) {
-        const { itemId: segmentId } = evt.detail;
-        app.enterState(new SegmentDragState(segmentId));
-    }
-
     onSegmentSourceOffsetChange(app: AppElement, evt: RangeSourceOffsetChangeEvent) {
         throw new Error('not implemented')
     }
