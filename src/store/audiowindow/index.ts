@@ -68,18 +68,28 @@ class BeatRange {
         const { audioWindow } = this;
         const { visibleRange, quanitization } = audioWindow;
         const { start, duration } = visibleRange;
-        const beatsPerSecond = 128 / 60;
-        const tickDistanceMs = beatsPerSecond * quanitization;
+        const secondsPerBeat = 60 / 128;
+        const tickDistanceMs = secondsPerBeat * quanitization;
         const min = Math.ceil(start.seconds / tickDistanceMs);
         const d = Math.floor((start.seconds + duration.seconds) / tickDistanceMs);
 
         const ticks: T[] = [];
         for(let i = min; i <= d; i += 1) {
-            const time = Time.fromSeconds(i * tickDistanceMs);
-            const value: T = cb(i, time);
-            ticks.push(value);
+            if (i !== 0) {
+                const time = Time.fromSeconds(i * tickDistanceMs);
+                const value: T = cb(i, time);
+                ticks.push(value);
+            }
         }
 
         return ticks;
     }
+}
+
+export function quanitizeTime(audioWindow: AudioWindow, time: Time): Time {
+    const { quanitization } = audioWindow;
+    const { milliseconds } = time;
+    const remainder = milliseconds % quanitization;
+    console.log(remainder)
+    return time;
 }

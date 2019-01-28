@@ -1,0 +1,15 @@
+<template>
+    <section class="tracks">
+        <template for:each={audioTracks} for:item="track">
+            <ffmpeg-trackloops
+                track={track}
+                key={track.id}
+                oncreatetrackloop={onCreateTrackLoop}
+            >
+            </ffmpeg-trackloops>
+        </template>
+    </section>
+    <template if:true={isLoopEditRouteActive}>
+        <ffmpeg-loopedit></ffmpeg-loopedit>
+    </template>
+</template>

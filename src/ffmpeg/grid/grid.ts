@@ -300,7 +300,7 @@ export default class GridElement extends LightningElement implements GridFSM {
                 };
 
                 appStore.dispatch(
-                    createAudioWindow(windowId, rect, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(30))),
+                    createAudioWindow(windowId, rect, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(5))),
                 );
                 this.windowId = windowId;
 

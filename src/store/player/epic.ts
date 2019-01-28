@@ -1,14 +1,70 @@
 import {
     START_PLAYBACK,
+    PLAY_TRACK_LOOP,
 } from './const';
-import { flatMap } from 'rxjs/operators';
-import { StartPlaybackAction } from './action';
-import { empty as emptyObservable } from 'rxjs';
+import { flatMap, repeat } from 'rxjs/operators';
+import { StartPlaybackAction, PlayTrackLoopAction } from './action';
+import { empty as emptyObservable, from as observableFrom, Observable, Observer } from 'rxjs';
 import { appStore } from '../index';
 import { AudioSegment } from 'store/audiosegment';
-import { AudioTrack } from 'store/audiotrack';
+import { AudioTrack, Loop } from 'store/audiotrack';
 import { Instrument } from 'store/instrument';
-import { notes as octaves } from 'util/sound';
+import { notes as octaves, MidiNote } from 'util/sound';
+import { Time } from 'util/time';
+import { AudioRange } from 'util/audiorange';
+
+export function playTrackLoopEpic(actions) {
+    return actions.ofType(PLAY_TRACK_LOOP)
+        .pipe(
+            flatMap((action: PlayTrackLoopAction) => {
+                const { audioContext, trackId, instrumentId, loopId } = action.payload;
+                const { audiotrack, instrument } = appStore.getState();
+                const track = audiotrack.items.get(trackId) as AudioTrack;
+                const trackInstrument = instrument.items.get(instrumentId) as Instrument;
+                const loop = track.loops.get(loopId) as Loop;
+                const audioContextStartTime = Time.fromSeconds(audioContext.currentTime);
+
+                return observableFrom(loop.notes.toList().toArray())
+                    .pipe(
+                        flatMap((note: MidiNote) => {
+                            let instrumentStartTime: Time = audioContextStartTime;
+                            return Observable.create((o: Observer<AudioRange>) => {
+                                const start = instrumentStartTime.plus(note.range.start);
+                                instrumentStartTime = start.plus(loop.duration);
+                                const duration = note.range.duration;
+
+                                o.next(
+                                    new AudioRange(start, duration),
+                                );
+                                o.complete();
+                            })
+                            .pipe(
+                                flatMap((range: AudioRange) => {
+                                    console.log(range);
+                                    return Observable.create((o: Observer<never>) => {
+                                        const { frequency } = octaves[note.note];
+                                        const node = audioContext.createOscillator();
+                                        node.frequency.setValueAtTime(frequency, 0);
+                                        node.type = trackInstrument.data.type;
+                                        node.start(range.start.seconds);
+                                        node.stop(
+                                            audioContextStartTime
+                                                .plus(range.start)
+                                                .plus(range.duration).seconds
+                                            );
+                                        node.connect(audioContext.destination);
+                                        node.onended = () => {
+                                            o.complete();
+                                        };
+                                    });
+                                }),
+                                repeat()
+                            )
+                        })
+                    );
+            })
+        )
+}
 
 export function startPlaybackEpic(actions) {
     return actions.ofType(START_PLAYBACK)
@@ -39,7 +95,7 @@ export function startPlaybackEpic(actions) {
                     });
                 });
 
-                return emptyObservable()
+                return emptyObservable();
             })
         )
 }

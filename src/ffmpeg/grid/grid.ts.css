@@ -1,6 +1,6 @@
 :host {
     display: grid;
-    grid-template-columns: 20fr 80fr;
+    grid-template-columns: 150px 80fr;
     grid-template-rows: auto auto 100fr 2rem;
     background: rgb(52, 52, 52);
     color: rgb(153, 153, 153);
@@ -52,6 +52,7 @@ main {
     position: relative;
     z-index: 2;
     grid-column: 1;
+    width: 150px;
 }
 
 .toolbar {

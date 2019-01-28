@@ -30,6 +30,7 @@ main {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    background: rgb(46, 46, 46);
 }
 
 .master-out {

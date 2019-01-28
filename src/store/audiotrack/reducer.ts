@@ -1,18 +1,25 @@
 import { Record, Map as ImmutableMap } from 'immutable';
-import { AudioTrack } from './index';
+import { AudioTrack, Loop } from './index';
 import {
     CreateTrackAction,
     SetTrackInstrumentAction,
     SetTrackRectAction,
+    CreateTrackLoopAction,
+    CreateTrackLoopNoteAction,
+    SetTrackLoopNoteRangeAction,
 } from './action';
 import {
     CREATE_TRACK,
     SET_TRACK_INSTRUMENT,
     SET_TRACK_RECT,
+    CREATE_TRACK_LOOP,
+    CREATE_TRACK_LOOP_NOTE,
+    SET_TRACK_LOOP_NOTE_RANGE,
 } from './const';
 import { Rect } from 'util/geometry';
 import { CREATE_AUDIO_SEGMENT } from 'store/audiosegment/const';
 import { CreateAudioSegmentAction } from 'store/audiosegment/action';
+import { MidiNote } from 'util/sound';
 
 export class AudioTrackState extends Record({
     items: ImmutableMap(),
@@ -54,6 +61,32 @@ function createAudioSegmentReducer(state: AudioTrackState, action: CreateAudioSe
     });
 }
 
+function createTrackLoopReducer(state: AudioTrackState, action: CreateTrackLoopAction): AudioTrackState {
+    const { trackId, loopId } = action.payload;
+    const loop = new Loop({
+        id: loopId,
+    });
+
+    return state.setIn(['items', trackId, 'loops', loopId], loop);
+}
+
+function createTrackLoopNoteReducer(state: AudioTrackState, action: CreateTrackLoopNoteAction): AudioTrackState {
+    const { trackId, loopId, noteId, range, octave } = action.payload;
+    const note: MidiNote = {
+        id: noteId,
+        note: octave,
+        range: range,
+    };
+
+    return state.setIn(['items', trackId, 'loops', loopId, 'notes', noteId], note);
+}
+
+function setTrackLoopNoteRangeReducer(state: AudioTrackState, action: SetTrackLoopNoteRangeAction): AudioTrackState {
+    const { trackId, loopId, noteId, range } = action.payload;
+    return state.setIn(['items', trackId, 'loops', loopId, 'notes', noteId, 'range'], range);
+
+}
+
 export function reducer(state = new AudioTrackState(), action) {
     switch(action.type) {
         case CREATE_TRACK:
@@ -64,6 +97,12 @@ export function reducer(state = new AudioTrackState(), action) {
             return setTrackRectReducer(state, action);
         case CREATE_AUDIO_SEGMENT:
             return createAudioSegmentReducer(state, action);
+        case CREATE_TRACK_LOOP:
+            return createTrackLoopReducer(state, action);
+        case CREATE_TRACK_LOOP_NOTE:
+            return createTrackLoopNoteReducer(state, action);
+        case SET_TRACK_LOOP_NOTE_RANGE:
+            return setTrackLoopNoteRangeReducer(state, action);
     }
     return state;
 }

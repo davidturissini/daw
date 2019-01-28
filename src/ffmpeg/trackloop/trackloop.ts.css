@@ -1,0 +1,7 @@
+:host {
+    display: flex;
+}
+
+article {
+    flex: 1 0 auto;
+}

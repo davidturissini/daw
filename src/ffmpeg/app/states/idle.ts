@@ -85,4 +85,15 @@ export class IdleState extends BaseState {
             startPlayback(audioContext, new AudioRange(timeZero, Time.fromSeconds(10)), false)
         )
     }
+
+    /*
+     *
+     * Toggle Mode Buttons
+     *
+    */
+    onPerformanceModeButtonClick(evt: MouseEvent) {
+        appStore.dispatch(
+            navigate(RouteNames.ConcertMode, {}),
+        )
+    }
 }

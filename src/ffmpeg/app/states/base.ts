@@ -1,5 +1,3 @@
-import { TimelineDragState } from './timelinedrag';
-import { GridRowMouseDownEvent } from 'cmp/grid/grid';
 import { RangeDurationChangeEvent, RangeSourceOffsetChangeEvent, RangeDragEvent, RangeDragEndEvent, RangeDragStartEvent } from 'cmp/audiorange/audiorange';
 
 export class BaseState {
@@ -30,7 +28,8 @@ export class BaseState {
     onSilenceDetectButtonClick(app, evt) {}
     onSegmentDurationChange(app, evt: RangeDurationChangeEvent) {}
     onEditorMouseLeave(app, evt) {}
-    onAudioTrackMouseDown(app, evt: GridRowMouseDownEvent) {}
+    onAudioTrackMouseDown(app, evt) {}
     onAudioTrackMouseMove(app, evt: MouseEvent, trackId: string) {}
     onSegmentDoubleClick(app, evt) {}
+    onPerformanceModeButtonClick(app, evt: MouseEvent) {}
 }

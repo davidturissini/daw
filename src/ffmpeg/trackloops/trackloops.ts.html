@@ -1,0 +1,20 @@
+<template>
+    <article class="track" key={track.id}>
+        <header>
+            <h4 class="track__title">{track.title}</h4>
+        </header>
+        <ul>
+            <template for:each={trackLoops} for:item="loop">
+                <li key={loop.id}>
+                    <ffmpeg-trackloop
+                        instrument-id={track.instrumentId}
+                        track-id={track.id}
+                        loop={loop}
+                    >
+                    </ffmpeg-trackloop>
+                </li>
+            </template>
+        </ul>
+        <button onclick={onCreateTrackLoopClick}>Add Loop</button>
+    </article>
+</template>

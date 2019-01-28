@@ -8,7 +8,7 @@ import { AudioTrack } from 'store/audiotrack';
 import { EditorState } from 'store/editor/reducer';
 import { createRouter } from 'store/route/action';
 import { RouterState } from 'store/route/reducer';
-import { RouteNames } from 'store/route';
+import { RouteNames, routeIsActive } from 'store/route';
 import { AudioSegmentState } from 'store/audiosegment/reducer';
 import { AudioSegment } from 'store/audiosegment';
 import { Color } from 'util/color';
@@ -157,6 +157,15 @@ export default class AppElement extends LightningElement {
 
     /*
      *
+     * Toggle Mode Buttons
+     *
+    */
+    onPerformanceModeButtonClick(evt: MouseEvent) {
+        this.state.onPerformanceModeButtonClick(this, evt);
+    }
+
+    /*
+     *
      * Events
      *
     */
@@ -264,7 +273,7 @@ export default class AppElement extends LightningElement {
      * Routing
      *
     */
-    get isEditorRoute() {
+    get isHomeRoute() {
         if (this.route) {
             return this.route.name === RouteNames.Home;
         }
@@ -274,6 +283,13 @@ export default class AppElement extends LightningElement {
     get isSegmentEditRoute() {
         if (this.route) {
             return this.route.name === RouteNames.SegmentEdit;
+        }
+        return false;
+    }
+
+    get isConcertModeRoute() {
+        if (this.route) {
+            return routeIsActive(RouteNames.ConcertMode, {});
         }
         return false;
     }
