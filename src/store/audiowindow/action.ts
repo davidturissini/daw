@@ -5,6 +5,7 @@ import {
 import { Action } from 'store/index';
 import { Rect } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
+import { Time, Beat } from 'util/time';
 
 export type SetAudioWindowVisibleRangeAction = Action<{
     range: AudioRange;
@@ -23,11 +24,11 @@ export function setAudioWindowVisibleRange(windowId: string, range: AudioRange):
 export type CreateAudioWindowAction = Action<{
     id: string;
     rect: Rect;
-    quanitization: number;
+    quanitization: Beat;
     visibleRange: AudioRange;
 }>
 
-export function createAudioWindow(id: string, rect: Rect, quanitization: number, visibleRange: AudioRange): CreateAudioWindowAction {
+export function createAudioWindow(id: string, rect: Rect, quanitization: Beat, visibleRange: AudioRange): CreateAudioWindowAction {
     return {
         type: CREATE_AUDIO_WINDOW,
         payload: {

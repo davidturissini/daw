@@ -1,5 +1,5 @@
 import { LightningElement, track, wire, api } from 'lwc';
-import { Time, timeZero } from '../../util/time';
+import { Time, timeZero, Beat, beatToTime } from '../../util/time';
 import { timeToPixel, pixelToTime, Rect } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
 import { generateId } from 'util/uniqueid';
@@ -103,7 +103,8 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
 
         if (this.timeVariant === GridTimeVariant.Time) {
-            return mapTimeMarks<GridLine>(audioWindow, Time.fromSeconds(audioWindow.quanitization), (time: Time) => {
+            const time = beatToTime(audioWindow.quanitization, 128);
+            return mapTimeMarks<GridLine>(audioWindow, time, (time: Time) => {
                 const translateX = timeToPixel(audioWindow.rect, audioWindow.visibleRange, time);
                 return {
                     time,
@@ -300,7 +301,7 @@ export default class GridElement extends LightningElement implements GridFSM {
                 };
 
                 appStore.dispatch(
-                    createAudioWindow(windowId, rect, 1 / 4, new AudioRange(timeZero, Time.fromSeconds(5))),
+                    createAudioWindow(windowId, rect, new Beat(1 / 4), new AudioRange(timeZero, Time.fromSeconds(5))),
                 );
                 this.windowId = windowId;
 

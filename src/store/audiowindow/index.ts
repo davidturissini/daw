@@ -1,13 +1,13 @@
 import { Record } from 'immutable';
 import { Rect, Frame } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
-import { timeZero, Time } from 'util/time';
+import { timeZero, Time, Beat, beatToTime } from 'util/time';
 
 export class AudioWindow extends Record<{
     id: string;
     rect: Rect;
     visibleRange: AudioRange;
-    quanitization: number;
+    quanitization: Beat;
 }>({
     id: '',
     rect: {
@@ -17,10 +17,9 @@ export class AudioWindow extends Record<{
         width: 0,
     },
     visibleRange: new AudioRange(timeZero, timeZero),
-    quanitization: 1 / 4,
+    quanitization: new Beat(1),
 }) {
     get frame(): Frame {
-        console.error('Deprecated audioWindow.frame');
         return {
             height: this.rect.height,
             width: this.rect.width,
@@ -68,15 +67,13 @@ class BeatRange {
         const { audioWindow } = this;
         const { visibleRange, quanitization } = audioWindow;
         const { start, duration } = visibleRange;
-        const secondsPerBeat = 60 / 128;
-        const tickDistanceMs = secondsPerBeat * quanitization;
-        const min = Math.ceil(start.seconds / tickDistanceMs);
-        const d = Math.floor((start.seconds + duration.seconds) / tickDistanceMs);
-
+        const tickDistanceSeconds = beatToTime(quanitization, 128).seconds;
+        const min = Math.ceil(start.seconds / tickDistanceSeconds);
+        const d = Math.floor((start.seconds + duration.seconds) / tickDistanceSeconds);
         const ticks: T[] = [];
         for(let i = min; i <= d; i += 1) {
             if (i !== 0) {
-                const time = Time.fromSeconds(i * tickDistanceMs);
+                const time = Time.fromSeconds(i * tickDistanceSeconds);
                 const value: T = cb(i, time);
                 ticks.push(value);
             }
@@ -87,9 +84,17 @@ class BeatRange {
 }
 
 export function quanitizeTime(audioWindow: AudioWindow, time: Time): Time {
-    const { quanitization } = audioWindow;
-    const { milliseconds } = time;
-    const remainder = milliseconds % quanitization;
-    console.log(remainder)
-    return time;
+    const quantizeInterval = audioWindow.quanitization;
+    const quanitizeTime = beatToTime(quantizeInterval, 128);
+    const max = time.milliseconds + quanitizeTime.milliseconds;
+    const mod = max % quanitizeTime.milliseconds;
+    const nearestMax = new Time(max - mod);
+    const nearestMin = nearestMax.minus(quanitizeTime);
+
+    const minDiff = time.milliseconds - nearestMin.milliseconds;
+    const maxDiff = nearestMax.milliseconds - time.milliseconds;
+    if (minDiff < maxDiff) {
+        return nearestMin;
+    }
+    return nearestMax;
 }

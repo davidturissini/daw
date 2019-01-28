@@ -63,3 +63,16 @@ export function subtract(first, second) {
 }
 
 export const timeZero = new Time(0);
+
+export class Beat {
+    index: number;
+    constructor(index: number) {
+        this.index = index;
+    }
+}
+
+export function beatToTime(beat: Beat, bpm: number): Time {
+    const beatsPerSecond = 60 / bpm;
+    const seconds = beatsPerSecond * beat.index;
+    return Time.fromSeconds(seconds);
+}
