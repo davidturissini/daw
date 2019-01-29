@@ -7,6 +7,7 @@ import {
     CreateTrackLoopAction,
     CreateTrackLoopNoteAction,
     SetTrackLoopNoteRangeAction,
+    SetTrackLoopDurationAction,
 } from './action';
 import {
     CREATE_TRACK,
@@ -15,6 +16,7 @@ import {
     CREATE_TRACK_LOOP,
     CREATE_TRACK_LOOP_NOTE,
     SET_TRACK_LOOP_NOTE_RANGE,
+    SET_TRACK_LOOP_DURATION,
 } from './const';
 import { Rect } from 'util/geometry';
 import { CREATE_AUDIO_SEGMENT } from 'store/audiosegment/const';
@@ -84,7 +86,11 @@ function createTrackLoopNoteReducer(state: AudioTrackState, action: CreateTrackL
 function setTrackLoopNoteRangeReducer(state: AudioTrackState, action: SetTrackLoopNoteRangeAction): AudioTrackState {
     const { trackId, loopId, noteId, range } = action.payload;
     return state.setIn(['items', trackId, 'loops', loopId, 'notes', noteId, 'range'], range);
+}
 
+function setTrackLoopDurationReducer(state: AudioTrackState, action: SetTrackLoopDurationAction): AudioTrackState {
+    const { trackId, loopId, duration } = action.payload;
+    return state.setIn(['items', trackId, 'loops', loopId, 'duration'], duration);
 }
 
 export function reducer(state = new AudioTrackState(), action) {
@@ -103,6 +109,8 @@ export function reducer(state = new AudioTrackState(), action) {
             return createTrackLoopNoteReducer(state, action);
         case SET_TRACK_LOOP_NOTE_RANGE:
             return setTrackLoopNoteRangeReducer(state, action);
+        case SET_TRACK_LOOP_DURATION:
+            return setTrackLoopDurationReducer(state, action);
     }
     return state;
 }

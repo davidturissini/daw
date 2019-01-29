@@ -1,6 +1,7 @@
 import { AudioWindow } from "store/audiowindow";
 import { RangeDragStartEvent, RangeDragEvent } from "cmp/audiorange/audiorange";
-import { Time } from "util/time";
+import { CursorDragEvent } from "cmp/cursor/cursor";
+import { AudioRange } from "util/audiorange";
 
 export enum GridStateInputs {
     EditButtonClick = 'EditButtonClick',
@@ -22,13 +23,17 @@ export enum GridStateInputs {
     GridContainerClick = 'GridContainerClick',
     GridContainerMouseMove = 'GridContainerMouseMove',
     GridContainerMouseLeave = 'GridContainerMouseLeave',
+
+    DurationCursorDragStart = 'DurationCursorDragStart',
+    DurationCursorDrag = 'DurationCursorDrag',
+    DurationCursorDragEnd = 'DurationCursorDragEnd',
 }
 
 export enum GridStateNames {
-    Base = 'base',
     Idle = 'idle',
     DrawRange = 'drawRange',
     RangeDrag = 'rangeDrag',
+    DurationCursorDrag = 'durationCursorDrag',
 }
 
 export interface GridStateCtor {
@@ -36,9 +41,8 @@ export interface GridStateCtor {
 }
 
 export interface GridState {
-    name: GridStateNames;
-    enter: () => void;
-    exit: () => void;
+    enter: (fsm: GridFSM) => void;
+    exit: (fsm: GridFSM) => void;
     [GridStateInputs.EditButtonClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridRowMouseDown]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridRowMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
@@ -55,6 +59,10 @@ export interface GridState {
     [GridStateInputs.GridContainerClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridContainerMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridContainerMouseLeave]?: (fsm: GridFSM, evt: MouseEvent) => void;
+
+    [GridStateInputs.DurationCursorDragStart]?: (fsm: GridFSM, evt: CursorDragEvent) => void;
+    [GridStateInputs.DurationCursorDrag]?: (fsm: GridFSM, evt: CursorDragEvent) => void;
+    [GridStateInputs.DurationCursorDragEnd]?: (fsm: GridFSM, evt: CursorDragEvent) => void;
 }
 
 export interface GridFSM {
@@ -67,5 +75,6 @@ export interface GridFSM {
 
     audioWindow: AudioWindow | null;
     dispatchEvent: HTMLElement['dispatchEvent'];
-    cursorTime: Time | null;
+    range: AudioRange | null;
+    interactionStateName: GridStateNames;
 }

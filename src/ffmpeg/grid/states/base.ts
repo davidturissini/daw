@@ -1,15 +1,15 @@
 import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
 import { GridCloseEvent } from './../events';
 import { RangeDragStartEvent } from 'cmp/audiorange/audiorange';
-import { pixelToTime } from 'util/geometry';
+import { absolutePixelToTime } from 'util/geometry';
 import { quanitizeTime } from 'store/audiowindow';
 import { setAudioWindowVirtualCursorTime } from 'store/audiowindow/action';
 import { appStore } from 'store/index';
+import { CursorDragEvent } from 'cmp/cursor/cursor';
 
 export abstract class BaseState implements GridState {
-    name: GridStateNames;
-    enter() {}
-    exit() {}
+    enter(fsm: GridFSM) {}
+    exit(fsm: GridFSM) {}
     [GridStateInputs.CloseButtonClick](cmp: GridFSM) {
         const event: GridCloseEvent = new CustomEvent('gridclose', {
             bubbles: true,
@@ -32,7 +32,7 @@ export abstract class BaseState implements GridState {
             return;
         }
         const { x } = evt;
-        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, x - audioWindow.rect.x);
+        const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, x - audioWindow.rect.x);
         const quanitized = quanitizeTime(audioWindow, time);
         appStore.dispatch(
             setAudioWindowVirtualCursorTime(audioWindow.id, quanitized)
@@ -46,5 +46,9 @@ export abstract class BaseState implements GridState {
         appStore.dispatch(
             setAudioWindowVirtualCursorTime(audioWindow.id, null)
         );
+    }
+
+    [GridStateInputs.DurationCursorDragStart](fsm: GridFSM, evt: CursorDragEvent) {
+        fsm.enterState(GridStateNames.DurationCursorDrag, evt.detail.time);
     }
 }

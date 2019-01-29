@@ -1,4 +1,4 @@
-import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
+import { GridStateInputs, GridState, GridFSM } from './types';
 import { BaseState } from './base';
 import { AudioRange } from 'util/audiorange';
 import { RangeDragEvent } from 'cmp/audiorange/audiorange';
@@ -6,7 +6,6 @@ import { AudioRangeChangeEvent } from '../events';
 import { quanitizeTime } from 'store/audiowindow';
 
 export class RangeDragState extends BaseState implements GridState {
-    name: GridStateNames.RangeDrag;
     range: AudioRange;
     parentId: string;
     id: string;

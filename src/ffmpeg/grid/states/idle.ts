@@ -4,7 +4,9 @@ import { GridClickEvent } from './../events';
 import { absolutePixelToTime } from 'util/geometry';
 
 export class IdleState extends BaseState implements GridState {
-    name: GridStateNames.Idle;
+    enter(fsm: GridFSM) {
+        fsm.interactionStateName = GridStateNames.Idle;
+    }
     [GridStateInputs.EditButtonClick](cmp: GridFSM) {
         cmp.enterState(GridStateNames.DrawRange);
     }

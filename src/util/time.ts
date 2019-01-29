@@ -9,31 +9,31 @@ export class Time {
         return this.milliseconds / 1000;
     }
 
-    static fromSeconds(seconds) {
+    static fromSeconds(seconds: number) {
         return new Time(seconds * 1000);
     }
 
-    add(time) {
+    add(time: Time) {
         return sum(this, time);
     }
 
-    plus(time) {
+    plus(time: Time) {
         return this.add(time);
     }
 
-    subtract(time) {
+    subtract(time: Time) {
         return subtract(this, time);
     }
 
-    minus(time) {
+    minus(time: Time) {
         return this.subtract(time);
     }
 
-    greaterThan(time) {
+    greaterThan(time: Time) {
         return gt(this, time);
     }
 
-    lessThan(time) {
+    lessThan(time: Time) {
         return lt(this, time);
     }
 
@@ -69,6 +69,12 @@ export class Beat {
     constructor(index: number) {
         this.index = index;
     }
+}
+
+export function timeToBeat(time: Time, bpm: number): Beat {
+    const secondsPerBeat = bpm / 60;
+    const index = time.seconds * secondsPerBeat;
+    return new Beat(index);
 }
 
 export function beatToTime(beat: Beat, bpm: number): Time {

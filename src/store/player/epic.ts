@@ -10,7 +10,7 @@ import { AudioSegment } from 'store/audiosegment';
 import { AudioTrack, Loop } from 'store/audiotrack';
 import { Instrument } from 'store/instrument';
 import { notes as octaves, MidiNote } from 'util/sound';
-import { Time } from 'util/time';
+import { Time, beatToTime } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 
 export function playTrackLoopEpic(actions) {
@@ -31,7 +31,7 @@ export function playTrackLoopEpic(actions) {
                             return Observable.create((o: Observer<AudioRange>) => {
                                 const start = instrumentStartTime;
                                 const duration = note.range.duration;
-                                const timeTillNextPlay = loop.duration;
+                                const timeTillNextPlay = beatToTime(loop.duration, 128);
                                 instrumentStartTime = start.plus(timeTillNextPlay);
 
                                 o.next(

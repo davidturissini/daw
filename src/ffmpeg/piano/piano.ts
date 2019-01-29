@@ -6,6 +6,7 @@ import { Piano } from 'store/piano';
 import { GridElementRow } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { Color } from 'util/color';
+import { AudioRange } from 'util/audiorange';
 
 export type PianoMouseDownEvent = CustomEvent<{
     name: string;
@@ -29,11 +30,10 @@ export type PianoMidiNoteMap = {
     [octave: string]: MidiNote[]
 };
 
-const gridRowNoteMap: { [key: string]: GridElementRow } = Object.keys(notes).reduce((seed, octave) => {
+const gridRowNoteMap: { [key: string]: { height: number } } = Object.keys(notes).reduce((seed, octave) => {
     const note = notes[octave];
-    const row: GridElementRow = {
+    const row = {
         height: note.sharp ? 30 : 45,
-        id: octave,
     };
     seed[octave] = row;
     return seed;
@@ -43,6 +43,7 @@ export default class PianoElement extends LightningElement {
     @api pianoId: string;
     @api midiNotes: PianoMidiNoteMap;
     @api canCloseGrid: boolean = false;
+    @api range: AudioRange | null = null;
     @track gridWindowId: string | null = null;
     @wire(wireSymbol, {
         paths: {

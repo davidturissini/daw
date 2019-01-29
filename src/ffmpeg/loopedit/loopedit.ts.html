@@ -1,6 +1,8 @@
 <template>
     <template if:true={hasPiano}>
         <ffmpeg-piano
+            ongridrangechange={onPianoGridRangeChange}
+            range={loopRange}
             ongridclose={onPianoGridClose}
             can-close-grid={canClosePianoGrid}
             midi-notes={pianoMidiNotes}

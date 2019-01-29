@@ -4,11 +4,13 @@ import { appStore, wireSymbol } from 'store/index';
 import { createPiano } from 'store/piano/action';
 import { RouterState } from 'store/route/reducer';
 import { AudioTrackState } from 'store/audiotrack/reducer';
-import { AudioRangeChangeEvent, AudioRangeCreatedEvent } from 'cmp/grid/events';
-import { createTrackLoopNote, setTrackLoopNoteRange } from 'store/audiotrack/action';
+import { AudioRangeChangeEvent, AudioRangeCreatedEvent, GridRangeChangeEvent } from 'cmp/grid/events';
+import { createTrackLoopNote, setTrackLoopNoteRange, setTrackLoopDuration } from 'store/audiotrack/action';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
 import { Loop } from 'store/audiotrack';
 import { MidiNote } from 'util/sound';
+import { AudioRange } from 'util/audiorange';
+import { timeZero, timeToBeat, beatToTime } from 'util/time';
 
 export default class LoopEditElement extends LightningElement {
     @track pianoId: string | null = null;
@@ -33,6 +35,15 @@ export default class LoopEditElement extends LightningElement {
         }
         const { track_id, loop_id } = route.params;
         return this.storeData.data.audiotracks.getIn([track_id, 'loops', loop_id]);
+    }
+
+    get loopRange(): AudioRange | null {
+        const { loop } = this;
+        if (!loop) {
+            return null;
+        }
+
+        return new AudioRange(timeZero, beatToTime(loop.duration, 128));
     }
 
     get trackId() {
@@ -78,6 +89,24 @@ export default class LoopEditElement extends LightningElement {
             return seed;
         }, {});
         return obj;
+    }
+
+    /*
+     *
+     *  Piano Events
+     *
+     */
+    onPianoGridRangeChange(evt: GridRangeChangeEvent) {
+        const { trackId, loop } = this;
+        if (!trackId || !loop) {
+            return;
+        }
+
+        const { duration } = evt.detail.range;
+
+        appStore.dispatch(
+            setTrackLoopDuration(trackId, loop.id, timeToBeat(duration, 128))
+        );
     }
 
     /*

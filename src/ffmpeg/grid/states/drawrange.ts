@@ -8,11 +8,13 @@ import { generateId } from 'util/uniqueid';
 import { quanitizeTime } from 'store/audiowindow';
 
 export class DrawRangeState extends BaseState implements GridState {
-    name: GridStateNames.DrawRange;
     parentId: string | null = null;
     startX: number | null = null;
     rangeId: string | null = null;
     range: AudioRange | null = null;
+    enter(fsm: GridFSM) {
+        fsm.interactionStateName = GridStateNames.DrawRange;
+    }
     [GridStateInputs.GridRowMouseDown](cmp: GridFSM, evt: MouseEvent) {
         evt.preventDefault();
         const { audioWindow } = cmp;

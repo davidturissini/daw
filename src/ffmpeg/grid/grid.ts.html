@@ -37,6 +37,16 @@
             <template if:true={virtualCursorInRange}>
                 <ffmpeg-cursor audio-window={audioWindow} time={audioWindow.virtualCursor} virtual></ffmpeg-cursor>
             </template>
+            <template if:true={hasRange}>
+                <ffmpeg-cursor
+                    oncursordragstart={onDurationCursorDragStart}
+                    oncursordrag={onDurationCursorDrag}
+                    oncursordragend={onDurationCursorDragEnd}
+                    audio-window={audioWindow}
+                    time={range.duration}
+                    user-drag
+                ></ffmpeg-cursor>
+            </template>
             <ul>
                 <template for:each={gridLines} for:item="gridLine">
                     <li style={gridLine.style} key={gridLine.time.milliseconds}></li>

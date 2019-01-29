@@ -12,7 +12,7 @@ import { BaseState } from './bsm/base';
 import { IdleState } from './bsm/idle';
 import { createPiano } from 'store/piano/action';
 import { generateId } from 'util/uniqueid';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridCloseEvent } from 'cmp/grid/events';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridCloseEvent, GridRangeChangeEvent } from 'cmp/grid/events';
 import { addNote, setNoteRange } from 'store/audiosegment/action';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';

@@ -5,7 +5,8 @@ export enum IconVariants {
     HandPaper = 'fas fa-hand-paper',
     Times = 'fas fa-times',
     TrackList = 'fas fa-list-ul',
-    Columns = 'fas fa-columns'
+    Columns = 'fas fa-columns',
+    Play = 'fas fa-play',
 }
 
 export default class IconElement extends LightningElement {

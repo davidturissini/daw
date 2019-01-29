@@ -1,8 +1,19 @@
 import { LightningElement, api } from 'lwc';
 import interact from 'interactjs';
-import { timeToPixel } from 'util/geometry';
+import { timeToPixel, pixelToTime } from 'util/geometry';
 import { Time } from 'util/time';
-import { AudioWindow } from 'store/audiowindow';
+import { AudioWindow, quanitizeTime } from 'store/audiowindow';
+
+export type CursorDragStartEvent = CustomEvent<{
+    time: Time,
+}>
+
+export type CursorDragEvent = CustomEvent<{
+    time: Time,
+}>
+
+export type CursorDragEndEvent = CustomEvent<{}>
+
 
 export default class CursorElement extends LightningElement {
     @api virtual: boolean = false;
@@ -26,14 +37,37 @@ export default class CursorElement extends LightningElement {
         return base;
     }
 
-    onCaretDrag = (evt) => {
-        const event = new CustomEvent('cursordrag', {
+    onStartDrag = (evt) => {
+        const event: CursorDragStartEvent = new CustomEvent('cursordragstart', {
             bubbles: true,
             composed: true,
             detail: {
-                dx: evt.dx,
+                time: this.time,
+            }
+        });
+
+        this.dispatchEvent(event);
+    }
+
+    onCaretDrag = (evt) => {
+        const { audioWindow } = this;
+        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.dx);
+        const event: CursorDragEvent = new CustomEvent('cursordrag', {
+            bubbles: true,
+            composed: true,
+            detail: {
+                time,
             },
         });
+        this.dispatchEvent(event);
+    }
+
+    onEndDrag = (evt) => {
+        const event: CursorDragEndEvent = new CustomEvent('cursordragend', {
+            bubbles: true,
+            composed: true,
+        });
+
         this.dispatchEvent(event);
     }
 
@@ -55,7 +89,9 @@ export default class CursorElement extends LightningElement {
             this.interact = interact(this.template.querySelector('.drag-triangle'));
 
             this.interact.draggable({
-                onmove: this.onCaretDrag
+                onmove: this.onCaretDrag,
+                onstart: this.onStartDrag,
+                onend: this.onEndDrag,
             });
 
             this.interact.on('doubletap', this.onCaretDoubleTap);

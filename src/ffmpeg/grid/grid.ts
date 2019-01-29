@@ -15,6 +15,8 @@ import { TimelineDragStartEvent, TimelineDragEndEvent, GridAudioWindowCreatedEve
 import { RangeDragEvent, RangeDragStartEvent, RangeDragEndEvent } from 'cmp/audiorange/audiorange';
 import { RangeDragState } from './states/rangedrag';
 import rafThrottle from 'raf-throttle';
+import { CursorDragEvent, CursorDragStartEvent, CursorDragEndEvent } from 'cmp/cursor/cursor';
+import { DurationCursorDragState } from './states/durationcursordrag';
 
 export interface GridRange {
     itemId: string;
@@ -41,6 +43,7 @@ interface GridLine {
 export default class GridElement extends LightningElement implements GridFSM {
     @api rows: GridElementRow[] = [];
     @api canClose: boolean = false;
+    @api range: AudioRange | null = null;
     @track timeVariant: GridTimeVariant = GridTimeVariant.Beats;
     @track interactionStateName: GridStateNames;
     @track windowId: string | null;
@@ -54,6 +57,10 @@ export default class GridElement extends LightningElement implements GridFSM {
         data: {
             audiowindow: AudioWindowState['items']
         }
+    }
+
+    get hasRange(): boolean {
+        return this.audioWindow !== null && this.range !== null;
     }
 
     /*
@@ -72,12 +79,11 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     transitionToState(state: GridState) {
         if(this.state) {
-            this.state.exit()
+            this.state.exit(this)
         }
         this.previousState = this.state;
         this.state = state;
-        this.interactionStateName = name;
-        this.state.enter();
+        this.state.enter(this);
     }
 
     enterState(name: GridStateNames, ...args: any[]) {
@@ -98,6 +104,7 @@ export default class GridElement extends LightningElement implements GridFSM {
         [GridStateNames.Idle]: IdleState,
         [GridStateNames.DrawRange]: DrawRangeState,
         [GridStateNames.RangeDrag]: RangeDragState,
+        [GridStateNames.DurationCursorDrag]: DurationCursorDragState,
     }
 
     /*
@@ -111,6 +118,23 @@ export default class GridElement extends LightningElement implements GridFSM {
             return false;
         }
         return true;
+    }
+
+    /*
+     *
+     * Cursor Events
+     *
+     */
+    onDurationCursorDrag(evt: CursorDragEvent) {
+        this.stateInput(GridStateInputs.DurationCursorDrag, evt);
+    }
+
+    onDurationCursorDragStart(evt: CursorDragStartEvent) {
+        this.stateInput(GridStateInputs.DurationCursorDragStart, evt);
+    }
+
+    onDurationCursorDragEnd(evt: CursorDragEndEvent) {
+        this.stateInput(GridStateInputs.DurationCursorDragEnd, evt);
     }
 
     /*
@@ -361,8 +385,9 @@ export default class GridElement extends LightningElement implements GridFSM {
                     y: bounds.top,
                 };
 
+                let duration = this.range ? this.range.duration.plus(beatToTime(new Beat(4), 128)) : beatToTime(new Beat(10), 128);
                 appStore.dispatch(
-                    createAudioWindow(windowId, rect, new Beat(1 / 4), new AudioRange(timeZero, Time.fromSeconds(5))),
+                    createAudioWindow(windowId, rect, new Beat(1 / 4), new AudioRange(timeZero, duration)),
                 );
                 this.windowId = windowId;
 

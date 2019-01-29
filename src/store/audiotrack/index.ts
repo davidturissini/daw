@@ -2,16 +2,16 @@ import { Record, List, Map as ImmutableMap } from 'immutable';
 import { Rect } from 'util/geometry';
 import { Color } from 'util/color';
 import { MidiNote } from 'util/sound';
-import { Time } from 'util/time';
+import { Beat } from 'util/time';
 
 export class Loop extends Record<{
     id: string;
     notes: ImmutableMap<string, MidiNote>;
-    duration: Time;
+    duration: Beat;
 }>({
     id: '',
     notes: ImmutableMap(),
-    duration: Time.fromSeconds(5)
+    duration: new Beat(20),
 }) {
 
 }

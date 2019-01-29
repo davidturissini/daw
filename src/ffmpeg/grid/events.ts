@@ -35,3 +35,7 @@ export type GridCloseEvent = CustomEvent<{}>;
 export type GridClickEvent = CustomEvent<{
     time: Time;
 }>
+
+export type GridRangeChangeEvent = CustomEvent<{
+    range: AudioRange;
+}>
