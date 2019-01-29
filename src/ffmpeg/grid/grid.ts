@@ -12,8 +12,9 @@ import { GridStateNames, GridState, GridStateInputs, GridFSM, GridStateCtor } fr
 import { IdleState } from './states/idle';
 import { DrawRangeState } from './states/drawrange';
 import { TimelineDragStartEvent, TimelineDragEndEvent, GridAudioWindowCreatedEvent } from './events';
-import { RangeDragEvent, RangeDragStartEvent } from 'cmp/audiorange/audiorange';
+import { RangeDragEvent, RangeDragStartEvent, RangeDragEndEvent } from 'cmp/audiorange/audiorange';
 import { RangeDragState } from './states/rangedrag';
+import rafThrottle from 'raf-throttle';
 
 export interface GridRange {
     itemId: string;
@@ -43,6 +44,7 @@ export default class GridElement extends LightningElement implements GridFSM {
     @track timeVariant: GridTimeVariant = GridTimeVariant.Beats;
     @track interactionStateName: GridStateNames;
     @track windowId: string | null;
+
     @wire(wireSymbol, {
         paths: {
             audiowindow: ['audiowindow', 'items']
@@ -60,15 +62,29 @@ export default class GridElement extends LightningElement implements GridFSM {
      *
      */
     state: GridState;
+    previousState: GridState | null;
 
-    enterState(name: GridStateNames, ...args: any[]) {
+    enterPreviousState() {
+        if (this.previousState) {
+            this.transitionToState(this.previousState);
+        }
+    }
+
+    transitionToState(state: GridState) {
         if(this.state) {
             this.state.exit()
         }
-        const Ctor = this.states[name] as GridStateCtor;
-        this.state = new Ctor(...args);
+        this.previousState = this.state;
+        this.state = state;
         this.interactionStateName = name;
         this.state.enter();
+    }
+
+    enterState(name: GridStateNames, ...args: any[]) {
+        const Ctor = this.states[name] as GridStateCtor;
+        const state = new Ctor(...args);
+        this.transitionToState(state);
+
     }
 
     stateInput<T>(name: GridStateInputs, evt: T, ...args: any[]) {
@@ -82,6 +98,19 @@ export default class GridElement extends LightningElement implements GridFSM {
         [GridStateNames.Idle]: IdleState,
         [GridStateNames.DrawRange]: DrawRangeState,
         [GridStateNames.RangeDrag]: RangeDragState,
+    }
+
+    /*
+     *
+     * Cursors
+     *
+     */
+    get virtualCursorInRange() {
+        const { audioWindow } = this;
+        if (!audioWindow || !audioWindow.virtualCursor) {
+            return false;
+        }
+        return true;
     }
 
     /*
@@ -166,7 +195,7 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     /*
      *
-     * Grid Events
+     * Grid Row Events
      *
      */
     onGridRowMouseDown(evt: MouseEvent) {
@@ -187,8 +216,21 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
     }
 
+    /*
+     *
+     * Grid Container Events
+     *
+     */
     onGridContainerClick(evt: MouseEvent) {
         this.stateInput(GridStateInputs.GridContainerClick, evt);
+    }
+
+    onGridContainerMouseMove = rafThrottle((evt: MouseEvent) => {
+        this.stateInput(GridStateInputs.GridContainerMouseMove, evt);
+    });
+
+    onGridContainerMouseLeave(evt: MouseEvent) {
+        this.stateInput(GridStateInputs.GridContainerMouseLeave, evt);
     }
 
     /*
@@ -215,6 +257,9 @@ export default class GridElement extends LightningElement implements GridFSM {
     }
     onRangeDrag(evt: RangeDragEvent) {
         this.stateInput(GridStateInputs.RangeDrag, evt);
+    }
+    onRangeDragEnd(evt: RangeDragEndEvent) {
+        this.stateInput(GridStateInputs.RangeDragEnd, evt);
     }
 
     /*

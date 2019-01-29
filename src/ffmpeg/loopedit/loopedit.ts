@@ -77,7 +77,6 @@ export default class LoopEditElement extends LightningElement {
             seed[note.note].push(note);
             return seed;
         }, {});
-        console.log(obj);
         return obj;
     }
 

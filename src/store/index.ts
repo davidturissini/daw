@@ -38,7 +38,8 @@ if (process.env.NODE_ENV !== 'production') {
             predicate: (getState, action) => {
                 return (
                     action.type !== 'SET_VIRTUAL_CURSOR_TIME' &&
-                    action.type !== 'SET_AUDIO_WINDOW_VISIBLE_RANGE'
+                    action.type !== 'SET_AUDIO_WINDOW_VISIBLE_RANGE' &&
+                    action.type !== 'SET_AUDIO_WINDOW_VIRTUAL_CURSOR_TIME'
                 );
             },
             stateTransformer: (state) => {

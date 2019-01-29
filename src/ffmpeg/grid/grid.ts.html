@@ -33,7 +33,10 @@
         <div class="col-left">
             <slot name="col-left"></slot>
         </div>
-        <div class="grid-container" onclick={onGridContainerClick}>
+        <div class="grid-container" onmousemove={onGridContainerMouseMove} onmouseleave={onGridContainerMouseLeave} onclick={onGridContainerClick}>
+            <template if:true={virtualCursorInRange}>
+                <ffmpeg-cursor audio-window={audioWindow} time={audioWindow.virtualCursor} virtual></ffmpeg-cursor>
+            </template>
             <ul>
                 <template for:each={gridLines} for:item="gridLine">
                     <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
@@ -54,6 +57,7 @@
                             data-row-id={row.id}
                             onrangedragstart={onRangeDragStart}
                             onrangedrag={onRangeDrag}
+                            onrangedragend={onRangeDragEnd}
                             item-id={range.itemId}
                             color={range.color}
                             audio-window={audioWindow}

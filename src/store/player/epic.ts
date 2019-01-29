@@ -27,11 +27,12 @@ export function playTrackLoopEpic(actions) {
                 return observableFrom(loop.notes.toList().toArray())
                     .pipe(
                         flatMap((note: MidiNote) => {
-                            let instrumentStartTime: Time = audioContextStartTime;
+                            let instrumentStartTime: Time = audioContextStartTime.plus(note.range.start);
                             return Observable.create((o: Observer<AudioRange>) => {
-                                const start = instrumentStartTime.plus(note.range.start);
-                                instrumentStartTime = start.plus(loop.duration);
+                                const start = instrumentStartTime;
                                 const duration = note.range.duration;
+                                const timeTillNextPlay = loop.duration;
+                                instrumentStartTime = start.plus(timeTillNextPlay);
 
                                 o.next(
                                     new AudioRange(start, duration),
@@ -40,18 +41,17 @@ export function playTrackLoopEpic(actions) {
                             })
                             .pipe(
                                 flatMap((range: AudioRange) => {
-                                    console.log(range);
                                     return Observable.create((o: Observer<never>) => {
                                         const { frequency } = octaves[note.note];
                                         const node = audioContext.createOscillator();
                                         node.frequency.setValueAtTime(frequency, 0);
                                         node.type = trackInstrument.data.type;
-                                        node.start(range.start.seconds);
+                                        node.start(
+                                            range.start.seconds
+                                        );
                                         node.stop(
-                                            audioContextStartTime
-                                                .plus(range.start)
-                                                .plus(range.duration).seconds
-                                            );
+                                            range.start.plus(range.duration).seconds
+                                        );
                                         node.connect(audioContext.destination);
                                         node.onended = () => {
                                             o.complete();

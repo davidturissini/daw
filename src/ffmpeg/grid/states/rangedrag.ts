@@ -6,6 +6,7 @@ import { AudioRangeChangeEvent } from '../events';
 import { quanitizeTime } from 'store/audiowindow';
 
 export class RangeDragState extends BaseState implements GridState {
+    name: GridStateNames.RangeDrag;
     range: AudioRange;
     parentId: string;
     id: string;
@@ -42,5 +43,9 @@ export class RangeDragState extends BaseState implements GridState {
             }
         });
         fsm.dispatchEvent(event);
+    }
+
+    [GridStateInputs.RangeDragEnd](fsm: GridFSM, evt: RangeDragEvent) {
+        fsm.enterPreviousState();
     }
 }

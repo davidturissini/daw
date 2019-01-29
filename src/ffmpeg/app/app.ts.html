@@ -43,12 +43,6 @@
                     </section>
                 </section>
             </ffmpeg-grid>
-            <template if:true={cursorInWindow}>
-                <ffmpeg-cursor time={editor.cursor}></ffmpeg-cursor>
-            </template>
-            <template if:true={hasVirtualCursor}>
-                <ffmpeg-cursor time={editor.virtualCursor} virtual></ffmpeg-cursor>
-            </template>
             <template if:true={isSegmentEditRoute}>
                 <div class="resizer"></div>
                 <ffmpeg-segmentedit segment-id={route.params.segment_id}></ffmpeg-segmentedit>

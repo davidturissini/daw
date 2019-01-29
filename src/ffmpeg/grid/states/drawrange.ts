@@ -8,6 +8,7 @@ import { generateId } from 'util/uniqueid';
 import { quanitizeTime } from 'store/audiowindow';
 
 export class DrawRangeState extends BaseState implements GridState {
+    name: GridStateNames.DrawRange;
     parentId: string | null = null;
     startX: number | null = null;
     rangeId: string | null = null;

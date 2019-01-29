@@ -1,41 +1,20 @@
-import { LightningElement, wire, api } from 'lwc';
-import { wireSymbol } from 'store/index';
+import { LightningElement, api } from 'lwc';
 import interact from 'interactjs';
-import { EditorState } from 'store/editor/reducer';
 import { timeToPixel } from 'util/geometry';
 import { Time } from 'util/time';
+import { AudioWindow } from 'store/audiowindow';
 
-export default class Cursor extends LightningElement {
-    @api virtual;
-    @api playhead;
+export default class CursorElement extends LightningElement {
+    @api virtual: boolean = false;
     @api userDrag;
     @api time: Time;
+    @api audioWindow: AudioWindow;
 
     interact: any;
 
-    /*
-     *
-     * Editor
-     *
-    */
-    @wire(wireSymbol, {
-        paths: {
-            editor: ['editor']
-        }
-    })
-    reduxData: {
-        data: {
-            editor: EditorState;
-        }
-    }
-
     get containerStyle() {
-        const { editor } = this.reduxData.data
-        if (!editor.frame) {
-            return '';
-        }
-
-        const px = timeToPixel(editor.frame, editor.visibleRange, this.time);
+        const { audioWindow } = this;
+        const px = timeToPixel(audioWindow.frame, audioWindow.visibleRange, this.time);
         return `transform: translateX(${px}px)`;
     }
 
@@ -43,9 +22,6 @@ export default class Cursor extends LightningElement {
         let base = 'line'
         if (this.virtual) {
             return `${base} line--virtual`;
-        }
-        if (this.playhead) {
-            return `${base} line--playhead`;
         }
         return base;
     }

@@ -8,6 +8,7 @@ export class AudioWindow extends Record<{
     rect: Rect;
     visibleRange: AudioRange;
     quanitization: Beat;
+    virtualCursor: Time | null;
 }>({
     id: '',
     rect: {
@@ -18,6 +19,7 @@ export class AudioWindow extends Record<{
     },
     visibleRange: new AudioRange(timeZero, timeZero),
     quanitization: new Beat(1),
+    virtualCursor: null,
 }) {
     get frame(): Frame {
         return {
