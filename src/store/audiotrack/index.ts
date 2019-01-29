@@ -11,7 +11,7 @@ export class Loop extends Record<{
 }>({
     id: '',
     notes: ImmutableMap(),
-    duration: new Beat(20),
+    duration: new Beat(4),
 }) {
 
 }

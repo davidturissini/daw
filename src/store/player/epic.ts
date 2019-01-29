@@ -4,14 +4,92 @@ import {
 } from './const';
 import { flatMap, repeat } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction } from './action';
-import { empty as emptyObservable, from as observableFrom, Observable, Observer } from 'rxjs';
+import { empty as emptyObservable, from as observableFrom, Observable, Observer, empty } from 'rxjs';
 import { appStore } from '../index';
 import { AudioSegment } from 'store/audiosegment';
 import { AudioTrack, Loop } from 'store/audiotrack';
 import { Instrument } from 'store/instrument';
-import { notes as octaves, MidiNote } from 'util/sound';
-import { Time, beatToTime } from 'util/time';
+import { notes as octaves, MidiNote, audioContext } from 'util/sound';
+import { Time, beatToTime, Beat, timeToBeat, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
+
+function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, delay: Time) {
+    return observableFrom(loop.notes.toList().toArray())
+        .pipe(
+            flatMap((note: MidiNote) => {
+                let instrumentStartTime: Time = audioContextStartTime.plus(note.range.start).plus(delay);
+                return Observable.create((o: Observer<AudioRange>) => {
+                    const start = instrumentStartTime;
+                    const duration = note.range.duration;
+                    const timeTillNextPlay = beatToTime(loop.duration, 128);
+                    instrumentStartTime = start.plus(timeTillNextPlay);
+
+                    o.next(
+                        new AudioRange(start, duration),
+                    );
+                    o.complete();
+                })
+                .pipe(
+                    flatMap((range: AudioRange) => {
+                        return Observable.create((o: Observer<never>) => {
+                            const { frequency } = octaves[note.note];
+                            const node = audioContext.createOscillator();
+                            node.frequency.setValueAtTime(frequency, 0);
+                            node.start(
+                                range.start.seconds
+                            );
+                            node.stop(
+                                range.start.plus(range.duration).seconds
+                            );
+                            node.connect(audioContext.destination);
+                            node.onended = () => {
+                                o.complete();
+                            };
+                        });
+                    }),
+                    repeat()
+                )
+            })
+        );
+}
+
+class LoopPlayer {
+    audioContext: AudioContext;
+    loops: Loop[] = [];
+    audioContextStartTime: Time | null = null;
+
+    constructor(audioContext: AudioContext) {
+        this.audioContext = audioContext;
+    }
+
+    addLoop(loop: Loop) {
+        this.loops.push(loop);
+        const audioContextTime = Time.fromSeconds(this.audioContext.currentTime);
+        let delay = timeZero;
+        if (this.audioContextStartTime) {
+            const currentTime = audioContextTime.minus(this.audioContextStartTime);
+            const currentBeat = timeToBeat(currentTime, 128);
+            const roundedBeatIndex = Math.floor(currentBeat.index / 4);
+            const nextBeat = new Beat((roundedBeatIndex + 1) * 4);
+            const beatDelay = new Beat(nextBeat.index - currentBeat.index);
+            delay = beatToTime(beatDelay, 128);
+        }
+
+        if (this.loops.length === 1) {
+            this.play();
+        }
+        loopPlaybackStream(loop, Time.fromSeconds(this.audioContext.currentTime), delay)
+            .subscribe(() => {
+
+            })
+    }
+
+    play() {
+        this.audioContextStartTime = Time.fromSeconds(this.audioContext.currentTime);
+    }
+}
+
+const player = new LoopPlayer(audioContext);
 
 export function playTrackLoopEpic(actions) {
     return actions.ofType(PLAY_TRACK_LOOP)
@@ -24,44 +102,10 @@ export function playTrackLoopEpic(actions) {
                 const loop = track.loops.get(loopId) as Loop;
                 const audioContextStartTime = Time.fromSeconds(audioContext.currentTime);
 
-                return observableFrom(loop.notes.toList().toArray())
-                    .pipe(
-                        flatMap((note: MidiNote) => {
-                            let instrumentStartTime: Time = audioContextStartTime.plus(note.range.start);
-                            return Observable.create((o: Observer<AudioRange>) => {
-                                const start = instrumentStartTime;
-                                const duration = note.range.duration;
-                                const timeTillNextPlay = beatToTime(loop.duration, 128);
-                                instrumentStartTime = start.plus(timeTillNextPlay);
 
-                                o.next(
-                                    new AudioRange(start, duration),
-                                );
-                                o.complete();
-                            })
-                            .pipe(
-                                flatMap((range: AudioRange) => {
-                                    return Observable.create((o: Observer<never>) => {
-                                        const { frequency } = octaves[note.note];
-                                        const node = audioContext.createOscillator();
-                                        node.frequency.setValueAtTime(frequency, 0);
-                                        node.type = trackInstrument.data.type;
-                                        node.start(
-                                            range.start.seconds
-                                        );
-                                        node.stop(
-                                            range.start.plus(range.duration).seconds
-                                        );
-                                        node.connect(audioContext.destination);
-                                        node.onended = () => {
-                                            o.complete();
-                                        };
-                                    });
-                                }),
-                                repeat()
-                            )
-                        })
-                    );
+                player.addLoop(loop);
+
+                return empty();
             })
         )
 }
