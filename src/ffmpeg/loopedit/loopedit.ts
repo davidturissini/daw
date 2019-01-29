@@ -11,6 +11,7 @@ import { Loop } from 'store/audiotrack';
 import { MidiNote } from 'util/sound';
 import { AudioRange } from 'util/audiorange';
 import { timeZero, timeToBeat, beatToTime } from 'util/time';
+import { ProjectState } from 'store/project/reducer';
 
 export default class LoopEditElement extends LightningElement {
     @track pianoId: string | null = null;
@@ -19,13 +20,19 @@ export default class LoopEditElement extends LightningElement {
         paths: {
             route: ['router', 'route'],
             audiotracks: ['audiotrack', 'items'],
+            project: ['project']
         }
     })
     storeData: {
         data: {
             route: RouterState['route'],
             audiotracks: AudioTrackState['items'],
+            project: ProjectState;
         },
+    }
+
+    get project() {
+        return this.storeData.data.project;
     }
 
     get loop(): Loop | null {
@@ -43,7 +50,7 @@ export default class LoopEditElement extends LightningElement {
             return null;
         }
 
-        return new AudioRange(timeZero, beatToTime(loop.duration, 128));
+        return new AudioRange(timeZero, beatToTime(loop.duration, this.project.tempo));
     }
 
     get trackId() {
@@ -105,7 +112,7 @@ export default class LoopEditElement extends LightningElement {
         const { duration } = evt.detail.range;
 
         appStore.dispatch(
-            setTrackLoopDuration(trackId, loop.id, timeToBeat(duration, 128))
+            setTrackLoopDuration(trackId, loop.id, timeToBeat(duration, this.project.tempo))
         );
     }
 

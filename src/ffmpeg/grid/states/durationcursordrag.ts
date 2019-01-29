@@ -21,7 +21,7 @@ export class DurationCursorDragState extends BaseState implements GridState {
         }
 
         const duration = this.time = evt.detail.time.plus(this.time);
-        const quanitized = quanitizeTime(audioWindow, duration);
+        const quanitized = quanitizeTime(audioWindow, duration, fsm.project.tempo);
 
         const nextRange = new AudioRange(range.start, quanitized);
         const event: GridRangeChangeEvent = new CustomEvent('gridrangechange', {

@@ -29,7 +29,7 @@ export class RangeDragState extends BaseState implements GridState {
         );
 
         const quanitizedRange = new AudioRange(
-            quanitizeTime(audioWindow, nextStart),
+            quanitizeTime(audioWindow, nextStart, fsm.project.tempo),
             rangeDuration
         );
         const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {

@@ -2,6 +2,7 @@ import { AudioWindow } from "store/audiowindow";
 import { RangeDragStartEvent, RangeDragEvent } from "cmp/audiorange/audiorange";
 import { CursorDragEvent } from "cmp/cursor/cursor";
 import { AudioRange } from "util/audiorange";
+import { ProjectState } from "store/project/reducer";
 
 export enum GridStateInputs {
     EditButtonClick = 'EditButtonClick',
@@ -77,4 +78,5 @@ export interface GridFSM {
     dispatchEvent: HTMLElement['dispatchEvent'];
     range: AudioRange | null;
     interactionStateName: GridStateNames;
+    project: ProjectState;
 }

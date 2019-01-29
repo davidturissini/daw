@@ -4,6 +4,7 @@ import { Time } from '../../util/time';
 import rafThrottle from 'raf-throttle';
 import { timeToPixel } from 'util/geometry';
 import { AudioWindow, mapTimeMarks, mapBeatMarks } from 'store/audiowindow';
+import { Tempo } from 'store/project';
 
 export enum TimelineVariant {
     Time = 'time',
@@ -54,7 +55,7 @@ export function getResolution(duration): number {
 export default class Timeline extends LightningElement {
     interact: Interactable;
     @api audioWindow: AudioWindow;
-    @api bpm: number;
+    @api tempo: Tempo;
     @api variant: TimelineVariant = TimelineVariant.Time;
 
     get isTimeVariant() {
@@ -66,7 +67,7 @@ export default class Timeline extends LightningElement {
     }
 
     get ticks(): TimelineTick[] {
-        const { audioWindow, bpm } = this;
+        const { audioWindow, tempo } = this;
         const { rect, visibleRange } = audioWindow;
         const resolution = Time.fromSeconds(getResolution(visibleRange.duration) * 4);
         if (this.variant === TimelineVariant.Time) {
@@ -79,7 +80,7 @@ export default class Timeline extends LightningElement {
             });
         }
 
-        return mapBeatMarks<TimelineTick>(audioWindow, bpm, (beat: number, time: Time) => {
+        return mapBeatMarks<TimelineTick>(audioWindow, tempo, (beat: number, time: Time) => {
             const label = (beat % 4 === 0) ? beat / 4 : undefined;
             const translateX = timeToPixel(rect, visibleRange, time);
             return {

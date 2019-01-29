@@ -12,8 +12,9 @@ import { Instrument } from 'store/instrument';
 import { notes as octaves, MidiNote, audioContext } from 'util/sound';
 import { Time, beatToTime, Beat, timeToBeat, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
+import { Tempo } from 'store/project';
 
-function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, delay: Time) {
+function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, tempo: Tempo, delay: Time) {
     return observableFrom(loop.notes.toList().toArray())
         .pipe(
             flatMap((note: MidiNote) => {
@@ -21,7 +22,7 @@ function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, delay: Time
                 return Observable.create((o: Observer<AudioRange>) => {
                     const start = instrumentStartTime;
                     const duration = note.range.duration;
-                    const timeTillNextPlay = beatToTime(loop.duration, 128);
+                    const timeTillNextPlay = beatToTime(loop.duration, tempo);
                     instrumentStartTime = start.plus(timeTillNextPlay);
 
                     o.next(
@@ -55,10 +56,12 @@ function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, delay: Time
 
 class LoopPlayer {
     audioContext: AudioContext;
+    tempo: Tempo;
     loops: Loop[] = [];
     audioContextStartTime: Time | null = null;
 
-    constructor(audioContext: AudioContext) {
+    constructor(audioContext: AudioContext, tempo: Tempo) {
+        this.tempo = tempo;
         this.audioContext = audioContext;
     }
 
@@ -68,17 +71,17 @@ class LoopPlayer {
         let delay = timeZero;
         if (this.audioContextStartTime) {
             const currentTime = audioContextTime.minus(this.audioContextStartTime);
-            const currentBeat = timeToBeat(currentTime, 128);
+            const currentBeat = timeToBeat(currentTime, this.tempo);
             const roundedBeatIndex = Math.floor(currentBeat.index / 4);
             const nextBeat = new Beat((roundedBeatIndex + 1) * 4);
             const beatDelay = new Beat(nextBeat.index - currentBeat.index);
-            delay = beatToTime(beatDelay, 128);
+            delay = beatToTime(beatDelay, this.tempo);
         }
 
         if (this.loops.length === 1) {
             this.play();
         }
-        loopPlaybackStream(loop, Time.fromSeconds(this.audioContext.currentTime), delay)
+        loopPlaybackStream(loop, Time.fromSeconds(this.audioContext.currentTime), this.tempo, delay)
             .subscribe(() => {
 
             })
@@ -89,7 +92,7 @@ class LoopPlayer {
     }
 }
 
-const player = new LoopPlayer(audioContext);
+const player = new LoopPlayer(audioContext, new Tempo(128));
 
 export function playTrackLoopEpic(actions) {
     return actions.ofType(PLAY_TRACK_LOOP)

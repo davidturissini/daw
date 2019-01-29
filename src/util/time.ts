@@ -1,3 +1,4 @@
+import { Tempo } from "store/project";
 
 export class Time {
     milliseconds: number;
@@ -71,14 +72,12 @@ export class Beat {
     }
 }
 
-export function timeToBeat(time: Time, bpm: number): Beat {
-    const secondsPerBeat = bpm / 60;
-    const index = time.seconds * secondsPerBeat;
+export function timeToBeat(time: Time, tempo: Tempo): Beat {
+    const index = time.seconds * tempo.secondsPerBeat;
     return new Beat(index);
 }
 
-export function beatToTime(beat: Beat, bpm: number): Time {
-    const beatsPerSecond = 60 / bpm;
-    const seconds = beatsPerSecond * beat.index;
+export function beatToTime(beat: Beat, tempo: Tempo): Time {
+    const seconds = tempo.beatsPerSecond * beat.index;
     return Time.fromSeconds(seconds);
 }

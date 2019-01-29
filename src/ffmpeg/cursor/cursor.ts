@@ -2,7 +2,7 @@ import { LightningElement, api } from 'lwc';
 import interact from 'interactjs';
 import { timeToPixel, pixelToTime } from 'util/geometry';
 import { Time } from 'util/time';
-import { AudioWindow, quanitizeTime } from 'store/audiowindow';
+import { AudioWindow } from 'store/audiowindow';
 
 export type CursorDragStartEvent = CustomEvent<{
     time: Time,

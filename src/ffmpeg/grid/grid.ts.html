@@ -23,7 +23,7 @@
         if:true={hasAudioWindow}
         class="timeline"
         variant="beats"
-        bpm={timelineBpm}
+        tempo={project.tempo}
         audio-window={audioWindow}
         ontimelinedrag={onTimelineDrag}
         ontimelinedragstart={onTimelineDragStart}
@@ -84,7 +84,7 @@
     <ffmpeg-timeline
         if:true={hasAudioWindow}
         class="time-timeline"
-        bpm={timelineBpm}
+        tempo={project.tempo}
         audio-window={audioWindow}
         ontimelinedrag={onTimelineDrag}
         ontimelinedragstart={onTimelineDragStart}

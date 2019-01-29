@@ -17,6 +17,7 @@ import { RangeDragState } from './states/rangedrag';
 import rafThrottle from 'raf-throttle';
 import { CursorDragEvent, CursorDragStartEvent, CursorDragEndEvent } from 'cmp/cursor/cursor';
 import { DurationCursorDragState } from './states/durationcursordrag';
+import { ProjectState } from 'store/project/reducer';
 
 export interface GridRange {
     itemId: string;
@@ -50,13 +51,19 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     @wire(wireSymbol, {
         paths: {
-            audiowindow: ['audiowindow', 'items']
+            audiowindow: ['audiowindow', 'items'],
+            project: ['project'],
         }
     })
     storeData: {
         data: {
-            audiowindow: AudioWindowState['items']
+            audiowindow: AudioWindowState['items'];
+            project: ProjectState;
         }
+    }
+
+    get project(): ProjectState {
+        return this.storeData.data.project;
     }
 
     get hasRange(): boolean {
@@ -159,7 +166,7 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
 
         if (this.timeVariant === GridTimeVariant.Time) {
-            const time = beatToTime(audioWindow.quanitization, 128);
+            const time = beatToTime(audioWindow.quanitization, this.project.tempo);
             return mapTimeMarks<GridLine>(audioWindow, time, (time: Time) => {
                 const translateX = timeToPixel(audioWindow.rect, audioWindow.visibleRange, time);
                 return {
@@ -169,7 +176,7 @@ export default class GridElement extends LightningElement implements GridFSM {
             });
         }
 
-        return mapBeatMarks<GridLine>(audioWindow, this.timelineBpm, (beat: Number, time: Time) => {
+        return mapBeatMarks<GridLine>(audioWindow, this.project.tempo, (beat: Number, time: Time) => {
             const translateX = timeToPixel(audioWindow.rect, audioWindow.visibleRange, time);
             return {
                 time,
@@ -214,7 +221,7 @@ export default class GridElement extends LightningElement implements GridFSM {
      *
      */
     get timelineBpm() {
-        return 128;
+        return this.project.tempo.beatsPerMinute;
     }
 
     /*
@@ -385,7 +392,7 @@ export default class GridElement extends LightningElement implements GridFSM {
                     y: bounds.top,
                 };
 
-                let duration = this.range ? this.range.duration.plus(beatToTime(new Beat(4), 128)) : beatToTime(new Beat(10), 128);
+                let duration = this.range ? this.range.duration.plus(beatToTime(new Beat(4), this.project.tempo)) : beatToTime(new Beat(10), this.project.tempo);
                 appStore.dispatch(
                     createAudioWindow(windowId, rect, new Beat(1 / 4), new AudioRange(timeZero, duration)),
                 );

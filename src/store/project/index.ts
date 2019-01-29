@@ -1,7 +1,14 @@
-import { Record } from 'immutable';
+export class Tempo {
+    beatsPerMinute: number;
+    constructor(bpm: number) {
+        this.beatsPerMinute = bpm;
+    }
 
-export class Project extends Record<{
-    bpm: number
-}>({
-    bpm: 128
-}) {}
+    get beatsPerSecond(): number {
+        return 60 / this.beatsPerMinute;
+    }
+
+    get secondsPerBeat(): number {
+        return this.beatsPerMinute / 60;
+    }
+}

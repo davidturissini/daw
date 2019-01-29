@@ -33,7 +33,7 @@ export abstract class BaseState implements GridState {
         }
         const { x } = evt;
         const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, x - audioWindow.rect.x);
-        const quanitized = quanitizeTime(audioWindow, time);
+        const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
         appStore.dispatch(
             setAudioWindowVirtualCursorTime(audioWindow.id, quanitized)
         );

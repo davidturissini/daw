@@ -24,7 +24,7 @@ export class DrawRangeState extends BaseState implements GridState {
         const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
         this.startX = evt.x;
         const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.x - rect.left);
-        const quanitized = quanitizeTime(audioWindow, time);
+        const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
         const range = this.range = new AudioRange(quanitized, timeZero);
         const id = this.rangeId = generateId();
         const parentId = this.parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
@@ -47,7 +47,7 @@ export class DrawRangeState extends BaseState implements GridState {
             }
             const diff = evt.x - this.startX;
             const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, diff);
-            const quanitized = quanitizeTime(audioWindow, time);
+            const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
             const next = new AudioRange(this.range.start, quanitized);
 
             const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {
