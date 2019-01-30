@@ -1,3 +1,7 @@
 <template>
-    <button onclick={handleOscillatorNodeClick}>Oscillator</button>
+    <template for:each={instruments} for:item="instrument">
+        <article key={instrument.type}>
+            <h6 data-instrument-type={instrument.type} onclick={handleOscillatorNodeClick} class="instrument__label">{instrument.type}</h6>
+        </article>
+    </template>
 </template>

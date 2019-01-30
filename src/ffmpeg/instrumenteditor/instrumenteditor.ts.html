@@ -1,0 +1,34 @@
+<template>
+    <template if:true={isDrumMachineInstrument}>
+        <div class="drum-machine">
+            <ol class="sample__switches switch-labels">
+                <template for:each={drumMachineSampleLabels} for:item="label">
+                    <li key={label} class="switch">{label}</li>
+                </template>
+            </ol>
+            <template for:each={drumMachineSamples} for:item="sample">
+                <div key={sample.id} class="sample">
+                    <div class="sample__data">
+                        {sample.title}
+                    </div>
+                    <div class="switches-container">
+                        <ul class="sample__switches">
+                            <template for:each={sample.switches} for:item="beat">
+                                <ffmpeg-button
+                                    key={beat.id}
+                                    class={beat.className}
+                                    onclick={onBeatClick}
+                                    data-sample-id={sample.id}
+                                    data-beat-id={beat.id}
+                                ></ffmpeg-button>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+    <template if:true={isOscillatorInstrument}>
+        Oscillator
+    </template>
+</template>

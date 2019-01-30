@@ -1,0 +1,54 @@
+:host {
+    display: block;
+    padding: 0.5rem;
+}
+
+ol, ul, li {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+ul {
+    display: flex;
+}
+
+.switch--selected {
+    background: red;
+}
+
+.sample {
+    display: flex;
+    height: 1rem;
+}
+
+.sample__data {
+    flex: 0 0 100px;
+}
+
+.sample__switches {
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: space-evenly;
+    margin-bottom: 0.15rem;
+    margin-top: 0.15rem;
+}
+
+.switch {
+    width: 1.5rem;
+}
+
+.switch-labels {
+    font-size: 0.5rem;
+    margin-left: 100px;
+}
+
+.switches-container {
+    flex: 1 0 auto;
+    display: flex;
+    background: rgb(96, 96, 96);
+}
+
+.switch-button {
+    width: 1rem;
+}

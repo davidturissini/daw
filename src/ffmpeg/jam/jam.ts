@@ -49,4 +49,20 @@ export default class JamElement extends LightningElement {
         }
         return false;
     }
+
+    get isInstrumentEditRouteActive(): boolean {
+        const { route } = this.storeData.data.router;
+        if (route) {
+            return route.name === RouteNames.ConcertInstrumentEdit;
+        }
+        return false;
+    }
+
+    get routeParams() {
+        const { route } = this.storeData.data.router;
+        if (route) {
+            return route.params;
+        }
+        return {};
+    }
 }

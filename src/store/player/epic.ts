@@ -8,13 +8,15 @@ import { empty as emptyObservable, from as observableFrom, Observable, Observer,
 import { appStore } from '../index';
 import { AudioSegment } from 'store/audiosegment';
 import { AudioTrack, Loop } from 'store/audiotrack';
-import { Instrument } from 'store/instrument';
+import { Instrument, render as renderInstrument } from 'store/instrument';
 import { notes as octaves, MidiNote, audioContext } from 'util/sound';
 import { Time, beatToTime, Beat, timeToBeat, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
+import { InstrumentRenderer } from 'store/instrument/types';
 
-function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, tempo: Tempo, delay: Time) {
+function loopPlaybackStream(instrument: InstrumentRenderer, loop: Loop, audioContextStartTime: Time, tempo: Tempo, delay: Time) {
+    instrument.connect(audioContext.destination);
     return observableFrom(loop.notes.toList().toArray())
         .pipe(
             flatMap((note: MidiNote) => {
@@ -34,18 +36,10 @@ function loopPlaybackStream(loop: Loop, audioContextStartTime: Time, tempo: Temp
                     flatMap((range: AudioRange) => {
                         return Observable.create((o: Observer<never>) => {
                             const { frequency } = octaves[note.note];
-                            const node = audioContext.createOscillator();
-                            node.frequency.setValueAtTime(frequency, 0);
-                            node.start(
-                                range.start.seconds
-                            );
-                            node.stop(
-                                range.start.plus(range.duration).seconds
-                            );
-                            node.connect(audioContext.destination);
-                            node.onended = () => {
-                                o.complete();
-                            };
+                            instrument.trigger(frequency, range)
+                                .then(() => {
+                                    o.complete();
+                                });
                         });
                     }),
                     repeat()
@@ -65,7 +59,7 @@ class LoopPlayer {
         this.audioContext = audioContext;
     }
 
-    addLoop(loop: Loop) {
+    addLoop(loop: Loop, instrument: InstrumentRenderer) {
         this.loops.push(loop);
         const audioContextTime = Time.fromSeconds(this.audioContext.currentTime);
         let delay = timeZero;
@@ -81,7 +75,7 @@ class LoopPlayer {
         if (this.loops.length === 1) {
             this.play();
         }
-        loopPlaybackStream(loop, Time.fromSeconds(this.audioContext.currentTime), this.tempo, delay)
+        loopPlaybackStream(instrument, loop, Time.fromSeconds(this.audioContext.currentTime), this.tempo, delay)
             .subscribe(() => {
 
             })
@@ -101,12 +95,11 @@ export function playTrackLoopEpic(actions) {
                 const { audioContext, trackId, instrumentId, loopId } = action.payload;
                 const { audiotrack, instrument } = appStore.getState();
                 const track = audiotrack.items.get(trackId) as AudioTrack;
-                const trackInstrument = instrument.items.get(instrumentId) as Instrument;
+                const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
                 const loop = track.loops.get(loopId) as Loop;
-                const audioContextStartTime = Time.fromSeconds(audioContext.currentTime);
+                const renderedInstrument = renderInstrument(audioContext, trackInstrument, new Tempo(128));
 
-
-                player.addLoop(loop);
+                player.addLoop(loop, renderedInstrument);
 
                 return empty();
             })

@@ -7,6 +7,7 @@ export enum RouteNames {
     SegmentEdit = 'SegmentEdit',
     ConcertMode = 'ConcertMode',
     LoopEdit = 'ConcertMode.LoopEdit',
+    ConcertInstrumentEdit = 'ConcertMode.InstrumentEdit'
 }
 
 export class Route<T> extends Record<{
@@ -38,6 +39,9 @@ const routes: Router5Route[] = [{
 }, {
     name: RouteNames.LoopEdit,
     path: '/tracks/:track_id/loops/:loop_id'
+}, {
+    name: RouteNames.ConcertInstrumentEdit,
+    path: '/instruments/:instrument_id'
 }];
 
 

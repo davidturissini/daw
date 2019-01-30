@@ -1,39 +1,28 @@
 import { Record } from 'immutable';
+import { InstrumentType, InstrumentRenderer } from './types';
+import { DrumMachine, DrumMachineData } from './types/DrumMachine';
+import { Oscillator } from './types/Oscillator';
+import { Tempo } from 'store/project';
 
-export enum InstrumentType {
-    Oscillator = 'OscillatorNode'
-}
+export type InstrumentDataTypes = DrumMachineData;
 
-export enum OscillatorNodeTypes {
-    sine = 'sine',
-    square = 'square',
-    sawtooth = 'sawtooth',
-    triangle = 'triangle',
-    custom = 'custom',
-}
-
-export interface InstrumentDataOscillator {
-    detune: number;
-    type: OscillatorNodeTypes;
-}
-
-export class Instrument extends Record<{
+export class Instrument<T> extends Record<{
     id: string;
     type: InstrumentType;
-    data: InstrumentDataOscillator;
+    data: any;
 }>({
-    type: InstrumentType.Oscillator,
-    data: {
-        detune: 0,
-        type: OscillatorNodeTypes.sine
-    },
+    type: InstrumentType.DrumMachine,
     id: '',
+    data: {},
 }) {
-
+    data: T;
 }
 
-export function createOscillator(audioContext: AudioContext, frequency: number) {
-    const oscillator = audioContext.createOscillator();
-    oscillator.frequency.setValueAtTime(frequency, 0);
-    return oscillator;
+export function render(audioContext: AudioContext, instrument: Instrument<any>, tempo: Tempo): InstrumentRenderer {
+    switch(instrument.type) {
+        case InstrumentType.DrumMachine:
+            return new DrumMachine(audioContext, tempo, instrument.data as DrumMachineData);
+        case InstrumentType.Oscillator:
+            return new Oscillator(audioContext);
+    }
 }

@@ -1,3 +1,10 @@
 :host {
     display: block;
 }
+
+.instrument__label {
+    margin: 0;
+    font-size: 1rem;
+    padding: 0;
+    font-weight: normal;
+}

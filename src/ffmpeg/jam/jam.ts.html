@@ -12,4 +12,7 @@
     <template if:true={isLoopEditRouteActive}>
         <ffmpeg-loopedit></ffmpeg-loopedit>
     </template>
+    <template if:true={isInstrumentEditRouteActive}>
+        <ffmpeg-instrumenteditor instrument-id={routeParams.instrument_id}></ffmpeg-instrumenteditor>
+    </template>
 </template>
