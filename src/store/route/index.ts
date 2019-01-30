@@ -4,7 +4,7 @@ import browserPlugin from 'router5-plugin-browser';
 
 export enum RouteNames {
     Home = 'Home',
-    SegmentEdit = 'SegmentEdit',
+    SegmentEdit = 'Home.SegmentEdit',
     ConcertMode = 'ConcertMode',
     LoopEdit = 'ConcertMode.LoopEdit',
     ConcertInstrumentEdit = 'ConcertMode.InstrumentEdit'
@@ -29,10 +29,9 @@ export interface SegmentEditRouteParams {
 const routes: Router5Route[] = [{
     name: RouteNames.Home,
     path: '/',
-    children: [{
-        name: RouteNames.SegmentEdit,
-        path: '/segments/:segment_id/edit'
-    }]
+}, {
+    name: RouteNames.SegmentEdit,
+    path: '/segments/:segment_id/edit'
 }, {
     name: RouteNames.ConcertMode,
     path: '/concert',

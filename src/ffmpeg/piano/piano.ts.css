@@ -1,6 +1,7 @@
 :host {
     display: block;
-    display: flex;
+    height: 100%;
+    overflow: hidden;
 }
 
 .key {
@@ -34,5 +35,4 @@
 .grid {
     position: relative;
     z-index: 1;
-    flex: 1 0 auto;
 }

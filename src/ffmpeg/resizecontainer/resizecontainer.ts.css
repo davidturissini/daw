@@ -1,0 +1,12 @@
+:host {
+    display: block;
+}
+
+.resizer {
+    height: 10px;
+    cursor: ns-resize;
+    background: rgb(140, 140, 140);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -18,10 +18,12 @@ import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/act
 import { ProjectState } from 'store/project/reducer';
 import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridClickEvent } from 'cmp/grid/events';
 import { Time } from 'util/time';
+import { Frame } from 'util/geometry';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
     @track cursor: Time | null = null;
+    @track mainFrame: Frame | null = null;
     constructor() {
         super();
         this.enterState(new IdleState());
@@ -275,7 +277,7 @@ export default class AppElement extends LightningElement {
     */
     get isHomeRoute() {
         if (this.route) {
-            return this.route.name === RouteNames.Home;
+            return routeIsActive(RouteNames.Home, {});
         }
         return false;
     }
@@ -369,6 +371,20 @@ export default class AppElement extends LightningElement {
      * Lifecycle
      *
     */
+    renderedCallback() {
+        if (!this.mainFrame) {
+            requestAnimationFrame(() => {
+                const rect = this.template.querySelector('.body')!.getBoundingClientRect();
+                const frame: Frame = {
+                    width: rect.width,
+                    height: rect.height,
+                };
+
+                this.mainFrame = frame;
+            });
+        }
+    }
+
     connectedCallback() {
         appStore.dispatch(createRouter());
         window.history.replaceState(history.state, '', window.location.pathname);

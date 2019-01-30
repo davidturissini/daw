@@ -22,31 +22,32 @@
     </aside>
     <main class="body">
         <template if:true={isHomeRoute}>
-            <ffmpeg-grid
-                class="track-grid"
-                onaudiorangecreated={onTrackSegmentCreated}
-                onaudiorangechange={onTrackSegmentRangeChange}
-                onrangedoubleclick={onSegmentDoubleClick}
-                onrangedragstart={onSegmentDragStart}
-                onrangedragend={onSegmentDragEnd}
-                onrangedrag={onSegmentDrag}
-                rows={trackGridRows}
-            >
-                <section slot="col-left" class="tracks-summary">
-                    <section class="tracks">
-                        <template for:each={audioTracksArray} for:item="track" for:index="index">
-                            <article data-track-id={track.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.id}>
-                                <span class="track-index">{index}</span>
-                                <h4 class="track__title">{track.title}</h4>
-                            </article>
-                        </template>
+            <ffmpeg-resizecontainer parent-frame={mainFrame}>
+                <ffmpeg-grid
+                    class="track-grid"
+                    onaudiorangecreated={onTrackSegmentCreated}
+                    onaudiorangechange={onTrackSegmentRangeChange}
+                    onrangedoubleclick={onSegmentDoubleClick}
+                    onrangedragstart={onSegmentDragStart}
+                    onrangedragend={onSegmentDragEnd}
+                    onrangedrag={onSegmentDrag}
+                    rows={trackGridRows}
+                >
+                    <section slot="col-left" class="tracks-summary">
+                        <section class="tracks">
+                            <template for:each={audioTracksArray} for:item="track" for:index="index">
+                                <article data-track-id={track.id} onkeyup={onTrackSummaryKeyUp} tabindex="0" class="track track--summary" key={track.id}>
+                                    <span class="track-index">{index}</span>
+                                    <h4 class="track__title">{track.title}</h4>
+                                </article>
+                            </template>
+                        </section>
                     </section>
-                </section>
-            </ffmpeg-grid>
-            <template if:true={isSegmentEditRoute}>
-                <div class="resizer"></div>
-                <ffmpeg-segmentedit segment-id={route.params.segment_id}></ffmpeg-segmentedit>
-            </template>
+                </ffmpeg-grid>
+                <template if:true={isSegmentEditRoute}>
+                    <ffmpeg-segmentedit slot="bottom" segment-id={route.params.segment_id}></ffmpeg-segmentedit>
+                </template>
+            </ffmpeg-resizecontainer>
         </template>
         <template if:true={isConcertModeRoute}>
             <ffmpeg-jam></ffmpeg-jam>

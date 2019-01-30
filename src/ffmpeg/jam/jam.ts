@@ -1,4 +1,4 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, wire, track } from 'lwc';
 import { wireSymbol, appStore } from 'store/index';
 import { AudioTrackState } from 'store/audiotrack/reducer';
 import { createTrackLoop } from 'store/audiotrack/action';
@@ -6,8 +6,10 @@ import { generateId } from 'util/uniqueid';
 import { CreateTrackLoopEvent } from 'cmp/trackloops/trackloops';
 import { RouteNames } from 'store/route';
 import { RouterState } from 'store/route/reducer';
+import { Frame } from 'util/geometry';
 
 export default class JamElement extends LightningElement {
+    @track frame: Frame | null = null;
     @wire(wireSymbol, {
         paths: {
             audiotracks: ['audiotrack', 'items'],
@@ -64,5 +66,23 @@ export default class JamElement extends LightningElement {
             return route.params;
         }
         return {};
+    }
+
+    get hasFrame() {
+        return this.frame !== null;
+    }
+
+    renderedCallback() {
+        if (!this.frame) {
+            requestAnimationFrame(() => {
+                const host = this.template.host! as HTMLElement;
+                const rect = host.getBoundingClientRect();
+                const frame: Frame = {
+                    height: rect.height,
+                    width: rect.width,
+                };
+                this.frame = frame;
+            });
+        }
     }
 }

@@ -1,18 +1,20 @@
 <template>
-    <section class="tracks">
-        <template for:each={audioTracks} for:item="track">
-            <ffmpeg-trackloops
-                track={track}
-                key={track.id}
-                oncreatetrackloop={onCreateTrackLoop}
-            >
-            </ffmpeg-trackloops>
+    <ffmpeg-resizecontainer parent-frame={frame}>
+        <section class="tracks">
+            <template for:each={audioTracks} for:item="track">
+                <ffmpeg-trackloops
+                    track={track}
+                    key={track.id}
+                    oncreatetrackloop={onCreateTrackLoop}
+                >
+                </ffmpeg-trackloops>
+            </template>
+        </section>
+        <template if:true={isLoopEditRouteActive}>
+            <ffmpeg-loopedit slot="bottom"></ffmpeg-loopedit>
         </template>
-    </section>
-    <template if:true={isLoopEditRouteActive}>
-        <ffmpeg-loopedit></ffmpeg-loopedit>
-    </template>
-    <template if:true={isInstrumentEditRouteActive}>
-        <ffmpeg-instrumenteditor instrument-id={routeParams.instrument_id}></ffmpeg-instrumenteditor>
-    </template>
+        <template if:true={isInstrumentEditRouteActive}>
+            <ffmpeg-instrumenteditor slot="bottom" instrument-id={routeParams.instrument_id}></ffmpeg-instrumenteditor>
+        </template>
+    </ffmpeg-resizecontainer>
 </template>

@@ -4,6 +4,7 @@
     grid-template-rows: auto auto 100fr 2rem;
     background: rgb(52, 52, 52);
     color: rgb(153, 153, 153);
+    height: 100%;
 }
 
 ul {
@@ -44,6 +45,7 @@ main {
     grid-row: 3;
     display: grid;
     grid-template-columns: 150px auto;
+    overflow-y: auto;
 }
 
 .col-left {
