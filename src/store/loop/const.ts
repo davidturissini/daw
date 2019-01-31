@@ -1,0 +1,1 @@
+export const CREATE_LOOP_NOTE = 'CREATE_LOOP_NOTE';

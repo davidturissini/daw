@@ -4,16 +4,27 @@ import { appStore, wireSymbol } from 'store/index';
 import { createPiano } from 'store/piano/action';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
 import { MidiNote } from 'util/sound';
-import { AudioRange } from 'util/audiorange';
-import { timeZero, beatToTime } from 'util/time';
+import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
+import { timeZero, beatToTime, Time, Beat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
 import { InstrumentType } from 'store/instrument/types';
-import { DrumMachineData } from 'store/instrument/types/DrumMachine';
-import { setDrumMachineSwitchOnOff } from 'store/instrument/action';
+import { DrumMachineData, DrumMachineNotes, DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
+import { createLoopNote } from 'store/loop/action';
+import { Map as ImmutableMap } from 'immutable';
+
+interface DrumMachineNotesGrid {
+    id: string;
+    title: string | null,
+    notes: Array<{
+        className: string,
+        id: string,
+    }>
+}
+
 
 export default class LoopEditElement extends LightningElement {
     @track pianoId: string | null = null;
@@ -38,19 +49,17 @@ export default class LoopEditElement extends LightningElement {
         return this.storeData.data.project;
     }
 
-    get loop(): Loop {
+    loop<T extends string>(): Loop<T> {
         const { loopId } = this;
-        return this.storeData.data.loop.get(loopId) as Loop;
+        return this.storeData.data.loop.get(loopId) as Loop<T>;
     }
 
     get loopRange(): AudioRange | null {
-        const { loop } = this;
-        return new AudioRange(timeZero, beatToTime(loop.duration, this.project.tempo));
+        return new AudioRange(timeZero, beatToTime(this.loop().duration, this.project.tempo));
     }
 
     instrument<T>(): Instrument<T> {
-        const { loop } = this;
-        return this.storeData.data.instruments.get(loop.instrumentId) as Instrument<T>;
+        return this.storeData.data.instruments.get(this.loop().instrumentId) as Instrument<T>;
     }
 
     get instrumentIsDrumMachine() {
@@ -62,45 +71,60 @@ export default class LoopEditElement extends LightningElement {
      *  Drum Machine
      *
      */
-    get drumMachineSamples() {
-        const { data } = this.instrument<DrumMachineData>();
-        return data.samples.map((sample, index) => {
+    get drumMachineKeys(): DrumMachineNotesGrid[] {
+        const loop = this.loop<DrumMachineNotes>();
+        const data = loop.data as DrumMachineLoopData;
+
+        const { resolution } = data;
+        const beatTimes = divideBeatRange(new BeatRange(new Beat(0), loop.duration), resolution);
+
+        return Object.keys(DrumMachineNotes).map((drumKeyId: DrumMachineNotes) => {
+            const notesForKey = this.loop<DrumMachineNotes>().notes.get(drumKeyId, ImmutableMap()).toList().toArray() as MidiNote[];
             return {
-                id: index,
-                title: sample.sample === null ? null : 'Sample',
-                ...sample,
-                switches: sample.switches.map((swtch, switchIndex) => {
+                id: drumKeyId,
+                title: 'Sample',
+                notes: beatTimes.map((beat, index) => {
+                    let classNames = ['sample'];
+                    const noteIsOn = notesForKey.find((note) => {
+                        return note.range.start.index === beat.index;
+                    }) !== undefined;
+
+                    if (noteIsOn) {
+                        classNames.push('switch--selected');
+                    }
+
                     return {
-                        ...swtch,
-                        className: swtch.onOff ? 'switch--selected switch' : 'switch',
-                        id: switchIndex,
+                        className: classNames.join(' '),
+                        id: index + ''
                     }
                 })
-            };
-        });
+            }
+        })
     }
 
     get drumMachineSampleLabels(): string[] {
-        const { data } = this.instrument<DrumMachineData>();
-        const { duration, resolution } = data;
-        const labels: string[] = []
-        const numberOfBeats = duration.index / resolution.index;
+        const loop = this.loop<DrumMachineNotes>();
+        const data = loop.data as DrumMachineLoopData;
+        const { resolution } = data;
 
-        for(let i = 0; i < numberOfBeats; i += 1) {
-            labels.push(`${i} / 4`);
-        }
-        console.log(labels)
-        return labels;
+        return divideBeatRange(new BeatRange(new Beat(0), loop.duration), resolution).map((beat, index) => {
+            return `${index} / 4`;
+        });
     }
 
     onBeatClick(evt: MouseEvent) {
+        const loop = this.loop<DrumMachineNotes>();
+        const data = loop.data as DrumMachineLoopData;
+        const { resolution } = data;
+
         const target = evt.target as HTMLElement;
-        const sampleId = parseInt(target.getAttribute('data-sample-id') as string, 10);
-        const switchId = parseInt(target.getAttribute('data-beat-id') as string, 10);
+        const keyId = target.getAttribute('data-key-id');
+        const beatIndex = parseInt(target.getAttribute('data-beat-index') as string, 10);
+        const range = new BeatRange(new Beat(beatIndex * resolution.index), resolution);
 
         appStore.dispatch(
-            setDrumMachineSwitchOnOff(this.instrument<any>().id, switchId, sampleId, true),
-        );
+            createLoopNote(this.loopId, generateId(), keyId, range),
+        )
     }
 
     /*

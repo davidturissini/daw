@@ -6,20 +6,20 @@
                     <li key={label} class="switch">{label}</li>
                 </template>
             </ol>
-            <template for:each={drumMachineSamples} for:item="sample">
-                <div key={sample.id} class="sample">
+            <template for:each={drumMachineKeys} for:item="key">
+                <div key={key.id} class="sample">
                     <div class="sample__data">
-                        {sample.title}
+                        {key.title}
                     </div>
                     <div class="switches-container">
                         <ul class="sample__switches">
-                            <template for:each={sample.switches} for:item="beat">
+                            <template for:each={key.notes} for:item="beat" for:index="beatIndex">
                                 <ffmpeg-button
                                     key={beat.id}
                                     class={beat.className}
                                     onclick={onBeatClick}
-                                    data-sample-id={sample.id}
-                                    data-beat-id={beat.id}
+                                    data-key-id={key.id}
+                                    data-beat-index={beatIndex}
                                 ></ffmpeg-button>
                             </template>
                         </ul>

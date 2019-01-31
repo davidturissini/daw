@@ -6,10 +6,10 @@ export enum InstrumentType {
     Oscillator = 'Oscillator',
 }
 
-export interface InstrumentRenderer {
+export interface InstrumentRenderer<K> {
     audioContext: AudioContext;
     type: InstrumentType;
-    trigger(frequency: number, range: AudioRange, offset: Time): Promise<any>;
+    trigger(key: K, range: AudioRange, offset: Time): Promise<any>;
     connect(node: AudioNode): void;
     kill(): void;
 }

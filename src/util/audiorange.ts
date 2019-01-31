@@ -1,4 +1,4 @@
-import { Time, sum as sumTime, gt, subtract as subtractTime } from './time';
+import { Time, sum as sumTime, gt, subtract as subtractTime, Beat } from './time';
 
 export class AudioRange {
     start: Time;
@@ -66,4 +66,23 @@ export function clamp(haystack, needle) {
 
     return new AudioRange(start, duration);
 
+}
+
+
+export class BeatRange {
+    start: Beat;
+    duration: Beat;
+    constructor(start: Beat, duration: Beat) {
+        this.start = start;
+        this.duration = duration;
+    }
+}
+
+export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
+    const { duration } = range;
+    const beats: Beat[] = [];
+    for(let i = 0; i < duration.index; i += resolution.index) {
+        beats.push(new Beat(i));
+    }
+    return beats;
 }

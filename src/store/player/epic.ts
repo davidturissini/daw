@@ -7,12 +7,13 @@ import { StartPlaybackAction, PlayTrackLoopAction } from './action';
 import { empty as emptyObservable, from as observableFrom, Observable, Observer, empty } from 'rxjs';
 import { appStore } from '../index';
 import { AudioSegment } from 'store/audiosegment';
-import { AudioTrack, Loop } from 'store/audiotrack';
+import { AudioTrack } from 'store/audiotrack';
 import { Instrument, render as renderInstrument } from 'store/instrument';
 import { notes as octaves, MidiNote, audioContext } from 'util/sound';
 import { Time, beatToTime, Beat, timeToBeat, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
+import { Loop } from 'store/loop';
 import { InstrumentRenderer } from 'store/instrument/types';
 import { SET_DRUM_MACHINE_SWITCH_ON_OFF } from 'store/instrument/const';
 import { SetDrumMachineSwitchOnOffAction } from 'store/instrument/action';
@@ -109,7 +110,7 @@ export function playTrackLoopEpic(actions) {
     return actions.ofType(PLAY_TRACK_LOOP)
         .pipe(
             flatMap((action: PlayTrackLoopAction) => {
-                const { audioContext, trackId, instrumentId, loopId, tempo } = action.payload;
+                const { audioContext, instrumentId, loopId, tempo } = action.payload;
                 if (clock === null) {
                     clock = new Clock(audioContext, tempo);
                 }
@@ -117,10 +118,9 @@ export function playTrackLoopEpic(actions) {
                 let startTime: Time | null = null;
                 let offsetTime: Time = timeZero;
                 Observable.create((o) => {
-                    const { audiotrack, instrument } = appStore.getState();
-                    const track = audiotrack.items.get(trackId) as AudioTrack;
+                    const { instrument, loop: loops } = appStore.getState();
                     const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
-                    const loop = track.loops.get(loopId) as Loop;
+                    const loop = loops.items.get(loopId) as Loop;
                     const renderedInstrument = renderInstrument(audioContext, trackInstrument, tempo);
                     if (startTime === null) {
                         startTime = clock!.timeUntilNextBar();

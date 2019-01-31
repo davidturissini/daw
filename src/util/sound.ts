@@ -1,4 +1,4 @@
-import { AudioRange } from 'util/audiorange';
+import { BeatRange } from 'util/audiorange';
 
 interface Note {
     frequency: number;
@@ -8,7 +8,7 @@ interface Note {
 export interface MidiNote {
     id: string;
     note: string;
-    range: AudioRange;
+    range: BeatRange;
 }
 
 export const notes: { [key: string]: Note } = {
