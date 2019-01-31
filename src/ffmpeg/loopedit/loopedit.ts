@@ -1,33 +1,36 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track, wire, api } from 'lwc';
 import { generateId } from 'util/uniqueid';
 import { appStore, wireSymbol } from 'store/index';
 import { createPiano } from 'store/piano/action';
-import { RouterState } from 'store/route/reducer';
-import { AudioTrackState } from 'store/audiotrack/reducer';
-import { AudioRangeChangeEvent, AudioRangeCreatedEvent, GridRangeChangeEvent } from 'cmp/grid/events';
-import { createTrackLoopNote, setTrackLoopNoteRange, setTrackLoopDuration } from 'store/audiotrack/action';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
-import { Loop } from 'store/audiotrack';
 import { MidiNote } from 'util/sound';
 import { AudioRange } from 'util/audiorange';
-import { timeZero, timeToBeat, beatToTime } from 'util/time';
+import { timeZero, beatToTime } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
+import { Instrument } from 'store/instrument';
+import { InstrumentState } from 'store/instrument/reducer';
+import { InstrumentType } from 'store/instrument/types';
+import { DrumMachineData } from 'store/instrument/types/DrumMachine';
+import { setDrumMachineSwitchOnOff } from 'store/instrument/action';
+import { Loop } from 'store/loop';
+import { LoopState } from 'store/loop/reducer';
 
 export default class LoopEditElement extends LightningElement {
     @track pianoId: string | null = null;
+    @api loopId: string;
 
     @wire(wireSymbol, {
         paths: {
-            route: ['router', 'route'],
-            audiotracks: ['audiotrack', 'items'],
-            project: ['project']
+            project: ['project'],
+            instruments: ['instrument', 'items'],
+            loop: ['loop', 'items']
         }
     })
     storeData: {
         data: {
-            route: RouterState['route'],
-            audiotracks: AudioTrackState['items'],
+            loop: LoopState['items'];
             project: ProjectState;
+            instruments: InstrumentState['items'];
         },
     }
 
@@ -35,38 +38,69 @@ export default class LoopEditElement extends LightningElement {
         return this.storeData.data.project;
     }
 
-    get loop(): Loop | null {
-        const { route } = this.storeData.data;
-        if (!route) {
-            return null;
-        }
-        const { track_id, loop_id } = route.params;
-        return this.storeData.data.audiotracks.getIn([track_id, 'loops', loop_id]);
+    get loop(): Loop {
+        const { loopId } = this;
+        return this.storeData.data.loop.get(loopId) as Loop;
     }
 
     get loopRange(): AudioRange | null {
         const { loop } = this;
-        if (!loop) {
-            return null;
-        }
-
         return new AudioRange(timeZero, beatToTime(loop.duration, this.project.tempo));
     }
 
-    get trackId() {
-        const { route } = this.storeData.data;
-        if (route) {
-            return route.params.track_id;
-        }
-        return null;
+    instrument<T>(): Instrument<T> {
+        const { loop } = this;
+        return this.storeData.data.instruments.get(loop.instrumentId) as Instrument<T>;
     }
 
-    get loopId() {
-        const { route } = this.storeData.data;
-        if (route) {
-            return route.params.loop_id;
+    get instrumentIsDrumMachine() {
+        return this.instrument().type === InstrumentType.DrumMachine;
+    }
+
+    /*
+     *
+     *  Drum Machine
+     *
+     */
+    get drumMachineSamples() {
+        const { data } = this.instrument<DrumMachineData>();
+        return data.samples.map((sample, index) => {
+            return {
+                id: index,
+                title: sample.sample === null ? null : 'Sample',
+                ...sample,
+                switches: sample.switches.map((swtch, switchIndex) => {
+                    return {
+                        ...swtch,
+                        className: swtch.onOff ? 'switch--selected switch' : 'switch',
+                        id: switchIndex,
+                    }
+                })
+            };
+        });
+    }
+
+    get drumMachineSampleLabels(): string[] {
+        const { data } = this.instrument<DrumMachineData>();
+        const { duration, resolution } = data;
+        const labels: string[] = []
+        const numberOfBeats = duration.index / resolution.index;
+
+        for(let i = 0; i < numberOfBeats; i += 1) {
+            labels.push(`${i} / 4`);
         }
-        return null;
+        console.log(labels)
+        return labels;
+    }
+
+    onBeatClick(evt: MouseEvent) {
+        const target = evt.target as HTMLElement;
+        const sampleId = parseInt(target.getAttribute('data-sample-id') as string, 10);
+        const switchId = parseInt(target.getAttribute('data-beat-id') as string, 10);
+
+        appStore.dispatch(
+            setDrumMachineSwitchOnOff(this.instrument<any>().id, switchId, sampleId, true),
+        );
     }
 
     /*
@@ -96,51 +130,6 @@ export default class LoopEditElement extends LightningElement {
             return seed;
         }, {});
         return obj;
-    }
-
-    /*
-     *
-     *  Piano Events
-     *
-     */
-    onPianoGridRangeChange(evt: GridRangeChangeEvent) {
-        const { trackId, loop } = this;
-        if (!trackId || !loop) {
-            return;
-        }
-
-        const { duration } = evt.detail.range;
-
-        appStore.dispatch(
-            setTrackLoopDuration(trackId, loop.id, timeToBeat(duration, this.project.tempo))
-        );
-    }
-
-    /*
-     *
-     *  Events
-     *
-     */
-    onAudioRangeChange(evt: AudioRangeChangeEvent) {
-        const { trackId } = this;
-        if (!trackId) {
-            return;
-        }
-        const { id: noteId, range } = evt.detail;
-        appStore.dispatch(
-            setTrackLoopNoteRange(trackId, this.loopId, noteId, range)
-        )
-    }
-
-    onAudioRangeCreated(evt: AudioRangeCreatedEvent) {
-        const { trackId } = this;
-        if (!trackId) {
-            return;
-        }
-        const { parentId: octave, id: noteId, range } = evt.detail;
-        appStore.dispatch(
-            createTrackLoopNote(trackId, octave, this.loopId, noteId, range),
-        )
     }
 
     /*

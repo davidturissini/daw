@@ -1,37 +1,43 @@
-import { LightningElement, api } from 'lwc';
-import { AudioTrack } from 'store/audiotrack';
-import { appStore } from 'store/index';
-import { navigate } from 'store/route/action';
-import { RouteNames } from 'store/route';
+import { LightningElement, api, wire } from 'lwc';
+import { wireSymbol } from 'store/index';
+import { Instrument } from 'store/instrument';
+import { LoopState } from 'store/loop/reducer';
+import { Loop } from 'store/loop';
 
-export type CreateTrackLoopEvent = CustomEvent<{
-    trackId: string;
+export type CreateLoopEvent = CustomEvent<{
+    instrumentId: string;
 }>
 
 export default class TrackLoopsElement extends LightningElement {
-    @api track: AudioTrack;
+    @api instrument: Instrument<any>;
 
-    get trackLoops() {
-        return this.track.loops.toList().toArray();
+    @wire(wireSymbol, {
+        paths: {
+            loop: ['loop', 'items']
+        }
+    })
+    storeData: {
+        data: {
+            loop: LoopState['items']
+        }
+    }
+
+    get loops() {
+        const { loop: loopItems } = this.storeData.data;
+        return this.instrument.loops.map((loopId) => {
+            return loopItems.get(loopId) as Loop;
+        })
     }
 
     onCreateTrackLoopClick(evt) {
-        const event: CreateTrackLoopEvent = new CustomEvent('createtrackloop', {
+        const event: CreateLoopEvent = new CustomEvent('createtrackloop', {
             bubbles: true,
             composed: true,
             detail: {
-                trackId: this.track.id,
+                instrumentId: this.instrument.id,
             }
         });
 
         this.dispatchEvent(event);
-    }
-
-    onTitleFocus() {
-        appStore.dispatch(
-            navigate(RouteNames.ConcertInstrumentEdit, {
-                instrument_id: this.track.instrumentId,
-            })
-        )
     }
 }

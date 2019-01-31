@@ -79,13 +79,18 @@ export default class Instruments extends LightningElement {
     handleOscillatorNodeClick(evt: MouseEvent) {
         const instrumentId = generateId();
         const type = (evt.target as HTMLElement).getAttribute('data-instrument-type');
+        const loopId = generateId();
+        const audioTrackId = generateId();
         let action: CreateInstrumentAction;
         switch(type) {
             case InstrumentType.DrumMachine:
                 action = createInstrument<DrumMachineData>(
                     instrumentId,
+                    'Drum Machine',
                     type,
                     defaultDrumMachineData(),
+                    audioTrackId,
+                    loopId,
                 );
                 break;
             default:

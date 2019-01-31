@@ -1,4 +1,5 @@
 import { AudioRange } from "util/audiorange";
+import { Time } from "util/time";
 
 export enum InstrumentType {
     DrumMachine = 'Drum Machine',
@@ -8,6 +9,7 @@ export enum InstrumentType {
 export interface InstrumentRenderer {
     audioContext: AudioContext;
     type: InstrumentType;
-    trigger(frequency: number, range: AudioRange): Promise<any>;
+    trigger(frequency: number, range: AudioRange, offset: Time): Promise<any>;
     connect(node: AudioNode): void;
+    kill(): void;
 }

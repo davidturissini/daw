@@ -1,4 +1,4 @@
-import { Record, Map as ImmutableMap } from 'immutable';
+import { Record, Map as ImmutableMap, List } from 'immutable';
 import { Instrument } from './index';
 import {
     CreateInstrumentAction, SetDrumMachineSwitchOnOffAction,
@@ -15,11 +15,13 @@ export class InstrumentState extends Record({
 }
 
 function createInstrumentReducer(state: InstrumentState, action: CreateInstrumentAction) {
-    const { id, type, data } = action.payload;
+    const { id, type, data, loopId, title } = action.payload;
     const instrument = new Instrument({
+        title,
         id,
         type,
         data,
+        loops: List([loopId])
     });
 
     return state.setIn(['items', id], instrument);

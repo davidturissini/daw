@@ -1,14 +1,13 @@
 <template>
-    <article class="track" key={track.id}>
+    <article class="track">
         <header>
-            <h4 class="track__title" tabindex="0" onfocus={onTitleFocus}>{track.title}</h4>
+            <h4 class="track__title" tabindex="0">{instrument.title}</h4>
         </header>
         <ul>
-            <template for:each={trackLoops} for:item="loop">
+            <template for:each={loops} for:item="loop">
                 <li key={loop.id}>
                     <ffmpeg-trackloop
-                        instrument-id={track.instrumentId}
-                        track-id={track.id}
+                        instrument-id={instrument.id}
                         loop={loop}
                     >
                     </ffmpeg-trackloop>

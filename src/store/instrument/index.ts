@@ -1,4 +1,4 @@
-import { Record } from 'immutable';
+import { Record, List } from 'immutable';
 import { InstrumentType, InstrumentRenderer } from './types';
 import { DrumMachine, DrumMachineData } from './types/DrumMachine';
 import { Oscillator } from './types/Oscillator';
@@ -10,10 +10,14 @@ export class Instrument<T> extends Record<{
     id: string;
     type: InstrumentType;
     data: any;
+    loops: List<string>;
+    title: string;
 }>({
     type: InstrumentType.DrumMachine,
     id: '',
     data: {},
+    loops: List(),
+    title: '',
 }) {
     data: T;
 }

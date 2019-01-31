@@ -37,7 +37,7 @@ const routes: Router5Route[] = [{
     path: '/concert',
 }, {
     name: RouteNames.LoopEdit,
-    path: '/tracks/:track_id/loops/:loop_id'
+    path: '/loops/:loop_id'
 }, {
     name: RouteNames.ConcertInstrumentEdit,
     path: '/instruments/:instrument_id'

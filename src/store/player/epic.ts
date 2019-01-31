@@ -2,7 +2,7 @@ import {
     START_PLAYBACK,
     PLAY_TRACK_LOOP,
 } from './const';
-import { flatMap, repeat } from 'rxjs/operators';
+import { flatMap, repeat, filter, takeUntil, map } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction } from './action';
 import { empty as emptyObservable, from as observableFrom, Observable, Observer, empty } from 'rxjs';
 import { appStore } from '../index';
@@ -14,32 +14,39 @@ import { Time, beatToTime, Beat, timeToBeat, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
 import { InstrumentRenderer } from 'store/instrument/types';
+import { SET_DRUM_MACHINE_SWITCH_ON_OFF } from 'store/instrument/const';
+import { SetDrumMachineSwitchOnOffAction } from 'store/instrument/action';
 
-function loopPlaybackStream(instrument: InstrumentRenderer, loop: Loop, audioContextStartTime: Time, tempo: Tempo, delay: Time) {
+function loopPlaybackStream(instrument: InstrumentRenderer, loop: Loop, clock: Clock, initialStartTime: Time, initialOffsetTime: Time) {
     instrument.connect(audioContext.destination);
     return observableFrom(loop.notes.toList().toArray())
         .pipe(
             flatMap((note: MidiNote) => {
-                let instrumentStartTime: Time = audioContextStartTime.plus(note.range.start).plus(delay);
-                return Observable.create((o: Observer<AudioRange>) => {
-                    const start = instrumentStartTime;
-                    const duration = note.range.duration;
-                    const timeTillNextPlay = beatToTime(loop.duration, tempo);
-                    instrumentStartTime = start.plus(timeTillNextPlay);
+                let startTime: Time = initialStartTime;
+                let offsetTime: Time = initialOffsetTime;
 
+                return Observable.create((o: Observer<AudioRange>) => {
                     o.next(
-                        new AudioRange(start, duration),
+                        new AudioRange(startTime, note.range.duration),
                     );
                     o.complete();
+
+                    const timeTillNextPlay = beatToTime(loop.duration, clock.tempo).minus(offsetTime);
+                    startTime = startTime.plus(timeTillNextPlay);
+                    offsetTime = timeZero;
                 })
                 .pipe(
                     flatMap((range: AudioRange) => {
                         return Observable.create((o: Observer<never>) => {
                             const { frequency } = octaves[note.note];
-                            instrument.trigger(frequency, range)
+                            instrument.trigger(frequency, range, offsetTime)
                                 .then(() => {
                                     o.complete();
                                 });
+
+                            return () => {
+                                instrument.kill();
+                            }
                         });
                     }),
                     repeat()
@@ -48,58 +55,101 @@ function loopPlaybackStream(instrument: InstrumentRenderer, loop: Loop, audioCon
         );
 }
 
-class LoopPlayer {
+class Clock {
     audioContext: AudioContext;
+    audioContextStartTime: Time;
     tempo: Tempo;
-    loops: Loop[] = [];
-    audioContextStartTime: Time | null = null;
-
     constructor(audioContext: AudioContext, tempo: Tempo) {
         this.tempo = tempo;
         this.audioContext = audioContext;
-    }
-
-    addLoop(loop: Loop, instrument: InstrumentRenderer) {
-        this.loops.push(loop);
-        const audioContextTime = Time.fromSeconds(this.audioContext.currentTime);
-        let delay = timeZero;
-        if (this.audioContextStartTime) {
-            const currentTime = audioContextTime.minus(this.audioContextStartTime);
-            const currentBeat = timeToBeat(currentTime, this.tempo);
-            const roundedBeatIndex = Math.floor(currentBeat.index / 4);
-            const nextBeat = new Beat((roundedBeatIndex + 1) * 4);
-            const beatDelay = new Beat(nextBeat.index - currentBeat.index);
-            delay = beatToTime(beatDelay, this.tempo);
-        }
-
-        if (this.loops.length === 1) {
-            this.play();
-        }
-        loopPlaybackStream(instrument, loop, Time.fromSeconds(this.audioContext.currentTime), this.tempo, delay)
-            .subscribe(() => {
-
-            })
-    }
-
-    play() {
         this.audioContextStartTime = Time.fromSeconds(this.audioContext.currentTime);
+    }
+
+    get currentTime(): Time {
+        const audioContextTime = Time.fromSeconds(this.audioContext.currentTime);
+        return audioContextTime.minus(this.audioContextStartTime);
+    }
+
+    get currentBeat(): Beat {
+        return timeToBeat(this.currentTime, this.tempo);
+    }
+
+    get nextBeat(): Beat {
+        const { currentBeat } = this;
+        const roundedBeatIndex = Math.floor(currentBeat.index / 4);
+        return new Beat((roundedBeatIndex + 1) * 4);
+    }
+
+    get nextBeatTime(): Time {
+        return beatToTime(this.nextBeat, this.tempo);
+    }
+
+    timeSincePreviousBar(): Time {
+        const { currentBeat, tempo } = this;
+        const mod = currentBeat.index % 4;
+        const barStart = new Beat(currentBeat.index - mod);
+        return this.currentTime.minus(beatToTime(barStart, tempo));
+    }
+
+    timeUntilNextBar(): Time {
+        const { currentBeat, tempo } = this;
+        if (currentBeat.index % 4 === 0) {
+            return beatToTime(currentBeat, tempo)
+        }
+        return beatToTime(this.nextBeat, tempo).minus(this.currentTime);
     }
 }
 
-const player = new LoopPlayer(audioContext, new Tempo(128));
+function createLoopStream(clock: Clock, loop: Loop, instrument: InstrumentRenderer, startTime: Time, offsetTime: Time) {
+    return loopPlaybackStream(instrument, loop, clock, startTime, offsetTime);
+}
 
 export function playTrackLoopEpic(actions) {
+    let clock: Clock | null = null;
     return actions.ofType(PLAY_TRACK_LOOP)
         .pipe(
             flatMap((action: PlayTrackLoopAction) => {
-                const { audioContext, trackId, instrumentId, loopId } = action.payload;
-                const { audiotrack, instrument } = appStore.getState();
-                const track = audiotrack.items.get(trackId) as AudioTrack;
-                const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
-                const loop = track.loops.get(loopId) as Loop;
-                const renderedInstrument = renderInstrument(audioContext, trackInstrument, new Tempo(128));
+                const { audioContext, trackId, instrumentId, loopId, tempo } = action.payload;
+                if (clock === null) {
+                    clock = new Clock(audioContext, tempo);
+                }
 
-                player.addLoop(loop, renderedInstrument);
+                let startTime: Time | null = null;
+                let offsetTime: Time = timeZero;
+                Observable.create((o) => {
+                    const { audiotrack, instrument } = appStore.getState();
+                    const track = audiotrack.items.get(trackId) as AudioTrack;
+                    const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
+                    const loop = track.loops.get(loopId) as Loop;
+                    const renderedInstrument = renderInstrument(audioContext, trackInstrument, tempo);
+                    if (startTime === null) {
+                        startTime = clock!.timeUntilNextBar();
+                    } else {
+                        startTime = clock!.currentTime;
+                        offsetTime = clock!.timeSincePreviousBar();
+                    }
+                    o.next({ loop, renderedInstrument, startTime, offsetTime });
+                    o.complete();
+                })
+                .pipe(
+                    map(({ loop, renderedInstrument, startTime, offsetTime }) => {
+                        return createLoopStream(clock as Clock, loop, renderedInstrument, startTime, offsetTime)
+                    }),
+                    flatMap((stream: Observable<any>) =>{
+                        return stream.pipe(
+                            takeUntil(
+                                actions.ofType(SET_DRUM_MACHINE_SWITCH_ON_OFF)
+                                    .pipe(
+                                        filter((action: SetDrumMachineSwitchOnOffAction) => action.payload.instrumentId === instrumentId)
+                                    )
+                            ),
+                        )
+                    }),
+                    repeat()
+                )
+                .subscribe(() => {
+                    console.log('mmk?')
+                });
 
                 return empty();
             })

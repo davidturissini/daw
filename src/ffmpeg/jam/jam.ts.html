@@ -1,17 +1,17 @@
 <template>
     <ffmpeg-resizecontainer parent-frame={frame}>
         <section class="tracks">
-            <template for:each={audioTracks} for:item="track">
+            <template for:each={instruments} for:item="instrument">
                 <ffmpeg-trackloops
-                    track={track}
-                    key={track.id}
+                    instrument={instrument}
+                    key={instrument.id}
                     oncreatetrackloop={onCreateTrackLoop}
                 >
                 </ffmpeg-trackloops>
             </template>
         </section>
         <template if:true={isLoopEditRouteActive}>
-            <ffmpeg-loopedit slot="bottom"></ffmpeg-loopedit>
+            <ffmpeg-loopedit loop-id={routeParams.loop_id} slot="bottom"></ffmpeg-loopedit>
         </template>
         <template if:true={isInstrumentEditRouteActive}>
             <ffmpeg-instrumenteditor slot="bottom" instrument-id={routeParams.instrument_id}></ffmpeg-instrumenteditor>

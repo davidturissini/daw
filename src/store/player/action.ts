@@ -4,23 +4,22 @@ import {
 } from './const';
 import { Action } from 'store/index';
 import { AudioRange } from 'util/audiorange';
+import { Tempo } from 'store/project';
 
 export type PlayTrackLoopAction = Action<{
     loopId: string;
-    trackId: string;
     instrumentId: string;
     audioContext: AudioContext;
-    bpm: number;
+    tempo: Tempo;
 }>;
-export function playTrackLoop(audioContext: AudioContext, trackId: string, loopId: string, instrumentId: string, bpm: number): PlayTrackLoopAction {
+export function playTrackLoop(audioContext: AudioContext, loopId: string, instrumentId: string, tempo: Tempo): PlayTrackLoopAction {
     return {
         type: PLAY_TRACK_LOOP,
         payload: {
             audioContext,
-            trackId,
             loopId,
             instrumentId,
-            bpm,
+            tempo,
         }
     }
 }

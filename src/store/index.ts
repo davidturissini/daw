@@ -13,6 +13,7 @@ import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
 import { reducer as pianoReducer, PianoState } from './piano/reducer';
 import { reducer as audioWindowReducer, AudioWindowState } from './audiowindow/reducer';
+import { reducer as loopReducer, LoopState } from './loop/reducer';
 
 // Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
@@ -66,6 +67,7 @@ export interface AppState {
     router: RouterState;
     piano: PianoState;
     audiowindow: AudioWindowState;
+    loop: LoopState;
 }
 
 export const appStore = createStore(
@@ -78,6 +80,7 @@ export const appStore = createStore(
         project: projectReducer,
         router: routerReducer,
         piano: pianoReducer,
+        loop: loopReducer,
     }),
     applyMiddleware(...middleware),
 );

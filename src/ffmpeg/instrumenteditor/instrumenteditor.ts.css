@@ -19,7 +19,6 @@ ul {
 
 .sample {
     display: flex;
-    height: 1rem;
 }
 
 .sample__data {
@@ -36,6 +35,7 @@ ul {
 
 .switch {
     width: 1.5rem;
+    height: 1rem;
 }
 
 .switch-labels {

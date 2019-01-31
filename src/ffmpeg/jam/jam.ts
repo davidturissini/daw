@@ -1,30 +1,29 @@
 import { LightningElement, wire, track } from 'lwc';
-import { wireSymbol, appStore } from 'store/index';
-import { AudioTrackState } from 'store/audiotrack/reducer';
-import { createTrackLoop } from 'store/audiotrack/action';
+import { wireSymbol } from 'store/index';
 import { generateId } from 'util/uniqueid';
-import { CreateTrackLoopEvent } from 'cmp/trackloops/trackloops';
+import { CreateLoopEvent } from 'cmp/trackloops/trackloops';
 import { RouteNames } from 'store/route';
 import { RouterState } from 'store/route/reducer';
 import { Frame } from 'util/geometry';
+import { InstrumentState } from 'store/instrument/reducer';
 
 export default class JamElement extends LightningElement {
     @track frame: Frame | null = null;
     @wire(wireSymbol, {
         paths: {
-            audiotracks: ['audiotrack', 'items'],
+            instruments: ['instrument', 'items'],
             router: ['router']
         }
     })
     storeData: {
         data: {
-            audiotracks: AudioTrackState['items'];
+            instruments: InstrumentState['items'];
             router: RouterState;
         }
     }
 
-    get audioTracks() {
-        return this.storeData.data.audiotracks.toList().toArray();
+    get instruments() {
+        return this.storeData.data.instruments.toList().toArray();
     }
 
     /*
@@ -32,11 +31,9 @@ export default class JamElement extends LightningElement {
      * Track Loop Events
      *
      */
-    onCreateTrackLoop(evt: CreateTrackLoopEvent) {
+    onCreateTrackLoop(evt: CreateLoopEvent) {
         const loopId = generateId();
-        appStore.dispatch(
-            createTrackLoop(evt.detail.trackId, loopId)
-        )
+
     }
 
     /*

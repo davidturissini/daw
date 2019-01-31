@@ -1,85 +1,9 @@
 import {
     CREATE_TRACK,
-    CREATE_TRACK_LOOP,
     SET_TRACK_INSTRUMENT,
     SET_TRACK_RECT,
-    CREATE_TRACK_LOOP_NOTE,
-    SET_TRACK_LOOP_NOTE_RANGE,
-    SET_TRACK_LOOP_DURATION,
 } from './const';
 import { Action } from './../index';
-import { AudioRange } from 'util/audiorange';
-import { Beat } from 'util/time';
-
-
-export type SetTrackLoopDurationAction = Action<{
-    trackId: string;
-    loopId: string;
-    duration: Beat;
-}>
-
-export function setTrackLoopDuration(trackId: string, loopId: string, duration: Beat): SetTrackLoopDurationAction {
-    return {
-        type: SET_TRACK_LOOP_DURATION,
-        payload: {
-            trackId,
-            loopId,
-            duration,
-        }
-    }
-}
-
-export type SetTrackLoopNoteRangeAction = Action<{
-    trackId: string;
-    loopId: string;
-    noteId: string;
-    range: AudioRange;
-}>
-export function setTrackLoopNoteRange(trackId: string, loopId: string, noteId: string, range: AudioRange): SetTrackLoopNoteRangeAction {
-    return {
-        type: SET_TRACK_LOOP_NOTE_RANGE,
-        payload: {
-            trackId,
-            loopId,
-            noteId,
-            range,
-        }
-    }
-}
-
-export type CreateTrackLoopNoteAction = Action<{
-    trackId: string;
-    loopId: string;
-    noteId: string;
-    octave: string;
-    range: AudioRange;
-}>
-export function createTrackLoopNote(trackId: string, octave: string, loopId: string, noteId: string, range: AudioRange): CreateTrackLoopNoteAction {
-    return {
-        type: CREATE_TRACK_LOOP_NOTE,
-        payload: {
-            trackId,
-            octave,
-            loopId,
-            range,
-            noteId,
-        },
-    }
-}
-
-export type CreateTrackLoopAction = Action<{
-    loopId: string;
-    trackId: string;
-}>
-export function createTrackLoop(trackId: string, loopId: string): CreateTrackLoopAction {
-    return {
-        type: CREATE_TRACK_LOOP,
-        payload: {
-            trackId,
-            loopId,
-        }
-    }
-}
 
 export type SetTrackRectAction = Action<{
     trackId: string;

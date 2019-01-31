@@ -1,5 +1,5 @@
 import { Record, Map as ImmutableMap } from 'immutable';
-import { AudioTrack, Loop } from './index';
+import { AudioTrack } from './index';
 import {
     CreateTrackAction,
     SetTrackInstrumentAction,
@@ -66,15 +66,6 @@ function createAudioSegmentReducer(state: AudioTrackState, action: CreateAudioSe
     });
 }
 
-function createTrackLoopReducer(state: AudioTrackState, action: CreateTrackLoopAction): AudioTrackState {
-    const { trackId, loopId } = action.payload;
-    const loop = new Loop({
-        id: loopId,
-    });
-
-    return state.setIn(['items', trackId, 'loops', loopId], loop);
-}
-
 function createTrackLoopNoteReducer(state: AudioTrackState, action: CreateTrackLoopNoteAction): AudioTrackState {
     const { trackId, loopId, noteId, range, octave } = action.payload;
     const note: MidiNote = {
@@ -86,25 +77,13 @@ function createTrackLoopNoteReducer(state: AudioTrackState, action: CreateTrackL
     return state.setIn(['items', trackId, 'loops', loopId, 'notes', noteId], note);
 }
 
-function setTrackLoopNoteRangeReducer(state: AudioTrackState, action: SetTrackLoopNoteRangeAction): AudioTrackState {
-    const { trackId, loopId, noteId, range } = action.payload;
-    return state.setIn(['items', trackId, 'loops', loopId, 'notes', noteId, 'range'], range);
-}
-
-function setTrackLoopDurationReducer(state: AudioTrackState, action: SetTrackLoopDurationAction): AudioTrackState {
-    const { trackId, loopId, duration } = action.payload;
-    return state.setIn(['items', trackId, 'loops', loopId, 'duration'], duration);
-}
-
 function createInstrumentReducer(state: AudioTrackState, action: CreateInstrumentAction): AudioTrackState {
-    const { id, type } = action.payload;
-    const trackId = generateId();
+    const { type, audioTrackId } = action.payload;
     const track = new AudioTrack({
-        id: trackId,
-        instrumentId: id,
+        id: audioTrackId,
         title: type
     });
-    return state.setIn(['items', trackId], track);
+    return state.setIn(['items', audioTrackId], track);
 }
 
 export function reducer(state = new AudioTrackState(), action) {
@@ -117,14 +96,6 @@ export function reducer(state = new AudioTrackState(), action) {
             return setTrackRectReducer(state, action);
         case CREATE_AUDIO_SEGMENT:
             return createAudioSegmentReducer(state, action);
-        case CREATE_TRACK_LOOP:
-            return createTrackLoopReducer(state, action);
-        case CREATE_TRACK_LOOP_NOTE:
-            return createTrackLoopNoteReducer(state, action);
-        case SET_TRACK_LOOP_NOTE_RANGE:
-            return setTrackLoopNoteRangeReducer(state, action);
-        case SET_TRACK_LOOP_DURATION:
-            return setTrackLoopDurationReducer(state, action);
         case CREATE_INSTRUMENT:
             return createInstrumentReducer(state, action);
     }
