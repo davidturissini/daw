@@ -3,14 +3,14 @@ import { generateId } from 'util/uniqueid';
 import { appStore, wireSymbol } from 'store/index';
 import { createPiano } from 'store/piano/action';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
-import { MidiNote } from 'util/sound';
+import { MidiNote, PianoKey, notes } from 'util/sound';
 import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
 import { timeZero, beatToTime, Beat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
 import { InstrumentType } from 'store/instrument/types';
-import { DrumMachineNotes, DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
+import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
 import { createLoopNote } from 'store/loop/action';
@@ -49,17 +49,17 @@ export default class LoopEditElement extends LightningElement {
         return this.storeData.data.project;
     }
 
-    loop<T extends string>(): Loop<T> {
+    get loop(): Loop {
         const { loopId } = this;
-        return this.storeData.data.loop.get(loopId) as Loop<T>;
+        return this.storeData.data.loop.get(loopId) as Loop;
     }
 
     get loopRange(): AudioRange | null {
-        return new AudioRange(timeZero, beatToTime(this.loop().duration, this.project.tempo));
+        return new AudioRange(timeZero, beatToTime(this.loop.duration, this.project.tempo));
     }
 
     instrument<T>(): Instrument<T> {
-        return this.storeData.data.instruments.get(this.loop().instrumentId) as Instrument<T>;
+        return this.storeData.data.instruments.get(this.loop.instrumentId) as Instrument<T>;
     }
 
     get instrumentIsDrumMachine() {
@@ -72,16 +72,22 @@ export default class LoopEditElement extends LightningElement {
      *
      */
     get drumMachineKeys(): DrumMachineNotesGrid[] {
-        const loop = this.loop<DrumMachineNotes>();
+        const { loop } = this;
         const data = loop.data as DrumMachineLoopData;
 
         const { resolution } = data;
         const beatTimes = divideBeatRange(new BeatRange(new Beat(0), loop.duration), resolution);
-
-        return Object.keys(DrumMachineNotes).map((drumKeyId: DrumMachineNotes) => {
-            const notesForKey = this.loop<DrumMachineNotes>().notes.get(drumKeyId, ImmutableMap()).toList().toArray() as MidiNote[];
+        const { frequency: lowerFrequency } = notes[PianoKey.C3];
+        const { frequency: upperFrequency } = notes[PianoKey.C4];
+        return Object.keys(PianoKey).filter((key: PianoKey) => {
+            console.log('key', key, notes)
+            const { frequency } = notes[key];
+            return (frequency >= lowerFrequency && frequency < upperFrequency);
+        })
+        .map((key: PianoKey) => {
+            const notesForKey = loop.notes.get(key, ImmutableMap()).toList().toArray() as MidiNote[];
             return {
-                id: drumKeyId,
+                id: key,
                 title: 'Sample',
                 notes: beatTimes.map((beat, index) => {
                     let classNames = ['sample'];
@@ -103,7 +109,7 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get drumMachineSampleLabels(): string[] {
-        const loop = this.loop<DrumMachineNotes>();
+        const { loop } = this;
         const data = loop.data as DrumMachineLoopData;
         const { resolution } = data;
 
@@ -113,7 +119,7 @@ export default class LoopEditElement extends LightningElement {
     }
 
     onBeatClick(evt: MouseEvent) {
-        const loop = this.loop<DrumMachineNotes>();
+        const { loop } = this;
         const data = loop.data as DrumMachineLoopData;
         const { resolution } = data;
 

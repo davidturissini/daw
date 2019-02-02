@@ -1,11 +1,11 @@
 import { Record, Map as ImmutableMap } from 'immutable';
-import { MidiNote } from 'util/sound';
+import { MidiNote, PianoKey } from 'util/sound';
 import { Beat } from 'util/time';
 import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
 
 export type LoopDataTypes = DrumMachineLoopData;
 
-export class Loop<K extends string> extends Record<{
+export class Loop extends Record<{
     id: string;
     notes: ImmutableMap<string, ImmutableMap<string, MidiNote>>;
     instrumentId: string;
@@ -18,6 +18,6 @@ export class Loop<K extends string> extends Record<{
     instrumentId: '',
     data: {}
 }) {
-    notes: ImmutableMap<K, ImmutableMap<string, MidiNote>>;
+    notes: ImmutableMap<PianoKey, ImmutableMap<string, MidiNote>>;
     data: LoopDataTypes;
 }

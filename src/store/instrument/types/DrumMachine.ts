@@ -1,34 +1,22 @@
 import { InstrumentRenderer, InstrumentType } from './index';
-import { AudioRange } from 'util/audiorange';
 import { Beat, Time } from 'util/time';
 import { Tempo } from 'store/project';
 import { Record } from 'immutable';
 import { Observable } from 'rxjs';
 import { getSamples } from 'store/sample';
+import { PianoKey } from 'util/sound';
 
-function loadSample(note: DrumMachineNotes): AudioBuffer {
+function loadSample(note: PianoKey): AudioBuffer {
     const samples = getSamples();
-    if (note === DrumMachineNotes.Zero) {
+    if (note === PianoKey.C3) {
         return samples.drumKickAudioBuffer;
-    } else if (note === DrumMachineNotes.One) {
+    } else if (note === PianoKey.Csharp3) {
         return samples.snareAudioBuffer;
-    } else if (note === DrumMachineNotes.Two) {
+    } else if (note === PianoKey.D3) {
         return samples.hiHatAudioBuffer;
     }
 
     throw new Error(`Buffer not found for note ${note}`);
-}
-
-export enum DrumMachineNotes {
-    Zero = 'Zero',
-    One = 'One',
-    Two = 'Two',
-    Three = 'Three',
-    Four = 'Four',
-    Five = 'Five',
-    Six = 'Six',
-    Seven = 'Seven',
-    Eight = 'Eight',
 }
 
 export class DrumMachineLoopData extends Record<{
@@ -37,7 +25,7 @@ export class DrumMachineLoopData extends Record<{
     resolution: new Beat(1 / 4),
 }) {}
 
-export class DrumMachine implements InstrumentRenderer<DrumMachineNotes> {
+export class DrumMachine implements InstrumentRenderer {
     type: InstrumentType.DrumMachine;
     audioContext: BaseAudioContext;
     dest: AudioNode | null = null;
@@ -49,7 +37,7 @@ export class DrumMachine implements InstrumentRenderer<DrumMachineNotes> {
         this.audioContext = audioContext;
         this.tempo = tempo;
     }
-    trigger(key: DrumMachineNotes, when: Time, offset: Time, duration: Time) {
+    trigger(key: PianoKey, when: Time, offset: Time, duration: Time) {
         const source = this.audioContext.createBufferSource();
         if (this.dest) {
             source.connect(this.dest);

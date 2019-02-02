@@ -20,7 +20,7 @@ export class Instrument<T> extends Record<{
     data: T;
 }
 
-export function render(audioContext: AudioContext, instrument: Instrument<any>, tempo: Tempo): InstrumentRenderer<any> {
+export function render(audioContext: AudioContext, instrument: Instrument<any>, tempo: Tempo): InstrumentRenderer {
     switch(instrument.type) {
         case InstrumentType.DrumMachine:
             return new DrumMachine(audioContext, tempo);

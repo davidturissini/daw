@@ -1,5 +1,7 @@
 import { InstrumentRenderer, InstrumentType } from './index';
-import { AudioRange } from 'util/audiorange';
+import { PianoKey, notes } from 'util/sound';
+import { Time } from 'util/time';
+import { Observable } from 'rxjs';
 
 export class Oscillator implements InstrumentRenderer {
     type: InstrumentType.Oscillator;
@@ -8,20 +10,25 @@ export class Oscillator implements InstrumentRenderer {
     constructor(audioContext: AudioContext) {
         this.audioContext = audioContext;
     }
-    trigger(frequency: number, range: AudioRange) {
+    trigger(key: PianoKey, when: Time, offset: Time, duration: Time) {
         const { audioContext } = this;
-        return new Promise<never>((res) => {
-            const node = audioContext.createOscillator();
-            node.frequency.setValueAtTime(frequency, 0);
-            node.start(
-                range.start.seconds
-            );
-            node.stop(
-                range.start.plus(range.duration).seconds
-            );
-            node.onended = () => res();
+        const node = audioContext.createOscillator();
+        const { frequency } = notes[key];
+        node.frequency.setValueAtTime(frequency, 0);
+
+        return Observable.create((o) => {
+            node.start(when.seconds);
+            node.stop(duration.minus(offset).seconds);
+
             if (this.dest) {
                 node.connect(this.dest);
+            }
+
+            node.onended = () => o.complete();
+            return () => {
+                node.onended = () => {}
+                node.disconnect();
+                node.stop();
             }
         });
 
