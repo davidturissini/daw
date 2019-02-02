@@ -2,13 +2,13 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { Loop } from 'store/loop';
 import { appStore, wireSymbol } from 'store/index';
 import { playTrackLoop } from 'store/player/action';
-import { audioContext } from 'util/sound';
+import { getAudioContext } from 'util/sound';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
 import { ProjectState } from 'store/project/reducer';
 
-export default class TrackLoopElement extends LightningElement {
-    @api loop: Loop;
+export default class TrackLoopElement<T extends string> extends LightningElement {
+    @api loop: Loop<T>;
     @api instrumentId: string;
     @track isLoopEditRouteActive: boolean = false;
 
@@ -27,7 +27,7 @@ export default class TrackLoopElement extends LightningElement {
         evt.stopPropagation();
         appStore.dispatch(
             playTrackLoop(
-                audioContext,
+                getAudioContext(),
                 this.loop.id,
                 this.instrumentId,
                 this.storeData.data.project.tempo,

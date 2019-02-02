@@ -3,7 +3,6 @@ import { appStore } from 'store/index';
 import { createInstrument, CreateInstrumentAction } from 'store/instrument/action';
 import { generateId } from './../../util/uniqueid'
 import { InstrumentType } from 'store/instrument/types';
-import { audioContext } from 'util/sound';
 
 
 export default class Instruments extends LightningElement {

@@ -1,10 +1,11 @@
-import { Time, sum as sumTime, gt, subtract as subtractTime, Beat } from './time';
+import { Time, sum as sumTime, gt, subtract as subtractTime, Beat, LiveTime, beatToTime } from './time';
+import { Tempo } from 'store/project';
 
 export class AudioRange {
     start: Time;
     duration: Time;
-    constructor(start: Time, duration: Time) {
-        if (!(start instanceof Time)) {
+    constructor(start: Time | LiveTime, duration: Time) {
+        if (!(start instanceof Time) && !(start instanceof LiveTime)) {
             throw new Error(`Invalid start time for AudioRange. "${start}" is not a valid instance of Time`);
         }
 
@@ -76,6 +77,13 @@ export class BeatRange {
         this.start = start;
         this.duration = duration;
     }
+
+    toAudioRange(tempo: Tempo) {
+        const beatStartTime = beatToTime(this.start, tempo);
+        const beatDurationTime = beatToTime(this.duration, tempo);
+
+        return new AudioRange(beatStartTime, beatDurationTime);
+    }
 }
 
 export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
@@ -85,4 +93,29 @@ export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
         beats.push(new Beat(i));
     }
     return beats;
+}
+
+export function contains(needle: AudioRange, haystack: AudioRange): boolean {
+    return (
+        (
+            (
+                needle.start.greaterThan(haystack.start) ||
+                needle.start.equals(haystack.start)
+            ) &&
+            (
+                needle.start.lessThan(haystack.end) ||
+                needle.start.equals(haystack.end)
+            )
+        ) &&
+        (
+            (
+                needle.end.lessThan(haystack.end) ||
+                needle.end.equals(haystack.end)
+            ) &&
+            (
+                needle.end.greaterThan(haystack.start) ||
+                needle.end.equals(haystack.start)
+            )
+        )
+    )
 }

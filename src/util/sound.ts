@@ -111,4 +111,11 @@ export const notes: { [key: string]: Note } = {
     },
 }
 
-export const audioContext = new AudioContext();
+let ac: AudioContext | null = null;
+
+export function getAudioContext(): AudioContext {
+    if (ac === null) {
+        ac = new AudioContext();
+    }
+    return ac;
+}

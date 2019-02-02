@@ -10,7 +10,7 @@ import {
 } from './action';
 import { flatMap, take, merge, filter, takeUntil } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { audioContext } from 'util/sound';
+import { getAudioContext } from 'util/sound';
 import { createOscillator } from 'store/instrument';
 
 export function playKeyEpic(actions) {
@@ -18,8 +18,8 @@ export function playKeyEpic(actions) {
         .pipe(
             flatMap((action: PlayKeyAction) => {
                 const { frequency, name, pianoId } = action.payload;
-                const oscillator = createOscillator(audioContext, frequency);
-                oscillator.connect(audioContext.destination);
+                const oscillator = createOscillator(getAudioContext(), frequency);
+                oscillator.connect(getAudioContext().destination);
                 return Observable.create((o) => {
                     console.log('starting');
                     oscillator.start();

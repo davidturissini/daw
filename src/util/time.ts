@@ -14,32 +14,93 @@ export class Time {
         return new Time(seconds * 1000);
     }
 
-    add(time: Time) {
+    add(time: Time): Time {
         return sum(this, time);
     }
 
-    plus(time: Time) {
+    plus(time: Time): Time {
         return this.add(time);
     }
 
-    subtract(time: Time) {
+    subtract(time: Time): Time {
         return subtract(this, time);
     }
 
-    minus(time: Time) {
+    minus(time: Time): Time {
         return this.subtract(time);
     }
 
-    greaterThan(time: Time) {
+    greaterThan(time: Time): boolean {
         return gt(this, time);
     }
 
-    lessThan(time: Time) {
+    lessThan(time: Time): boolean {
         return lt(this, time);
     }
 
-    invert() {
+    invert(): Time {
         return invert(this);
+    }
+
+    equals(time: Time) {
+        return this.milliseconds === time.milliseconds;
+    }
+}
+
+interface CurrentTimeable {
+    currentTime: number;
+}
+
+export class LiveTime implements Time {
+    source: CurrentTimeable;
+    offset: number;
+    constructor(source: CurrentTimeable, milliseconds?: number) {
+        this.source = source;
+        this.offset = milliseconds || 0;
+    }
+
+    get milliseconds() {
+        return (this.source.currentTime * 1000) + this.offset;
+    }
+
+    get seconds() {
+        return this.source.currentTime + (this.offset / 1000);
+    }
+
+    snapshot() {
+        return new Time(this.milliseconds);
+    }
+
+    add(time: Time): LiveTime {
+        return new LiveTime(this.source, this.offset + time.milliseconds);
+    }
+
+    plus(time: Time): LiveTime {
+        return this.add(time);
+    }
+
+    subtract(time: Time): LiveTime {
+        return new LiveTime(this.source, this.offset - time.milliseconds);
+    }
+
+    minus(time: Time): LiveTime {
+        return this.subtract(time);
+    }
+
+    greaterThan(time: Time): boolean {
+        return gt(this, time);
+    }
+
+    lessThan(time: Time): boolean {
+        return lt(this, time);
+    }
+
+    invert(): LiveTime {
+        return new LiveTime(this.source, -this.offset);
+    }
+
+    equals(time: Time) {
+        return this.milliseconds === time.milliseconds;
     }
 }
 

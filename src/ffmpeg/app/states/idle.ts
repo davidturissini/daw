@@ -9,7 +9,7 @@ import { RangeSourceOffsetChangeEvent, RangeDoubleClickEvent, RangeDurationChang
 import AppElement from 'cmp/app/app';
 import { startPlayback } from 'store/player/action';
 import { timeZero, Time } from 'util/time';
-import { audioContext } from 'util/sound';
+import { getAudioContext } from 'util/sound';
 
 export class IdleState extends BaseState {
     onSegmentSourceOffsetChange(app: AppElement, evt: RangeSourceOffsetChangeEvent) {
@@ -76,7 +76,7 @@ export class IdleState extends BaseState {
     */
     onPlayButtonClick() {
         appStore.dispatch(
-            startPlayback(audioContext, new AudioRange(timeZero, Time.fromSeconds(10)), false)
+            startPlayback(getAudioContext(), new AudioRange(timeZero, Time.fromSeconds(10)), false)
         )
     }
 

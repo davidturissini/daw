@@ -1,38 +1,23 @@
 import { InstrumentRenderer, InstrumentType } from './index';
 import { AudioRange } from 'util/audiorange';
-import { Beat, beatToTime, Time } from 'util/time';
+import { Beat, Time } from 'util/time';
 import { Tempo } from 'store/project';
-import { Record, List } from 'immutable';
-import { silence } from './../../../lib/soundlab';
-import { audioContext } from 'util/sound';
+import { Record } from 'immutable';
+import { Observable } from 'rxjs';
+import { getSamples } from 'store/sample';
 
-let drumKickAudioBuffer: AudioBuffer;
-let snareAudioBuffer: AudioBuffer;
-let hiHatAudioBuffer: AudioBuffer;
+function loadSample(note: DrumMachineNotes): AudioBuffer {
+    const samples = getSamples();
+    if (note === DrumMachineNotes.Zero) {
+        return samples.drumKickAudioBuffer;
+    } else if (note === DrumMachineNotes.One) {
+        return samples.snareAudioBuffer;
+    } else if (note === DrumMachineNotes.Two) {
+        return samples.hiHatAudioBuffer;
+    }
 
-fetch('./samples/DDE Kick 1.wav')
-    .then((resp) => resp.arrayBuffer())
-    .then((arrayBuffer) => {
-        audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
-            drumKickAudioBuffer = audioBuffer;
-        });
-    })
-
-fetch('./samples/DDE Snare 4.wav')
-    .then((resp) => resp.arrayBuffer())
-    .then((arrayBuffer) => {
-        audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
-            snareAudioBuffer = audioBuffer;
-        });
-    })
-
-fetch('./samples/DDE HiHat 1.wav')
-    .then((resp) => resp.arrayBuffer())
-    .then((arrayBuffer) => {
-        audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
-            hiHatAudioBuffer = audioBuffer;
-        });
-    })
+    throw new Error(`Buffer not found for note ${note}`);
+}
 
 export enum DrumMachineNotes {
     Zero = 'Zero',
@@ -54,85 +39,36 @@ export class DrumMachineLoopData extends Record<{
 
 export class DrumMachine implements InstrumentRenderer<DrumMachineNotes> {
     type: InstrumentType.DrumMachine;
-    audioContext: AudioContext;
+    audioContext: BaseAudioContext;
     dest: AudioNode | null = null;
     resolution: Beat;
     tempo: Tempo;
     duration: Beat;
-    nodes: List<AudioBufferSourceNode> = List();
 
-    constructor(audioContext: AudioContext, tempo: Tempo) {
+    constructor(audioContext: BaseAudioContext, tempo: Tempo) {
         this.audioContext = audioContext;
         this.tempo = tempo;
     }
-    trigger(key: DrumMachineNotes, range: AudioRange, offset: Time) {
-        // const { audioContext, tempo } = this;
-        // const resolutionTime = beatToTime(this.resolution, tempo);
-        // const promises: Array<Promise<any>> = this.samples.filter(({ sample }) => {
-        //         return sample !== null;
-        //     })
-        //     .reduce((seed: Array<Promise<any>>, { sample, switches }) => {
-        //         const beatPromises = switches.filter(({ beat, onOff }) => {
-        //             return onOff === true;
-        //         })
-        //         .filter(({ beat }) => {
-        //             const beatTime = beatToTime(beat, tempo);
-        //             const value = beatTime.greaterThan(offset) || beatTime.milliseconds === offset.milliseconds;
-        //             return value;
-        //         })
-        //         .map(({ beat }) => {
-        //             const node = audioContext.createBufferSource();
-        //             node.buffer = sample;
-        //             const beatTime = beatToTime(beat, tempo);
-        //             const startTime = range.start.plus(beatTime).minus(offset)
-        //             node.start(startTime.seconds);
-        //             node.stop(startTime.plus(resolutionTime).seconds);
+    trigger(key: DrumMachineNotes, when: Time, offset: Time, duration: Time) {
+        const source = this.audioContext.createBufferSource();
+        if (this.dest) {
+            source.connect(this.dest);
+        }
+        source.buffer = loadSample(key);
 
-        //             if (this.dest) {
-        //                 node.connect(this.dest);
-        //             }
+        return Observable.create((o) => {
+            source.onended = () => o.complete();
+            source.start(when.seconds, offset.seconds, duration.seconds);
 
-        //             this.nodes = this.nodes.push(node);
-
-        //             return new Promise((res) => {
-        //                 node.onended = () => {
-        //                     this.nodes = this.nodes.remove(this.nodes.indexOf(node));
-        //                     res();
-        //                 }
-        //             });
-        //         });
-
-        //         // Empty
-        //         if (beatPromises.size === 0) {
-        //             seed.push(new Promise((res) => {
-        //                 const buffer = audioContext.createBufferSource();
-        //                 buffer.buffer = silence(audioContext. sampleRate, 1, resolutionTime.seconds);
-        //                 buffer.start();
-        //                 buffer.connect(audioContext.destination);
-        //                 buffer.onended = res;
-        //             }))
-        //             return seed;
-        //         }
-
-        //         return seed.concat(beatPromises.toArray());
-        //     }, []);
-
-        // return Promise.all(promises);
-
-        return new Promise((res) => {
-            console.log('trying to play drum')
-            res();
+            return () => {
+                source.onended = () => {}
+                source.disconnect();
+                source.stop();
+            }
         });
     }
 
     connect(node: AudioNode) {
         this.dest = node;
-    }
-
-    kill() {
-        this.nodes.forEach((node) => {
-            node.disconnect();
-            node.stop();
-        });
     }
 }

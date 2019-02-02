@@ -1,5 +1,5 @@
-import { AudioRange } from "util/audiorange";
 import { Time } from "util/time";
+import { Observable } from "rxjs";
 
 export enum InstrumentType {
     DrumMachine = 'Drum Machine',
@@ -7,9 +7,8 @@ export enum InstrumentType {
 }
 
 export interface InstrumentRenderer<K> {
-    audioContext: AudioContext;
+    audioContext: BaseAudioContext;
     type: InstrumentType;
-    trigger(key: K, range: AudioRange, offset: Time): Promise<any>;
+    trigger(key: K, when: Time, offset: Time, duration: Time): Observable<any>;
     connect(node: AudioNode): void;
-    kill(): void;
 }
