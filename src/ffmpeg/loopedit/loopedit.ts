@@ -9,13 +9,14 @@ import { timeZero, beatToTime, Beat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
-import { InstrumentType, DrumMachineData } from 'store/instrument/types';
-import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
+import { InstrumentType } from 'store/instrument/types';
+import { DrumMachineLoopData, DrumMachineData } from 'store/instrument/types/DrumMachine';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
-import { createLoopNote, deleteLoopNote } from 'store/loop/action';
+import { createLoopNote, deleteLoopNote, setLoopNoteRange } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
 import { Color } from 'util/color';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
 
 interface DrumMachineNotesGrid {
     id: string;
@@ -67,6 +68,10 @@ export default class LoopEditElement extends LightningElement {
 
     get instrumentIsDrumMachine() {
         return this.instrument().type === InstrumentType.DrumMachine;
+    }
+
+    get instrumentIsOscillator() {
+        return this.instrument().type === InstrumentType.Oscillator;
     }
 
     /*
@@ -149,7 +154,7 @@ export default class LoopEditElement extends LightningElement {
 
     /*
      *
-     *  Piano
+     *  Oscillator
      *
      */
     get hasPiano(): boolean {
@@ -166,14 +171,28 @@ export default class LoopEditElement extends LightningElement {
             return {};
         }
 
-        const obj: PianoMidiNoteMap = loop.notes.reduce((seed: {[key: string]: MidiNote[]}, note: MidiNote) => {
-            if (seed[note.note] === undefined) {
-                seed[note.note] = [];
+        const obj: PianoMidiNoteMap = loop.notes.reduce((seed: {[K in PianoKey]: MidiNote[]}, note: MidiNote, key: PianoKey) => {
+            if (seed[key] === undefined) {
+                seed[key] = [];
             }
-            seed[note.note].push(note);
+            seed[key].push(note);
             return seed;
         }, {});
         return obj;
+    }
+
+    onOscillatorNoteCreated(evt: AudioRangeCreatedEvent) {
+        const { id, parentId: key, beatRange } = evt.detail;
+        appStore.dispatch(
+            createLoopNote(this.loopId, id, key as PianoKey, beatRange),
+        );
+    }
+
+    onOscillatorNoteRangeChange(evt: AudioRangeChangeEvent) {
+        const { id, parentId: key, beatRange } = evt.detail;
+        appStore.dispatch(
+            setLoopNoteRange(this.loopId, key as PianoKey, id, beatRange)
+        );
     }
 
     /*

@@ -1,11 +1,12 @@
 import { LightningElement, api } from 'lwc';
-import { AudioRange } from 'util/audiorange';
+import { AudioRange, BeatRange } from 'util/audiorange';
 import { timeToPixel, durationToWidth, pixelToTime } from 'util/geometry';
 import { Color } from 'util/color';
 import interact, { Interactable } from 'interactjs';
 import rafThrottle from 'raf-throttle';
 import { Time } from 'util/time';
 import { AudioWindow } from 'store/audiowindow';
+import { Tempo } from 'store/project';
 
 export type RangeDragStartEvent = CustomEvent<{
     itemId: string;
@@ -54,7 +55,7 @@ function calcStyle(audioWindow: AudioWindow, range: AudioRange, color: Color) {
 
 export default class AudioRangeElement extends LightningElement {
     @api rowIndex: number;
-    @api range: AudioRange;
+    @api range: AudioRange | BeatRange;
     @api color: Color;
     @api audioWindow: AudioWindow;
     @api itemId: string;
@@ -77,7 +78,7 @@ export default class AudioRangeElement extends LightningElement {
             bubbles: true,
             detail: {
                 itemId: this.itemId,
-                range: this.range,
+                range: this.range.toAudioRange(new Tempo(128)),
             }
         });
 
@@ -154,7 +155,7 @@ export default class AudioRangeElement extends LightningElement {
     })
 
     get divStyle(): string {
-        const obj = calcStyle(this.audioWindow, this.range, this.color);
+        const obj = calcStyle(this.audioWindow, this.range.toAudioRange(new Tempo(128)), this.color);
         return `transform:${obj.transform};width:${obj.width};background:${obj.background}`;
     }
 

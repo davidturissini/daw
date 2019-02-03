@@ -2,6 +2,17 @@ import { InstrumentRenderer, InstrumentType } from './index';
 import { PianoKey, notes } from 'util/sound';
 import { Time } from 'util/time';
 import { Observable } from 'rxjs';
+import { Record } from 'immutable';
+
+export class OscillatorData extends Record<{}>({
+
+}){ }
+
+export class OscillatorLoopData extends Record<{
+
+}>({
+
+}) {}
 
 export class Oscillator implements InstrumentRenderer {
     type: InstrumentType.Oscillator;

@@ -1,4 +1,4 @@
-import { AudioRange } from 'util/audiorange';
+import { AudioRange, BeatRange } from 'util/audiorange';
 import { Time } from 'util/time';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
@@ -16,12 +16,14 @@ export type TimelineDragEndEvent = CustomEvent<{
 
 export type AudioRangeCreatedEvent = CustomEvent<{
     range: AudioRange;
+    beatRange: BeatRange;
     parentId: string;
     id: string;
 }>;
 
 export type AudioRangeChangeEvent = CustomEvent<{
     range: AudioRange;
+    beatRange: BeatRange;
     id: string;
     parentId: string;
 }>

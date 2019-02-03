@@ -35,6 +35,7 @@ export class DrawRangeState extends BaseState implements GridState {
                 id,
                 range,
                 parentId,
+                beatRange: range.toBeatRange(cmp.project.tempo),
             },
         });
         cmp.dispatchEvent(event);
@@ -57,6 +58,7 @@ export class DrawRangeState extends BaseState implements GridState {
                     range: next,
                     id: this.rangeId,
                     parentId: this.parentId,
+                    beatRange: next.toBeatRange(cmp.project.tempo),
                 },
             });
             cmp.dispatchEvent(event);

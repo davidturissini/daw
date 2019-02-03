@@ -2,8 +2,9 @@ import { Record, Map as ImmutableMap } from 'immutable';
 import { MidiNote, PianoKey } from 'util/sound';
 import { Beat } from 'util/time';
 import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
+import { OscillatorLoopData } from 'store/instrument/types/Oscillator';
 
-export type LoopDataTypes = DrumMachineLoopData;
+export type LoopDataTypes = DrumMachineLoopData | OscillatorLoopData;
 
 export class Loop extends Record<{
     id: string;

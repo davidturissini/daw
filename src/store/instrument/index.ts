@@ -1,10 +1,10 @@
 import { Record, List } from 'immutable';
-import { InstrumentType, InstrumentRenderer, DrumMachineData } from './types';
-import { DrumMachine } from './types/DrumMachine';
-import { Oscillator } from './types/Oscillator';
+import { InstrumentType, InstrumentRenderer } from './types';
+import { DrumMachine, DrumMachineData } from './types/DrumMachine';
+import { Oscillator, OscillatorData } from './types/Oscillator';
 import { Tempo } from 'store/project';
 
-export type InstrumentData = DrumMachineData;
+export type InstrumentData = DrumMachineData | OscillatorData;
 
 export class Instrument<T extends InstrumentData> extends Record<{
     id: string;

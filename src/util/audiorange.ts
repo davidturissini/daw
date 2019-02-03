@@ -1,4 +1,4 @@
-import { Time, sum as sumTime, gt, subtract as subtractTime, Beat, LiveTime, beatToTime } from './time';
+import { Time, sum as sumTime, gt, subtract as subtractTime, Beat, LiveTime, beatToTime, timeToBeat } from './time';
 import { Tempo } from 'store/project';
 
 export class AudioRange {
@@ -18,6 +18,16 @@ export class AudioRange {
 
     get end() {
         return this.start.add(this.duration);
+    }
+
+    toBeatRange(tempo: Tempo): BeatRange {
+        const start = timeToBeat(this.start, tempo);
+        const duration = timeToBeat(this.duration, tempo);
+        return new BeatRange(start, duration);
+    }
+
+    toAudioRange(tempo: Tempo): AudioRange {
+        return this;
     }
 }
 
