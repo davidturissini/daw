@@ -2,15 +2,15 @@ import { Record, Map as ImmutableMap } from 'immutable';
 import { Loop, LoopDataTypes } from './index';
 import { CREATE_INSTRUMENT } from 'store/instrument/const';
 import { CreateInstrumentAction } from 'store/instrument/action';
-import { CREATE_LOOP_NOTE } from './const';
-import { CreateLoopNoteAction } from './action';
+import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from './const';
+import { CreateLoopNoteAction, DeleteLoopNoteAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
 import { Beat } from 'util/time';
 
 export class LoopState extends Record<{
-    items: ImmutableMap<string, Loop<any>>
+    items: ImmutableMap<string, Loop>
 }>({
     items: ImmutableMap(),
 }) {}
@@ -37,7 +37,7 @@ function createInstrumentReducer(state: LoopState, action: CreateInstrumentActio
     return state.setIn(['items', loopId], loop);
 }
 
-function createLoopNoteReducer(state: LoopState, action: CreateLoopNoteAction<any>): LoopState{
+function createLoopNoteReducer(state: LoopState, action: CreateLoopNoteAction): LoopState {
     const { loopId, keyId, noteId, range } = action.payload;
     const note: MidiNote = {
         id: noteId,
@@ -47,12 +47,19 @@ function createLoopNoteReducer(state: LoopState, action: CreateLoopNoteAction<an
     return state.setIn(['items', loopId, 'notes', keyId, noteId], note);
 }
 
+function deleteLoopNoteReducer(state: LoopState, action: DeleteLoopNoteAction): LoopState {
+    const { loopId, keyId, noteId } = action.payload;
+    return state.deleteIn(['items', loopId, 'notes', keyId, noteId]);
+}
+
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
         case CREATE_INSTRUMENT:
             return createInstrumentReducer(state, action);
         case CREATE_LOOP_NOTE:
             return createLoopNoteReducer(state, action);
+        case DELETE_LOOP_NOTE:
+            return deleteLoopNoteReducer(state, action);
     }
     return state;
 }

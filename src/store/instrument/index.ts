@@ -1,10 +1,12 @@
 import { Record, List } from 'immutable';
-import { InstrumentType, InstrumentRenderer } from './types';
+import { InstrumentType, InstrumentRenderer, DrumMachineData } from './types';
 import { DrumMachine } from './types/DrumMachine';
 import { Oscillator } from './types/Oscillator';
 import { Tempo } from 'store/project';
 
-export class Instrument<T> extends Record<{
+export type InstrumentData = DrumMachineData;
+
+export class Instrument<T extends InstrumentData> extends Record<{
     id: string;
     type: InstrumentType;
     data: any;
@@ -27,4 +29,6 @@ export function render(audioContext: AudioContext, instrument: Instrument<any>, 
         case InstrumentType.Oscillator:
             return new Oscillator(audioContext);
     }
+
+    throw new Error('Could not render instrument');
 }

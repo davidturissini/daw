@@ -2,7 +2,7 @@ import {
     START_PLAYBACK,
     PLAY_TRACK_LOOP,
 } from './const';
-import { flatMap, filter, startWith, switchMap } from 'rxjs/operators';
+import { flatMap, filter, startWith, switchMap, merge } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction } from './action';
 import { empty as emptyObservable, Observable, empty } from 'rxjs';
 import { appStore } from '../index';
@@ -13,8 +13,8 @@ import { notes as octaves, MidiNote } from 'util/sound';
 import { Time, beatToTime, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 import { Loop } from 'store/loop';
-import { CREATE_LOOP_NOTE } from 'store/loop/const';
-import { CreateLoopNoteAction } from 'store/loop/action';
+import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from 'store/loop/const';
+import { CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
 import { Clock } from './Clock';
 import { LoopPlayerDelegate, LoopClock } from './LoopClock';
 
@@ -30,7 +30,8 @@ export function playTrackLoopEpic(actions) {
 
                 const reloadPlayerSignal = actions.ofType(CREATE_LOOP_NOTE)
                     .pipe(
-                        filter((action: CreateLoopNoteAction<any>) => action.payload.loopId === loopId)
+                        merge(actions.ofType(DELETE_LOOP_NOTE)),
+                        filter((action: CreateLoopNoteAction | DeleteLoopNoteAction) => action.payload.loopId === loopId)
                     );
 
                 reloadPlayerSignal.pipe(
@@ -50,7 +51,7 @@ export function playTrackLoopEpic(actions) {
                         return Observable.create((o) => {
                             const { instrument, loop: loops } = appStore.getState();
                             const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
-                            const loop = loops.items.get(loopId) as Loop<any>;
+                            const loop = loops.items.get(loopId) as Loop;
                             const renderedInstrument = renderInstrument(audioContext, trackInstrument, tempo);
                             renderedInstrument.connect(audioContext.destination);
 

@@ -15,9 +15,11 @@
                         <ul class="sample__switches">
                             <template for:each={key.notes} for:item="beat" for:index="beatIndex">
                                 <ffmpeg-button
+                                    button-color={beat.buttonColor}
                                     key={beat.id}
                                     class={beat.className}
                                     onclick={onBeatClick}
+                                    data-id={beat.noteId}
                                     data-key-id={key.id}
                                     data-beat-index={beatIndex}
                                 ></ffmpeg-button>

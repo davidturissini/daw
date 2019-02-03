@@ -1,1 +1,2 @@
 export const CREATE_LOOP_NOTE = 'CREATE_LOOP_NOTE';
+export const DELETE_LOOP_NOTE = 'DELETE_LOOP_NOTE';

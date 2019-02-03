@@ -7,14 +7,15 @@ import { MidiNote, PianoKey, notes } from 'util/sound';
 import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
 import { timeZero, beatToTime, Beat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
-import { Instrument } from 'store/instrument';
+import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
-import { InstrumentType } from 'store/instrument/types';
+import { InstrumentType, DrumMachineData } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
-import { createLoopNote } from 'store/loop/action';
+import { createLoopNote, deleteLoopNote } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
+import { Color } from 'util/color';
 
 interface DrumMachineNotesGrid {
     id: string;
@@ -22,6 +23,8 @@ interface DrumMachineNotesGrid {
     notes: Array<{
         className: string,
         id: string,
+        noteId: string;
+        buttonColor: Color | null;
     }>
 }
 
@@ -58,7 +61,7 @@ export default class LoopEditElement extends LightningElement {
         return new AudioRange(timeZero, beatToTime(this.loop.duration, this.project.tempo));
     }
 
-    instrument<T>(): Instrument<T> {
+    instrument<T extends InstrumentData>(): Instrument<T> {
         return this.storeData.data.instruments.get(this.loop.instrumentId) as Instrument<T>;
     }
 
@@ -74,34 +77,39 @@ export default class LoopEditElement extends LightningElement {
     get drumMachineKeys(): DrumMachineNotesGrid[] {
         const { loop } = this;
         const data = loop.data as DrumMachineLoopData;
+        const instrument = this.instrument<DrumMachineData>();
 
         const { resolution } = data;
         const beatTimes = divideBeatRange(new BeatRange(new Beat(0), loop.duration), resolution);
         const { frequency: lowerFrequency } = notes[PianoKey.C3];
-        const { frequency: upperFrequency } = notes[PianoKey.C4];
+        const { frequency: upperFrequency } = notes[PianoKey.G3];
         return Object.keys(PianoKey).filter((key: PianoKey) => {
-            console.log('key', key, notes)
             const { frequency } = notes[key];
-            return (frequency >= lowerFrequency && frequency < upperFrequency);
+            return (frequency >= lowerFrequency && frequency <= upperFrequency);
         })
         .map((key: PianoKey) => {
             const notesForKey = loop.notes.get(key, ImmutableMap()).toList().toArray() as MidiNote[];
+            const title = instrument.data.sampleNames[key];
             return {
                 id: key,
-                title: 'Sample',
+                title: title,
                 notes: beatTimes.map((beat, index) => {
                     let classNames = ['sample'];
-                    const noteIsOn = notesForKey.find((note) => {
+                    const note = notesForKey.find((note) => {
                         return note.range.start.index === beat.index;
-                    }) !== undefined;
+                    });
+
+                    const noteIsOn = note !== undefined;
 
                     if (noteIsOn) {
                         classNames.push('switch--selected');
                     }
 
                     return {
+                        noteId: note !== undefined ? note.id : '',
                         className: classNames.join(' '),
-                        id: index + ''
+                        id: index + '',
+                        buttonColor: noteIsOn ? new Color(95, 197, 254) : null,
                     }
                 })
             }
@@ -124,13 +132,19 @@ export default class LoopEditElement extends LightningElement {
         const { resolution } = data;
 
         const target = evt.target as HTMLElement;
-        const keyId = target.getAttribute('data-key-id');
+        const keyId = target.getAttribute('data-key-id') as PianoKey;
         const beatIndex = parseInt(target.getAttribute('data-beat-index') as string, 10);
         const range = new BeatRange(new Beat(beatIndex * resolution.index), resolution);
-
-        appStore.dispatch(
-            createLoopNote(this.loopId, generateId(), keyId, range),
-        );
+        const noteId = target.getAttribute('data-id') as string;
+        if (noteId !== '') {
+            appStore.dispatch(
+                deleteLoopNote(this.loopId, noteId, keyId),
+            );
+        } else {
+            appStore.dispatch(
+                createLoopNote(this.loopId, generateId(), keyId, range),
+            );
+        }
     }
 
     /*
