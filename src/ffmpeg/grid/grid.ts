@@ -1,7 +1,7 @@
 import { LightningElement, track, wire, api } from 'lwc';
 import { Time, timeZero, Beat, beatToTime } from '../../util/time';
 import { timeToPixel, pixelToTime, Rect } from 'util/geometry';
-import { AudioRange } from 'util/audiorange';
+import { AudioRange, BeatRange } from 'util/audiorange';
 import { generateId } from 'util/uniqueid';
 import { wireSymbol, appStore } from 'store/index';
 import { AudioWindowState } from 'store/audiowindow/reducer';
@@ -21,7 +21,7 @@ import { ProjectState } from 'store/project/reducer';
 
 export interface GridRange {
     itemId: string;
-    range: AudioRange;
+    range: AudioRange | BeatRange;
     color: Color;
 }
 

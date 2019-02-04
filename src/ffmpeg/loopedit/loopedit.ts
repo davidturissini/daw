@@ -1,9 +1,8 @@
-import { LightningElement, track, wire, api } from 'lwc';
+import { LightningElement, wire, api } from 'lwc';
 import { generateId } from 'util/uniqueid';
 import { appStore, wireSymbol } from 'store/index';
-import { createPiano } from 'store/piano/action';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
-import { MidiNote, PianoKey, notes } from 'util/sound';
+import { MidiNote, PianoKey, notes, getAudioContext } from 'util/sound';
 import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
 import { timeZero, beatToTime, Beat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
@@ -31,7 +30,6 @@ interface DrumMachineNotesGrid {
 
 
 export default class LoopEditElement extends LightningElement {
-    @track pianoId: string | null = null;
     @api loopId: string;
 
     @wire(wireSymbol, {
@@ -157,10 +155,6 @@ export default class LoopEditElement extends LightningElement {
      *  Oscillator
      *
      */
-    get hasPiano(): boolean {
-        return !!this.pianoId;
-    }
-
     get canClosePianoGrid() {
         return true;
     }
@@ -171,11 +165,11 @@ export default class LoopEditElement extends LightningElement {
             return {};
         }
 
-        const obj: PianoMidiNoteMap = loop.notes.reduce((seed: {[K in PianoKey]: MidiNote[]}, note: MidiNote, key: PianoKey) => {
+        const obj: PianoMidiNoteMap = loop.notes.reduce((seed: {[K in PianoKey]: MidiNote[]}, note: ImmutableMap<string, MidiNote>, key: PianoKey) => {
             if (seed[key] === undefined) {
                 seed[key] = [];
             }
-            seed[key].push(note);
+            seed[key] = seed[key].concat(note.toList().toArray());
             return seed;
         }, {});
         return obj;
@@ -195,19 +189,15 @@ export default class LoopEditElement extends LightningElement {
         );
     }
 
-    /*
-     *
-     *  Lifecycle
-     *
-     */
-    connectedCallback() {
-        if (!this.loopId) {
-            return;
-        }
-        const pianoId = generateId();
-        appStore.dispatch(
-            createPiano(pianoId, this.loopId)
-        );
-        this.pianoId = pianoId;
+    get pianoInstrumentId() {
+        return this.instrument<any>().id;
+    }
+
+    get projectTempo() {
+        return this.storeData.data.project.tempo;
+    }
+
+    get pianoAudioContext() {
+        return getAudioContext();
     }
 }

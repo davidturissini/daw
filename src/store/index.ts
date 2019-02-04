@@ -11,23 +11,21 @@ import { reducer as editorReducer, EditorState } from './editor/reducer';
 import { reducer as audioSegmentReducer, AudioSegmentState } from './audiosegment/reducer';
 import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
-import { reducer as pianoReducer, PianoState } from './piano/reducer';
 import { reducer as audioWindowReducer, AudioWindowState } from './audiowindow/reducer';
 import { reducer as loopReducer, LoopState } from './loop/reducer';
 
 // Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
-import { playKeyEpic } from './piano/epic';
-import { startPlaybackEpic, playTrackLoopEpic } from './player/epic';
+import { startPlaybackEpic, playTrackLoopEpic, playPianoKeyEpic } from './player/epic';
 
 const { keys } = Object;
 
 const rootEpic = combineEpics(
     createRouterEpic,
     navigateEpic,
-    playKeyEpic,
     startPlaybackEpic,
     playTrackLoopEpic,
+    playPianoKeyEpic,
 );
 const epicMiddleware = createEpicMiddleware();
 const middleware: Middleware[] = [epicMiddleware];
@@ -65,7 +63,6 @@ export interface AppState {
     audiosegment: AudioSegmentState;
     project: ProjectState;
     router: RouterState;
-    piano: PianoState;
     audiowindow: AudioWindowState;
     loop: LoopState;
 }
@@ -79,7 +76,6 @@ export const appStore = createStore(
         audiosegment: audioSegmentReducer,
         project: projectReducer,
         router: routerReducer,
-        piano: pianoReducer,
         loop: loopReducer,
     }),
     applyMiddleware(...middleware),

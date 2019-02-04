@@ -10,6 +10,6 @@ export enum InstrumentType {
 export interface InstrumentRenderer {
     audioContext: BaseAudioContext;
     type: InstrumentType;
-    trigger(key: PianoKey, when: Time, offset: Time, duration: Time): Observable<any>;
+    trigger(key: PianoKey, when: Time, offset: Time | null, duration: Time | null): Observable<any>;
     connect(node: AudioNode): void;
 }

@@ -61,7 +61,7 @@ export class DrumMachine implements InstrumentRenderer {
         this.audioContext = audioContext;
         this.tempo = tempo;
     }
-    trigger(key: PianoKey, when: Time, offset: Time, duration: Time) {
+    trigger(key: PianoKey, when: Time, offset: Time | null, duration: Time | null) {
         const source = this.audioContext.createBufferSource();
         if (this.dest) {
             source.connect(this.dest);
@@ -70,7 +70,11 @@ export class DrumMachine implements InstrumentRenderer {
 
         return Observable.create((o) => {
             source.onended = () => o.complete();
-            source.start(when.seconds, offset.seconds, duration.seconds);
+            source.start(
+                when.seconds,
+                offset === null ? undefined : offset.seconds,
+                duration === null ? undefined : duration.seconds
+            );
 
             return () => {
                 source.onended = () => {}

@@ -1,9 +1,11 @@
 import {
     START_PLAYBACK,
     PLAY_TRACK_LOOP,
+    PLAY_PIANO_KEY,
+    STOP_PIANO_KEY,
 } from './const';
-import { flatMap, filter, startWith, switchMap, merge } from 'rxjs/operators';
-import { StartPlaybackAction, PlayTrackLoopAction } from './action';
+import { flatMap, filter, startWith, switchMap, merge, takeUntil } from 'rxjs/operators';
+import { StartPlaybackAction, PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction } from './action';
 import { empty as emptyObservable, Observable, empty } from 'rxjs';
 import { appStore } from '../index';
 import { AudioSegment } from 'store/audiosegment';
@@ -17,6 +19,33 @@ import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from 'store/loop/const';
 import { CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
 import { Clock } from './Clock';
 import { LoopPlayerDelegate, LoopClock } from './LoopClock';
+
+export function playPianoKeyEpic(actions) {
+    return actions.ofType(PLAY_PIANO_KEY)
+        .pipe(
+            flatMap((action: PlayPianoKeyAction) => {
+                const { audioContext, instrument, key, tempo } = action.payload;
+                const instrumentNode = renderInstrument(audioContext, instrument, tempo);
+                instrumentNode.connect(audioContext.destination);
+                instrumentNode.trigger(key, timeZero, null, null)
+                    .pipe(
+                        takeUntil(
+                            actions.ofType(STOP_PIANO_KEY)
+                                .pipe(
+                                    filter((action: StopPianoKeyAction) => {
+                                        return action.payload.instrument === instrument && action.payload.key === key;
+                                    })
+                                )
+                        )
+                    )
+                    .subscribe(() => {
+
+                    })
+
+                return empty();
+            })
+        )
+}
 
 export function playTrackLoopEpic(actions) {
     let clock: Clock | null = null;

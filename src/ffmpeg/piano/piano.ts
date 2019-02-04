@@ -1,30 +1,16 @@
 import { LightningElement, api, wire, track } from 'lwc';
-import { notes, MidiNote } from 'util/sound';
-import { wireSymbol } from 'store/index';
-import { PianoState } from 'store/piano/reducer';
-import { Piano } from 'store/piano';
+import { notes, MidiNote, PianoKey } from 'util/sound';
+import { wireSymbol, appStore } from 'store/index';
 import { GridElementRow } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { Color } from 'util/color';
 import { AudioRange } from 'util/audiorange';
-
-export type PianoMouseDownEvent = CustomEvent<{
-    name: string;
-    frequency: number;
-    pianoId: string;
-}>
-
-export type PianoMouseEnterEvent = CustomEvent<{
-    name: string;
-    frequency: number;
-    pianoId: string;
-}>
-
-export type PianoMouseLeaveEvent = CustomEvent<{
-    name: string;
-    frequency: number;
-    pianoId: string;
-}>
+import { stopPianoKey } from 'store/player/action';
+import { Tempo } from 'store/project';
+import { Instrument } from 'store/instrument';
+import { InstrumentState } from 'store/instrument/reducer';
+import { PianoStateMachine } from './states';
+import { PianoStateInputNames } from './states/types';
 
 export type PianoMidiNoteMap = {
     [octave: string]: MidiNote[]
@@ -40,22 +26,35 @@ const gridRowNoteMap: { [key: string]: { height: number } } = Object.keys(notes)
 }, {});
 
 export default class PianoElement extends LightningElement {
-    @api pianoId: string;
     @api midiNotes: PianoMidiNoteMap;
     @api canCloseGrid: boolean = false;
     @api range: AudioRange | null = null;
+    @api instrumentId: string;
+    @api audioContext: BaseAudioContext;
+    @api tempo: Tempo;
     @track gridWindowId: string | null = null;
     @wire(wireSymbol, {
         paths: {
-            pianos: ['piano', 'items'],
+            instruments: ['instrument', 'items'],
             audiowindow: ['audiowindow', 'items'],
         }
     })
     storeData: {
         data: {
-            pianos: PianoState['items'];
+            instruments: InstrumentState['items'];
             audiowindow: AudioWindowState['items'];
         }
+    }
+
+    fsm: PianoStateMachine<PianoElement>;
+
+    constructor() {
+        super();
+        this.fsm = new PianoStateMachine(this);
+    }
+
+    get instrument(): Instrument<any> {
+        return this.storeData.data.instruments.get(this.instrumentId) as Instrument<any>;
     }
 
     get gridRows(): GridElementRow[] {
@@ -75,10 +74,6 @@ export default class PianoElement extends LightningElement {
             };
             return row;
         }, {});
-    }
-
-    get piano(): Piano {
-        return this.storeData.data.pianos.get(this.pianoId) as Piano;
     }
 
     get pianoKeyViewModels() {
@@ -136,56 +131,31 @@ export default class PianoElement extends LightningElement {
      *
      */
     onKeyMouseLeave(evt: MouseEvent) {
-        evt.stopPropagation();
-        const target = (evt.target as Element);
-        const noteName = target.getAttribute('data-note-name') as string;
-        const note = notes[noteName];
-
-        const event: PianoMouseEnterEvent = new CustomEvent('pianomouseleave', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                pianoId: this.pianoId,
-                name: noteName,
-                frequency: note.frequency,
-            }
-        });
-        this.dispatchEvent(event);
+        this.fsm.stateInput(PianoStateInputNames.PianoKeyMouseLeave, evt);
     }
 
     onKeyMouseEnter(evt: MouseEvent) {
-        evt.stopPropagation();
-        const target = (evt.target as Element);
-        const noteName = target.getAttribute('data-note-name') as string;
-        const note = notes[noteName];
-
-        const event: PianoMouseEnterEvent = new CustomEvent('pianomouseenter', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                pianoId: this.pianoId,
-                name: noteName,
-                frequency: note.frequency,
-            }
-        });
-        this.dispatchEvent(event);
+        this.fsm.stateInput(PianoStateInputNames.PianoKeyMouseEnter, evt);
     }
 
     onKeyMouseDown(evt: MouseEvent) {
-        evt.stopPropagation();
-        const target = (evt.target as Element);
-        const noteName = target.getAttribute('data-note-name') as string;
-        const note = notes[noteName];
+        this.fsm.stateInput(PianoStateInputNames.PianoKeyMouseDown, evt);
+    }
 
-        const event: PianoMouseDownEvent = new CustomEvent('pianomousedown', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                pianoId: this.pianoId,
-                name: noteName,
-                frequency: note.frequency,
-            }
-        });
-        this.dispatchEvent(event);
+    onDocumentMouseUp = (evt: MouseEvent) => {
+        this.fsm.stateInput(PianoStateInputNames.DocumentMouseUp, evt);
+    }
+
+    /*
+     *
+     *  Lifecycle
+     *
+     */
+    connectedCallback() {
+        document.addEventListener('mouseup', this.onDocumentMouseUp);
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener('mouseup', this.onDocumentMouseUp);
     }
 }

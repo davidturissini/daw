@@ -31,18 +31,18 @@
         </div>
     </template>
     <template if:true={instrumentIsOscillator}>
-        <template if:true={hasPiano}>
-            <ffmpeg-piano
-                ongridrangechange={onPianoGridRangeChange}
-                range={loopRange}
-                ongridclose={onPianoGridClose}
-                can-close-grid={canClosePianoGrid}
-                midi-notes={pianoMidiNotes}
-                piano-id={pianoId}
-                onaudiorangechange={onOscillatorNoteRangeChange}
-                onaudiorangecreated={onOscillatorNoteCreated}
-            >
-            </ffmpeg-piano>
-        </template>
+        <ffmpeg-piano
+            audio-context={pianoAudioContext}
+            tempo={projectTempo}
+            instrument-id={pianoInstrumentId}
+            ongridrangechange={onPianoGridRangeChange}
+            range={loopRange}
+            ongridclose={onPianoGridClose}
+            can-close-grid={canClosePianoGrid}
+            midi-notes={pianoMidiNotes}
+            onaudiorangechange={onOscillatorNoteRangeChange}
+            onaudiorangecreated={onOscillatorNoteCreated}
+        >
+        </ffmpeg-piano>
     </template>
 </template>

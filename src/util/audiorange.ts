@@ -94,6 +94,10 @@ export class BeatRange {
 
         return new AudioRange(beatStartTime, beatDurationTime);
     }
+
+    toBeatRange(tempo: Tempo) {
+        return this;
+    }
 }
 
 export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
