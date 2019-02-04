@@ -1,6 +1,7 @@
 :host {
     display: flex;
     background: #ccc;
+    text-align: left;
 }
 
 article {

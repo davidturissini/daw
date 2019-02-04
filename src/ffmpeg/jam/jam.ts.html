@@ -3,6 +3,7 @@
         <section class="tracks">
             <template for:each={instruments} for:item="instrument">
                 <ffmpeg-trackloops
+                    class="track-loop"
                     instrument={instrument}
                     key={instrument.id}
                     oncreatetrackloop={onCreateTrackLoop}

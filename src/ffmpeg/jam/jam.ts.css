@@ -20,3 +20,13 @@
     display: flex;
     flex: 1 0 auto;
 }
+
+.track-loop {
+    width: 100px;
+    padding: 0 0.2rem;
+    border-left: 1px solid rgb(55, 55, 55);
+}
+
+.track-loop:first-child {
+    border-left: 0;
+}

@@ -47,7 +47,7 @@ export type CreateLoopNoteAction = Action<{
     loopId: string;
     range: BeatRange;
 }>
-export function createLoopNote(loopId: string, noteId: string, keyId: PianoKey, range: BeatRange): CreateLoopNoteAction<K> {
+export function createLoopNote(loopId: string, noteId: string, keyId: PianoKey, range: BeatRange): CreateLoopNoteAction {
     return {
         type: CREATE_LOOP_NOTE,
         payload: {
