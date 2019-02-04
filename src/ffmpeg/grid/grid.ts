@@ -18,6 +18,7 @@ import rafThrottle from 'raf-throttle';
 import { CursorDragEvent, CursorDragStartEvent, CursorDragEndEvent } from 'cmp/cursor/cursor';
 import { DurationCursorDragState } from './states/durationcursordrag';
 import { ProjectState } from 'store/project/reducer';
+import { Tempo, Project } from 'store/project';
 
 export interface GridRange {
     itemId: string;
@@ -62,8 +63,8 @@ export default class GridElement extends LightningElement implements GridFSM {
         }
     }
 
-    get project(): ProjectState {
-        return this.storeData.data.project;
+    get project(): Project {
+        return this.storeData.data.project.currentProject!
     }
 
     get hasRange(): boolean {

@@ -1,7 +1,6 @@
 import { BaseState } from './base';
 import { BehaviorStateMachine } from 'util/bsm';
 import { PianoKeyPressState } from './pianokeypress';
-import { PianoMouseDownEvent } from './../../piano/piano';
 
 export class IdleState extends BaseState {
     onPianoMouseDown(bsm: BehaviorStateMachine<BaseState>, evt: PianoMouseDownEvent) {

@@ -8,7 +8,7 @@ import { RouteNames } from 'store/route';
 import { ProjectState } from 'store/project/reducer';
 
 export default class TrackLoopElement<T extends string> extends LightningElement {
-    @api loop: Loop<T>;
+    @api loop: Loop;
     @api instrumentId: string;
     @track isLoopEditRouteActive: boolean = false;
 
@@ -30,7 +30,7 @@ export default class TrackLoopElement<T extends string> extends LightningElement
                 getAudioContext(),
                 this.loop.id,
                 this.instrumentId,
-                this.storeData.data.project.tempo,
+                this.storeData.data.project.currentProject!.tempo,
             )
         );
     }

@@ -4,10 +4,10 @@ import { PianoKey } from "util/sound";
 
 export enum InstrumentType {
     DrumMachine = 'Drum Machine',
-    Oscillator = 'Oscillator',
+    Synth = 'Synth',
 }
 
-export interface InstrumentRenderer {
+export interface InstrumentAudioNode {
     audioContext: BaseAudioContext;
     type: InstrumentType;
     trigger(key: PianoKey, when: Time, offset: Time | null, duration: Time | null): Observable<any>;

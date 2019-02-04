@@ -635,6 +635,10 @@
   version "6.14.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.14.2.tgz#40b3dbb1221c7d66802cbcc32fe3b85e54569c77"
 
+"@types/tone@https://github.com/Tonejs/TypeScript.git":
+  version "0.2.0"
+  resolved "https://github.com/Tonejs/TypeScript.git#b748cc182ec6002b4f770fb2111ca15bf7d705d6"
+
 "@webassemblyjs/ast@1.7.11":
   version "1.7.11"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.7.11.tgz#b988582cafbb2b095e8b556526f30c90d057cace"
@@ -4235,6 +4239,10 @@ to-regex@^3.0.1, to-regex@^3.0.2:
     extend-shallow "^3.0.2"
     regex-not "^1.0.2"
     safe-regex "^1.1.0"
+
+tone@^13.4.9:
+  version "13.4.9"
+  resolved "https://registry.yarnpkg.com/tone/-/tone-13.4.9.tgz#c5e9f69d0cdea6d2fa03e108766b10d5f9185dde"
 
 trim-right@^1.0.1:
   version "1.0.1"

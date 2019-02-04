@@ -4,8 +4,8 @@ import { createInstrument, CreateInstrumentAction } from 'store/instrument/actio
 import { generateId } from './../../util/uniqueid'
 import { InstrumentType } from 'store/instrument/types';
 import { PianoKey } from 'util/sound';
-import { OscillatorData } from 'store/instrument/types/Oscillator';
-import { DrumMachineData } from 'store/instrument/types/DrumMachine';
+import { SynthData } from 'store/instrument/nodes/Synth';
+import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
 
 
 export default class Instruments extends LightningElement {
@@ -38,12 +38,12 @@ export default class Instruments extends LightningElement {
                     loopId,
                 );
                 break;
-            case InstrumentType.Oscillator:
-                action = createInstrument<OscillatorData>(
+            case InstrumentType.Synth:
+                action = createInstrument<SynthData>(
                     instrumentId,
                     'Oscillator',
                     type,
-                    new OscillatorData({}),
+                    new SynthData({}),
                     audioTrackId,
                     loopId,
                 );
@@ -59,7 +59,7 @@ export default class Instruments extends LightningElement {
         return [{
             type: InstrumentType.DrumMachine,
         }, {
-            type: InstrumentType.Oscillator,
+            type: InstrumentType.Synth,
         }];
     }
 }

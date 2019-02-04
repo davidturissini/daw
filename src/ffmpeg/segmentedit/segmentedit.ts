@@ -1,5 +1,4 @@
 import { LightningElement, api, wire, track } from 'lwc';
-import { PianoMouseDownEvent, PianoMouseEnterEvent, PianoMouseLeaveEvent } from './../piano/piano';
 import { appStore, wireSymbol } from 'store/index';
 import { AudioSegmentState } from 'store/audiosegment/reducer';
 import { AudioSegment } from 'store/audiosegment';
@@ -10,9 +9,8 @@ import { Instrument } from 'store/instrument';
 import { BehaviorStateMachine } from 'util/bsm';
 import { BaseState } from './bsm/base';
 import { IdleState } from './bsm/idle';
-import { createPiano } from 'store/piano/action';
 import { generateId } from 'util/uniqueid';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridCloseEvent, GridRangeChangeEvent } from 'cmp/grid/events';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridCloseEvent } from 'cmp/grid/events';
 import { addNote, setNoteRange } from 'store/audiosegment/action';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';

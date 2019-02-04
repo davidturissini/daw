@@ -1,4 +1,4 @@
-import { InstrumentRenderer, InstrumentType } from './index';
+import { InstrumentAudioNode, InstrumentType } from './../types';
 import { Beat, Time } from 'util/time';
 import { Tempo } from 'store/project';
 import { Record } from 'immutable';
@@ -49,7 +49,7 @@ export class DrumMachineLoopData extends Record<{
     resolution: new Beat(1 / 4),
 }) {}
 
-export class DrumMachine implements InstrumentRenderer {
+export class DrumMachine implements InstrumentAudioNode {
     type: InstrumentType.DrumMachine;
     audioContext: BaseAudioContext;
     dest: AudioNode | null = null;

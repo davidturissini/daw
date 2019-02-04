@@ -15,8 +15,8 @@ import { notes as octaves, MidiNote } from 'util/sound';
 import { Time, beatToTime, timeZero } from 'util/time';
 import { AudioRange } from 'util/audiorange';
 import { Loop } from 'store/loop';
-import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from 'store/loop/const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
+import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction } from 'store/loop/action';
 import { Clock } from './Clock';
 import { LoopPlayerDelegate, LoopClock } from './LoopClock';
 
@@ -59,8 +59,9 @@ export function playTrackLoopEpic(actions) {
 
                 const reloadPlayerSignal = actions.ofType(CREATE_LOOP_NOTE)
                     .pipe(
+                        merge(actions.ofType(SET_LOOP_NOTE_RANGE)),
                         merge(actions.ofType(DELETE_LOOP_NOTE)),
-                        filter((action: CreateLoopNoteAction | DeleteLoopNoteAction) => action.payload.loopId === loopId)
+                        filter((action: CreateLoopNoteAction | DeleteLoopNoteAction | SetLoopNoteRangeAction) => action.payload.loopId === loopId)
                     );
 
                 reloadPlayerSignal.pipe(
@@ -83,21 +84,12 @@ export function playTrackLoopEpic(actions) {
                             const loop = loops.items.get(loopId) as Loop;
                             const renderedInstrument = renderInstrument(audioContext, trackInstrument, tempo);
                             renderedInstrument.connect(audioContext.destination);
-
                             const delegate: LoopPlayerDelegate = {
-                                on(note, when, offset, duration, cb) {
-                                    const subscription = renderedInstrument.trigger(note, when, offset, duration).subscribe(
-                                        undefined,
-                                        undefined,
-                                        cb,
-                                    );
-
-                                    return function () {
-                                        subscription.unsubscribe();
-                                    }
+                                on(note, when, offset, duration) {
+                                    console.log(when, offset, duration)
+                                    renderedInstrument.trigger(note, when, offset, duration);
                                 }
                             }
-
                             const player = new LoopClock(
                                 clock as Clock,
                                 new AudioRange(timeZero, beatToTime(loop.duration, tempo)),
@@ -110,7 +102,7 @@ export function playTrackLoopEpic(actions) {
                             player.start(when, offset);
 
                             return () => {
-                                player.stop();
+                                player.stop(timeZero);
                             }
                         })
                     })

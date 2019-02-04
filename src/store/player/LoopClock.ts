@@ -2,10 +2,11 @@ import { Clock } from "./Clock";
 import { MidiNote } from "util/sound";
 import { AudioRange, contains as audioRangeContains, clamp } from 'util/audiorange';
 import { Tempo } from 'store/project';
-import { Time, timeZero } from "util/time";
+import { Time, timeZero, beatToTime } from "util/time";
+import { Loop as ToneLoop, Transport } from 'tone';
 
 export interface LoopPlayerDelegate {
-    on: (key: any, when: Time, offset: Time, duration: Time, cb: () => void) => () => void;
+    on: (key: any, when: Time, offset: Time, duration: Time) => void;
 }
 
 interface ClampedMidiNote {
@@ -36,6 +37,7 @@ export class LoopClock {
     range: AudioRange;
     killSignals: Array<() => void> = [];
     loop: boolean = false;
+    toneLoop: ToneLoop | null = null;
 
     constructor( clock: Clock, range: AudioRange, notes: MidiNote[], delegate: LoopPlayerDelegate) {
         this.clock = clock;
@@ -45,47 +47,30 @@ export class LoopClock {
     }
 
     start(when: Time, offset: Time) {
-        this.loopNext(when, offset);
-    }
-
-    stop() {
-        this.killSignals.forEach((kill) => kill());
+        if (Transport.state !== 'started') {
+            Transport.start();
+        }
+        const { duration: loopDuration } = this.range;
+        const loopDurationSeconds = loopDuration.seconds;
+        console.log(when.seconds)
+        this.toneLoop = new ToneLoop((time: number) => {
+            this.loopNext(Time.fromSeconds(time), timeZero);
+        }, loopDurationSeconds).start(when.seconds)
     }
 
     loopNext(when: Time, offset: Time) {
-        // We have no notes
-        if (this.notes.length === 0) {
-            return;
-        }
-
         const { range, clock } = this;
         const { duration: loopDuration } = range;
         const clamped = clampNotes(this.notes, new AudioRange(offset, loopDuration.minus(offset)), clock.tempo);
-        const len = clamped.length;
-        this.killSignals = [];
-
-        // No notes left to play
-        if (len === 0) {
-            return this.loopNext(loopDuration.minus(when).minus(offset), timeZero);
-        }
-
-        let finished = 0;
-        clamped.forEach(({ note, clampOffsetRange }) => {
+        clamped.forEach(({ note }) => {
             const beatStartTime = clock.beatToTime(note.range.start);
-
-            const delegateWhen = clock.audioContextTime().plus(beatStartTime).plus(when).minus(offset);
-            const startSnapshot = clock.currentTime;
-            const killSignal = this.delegate.on(note.note, delegateWhen, clampOffsetRange.start, clampOffsetRange.duration, () => {
-                finished += 1;
-                if (finished === len && this.loop) {
-                    const endSnapshot = clock.currentTime;
-                    const elapsed = endSnapshot.minus(startSnapshot.plus(when).minus(offset));
-                    const remaining = loopDuration.minus(elapsed);
-                    this.loopNext(remaining, timeZero);
-                }
-            });
-
-            this.killSignals.push(killSignal);
+            this.delegate.on(note.note, when.plus(beatStartTime), timeZero, beatToTime(note.range.duration, clock.tempo));
         });
+    }
+
+    stop(time: Time) {
+        if (this.toneLoop) {
+            this.toneLoop.stop(time.seconds);
+        }
     }
 }

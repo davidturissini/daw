@@ -19,6 +19,8 @@ import { ProjectState } from 'store/project/reducer';
 import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridClickEvent } from 'cmp/grid/events';
 import { Time } from 'util/time';
 import { Frame } from 'util/geometry';
+import { createProject } from 'store/project/action';
+import { Tempo } from 'store/project';
 
 export default class AppElement extends LightningElement {
     state: BaseState;
@@ -386,6 +388,7 @@ export default class AppElement extends LightningElement {
     }
 
     connectedCallback() {
+        appStore.dispatch(createProject('', new Tempo(128)))
         appStore.dispatch(createRouter());
         window.history.replaceState(history.state, '', window.location.pathname);
         document.addEventListener('keyup', this.onDocumentKeyUp);

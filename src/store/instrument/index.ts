@@ -1,10 +1,10 @@
 import { Record, List } from 'immutable';
-import { InstrumentType, InstrumentRenderer } from './types';
-import { DrumMachine, DrumMachineData } from './types/DrumMachine';
-import { Oscillator, OscillatorData } from './types/Oscillator';
+import { InstrumentType, InstrumentAudioNode } from './types';
+import { DrumMachine, DrumMachineData } from './nodes/DrumMachine';
+import { SynthNode, SynthData } from './nodes/Synth';
 import { Tempo } from 'store/project';
 
-export type InstrumentData = DrumMachineData | OscillatorData;
+export type InstrumentData = DrumMachineData | SynthData;
 
 export class Instrument<T extends InstrumentData> extends Record<{
     id: string;
@@ -22,12 +22,12 @@ export class Instrument<T extends InstrumentData> extends Record<{
     data: T;
 }
 
-export function render(audioContext: BaseAudioContext, instrument: Instrument<any>, tempo: Tempo): InstrumentRenderer {
+export function render(audioContext: BaseAudioContext, instrument: Instrument<any>, tempo: Tempo): InstrumentAudioNode {
     switch(instrument.type) {
         case InstrumentType.DrumMachine:
             return new DrumMachine(audioContext, tempo);
-        case InstrumentType.Oscillator:
-            return new Oscillator(audioContext);
+        case InstrumentType.Synth:
+            return new SynthNode(audioContext);
     }
 
     throw new Error('Could not render instrument');

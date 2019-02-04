@@ -1,8 +1,6 @@
 import { BaseState } from './base';
-import { PianoMouseEnterEvent, PianoMouseLeaveEvent } from './../../piano/piano';
 import { BehaviorStateMachine } from 'util/bsm';
 import { IdleState } from './idle';
-import { playKey, stopKey, stopPiano } from 'store/piano/action';
 import { appStore } from 'store/index';
 
 function createOscillator(audioContext: AudioContext, frequency: number) {

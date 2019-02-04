@@ -57,7 +57,7 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get loopRange(): AudioRange | null {
-        return new AudioRange(timeZero, beatToTime(this.loop.duration, this.project.tempo));
+        return new AudioRange(timeZero, beatToTime(this.loop.duration, this.project.currentProject!.tempo));
     }
 
     instrument<T extends InstrumentData>(): Instrument<T> {
@@ -69,7 +69,7 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get instrumentIsOscillator() {
-        return this.instrument().type === InstrumentType.Oscillator;
+        return this.instrument().type === InstrumentType.Synth;
     }
 
     /*
@@ -194,7 +194,7 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get projectTempo() {
-        return this.storeData.data.project.tempo;
+        return this.storeData.data.project.currentProject!.tempo;
     }
 
     get pianoAudioContext() {

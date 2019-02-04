@@ -1,16 +1,14 @@
 <template>
-    <template if:true={hasPiano}>
-        <ffmpeg-piano
-            ongridclose={onPianoGridClose}
-            can-close-grid={canClosePianoGrid}
-            midi-notes={pianoMidiNotes}
-            piano-id={pianoId}
-            onaudiorangechange={onAudioRangeChange}
-            onaudiorangecreated={onAudioRangeCreated}
-            onpianomouseenter={onPianoMouseEnter}
-            onpianomousedown={onPianoMouseDown}
-            onpianomouseleave={onPianoMouseLeave}
-        >
-        </ffmpeg-piano>
-    </template>
+    <ffmpeg-piano
+        ongridclose={onPianoGridClose}
+        can-close-grid={canClosePianoGrid}
+        midi-notes={pianoMidiNotes}
+        piano-id={pianoId}
+        onaudiorangechange={onAudioRangeChange}
+        onaudiorangecreated={onAudioRangeCreated}
+        onpianomouseenter={onPianoMouseEnter}
+        onpianomousedown={onPianoMouseDown}
+        onpianomouseleave={onPianoMouseLeave}
+    >
+    </ffmpeg-piano>
 </template>

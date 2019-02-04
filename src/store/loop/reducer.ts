@@ -6,9 +6,9 @@ import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from './const
 import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
-import { DrumMachineLoopData } from 'store/instrument/types/DrumMachine';
+import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
 import { Beat } from 'util/time';
-import { OscillatorLoopData } from 'store/instrument/types/Oscillator';
+import { SynthLoopData } from 'store/instrument/nodes/Synth';
 
 export class LoopState extends Record<{
     items: ImmutableMap<string, Loop>
@@ -21,8 +21,8 @@ function getDefaultInstrumentLoopData(type: InstrumentType): LoopDataTypes {
         return new DrumMachineLoopData({
             resolution: new Beat(1 / 4)
         });
-    } else if (type === InstrumentType.Oscillator) {
-        return new OscillatorLoopData({});
+    } else if (type === InstrumentType.Synth) {
+        return new SynthLoopData({});
     }
 
     throw new Error('Not implemented');

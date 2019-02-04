@@ -1,14 +1,29 @@
 import { Record } from 'immutable';
-import { Tempo } from './index';
+import { Project } from './index';
+import { CREATE_PROJECT } from './const';
+import { CreateProjectAction } from './action';
 
 export class ProjectState extends Record<{
-    tempo: Tempo;
+    currentProject: Project | null;
 }>({
-    tempo: new Tempo(128)
+    currentProject: null,
 }) {
 
 }
 
+function createProjectReducer(state: ProjectState, action: CreateProjectAction): ProjectState {
+    const { tempo, name } = action.payload;
+    const project = new Project({
+        name,
+        tempo,
+    });
+    return state.set('currentProject', project);
+}
+
 export function reducer(state = new ProjectState(), action) {
+    switch(action.type) {
+        case CREATE_PROJECT:
+            return createProjectReducer(state, action);
+    }
     return state;
 }
