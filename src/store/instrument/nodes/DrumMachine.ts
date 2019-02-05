@@ -61,27 +61,17 @@ export class DrumMachine implements InstrumentAudioNode {
         this.audioContext = audioContext;
         this.tempo = tempo;
     }
-    trigger(key: PianoKey, when: Time, offset: Time | null, duration: Time | null) {
+    trigger(key: PianoKey, velicity: number, when: Time, offset: Time | null, duration: Time | null) {
         const source = this.audioContext.createBufferSource();
         if (this.dest) {
             source.connect(this.dest);
         }
         source.buffer = loadSample(key);
-
-        return Observable.create((o) => {
-            source.onended = () => o.complete();
-            source.start(
-                when.seconds,
-                offset === null ? undefined : offset.seconds,
-                duration === null ? undefined : duration.seconds
-            );
-
-            return () => {
-                source.onended = () => {}
-                source.disconnect();
-                source.stop();
-            }
-        });
+        source.start(
+            when.seconds,
+            offset === null ? undefined : offset.seconds,
+            duration === null ? undefined : duration.seconds
+        );
     }
 
     connect(node: AudioNode) {

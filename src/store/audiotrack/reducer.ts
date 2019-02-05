@@ -4,27 +4,17 @@ import {
     CreateTrackAction,
     SetTrackInstrumentAction,
     SetTrackRectAction,
-    CreateTrackLoopAction,
-    CreateTrackLoopNoteAction,
-    SetTrackLoopNoteRangeAction,
-    SetTrackLoopDurationAction,
 } from './action';
 import {
     CREATE_TRACK,
     SET_TRACK_INSTRUMENT,
     SET_TRACK_RECT,
-    CREATE_TRACK_LOOP,
-    CREATE_TRACK_LOOP_NOTE,
-    SET_TRACK_LOOP_NOTE_RANGE,
-    SET_TRACK_LOOP_DURATION,
 } from './const';
 import { CREATE_INSTRUMENT } from 'store/instrument/const';
 import { Rect } from 'util/geometry';
 import { CREATE_AUDIO_SEGMENT } from 'store/audiosegment/const';
 import { CreateAudioSegmentAction } from 'store/audiosegment/action';
-import { MidiNote } from 'util/sound';
 import { CreateInstrumentAction } from 'store/instrument/action';
-import { generateId } from 'util/uniqueid';
 
 export class AudioTrackState extends Record({
     items: ImmutableMap(),
@@ -66,18 +56,7 @@ function createAudioSegmentReducer(state: AudioTrackState, action: CreateAudioSe
     });
 }
 
-function createTrackLoopNoteReducer(state: AudioTrackState, action: CreateTrackLoopNoteAction): AudioTrackState {
-    const { trackId, loopId, noteId, range, octave } = action.payload;
-    const note: MidiNote = {
-        id: noteId,
-        note: octave,
-        range: range,
-    };
-
-    return state.setIn(['items', trackId, 'loops', loopId, 'notes', noteId], note);
-}
-
-function createInstrumentReducer(state: AudioTrackState, action: CreateInstrumentAction): AudioTrackState {
+function createInstrumentReducer(state: AudioTrackState, action: CreateInstrumentAction<any>): AudioTrackState {
     const { type, audioTrackId } = action.payload;
     const track = new AudioTrack({
         id: audioTrackId,

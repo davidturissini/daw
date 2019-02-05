@@ -4,21 +4,18 @@ import {
     PLAY_PIANO_KEY,
     STOP_PIANO_KEY,
 } from './const';
-import { flatMap, filter, startWith, switchMap, merge, takeUntil } from 'rxjs/operators';
+import { flatMap, filter, takeUntil } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction } from './action';
-import { empty as emptyObservable, Observable, empty } from 'rxjs';
+import { empty as emptyObservable, empty, Observable } from 'rxjs';
 import { appStore } from '../index';
 import { AudioSegment } from 'store/audiosegment';
 import { AudioTrack } from 'store/audiotrack';
 import { Instrument, render as renderInstrument } from 'store/instrument';
-import { notes as octaves, MidiNote } from 'util/sound';
-import { Time, beatToTime, timeZero } from 'util/time';
-import { AudioRange } from 'util/audiorange';
+import { notes as octaves, MidiNote, PianoKey } from 'util/sound';
+import { timeZero, beatToTime, Time, timeToBeat } from 'util/time';
 import { Loop } from 'store/loop';
-import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction } from 'store/loop/action';
-import { Clock } from './Clock';
-import { LoopPlayerDelegate, LoopClock } from './LoopClock';
+import { Loop as ToneLoop, Transport } from 'tone';
+import { Clock } from 'store/player/clock';
 
 export function playPianoKeyEpic(actions) {
     return actions.ofType(PLAY_PIANO_KEY)
@@ -54,64 +51,38 @@ export function playTrackLoopEpic(actions) {
             flatMap((action: PlayTrackLoopAction) => {
                 const { audioContext, instrumentId, loopId, tempo } = action.payload;
                 if (clock === null) {
-                    clock = new Clock(audioContext, tempo);
+                    clock = new Clock(Transport, tempo);
                 }
 
-                const reloadPlayerSignal = actions.ofType(CREATE_LOOP_NOTE)
-                    .pipe(
-                        merge(actions.ofType(SET_LOOP_NOTE_RANGE)),
-                        merge(actions.ofType(DELETE_LOOP_NOTE)),
-                        filter((action: CreateLoopNoteAction | DeleteLoopNoteAction | SetLoopNoteRangeAction) => action.payload.loopId === loopId)
-                    );
+                const { instrument, loop: loops } = appStore.getState();
+                const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
+                const loop = loops.items.get(loopId) as Loop;
+                const instrumentNode = renderInstrument(audioContext, trackInstrument, tempo);
+                instrumentNode.connect(audioContext.destination);
+                return Observable.create((o) => {
+                    const isTransportStarted = Transport.state === 'started';
+                    let startTime = isTransportStarted ? clock!.nextBeatTime.seconds : Transport.seconds;
 
-                reloadPlayerSignal.pipe(
-                    flatMap(() => {
-                        return Observable.create((o) => {
-                            const when = timeZero;
-                            const offset = clock!.timeSincePreviousBar();
-                            o.next({ when, offset });
-                            o.complete();
-                        })
-                    }),
-                    startWith({
-                        when: clock!.timeUntilNextBar(),
-                        offset: timeZero,
-                    }),
-                    switchMap(({ when, offset }: { when: Time, offset: Time }) => {
-                        return Observable.create((o) => {
-                            const { instrument, loop: loops } = appStore.getState();
-                            const trackInstrument = instrument.items.get(instrumentId) as Instrument<any>;
-                            const loop = loops.items.get(loopId) as Loop;
-                            const renderedInstrument = renderInstrument(audioContext, trackInstrument, tempo);
-                            renderedInstrument.connect(audioContext.destination);
-                            const delegate: LoopPlayerDelegate = {
-                                on(note, when, offset, duration) {
-                                    console.log(when, offset, duration)
-                                    renderedInstrument.trigger(note, when, offset, duration);
-                                }
-                            }
-                            const player = new LoopClock(
-                                clock as Clock,
-                                new AudioRange(timeZero, beatToTime(loop.duration, tempo)),
-                                loop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
-                                    return seed.concat(noteMap.toList().toArray());
-                                }, []),
-                                delegate,
-                            );
-                            player.loop = true;
-                            player.start(when, offset);
+                    if (isTransportStarted === false) {
+                        Transport.start();
+                    }
 
-                            return () => {
-                                player.stop(timeZero);
-                            }
+                    const toneLoop = new ToneLoop((time: number) => {
+                        const { loop: loops } = appStore.getState();
+                        const innerLoop = loops.items.get(loopId) as Loop;
+
+                        innerLoop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
+                            return seed.concat(noteMap.toList().toArray());
+                        }, [])
+                        .forEach((note: MidiNote) => {
+                            const timeRange = note.range.toAudioRange(tempo);
+                            instrumentNode.trigger(note.note as PianoKey, note.velocity, Time.fromSeconds(time).plus(timeRange.start), timeZero, timeRange.duration);
                         })
-                    })
-                )
-                .subscribe(() => {
-                    console.log('mmk?')
+                    }, beatToTime(loop.duration, tempo).seconds).start(startTime);
+                    return () => {
+                        toneLoop.stop(0);
+                    }
                 });
-
-                return empty();
             })
         )
 }
@@ -131,7 +102,7 @@ export function startPlaybackEpic(actions) {
 
                 segments.forEach((segment) => {
                     const segmentTrack = audiotrack.items.get(segment.trackId) as AudioTrack;
-                    const segmentInstrument = instrument.items.get(segmentTrack.instrumentId) as Instrument;
+                    const segmentInstrument = instrument.items.get(segmentTrack.instrumentId) as Instrument<any>;
                     segment.notes.forEach((notes) => {
                         notes.forEach((note) => {
                             const { frequency } = octaves[note.note];

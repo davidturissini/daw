@@ -8,7 +8,6 @@ import { Frame } from 'util/geometry';
 import { InstrumentState } from 'store/instrument/reducer';
 import { getAudioContext } from 'util/sound';
 import { loadSamples } from 'store/sample';
-import { setContext } from 'tone';
 
 export default class JamElement extends LightningElement {
     @track frame: Frame | null = null;
@@ -73,7 +72,6 @@ export default class JamElement extends LightningElement {
     }
 
     connectedCallback() {
-        setContext(getAudioContext());
         loadSamples(getAudioContext());
     }
 

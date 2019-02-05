@@ -46,6 +46,7 @@ function createLoopNoteReducer(state: LoopState, action: CreateLoopNoteAction): 
         id: noteId,
         range,
         note: keyId,
+        velocity: 1,
     }
     return state.setIn(['items', loopId, 'notes', keyId, noteId], note);
 }

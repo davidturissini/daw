@@ -1,14 +1,15 @@
 import { Beat, Time, timeToBeat, beatToTime, LiveTime } from "util/time";
 import { Tempo } from "store/project";
+import { Transport } from "tone";
 
 export class Clock {
-    audioContext: AudioContext;
+    transport: Transport;
     audioContextStartTime: Time;
     tempo: Tempo;
-    constructor(audioContext: AudioContext, tempo: Tempo) {
+    constructor(transport: Transport, tempo: Tempo) {
         this.tempo = tempo;
-        this.audioContext = audioContext;
-        this.audioContextStartTime = Time.fromSeconds(this.audioContext.currentTime);
+        this.transport = transport;
+        this.audioContextStartTime = Time.fromSeconds(transport.seconds);
     }
 
     get currentTime(): Time {
@@ -49,6 +50,6 @@ export class Clock {
     }
 
     audioContextTime() {
-        return new LiveTime(this.audioContext);
+        return new LiveTime({ get currentTime() { return Transport.seconds }});
     }
 }

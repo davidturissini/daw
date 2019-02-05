@@ -1,4 +1,5 @@
 import { BeatRange } from 'util/audiorange';
+import Tone from 'tone';
 
 interface Note {
     frequency: number;
@@ -9,6 +10,7 @@ export interface MidiNote {
     id: string;
     note: string;
     range: BeatRange;
+    velocity: number;
 }
 
 export enum PianoKey {
@@ -484,6 +486,7 @@ let ac: AudioContext | null = null;
 export function getAudioContext(): AudioContext {
     if (ac === null) {
         ac = new AudioContext();
+        Tone.setContext(ac);
     }
     return ac;
 }

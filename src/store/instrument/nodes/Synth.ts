@@ -24,15 +24,8 @@ export class SynthNode implements InstrumentAudioNode {
 
         this.synth = new PolySynth(4, Synth);
     }
-    trigger(key: PianoKey, when: Time, offset: Time | null, duration: Time | null) {
-        const { audioContext } = this;
-
-        // const node = audioContext.createOscillator();
-        // const { frequency } = notes[key];
-        // node.frequency.setValueAtTime(frequency, 0);
-
+    trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (this.dest) {
-            // node.connect(this.dest);
             this.synth.connect(this.dest);
         }
 
@@ -44,7 +37,7 @@ export class SynthNode implements InstrumentAudioNode {
             if (offset !== null) {
                 normalizedDuration = normalizedDuration.minus(offset);
             }
-            this.synth.triggerAttackRelease(key, duration.seconds, when.seconds);
+            this.synth.triggerAttackRelease(key, duration.seconds, when.seconds, velocity);
         } else {
             this.synth.triggerAttack([key]);
         }
