@@ -2,10 +2,26 @@ import {
     CREATE_LOOP_NOTE,
     DELETE_LOOP_NOTE,
     SET_LOOP_NOTE_RANGE,
+    SET_LOOP_DURATION,
  } from './const';
 import { Action } from 'store/index';
 import { BeatRange } from 'util/audiorange';
 import { PianoKey } from 'util/sound';
+import { Beat } from 'util/time';
+
+export type SetLoopDurationAction = Action<{
+    loopId: string;
+    duration: Beat;
+}>
+export function setLoopDuration(loopId: string, duration: Beat): SetLoopDurationAction {
+    return {
+        type: SET_LOOP_DURATION,
+        payload: {
+            loopId,
+            duration,
+        }
+    }
+}
 
 export type SetLoopNoteRangeAction = Action<{
     loopId: string;

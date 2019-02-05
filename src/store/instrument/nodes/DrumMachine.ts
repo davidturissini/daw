@@ -77,4 +77,8 @@ export class DrumMachine implements InstrumentAudioNode {
     connect(node: AudioNode) {
         this.dest = node;
     }
+
+    release() {
+
+    }
 }

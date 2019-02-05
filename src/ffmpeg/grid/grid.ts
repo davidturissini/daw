@@ -18,7 +18,7 @@ import rafThrottle from 'raf-throttle';
 import { CursorDragEvent, CursorDragStartEvent, CursorDragEndEvent } from 'cmp/cursor/cursor';
 import { DurationCursorDragState } from './states/durationcursordrag';
 import { ProjectState } from 'store/project/reducer';
-import { Tempo, Project } from 'store/project';
+import { Project } from 'store/project';
 
 export interface GridRange {
     itemId: string;

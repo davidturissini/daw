@@ -43,6 +43,12 @@ export class SynthNode implements InstrumentAudioNode {
         }
     }
 
+    release() {
+        if (this.synth) {
+            this.synth.releaseAll();
+        }
+    }
+
     connect(node: AudioNode) {
         this.dest = node;
     }

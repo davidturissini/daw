@@ -4,18 +4,18 @@ import { appStore, wireSymbol } from 'store/index';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
 import { MidiNote, PianoKey, notes, getAudioContext } from 'util/sound';
 import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
-import { timeZero, beatToTime, Beat } from 'util/time';
+import { timeZero, beatToTime, Beat, timeToBeat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
 import { InstrumentType } from 'store/instrument/types';
-import { DrumMachineLoopData, DrumMachineData } from 'store/instrument/types/DrumMachine';
+import { DrumMachineLoopData, DrumMachineData } from 'store/instrument/nodes/DrumMachine';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
-import { createLoopNote, deleteLoopNote, setLoopNoteRange } from 'store/loop/action';
+import { createLoopNote, deleteLoopNote, setLoopNoteRange, setLoopDuration } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
 import { Color } from 'util/color';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
+import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridRangeChangeEvent } from 'cmp/grid/events';
 
 interface DrumMachineNotesGrid {
     id: string;
@@ -152,7 +152,7 @@ export default class LoopEditElement extends LightningElement {
 
     /*
      *
-     *  Oscillator
+     *  Synth
      *
      */
     get canClosePianoGrid() {
@@ -186,6 +186,13 @@ export default class LoopEditElement extends LightningElement {
         const { id, parentId: key, beatRange } = evt.detail;
         appStore.dispatch(
             setLoopNoteRange(this.loopId, key as PianoKey, id, beatRange)
+        );
+    }
+
+    onPianoGridRangeChange(evt: GridRangeChangeEvent) {
+        const { range } = evt.detail;
+        appStore.dispatch(
+            setLoopDuration(this.loopId, timeToBeat(range.duration, this.project.currentProject!.tempo))
         );
     }
 

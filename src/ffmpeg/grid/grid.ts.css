@@ -45,7 +45,6 @@ main {
     grid-row: 3;
     display: grid;
     grid-template-columns: 150px auto;
-    overflow-y: auto;
 }
 
 .col-left {

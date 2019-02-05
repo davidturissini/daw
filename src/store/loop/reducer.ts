@@ -2,8 +2,13 @@ import { Record, Map as ImmutableMap } from 'immutable';
 import { Loop, LoopDataTypes } from './index';
 import { CREATE_INSTRUMENT } from 'store/instrument/const';
 import { CreateInstrumentAction } from 'store/instrument/action';
-import { CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from './const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction } from './action';
+import {
+    CREATE_LOOP_NOTE,
+    DELETE_LOOP_NOTE,
+    SET_LOOP_NOTE_RANGE,
+    SET_LOOP_DURATION,
+} from './const';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopDurationAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
@@ -61,6 +66,11 @@ function setLoopNoteRangeReduer(state: LoopState, action: SetLoopNoteRangeAction
     return state.setIn(['items', loopId, 'notes', keyId, noteId, 'range'], range);
 }
 
+function setLoopDurationReducer(state: LoopState, action: SetLoopDurationAction): LoopState {
+    const { loopId, duration } = action.payload;
+    return state.setIn(['items', loopId, 'duration'], duration);
+}
+
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
         case CREATE_INSTRUMENT:
@@ -71,6 +81,8 @@ export function reducer(state = new LoopState(), action) {
             return deleteLoopNoteReducer(state, action);
         case SET_LOOP_NOTE_RANGE:
             return setLoopNoteRangeReduer(state, action);
+        case SET_LOOP_DURATION:
+            return setLoopDurationReducer(state, action);
     }
     return state;
 }

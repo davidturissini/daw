@@ -1,5 +1,4 @@
 import { Time } from "util/time";
-import { Observable } from "rxjs";
 import { PianoKey } from "util/sound";
 
 export enum InstrumentType {
@@ -12,4 +11,5 @@ export interface InstrumentAudioNode {
     type: InstrumentType;
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null): void;
     connect(node: AudioNode): void;
+    release(): void;
 }

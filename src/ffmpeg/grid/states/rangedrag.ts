@@ -39,6 +39,7 @@ export class RangeDragState extends BaseState implements GridState {
                 range: quanitizedRange,
                 id: this.id,
                 parentId: this.parentId,
+                beatRange: quanitizedRange.toBeatRange(fsm.project.tempo)
             }
         });
         fsm.dispatchEvent(event);

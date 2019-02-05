@@ -8,11 +8,9 @@ import { flatMap, filter, takeUntil } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction } from './action';
 import { empty as emptyObservable, empty, Observable } from 'rxjs';
 import { appStore } from '../index';
-import { AudioSegment } from 'store/audiosegment';
-import { AudioTrack } from 'store/audiotrack';
 import { Instrument, render as renderInstrument } from 'store/instrument';
-import { notes as octaves, MidiNote, PianoKey } from 'util/sound';
-import { timeZero, beatToTime, Time, timeToBeat } from 'util/time';
+import { MidiNote, PianoKey } from 'util/sound';
+import { timeZero, beatToTime, Time } from 'util/time';
 import { Loop } from 'store/loop';
 import { Loop as ToneLoop, Transport } from 'tone';
 import { Clock } from 'store/player/clock';
@@ -24,20 +22,26 @@ export function playPianoKeyEpic(actions) {
                 const { audioContext, instrument, key, tempo } = action.payload;
                 const instrumentNode = renderInstrument(audioContext, instrument, tempo);
                 instrumentNode.connect(audioContext.destination);
-                instrumentNode.trigger(key, timeZero, null, null)
-                    .pipe(
-                        takeUntil(
-                            actions.ofType(STOP_PIANO_KEY)
-                                .pipe(
-                                    filter((action: StopPianoKeyAction) => {
-                                        return action.payload.instrument === instrument && action.payload.key === key;
-                                    })
-                                )
-                        )
-                    )
-                    .subscribe(() => {
+                Observable.create((o) => {
+                    instrumentNode.trigger(key, 1, timeZero, null, null)
 
-                    })
+                    return () => {
+                        instrumentNode.release();
+                    }
+                })
+                .pipe(
+                    takeUntil(
+                        actions.ofType(STOP_PIANO_KEY)
+                            .pipe(
+                                filter((action: StopPianoKeyAction) => {
+                                    return action.payload.instrument === instrument && action.payload.key === key;
+                                })
+                            )
+                    )
+                )
+                .subscribe(() => {
+
+                })
 
                 return empty();
             })
@@ -91,31 +95,6 @@ export function startPlaybackEpic(actions) {
     return actions.ofType(START_PLAYBACK)
         .pipe(
             flatMap((action: StartPlaybackAction) => {
-                const { audioContext } = action.payload;
-                const { audiotrack, audiosegment, instrument } = appStore.getState();
-                const segments = audiotrack.items.toList().reduce((seed: AudioSegment[], audiotrack: AudioTrack) => {
-                    const trackSegments: AudioSegment[] = audiotrack.segments.toList().map((segmentId: string) => {
-                        return audiosegment.items.get(segmentId) as AudioSegment;
-                    }).toArray();
-                    return seed.concat(trackSegments);
-                }, []);
-
-                segments.forEach((segment) => {
-                    const segmentTrack = audiotrack.items.get(segment.trackId) as AudioTrack;
-                    const segmentInstrument = instrument.items.get(segmentTrack.instrumentId) as Instrument<any>;
-                    segment.notes.forEach((notes) => {
-                        notes.forEach((note) => {
-                            const { frequency } = octaves[note.note];
-                            const node = audioContext.createOscillator();
-                            node.frequency.setValueAtTime(frequency, 0);
-                            node.type = segmentInstrument.data.type;
-                            node.start(note.range.start.seconds);
-                            node.stop(audioContext.currentTime + note.range.start.plus(note.range.duration).seconds);
-                            node.connect(audioContext.destination);
-                        });
-                    });
-                });
-
                 return emptyObservable();
             })
         )
