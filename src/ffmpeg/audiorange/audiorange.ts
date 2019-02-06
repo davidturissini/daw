@@ -1,12 +1,12 @@
 import { LightningElement, api } from 'lwc';
 import { AudioRange, BeatRange } from 'util/audiorange';
-import { timeToPixel, durationToWidth, pixelToTime } from 'util/geometry';
+import { pixelToTime } from 'util/geometry';
 import { Color } from 'util/color';
 import interact, { Interactable } from 'interactjs';
 import rafThrottle from 'raf-throttle';
 import { Time } from 'util/time';
-import { AudioWindow } from 'store/audiowindow';
 import { Tempo } from 'store/project';
+import { AudioRangeElementChange } from 'cmp/audiowindow/audiowindow';
 
 export type RangeDragStartEvent = CustomEvent<{
     itemId: string;
@@ -30,40 +30,36 @@ export type RangeDurationChangeEvent = CustomEvent<{
     itemId: string;
 }>;
 
-
-function calcStyle(audioWindow: AudioWindow, range: AudioRange, color: Color) {
-    const { rect, visibleRange } = audioWindow;
-    const frameWidth = rect.width;
-    const segmentOffset = timeToPixel(rect, visibleRange, range.start);
-    let width = durationToWidth(rect, visibleRange, range.duration);
-
-    const x = segmentOffset;
-    if (x < 0) {
-        width += x;
-    }
-
-    if (width + x > frameWidth) {
-        const diff = (width + x) - frameWidth;
-        width = width - diff;
-    }
-    return {
-        transform: `translate3d(${Math.max(x, 0)}px, 0px, 0)`,
-        width: `${width}px`,
-        background: color.rgb(),
-    };
-}
+const rangeSymbol = Symbol();
 
 export default class AudioRangeElement extends LightningElement {
     @api rowIndex: number;
-    @api range: AudioRange | BeatRange;
     @api color: Color;
-    @api audioWindow: AudioWindow;
     @api itemId: string;
 
     moveInteract: Interactable | null = null;
     startHandleIneract: Interactable | null = null;
     endHandleInteract: Interactable | null = null;
     doubleClickInteract: Interactable | null = null;
+    connected = false;
+    @api
+    set range(value: AudioRange | BeatRange) {
+        if (this.connected === true) {
+            const event: AudioRangeElementChange = new CustomEvent('rangechange', {
+                bubbles: true,
+                composed: true,
+                detail: {
+                    range: value,
+                }
+            });
+            this.dispatchEvent(event);
+        }
+        this[rangeSymbol] = value;
+    }
+
+    get range() {
+        return this[rangeSymbol];
+    }
 
     /*
      *
@@ -154,11 +150,6 @@ export default class AudioRangeElement extends LightningElement {
         this.dispatchEvent(event);
     })
 
-    get divStyle(): string {
-        const obj = calcStyle(this.audioWindow, this.range.toAudioRange(new Tempo(128)), this.color);
-        return `transform:${obj.transform};width:${obj.width};background:${obj.background}`;
-    }
-
     /*
      *
      *
@@ -167,6 +158,7 @@ export default class AudioRangeElement extends LightningElement {
      *
     */
     connectedCallback() {
+        this.connected = true;
         this.moveInteract = interact(this.template.host).draggable({
             inertia: false,
             axis: 'y',

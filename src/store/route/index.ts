@@ -3,8 +3,6 @@ import createRouter, { Router, Route as Router5Route } from 'router5';
 import browserPlugin from 'router5-plugin-browser';
 
 export enum RouteNames {
-    Home = 'Home',
-    SegmentEdit = 'Home.SegmentEdit',
     ConcertMode = 'ConcertMode',
     LoopEdit = 'ConcertMode.LoopEdit',
     ConcertInstrumentEdit = 'ConcertMode.InstrumentEdit'
@@ -17,7 +15,7 @@ export class Route<T> extends Record<{
 }>({
     params: {},
     path: '',
-    name: RouteNames.Home,
+    name: RouteNames.ConcertMode,
 }) {
     params: T
 }
@@ -27,14 +25,8 @@ export interface SegmentEditRouteParams {
 }
 
 const routes: Router5Route[] = [{
-    name: RouteNames.Home,
-    path: '/',
-}, {
-    name: RouteNames.SegmentEdit,
-    path: '/segments/:segment_id/edit'
-}, {
     name: RouteNames.ConcertMode,
-    path: '/concert',
+    path: '/',
 }, {
     name: RouteNames.LoopEdit,
     path: '/loops/:loop_id'

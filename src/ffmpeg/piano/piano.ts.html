@@ -2,22 +2,23 @@
     <ffmpeg-grid
         range={range}
         class="grid"
-        can-close={canCloseGrid}
-        rows={gridRows}>
-        <div slot="col-left">
-            <template for:each={pianoKeyViewModels} for:item="pianoKey">
-                <button
-                    class={pianoKey.className}
-                    style={pianoKey.style}
-                    data-note-name={pianoKey.name}
-                    onmouseenter={onKeyMouseEnter}
-                    onmousedown={onKeyMouseDown}
-                    onmouseleave={onKeyMouseLeave}
-                    key={pianoKey.name}
-                >
-                    <h5 class="key__name">{pianoKey.name}</h5>
-                </button>
-            </template>
-        </div>
+        can-close={canCloseGrid}>
+        <template for:each={pianoKeyViewModels} for:item="pianoKey">
+            <button
+                data-row-id={pianoKey.note}
+                slot="col-left"
+                class={pianoKey.className}
+                style={pianoKey.style}
+                data-note-name={pianoKey.name}
+                onmouseenter={onKeyMouseEnter}
+                onmousedown={onKeyMouseDown}
+                onmouseleave={onKeyMouseLeave}
+                key={pianoKey.name}
+            >
+                <h5 class="key__name">{pianoKey.name}</h5>
+            </button>
+        </template>
+        <slot name="cursor" slot="cursor"></slot>
+        <slot name="range" slot="range"></slot>
     </ffmpeg-grid>
 </template>

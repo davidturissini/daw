@@ -1,11 +1,10 @@
 import { LightningElement, api, wire, track } from 'lwc';
-import { notes, MidiNote, PianoKey } from 'util/sound';
-import { wireSymbol, appStore } from 'store/index';
+import { MidiNote, PianoKeyMap, PianoKey } from 'util/sound';
+import { wireSymbol } from 'store/index';
 import { GridElementRow } from 'cmp/grid/grid';
 import { AudioWindowState } from 'store/audiowindow/reducer';
 import { Color } from 'util/color';
 import { AudioRange } from 'util/audiorange';
-import { stopPianoKey } from 'store/player/action';
 import { Tempo } from 'store/project';
 import { Instrument } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
@@ -16,14 +15,16 @@ export type PianoMidiNoteMap = {
     [octave: string]: MidiNote[]
 };
 
-const gridRowNoteMap: { [key: string]: { height: number } } = Object.keys(notes).reduce((seed, octave) => {
-    const note = notes[octave];
-    const row = {
-        height: note.sharp ? 30 : 45,
-    };
-    seed[octave] = row;
-    return seed;
-}, {});
+function gridRowNoteMap(notes: PianoKeyMap) {
+    return Object.keys(notes).reduce((seed, octave) => {
+        const note = notes[octave];
+        const row = {
+            height: note.sharp ? 30 : 45,
+        };
+        seed[octave] = row;
+        return seed;
+    }, {});
+}
 
 export default class PianoElement extends LightningElement {
     @api midiNotes: PianoMidiNoteMap;
@@ -32,6 +33,7 @@ export default class PianoElement extends LightningElement {
     @api instrumentId: string;
     @api audioContext: BaseAudioContext;
     @api tempo: Tempo;
+    @api notes: PianoKeyMap;
     @track gridWindowId: string | null = null;
     @wire(wireSymbol, {
         paths: {
@@ -58,6 +60,7 @@ export default class PianoElement extends LightningElement {
     }
 
     get gridRows(): GridElementRow[] {
+        const { notes } = this;
         return Object.keys(notes).map((octave) => {
             const note = notes[octave];
             const midiNotes = this.midiNotes[octave] || [];
@@ -77,10 +80,12 @@ export default class PianoElement extends LightningElement {
     }
 
     get pianoKeyViewModels() {
-        return Object.keys(notes).map((key) => {
-            const note = notes[key];
+        const { notes } = this;
+        const noteMap = gridRowNoteMap(notes);
+        return Object.keys(notes).map((key: PianoKey) => {
+            const note = notes[key]!;
             const classNames = ['key'];
-            const gridRow = gridRowNoteMap[key];
+            const gridRow = noteMap[key];
             const styles = [
                 `height: ${gridRow.height}px`
             ];
@@ -89,6 +94,7 @@ export default class PianoElement extends LightningElement {
             }
 
             return {
+                note: key,
                 name: key,
                 className: classNames.join(' '),
                 style: styles.join(';')

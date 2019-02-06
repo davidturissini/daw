@@ -3,21 +3,10 @@ import { Time } from 'util/time';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
 export type TimelineMouseLeaveEvent = CustomEvent<{}>;
-export type TimelineDragEvent = CustomEvent<{
-    dx: number;
-    windowId: string;
-}>;
-export type TimelineDragStartEvent = CustomEvent<{
-    windowId: string;
-}>;
-export type TimelineDragEndEvent = CustomEvent<{
-    windowId: string;
-}>;
-
 export type AudioRangeCreatedEvent = CustomEvent<{
     range: AudioRange;
     beatRange: BeatRange;
-    parentId: string;
+    rowIndex: number;
     id: string;
 }>;
 
@@ -25,11 +14,7 @@ export type AudioRangeChangeEvent = CustomEvent<{
     range: AudioRange;
     beatRange: BeatRange;
     id: string;
-    parentId: string;
-}>
-
-export type GridAudioWindowCreatedEvent = CustomEvent<{
-    windowId: string;
+    rowIndex: number;
 }>
 
 export type GridCloseEvent = CustomEvent<{}>;

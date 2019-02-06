@@ -1,8 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import interact from 'interactjs';
-import { timeToPixel, pixelToTime } from 'util/geometry';
 import { Time } from 'util/time';
-import { AudioWindow } from 'store/audiowindow';
+import { TimeChangeEvent } from 'cmp/audiowindow/audiowindow';
 
 export type CursorDragStartEvent = CustomEvent<{
     time: Time,
@@ -14,19 +13,33 @@ export type CursorDragEvent = CustomEvent<{
 
 export type CursorDragEndEvent = CustomEvent<{}>
 
+const timeSymbol = Symbol();
+
 
 export default class CursorElement extends LightningElement {
     @api virtual: boolean = false;
     @api userDrag;
-    @api time: Time;
-    @api audioWindow: AudioWindow;
-
+    connected = false;
     interact: any;
+    [timeSymbol]: Time;
 
-    get containerStyle() {
-        const { audioWindow } = this;
-        const px = timeToPixel(audioWindow.frame, audioWindow.visibleRange, this.time);
-        return `transform: translateX(${px}px)`;
+    @api
+    set time(value: Time) {
+        if (this.connected === true) {
+            const event: TimeChangeEvent = new CustomEvent('timechange', {
+                bubbles: true,
+                composed: true,
+                detail: {
+                    time: value,
+                }
+            });
+            this.dispatchEvent(event);
+        }
+        this[timeSymbol] = value;
+    }
+
+    get time() {
+        return this[timeSymbol];
     }
 
     get lineClassName() {
@@ -38,11 +51,15 @@ export default class CursorElement extends LightningElement {
     }
 
     onStartDrag = (evt) => {
+        const { time } = this;
+        if (!time) {
+            return;
+        }
         const event: CursorDragStartEvent = new CustomEvent('cursordragstart', {
             bubbles: true,
             composed: true,
             detail: {
-                time: this.time,
+                time,
             }
         });
 
@@ -50,16 +67,15 @@ export default class CursorElement extends LightningElement {
     }
 
     onCaretDrag = (evt) => {
-        const { audioWindow } = this;
-        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.dx);
-        const event: CursorDragEvent = new CustomEvent('cursordrag', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                time,
-            },
-        });
-        this.dispatchEvent(event);
+        // const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.dx);
+        // const event: CursorDragEvent = new CustomEvent('cursordrag', {
+        //     bubbles: true,
+        //     composed: true,
+        //     detail: {
+        //         time,
+        //     },
+        // });
+        // this.dispatchEvent(event);
     }
 
     onEndDrag = (evt) => {
@@ -84,6 +100,11 @@ export default class CursorElement extends LightningElement {
      * Lifecycle
      *
     */
+
+    connectedCallback() {
+        this.connected = true;
+    }
+
     renderedCallback() {
         if (this.userDrag && !this.interact) {
             this.interact = interact(this.template.querySelector('.drag-triangle'));
@@ -99,6 +120,7 @@ export default class CursorElement extends LightningElement {
     }
 
     disconnectedCallback() {
+        this.connected = false;
         if (this.interact) {
             this.interact.unset();
             this.interact.off('doubletap', this.onCaretDoubleTap);

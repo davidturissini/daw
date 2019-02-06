@@ -32,6 +32,7 @@
     </template>
     <template if:true={instrumentIsOscillator}>
         <ffmpeg-piano
+            notes={pianoNotes}
             audio-context={pianoAudioContext}
             tempo={projectTempo}
             instrument-id={pianoInstrumentId}
@@ -39,10 +40,21 @@
             range={loopRange}
             ongridclose={onPianoGridClose}
             can-close-grid={canClosePianoGrid}
-            midi-notes={pianoMidiNotes}
             onaudiorangechange={onOscillatorNoteRangeChange}
             onaudiorangecreated={onOscillatorNoteCreated}
         >
+            <ffmpeg-cursor
+                slot="cursor"
+                time={loopCurrentTime}
+            ></ffmpeg-cursor>
+            <template for:each={pianoMidiNotes} for:item="midiNote">
+                <ffmpeg-audiorange
+                    slot="range"
+                    data-row-id={midiNote.note}
+                    key={midiNote.id}
+                    range={midiNote.range}
+                ></ffmpeg-audiorange>
+            </template>
         </ffmpeg-piano>
     </template>
 </template>

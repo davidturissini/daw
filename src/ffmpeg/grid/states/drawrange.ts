@@ -8,10 +8,10 @@ import { generateId } from 'util/uniqueid';
 import { quanitizeTime } from 'store/audiowindow';
 
 export class DrawRangeState extends BaseState implements GridState {
-    parentId: string | null = null;
     startX: number | null = null;
     rangeId: string | null = null;
     range: AudioRange | null = null;
+    rowIndex: number | null = null;
     enter(fsm: GridFSM) {
         fsm.interactionStateName = GridStateNames.DrawRange;
     }
@@ -22,26 +22,27 @@ export class DrawRangeState extends BaseState implements GridState {
             return;
         }
         const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
+        const target = evt.target as HTMLElement;
+        const rowIndex = this.rowIndex = parseInt(target.getAttribute('data-row-index') as string, 10);
         this.startX = evt.x;
         const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.x - rect.left);
         const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
         const range = this.range = new AudioRange(quanitized, timeZero);
         const id = this.rangeId = generateId();
-        const parentId = this.parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
         const event: AudioRangeCreatedEvent = new CustomEvent('audiorangecreated', {
             bubbles: true,
             composed: true,
             detail: {
                 id,
                 range,
-                parentId,
+                rowIndex,
                 beatRange: range.toBeatRange(cmp.project.tempo),
             },
         });
         cmp.dispatchEvent(event);
     }
     [GridStateInputs.DocumentMouseMove](cmp: GridFSM, evt: MouseEvent) {
-        if (this.startX && this.rangeId && this.range && this.parentId) {
+        if (this.startX && this.rangeId && this.range && this.rowIndex) {
             const { audioWindow } = cmp;
             if (audioWindow === null) {
                 return;
@@ -57,7 +58,7 @@ export class DrawRangeState extends BaseState implements GridState {
                 detail: {
                     range: next,
                     id: this.rangeId,
-                    parentId: this.parentId,
+                    rowIndex: this.rowIndex,
                     beatRange: next.toBeatRange(cmp.project.tempo),
                 },
             });

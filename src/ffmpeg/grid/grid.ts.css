@@ -5,22 +5,8 @@
     background: rgb(52, 52, 52);
     color: rgb(153, 153, 153);
     height: 100%;
-}
-
-ul {
-    margin: 0;
-    padding: 0;
-}
-
-li {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 2px;
-    background: rgba(56, 56, 56);
+    position: relative;
     z-index: 1;
-    list-style-type: none;
 }
 
 .body {
@@ -45,6 +31,16 @@ main {
     grid-row: 3;
     display: grid;
     grid-template-columns: 150px auto;
+}
+
+.cursors-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .col-left {
@@ -85,5 +81,24 @@ main {
 
 .row {
     position: relative;
+    z-index: 1;
+}
+
+ffmpeg-audiowindow {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+ffmpeg-audiowindow ffmpeg-cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 5;
+}
+
+ffmpeg-audiowindow .grid-time-marker {
+    background: rgba(56, 56, 56);
     z-index: 1;
 }

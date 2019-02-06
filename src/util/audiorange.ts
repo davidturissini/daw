@@ -109,6 +109,21 @@ export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
     return beats;
 }
 
+export function containsTime(time: Time, range: AudioRange): boolean {
+    return (
+        (
+            (
+                time.greaterThan(range.start) ||
+                time.equals(range.start)
+            ) &&
+            (
+                time.lessThan(range.end) ||
+                time.equals(range.end)
+            )
+        )
+    )
+}
+
 export function contains(needle: AudioRange, haystack: AudioRange): boolean {
     return (
         (

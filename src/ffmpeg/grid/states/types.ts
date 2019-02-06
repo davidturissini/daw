@@ -1,8 +1,9 @@
-import { AudioWindow } from "store/audiowindow";
+import { AudioWindow } from "cmp/grid/grid";
 import { RangeDragStartEvent, RangeDragEvent } from "cmp/audiorange/audiorange";
 import { CursorDragEvent } from "cmp/cursor/cursor";
 import { AudioRange } from "util/audiorange";
 import { Project } from "store/project";
+import { Frame } from "util/geometry";
 
 export enum GridStateInputs {
     EditButtonClick = 'EditButtonClick',
@@ -79,4 +80,5 @@ export interface GridFSM {
     range: AudioRange | null;
     interactionStateName: GridStateNames;
     project: Project;
+    rowFrames: Frame[];
 }

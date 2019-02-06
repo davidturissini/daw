@@ -1,34 +1,7 @@
-import { Record } from 'immutable';
-import { Rect, Frame } from 'util/geometry';
 import { AudioRange } from 'util/audiorange';
-import { timeZero, Time, Beat, beatToTime } from 'util/time';
+import { Time, beatToTime } from 'util/time';
 import { Tempo } from 'store/project';
-
-export class AudioWindow extends Record<{
-    id: string;
-    rect: Rect;
-    visibleRange: AudioRange;
-    quanitization: Beat;
-    virtualCursor: Time | null;
-}>({
-    id: '',
-    rect: {
-        x: 0,
-        y: 0,
-        height: 0,
-        width: 0,
-    },
-    visibleRange: new AudioRange(timeZero, timeZero),
-    quanitization: new Beat(1),
-    virtualCursor: null,
-}) {
-    get frame(): Frame {
-        return {
-            height: this.rect.height,
-            width: this.rect.width,
-        };
-    }
-}
+import { AudioWindow } from 'cmp/grid/grid';
 
 export function mapBeatMarks<T>(audioWindow: AudioWindow, tempo: Tempo, cb: (beat: number, time: Time) => T): T[] {
     return new BeatRange(tempo, audioWindow).map<T>(cb);

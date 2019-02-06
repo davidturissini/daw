@@ -25,33 +25,65 @@
         variant="beats"
         tempo={project.tempo}
         audio-window={audioWindow}
-        ontimelinedrag={onTimelineDrag}
-        ontimelinedragstart={onTimelineDragStart}
-        ontimelinedragend={onTimelineDragEnd}>
+        ontimelinedrag={onTimelineDrag}>
     </ffmpeg-timeline>
     <main>
         <div class="col-left">
-            <slot name="col-left"></slot>
+            <slot name="col-left" onslotchange={onColLeftSlotChange}></slot>
         </div>
-        <div class="grid-container" onmousemove={onGridContainerMouseMove} onmouseleave={onGridContainerMouseLeave} onclick={onGridContainerClick}>
-            <template if:true={virtualCursorInRange}>
-                <ffmpeg-cursor audio-window={audioWindow} time={audioWindow.virtualCursor} virtual></ffmpeg-cursor>
-            </template>
-            <template if:true={hasRange}>
-                <ffmpeg-cursor
-                    oncursordragstart={onDurationCursorDragStart}
-                    oncursordrag={onDurationCursorDrag}
-                    oncursordragend={onDurationCursorDragEnd}
-                    audio-window={audioWindow}
-                    time={range.duration}
-                    user-drag
-                ></ffmpeg-cursor>
-            </template>
-            <ul>
-                <template for:each={gridLines} for:item="gridLine">
-                    <li style={gridLine.style} key={gridLine.time.milliseconds}></li>
+        <div
+            class="grid-container"
+            onmousemove={onGridContainerMouseMove}
+            onmouseleave={onGridContainerMouseLeave}
+            onclick={onGridContainerClick}
+            >
+            <ffmpeg-audiowindow
+                if:true={hasAudioWindow}
+                audio-window={audioWindow}
+                tempo={project.tempo}
+            >
+                <template if:true={durationMarkerIsVisible}>
+                    <ffmpeg-cursor
+                        slot="cursor"
+                        class="duration-marker"
+                        oncursordragstart={onDurationCursorDragStart}
+                        oncursordrag={onDurationCursorDrag}
+                        oncursordragend={onDurationCursorDragEnd}
+                        time={range.duration}
+                        user-drag
+                    ></ffmpeg-cursor>
                 </template>
-            </ul>
+                <template if:true={virtualCursorInRange}>
+                    <ffmpeg-cursor
+                        slot="cursor"
+                        time={audioWindow.virtualCursor}
+                        virtual
+                    ></ffmpeg-cursor>
+                </template>
+                <template for:each={gridLines} for:item="gridLine">
+                    <ffmpeg-cursor
+                        class="grid-time-marker"
+                        key={gridLine.milliseconds}
+                        slot="cursor"
+                        time={gridLine}
+                    ></ffmpeg-cursor>
+                </template>
+                <slot slot="range" name="range" onslotchange={onRangeSlotChange}></slot>
+            </ffmpeg-audiowindow>
+            <template for:each={rowViewModels} for:item="row" for:index="index">
+                <div
+                    class="row"
+                    style={row.style}
+                    key={row.id}
+                    data-row-index={index}
+                    onmouseup={onGridRowMouseUp}
+                    onmousedown={onGridRowMouseDown}
+                    onmousemove={onGridRowMouseMove}
+                >
+                </div>
+            </template>
+        </div>
+        <!-- <div class="grid-container" onmousemove={onGridContainerMouseMove} onmouseleave={onGridContainerMouseLeave} onclick={onGridContainerClick}>
             <template for:each={rowViewModels} for:item="row">
                 <div
                     data-row-id={row.id}
@@ -79,15 +111,13 @@
                 </div>
             </template>
             <slot></slot>
-        </div>
+        </div> -->
     </main>
     <ffmpeg-timeline
         if:true={hasAudioWindow}
         class="time-timeline"
         tempo={project.tempo}
         audio-window={audioWindow}
-        ontimelinedrag={onTimelineDrag}
-        ontimelinedragstart={onTimelineDragStart}
-        ontimelinedragend={onTimelineDragEnd}>
+        ontimelinedrag={onTimelineDrag}>
     </ffmpeg-timeline>
 </template>

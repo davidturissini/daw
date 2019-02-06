@@ -4,7 +4,7 @@ import { appStore, wireSymbol } from 'store/index';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
 import { MidiNote, PianoKey, notes, getAudioContext } from 'util/sound';
 import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
-import { timeZero, beatToTime, Beat, timeToBeat } from 'util/time';
+import { timeZero, beatToTime, Beat, timeToBeat, Time } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
@@ -159,31 +159,33 @@ export default class LoopEditElement extends LightningElement {
         return true;
     }
 
-    get pianoMidiNotes(): PianoMidiNoteMap {
+    get pianoMidiNotes(): MidiNote[] {
         const { loop } = this;
         if (!loop) {
-            return {};
+            return [];
         }
 
-        const obj: PianoMidiNoteMap = loop.notes.reduce((seed: {[K in PianoKey]: MidiNote[]}, note: ImmutableMap<string, MidiNote>, key: PianoKey) => {
-            if (seed[key] === undefined) {
-                seed[key] = [];
-            }
-            seed[key] = seed[key].concat(note.toList().toArray());
-            return seed;
-        }, {});
+        const obj = loop.notes.reduce((seed: MidiNote[], note: ImmutableMap<string, MidiNote>) => {
+            return seed.concat(
+                note.valueSeq().toList().toArray()
+            );
+        }, []);
         return obj;
     }
 
     onOscillatorNoteCreated(evt: AudioRangeCreatedEvent) {
-        const { id, parentId: key, beatRange } = evt.detail;
+        const { id, rowIndex, beatRange } = evt.detail;
+        const keys = Object.keys(notes);
+        const key = keys[rowIndex];
         appStore.dispatch(
             createLoopNote(this.loopId, id, key as PianoKey, beatRange),
         );
     }
 
     onOscillatorNoteRangeChange(evt: AudioRangeChangeEvent) {
-        const { id, parentId: key, beatRange } = evt.detail;
+        const { id, rowIndex, beatRange } = evt.detail;
+        const keys = Object.keys(notes);
+        const key = keys[rowIndex];
         appStore.dispatch(
             setLoopNoteRange(this.loopId, key as PianoKey, id, beatRange)
         );
@@ -196,6 +198,10 @@ export default class LoopEditElement extends LightningElement {
         );
     }
 
+    get pianoNotes() {
+        return notes;
+    }
+
     get pianoInstrumentId() {
         return this.instrument<any>().id;
     }
@@ -206,5 +212,9 @@ export default class LoopEditElement extends LightningElement {
 
     get pianoAudioContext() {
         return getAudioContext();
+    }
+
+    get loopCurrentTime() {
+        return new Time(1000);
     }
 }

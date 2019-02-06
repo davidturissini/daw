@@ -89,7 +89,7 @@ export default class AppElement extends LightningElement {
      *
     */
     get projectBpm() {
-        return this.storeData.data.project.bpm;
+        return this.storeData.data.project.currentProject!.tempo.beatsPerMinute;
     }
 
     /*
@@ -277,20 +277,6 @@ export default class AppElement extends LightningElement {
      * Routing
      *
     */
-    get isHomeRoute() {
-        if (this.route) {
-            return routeIsActive(RouteNames.Home, {});
-        }
-        return false;
-    }
-
-    get isSegmentEditRoute() {
-        if (this.route) {
-            return this.route.name === RouteNames.SegmentEdit;
-        }
-        return false;
-    }
-
     get isConcertModeRoute() {
         if (this.route) {
             return routeIsActive(RouteNames.ConcertMode, {});

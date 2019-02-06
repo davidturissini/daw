@@ -112,7 +112,12 @@ export enum PianoKey {
     C8 = 'C8',
 }
 
-export const notes: { [ K in PianoKey]: Note } = {
+export type PianoKeyMap = {
+    [K in PianoKey]?: Note
+}
+
+
+export const notes: { [K in PianoKey]: Note } = {
     [PianoKey.A0]: {
         frequency: 27.5,
         sharp: false,
