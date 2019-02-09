@@ -1,9 +1,10 @@
-import { GridStateInputs, GridState, GridFSM } from './types';
+import { GridStateInputs, GridState, GridFSM, GridStateNames } from './types';
 import { GridCloseEvent } from './../events';
 import { absolutePixelToTime } from 'util/geometry';
 import { quanitizeTime } from 'store/audiowindow';
 import { isAudioRangeElement } from 'cmp/audiowindow/audiowindow';
 import { getRowIndex } from './../util';
+import { toAudioRange } from 'util/audiorange';
 
 export abstract class BaseState implements GridState {
     enter(fsm: GridFSM) {}
@@ -18,17 +19,19 @@ export abstract class BaseState implements GridState {
     }
     [GridStateInputs.RangeDragStart](cmp: GridFSM, evt: DragEvent) {
         const target = evt.target as HTMLElement;
-        const { containerAudioWindowRect } = cmp;
-        if (!isAudioRangeElement(target) || containerAudioWindowRect === null) {
+        const { globalContainerAudioWindowRect, mainScrollY } = cmp;
+        if (!isAudioRangeElement(target) || globalContainerAudioWindowRect === null) {
             return;
         }
-
-        const rowIndex = getRowIndex(evt.y, cmp.rowFrames);
-        console.log(rowIndex);
-        // cmp.enterState(GridStateNames.RangeDrag,
-        //     rowIndex,
-        //     target.range,
-        // );
+        evt.preventDefault();
+        const rowIndex = getRowIndex(evt.y - globalContainerAudioWindowRect.y - mainScrollY, cmp.rowFrames);
+        cmp.enterState(GridStateNames.RangeDrag,
+            (evt.target as HTMLElement).getAttribute('data-item-id'),
+            Object.keys(cmp.rowFrames).indexOf(rowIndex),
+            toAudioRange(target.range, cmp.project.tempo),
+            evt.x,
+            evt.y,
+        );
     }
     [GridStateInputs.GridContainerMouseMove](cmp: GridFSM, evt: MouseEvent) {
         const { globalContainerAudioWindowRect, visibleRange, quanitization } = cmp;

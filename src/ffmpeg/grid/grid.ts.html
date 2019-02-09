@@ -57,7 +57,9 @@
                     ></ffmpeg-cursor>
                 </template>
                 <slot
-                    ondragstart={onRangeDragStart}
+                    onmousedown={onRangeDragStart}
+                    onmousemove={onRangeDrag}
+                    onmouseup={onRangeDragEnd}
                     onslotchange={onRangeSlotChange}
                 ></slot>
             </ffmpeg-audiowindow>

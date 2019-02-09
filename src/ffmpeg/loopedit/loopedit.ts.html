@@ -49,6 +49,7 @@
             ></ffmpeg-cursor>
             <template for:each={pianoMidiNotes} for:item="midiNote">
                 <ffmpeg-audiorange
+                    data-item-id={midiNote.id}
                     data-row-id={midiNote.note}
                     key={midiNote.id}
                     range={midiNote.range}

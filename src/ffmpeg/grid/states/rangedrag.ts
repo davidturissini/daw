@@ -3,59 +3,52 @@ import { BaseState } from './base';
 import { AudioRange, toBeatRange } from 'util/audiorange';
 import { AudioRangeChangeEvent } from '../events';
 import { quanitizeTime } from 'store/audiowindow';
+import { pixelToTime } from 'util/geometry';
 
 export class RangeDragState extends BaseState implements GridState {
     range: AudioRange;
-    parentId: string;
+    rowIndex: number;
+    startX: number;
+    startY: number;
     id: string;
-    constructor(parentId: string, id: string, initialRange: AudioRange) {
+    constructor(id: string, rowIndex: number, initialRange: AudioRange, startX: number, startY: number) {
         super();
-        this.range = initialRange;
-        this.parentId = parentId;
         this.id = id;
+        this.range = initialRange;
+        this.rowIndex = rowIndex;
+        this.startX = startX;
+        this.startY = startY;
     }
 
     [GridStateInputs.RangeDrag](fsm: GridFSM, evt: DragEvent) {
-        const { audioWindow } = fsm;
-        if (!audioWindow) {
+        const { containerAudioWindowRect, visibleRange, quanitization } = fsm;
+        if (containerAudioWindowRect === null) {
             return;
         }
-        const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
-        const rowY = evt.y - rect.top;
-        const rowKey = Object.keys(fsm.rowFrames).find((key) => {
-            const rowFrame = fsm.rowFrames[key];
-            return (rowFrame.rect.y + rowFrame.rect.height > rowY);
-        });
-
-        if (!rowKey) {
-            return;
-        }
-
+        evt.preventDefault();
         const { duration: rangeDuration } = this.range;
-        const nextStart = this.range.start.plus(evt.detail.time);
-        this.range = {
-            start: nextStart,
-            duration: rangeDuration,
-        };
-
+        const dx = evt.x - this.startX;
+        const deltaTime = pixelToTime(containerAudioWindowRect, visibleRange, dx);
+        const nextStart = this.range.start.plus(deltaTime);
         const quanitizedRange = {
-            start: quanitizeTime(audioWindow, nextStart, fsm.project.tempo),
+            start: quanitizeTime(quanitization, nextStart, fsm.project.tempo),
             duration: rangeDuration,
         };
         const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {
             bubbles: true,
             composed: true,
             detail: {
+                rowIndex: this.rowIndex,
                 range: quanitizedRange,
                 id: this.id,
-                parentId: this.parentId,
+                parentId: this.rowIndex,
                 beatRange: toBeatRange(quanitizedRange, fsm.project.tempo)
             }
         });
         fsm.dispatchEvent(event);
     }
 
-    [GridStateInputs.RangeDragEnd](fsm: GridFSM, evt: RangeDragEvent) {
+    [GridStateInputs.RangeDragEnd](fsm: GridFSM, evt: DragEvent) {
         fsm.enterPreviousState();
     }
 }

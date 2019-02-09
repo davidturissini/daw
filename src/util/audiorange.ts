@@ -1,7 +1,6 @@
 import { Time, sum as sumTime, gt, subtract as subtractTime, Beat, beatToTime, timeToBeat, createBeat } from './time';
 import { Tempo } from 'store/project';
 
-
 export interface AudioRange {
     start: Time;
     duration: Time;
@@ -13,8 +12,15 @@ export function toBeatRange(range: AudioRange, tempo: Tempo): BeatRange {
     return new BeatRange(start, duration);
 }
 
-export function toAudioRange(tempo: Tempo): AudioRange {
-    return this;
+function isAudioRangeElement(range: AudioRange | BeatRange): range is AudioRange {
+    return 'milliseconds' in range.start;
+}
+
+export function toAudioRange(range: BeatRange | AudioRange, tempo: Tempo): AudioRange {
+    if (isAudioRangeElement(range)) {
+        return range;
+    }
+    return range.toAudioRange(tempo);
 }
 
 export function relative(targetRange, absoluteRange): AudioRange {

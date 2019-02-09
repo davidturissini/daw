@@ -185,24 +185,26 @@ export default class AudioWindowElement extends LightningElement {
 
     renderedCallback() {
         if (!this.rect) {
-            const rect = this.getBoundingClientRect();
-            const host = this.template.host! as HTMLElement;
-            const localRect = {
-                height: host.offsetHeight,
-                width: host.offsetWidth,
-                x: host.offsetLeft,
-                y: host.offsetTop,
-            };
+            requestAnimationFrame(() => {
+                const rect = this.getBoundingClientRect();
+                const host = this.template.host! as HTMLElement;
+                const localRect = {
+                    height: host.offsetHeight,
+                    width: host.offsetWidth,
+                    x: host.offsetLeft,
+                    y: host.offsetTop,
+                };
 
-            const globalRect = {
-                height: rect.height,
-                width: rect.width,
-                x: rect.left,
-                y: rect.top,
-            };
-            this.setRect(localRect, globalRect);
-            this.cursorChildren.forEach((child) => {
-                this.drawElementStyle(child);
+                const globalRect = {
+                    height: rect.height,
+                    width: rect.width,
+                    x: rect.left,
+                    y: rect.top,
+                };
+                this.setRect(localRect, globalRect);
+                this.cursorChildren.forEach((child) => {
+                    this.drawElementStyle(child);
+                });
             });
         }
     }
