@@ -4,7 +4,6 @@
     user-select: none;
     position: relative;
     z-index: 1;
-    padding: 0.25rem 0;
     background: rgb(52, 52, 52);
     color: rgb(150, 150, 150);
     font-size: 0.6rem;
@@ -27,4 +26,30 @@
 
 .beat-label {
     transform: translateX(-50%);
+}
+
+.marker {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    display: block;
+}
+
+
+.marker-arrow {
+    display: block;
+    pointer-events: all;
+    height: 0;
+    width: 0;
+    border: 6px solid transparent;
+    border-top: 10px solid rgb(174, 174, 174);
+    margin-bottom: -6px;
+}
+
+ffmpeg-timelabel, ffmpeg-beatlabel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
 }

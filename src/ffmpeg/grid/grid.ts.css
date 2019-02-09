@@ -31,6 +31,7 @@ main {
     grid-row: 3;
     display: grid;
     grid-template-columns: 150px auto;
+    overflow-y: auto;
 }
 
 .cursors-container {
@@ -99,6 +100,5 @@ ffmpeg-audiowindow ffmpeg-cursor {
 }
 
 ffmpeg-audiowindow .grid-time-marker {
-    background: rgba(56, 56, 56);
     z-index: 1;
 }

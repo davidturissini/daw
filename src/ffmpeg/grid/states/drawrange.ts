@@ -6,6 +6,7 @@ import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { timeZero } from 'util/time';
 import { generateId } from 'util/uniqueid';
 import { quanitizeTime } from 'store/audiowindow';
+import { getRowIndex } from './../util';
 
 export class DrawRangeState extends BaseState implements GridState {
     startX: number | null = null;
@@ -15,18 +16,24 @@ export class DrawRangeState extends BaseState implements GridState {
     enter(fsm: GridFSM) {
         fsm.interactionStateName = GridStateNames.DrawRange;
     }
-    [GridStateInputs.GridRowMouseDown](cmp: GridFSM, evt: MouseEvent) {
-        evt.preventDefault();
-        const { audioWindow } = cmp;
-        if (audioWindow === null) {
+    [GridStateInputs.GridContainerMouseDown](cmp: GridFSM, evt: MouseEvent) {
+        const { globalContainerAudioWindowRect, mainScrollY, visibleRange, quanitization } = cmp;
+        if (globalContainerAudioWindowRect === null) {
             return;
         }
-        const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
-        const target = evt.target as HTMLElement;
-        const rowIndex = this.rowIndex = parseInt(target.getAttribute('data-row-index') as string, 10);
+
+        if (evt.target !== evt.currentTarget) {
+            // event bubbled
+            return;
+        }
+        evt.preventDefault();
+        console.log(evt.y, globalContainerAudioWindowRect.y, mainScrollY)
+        const rowKey = getRowIndex(evt.y - globalContainerAudioWindowRect.y + mainScrollY, cmp.rowFrames);
+        const row = cmp.rowFrames[rowKey];
+        const rowIndex = this.rowIndex = row.index;
         this.startX = evt.x;
-        const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.x - rect.left);
-        const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
+        const time = absolutePixelToTime(globalContainerAudioWindowRect, visibleRange, evt.x - globalContainerAudioWindowRect.x);
+        const quanitized = quanitizeTime(quanitization, time, cmp.project.tempo);
         const range = this.range = new AudioRange(quanitized, timeZero);
         const id = this.rangeId = generateId();
         const event: AudioRangeCreatedEvent = new CustomEvent('audiorangecreated', {
@@ -42,14 +49,14 @@ export class DrawRangeState extends BaseState implements GridState {
         cmp.dispatchEvent(event);
     }
     [GridStateInputs.DocumentMouseMove](cmp: GridFSM, evt: MouseEvent) {
-        if (this.startX && this.rangeId && this.range && this.rowIndex) {
-            const { audioWindow } = cmp;
-            if (audioWindow === null) {
+        if (this.startX && this.rangeId && this.range && this.rowIndex !== null) {
+            const { containerAudioWindowRect, visibleRange, quanitization } = cmp;
+            if (containerAudioWindowRect === null) {
                 return;
             }
             const diff = evt.x - this.startX;
-            const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, diff);
-            const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
+            const time = pixelToTime(containerAudioWindowRect, visibleRange, diff);
+            const quanitized = quanitizeTime(quanitization, time, cmp.project.tempo);
             const next = new AudioRange(this.range.start, quanitized);
 
             const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {

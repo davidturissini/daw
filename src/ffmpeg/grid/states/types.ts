@@ -1,19 +1,13 @@
-import { AudioWindow } from "cmp/grid/grid";
-import { RangeDragStartEvent, RangeDragEvent } from "cmp/audiorange/audiorange";
-import { CursorDragEvent } from "cmp/cursor/cursor";
+import { AudioWindow, GridRowRectMap } from "cmp/grid/grid";
 import { AudioRange } from "util/audiorange";
 import { Project } from "store/project";
-import { Frame } from "util/geometry";
+import { Rect } from "util/geometry";
+import { Beat } from "util/time";
 
 export enum GridStateInputs {
     EditButtonClick = 'EditButtonClick',
     PanButtonClick = 'PanButtonClick',
     CloseButtonClick = 'CloseButtonClick',
-
-    GridRowMouseDown = 'GridRowMouseDown',
-    GridRowMouseMove = 'GridRowMouseMove',
-    GridRowMouseUp = 'GridRowMouseUp',
-
 
     DocumentMouseMove = 'DocumentMouseMove',
     DocumentMouseUp = 'DocumentMouseUp',
@@ -23,6 +17,7 @@ export enum GridStateInputs {
     RangeDragEnd = 'RangeDragEnd',
 
     GridContainerClick = 'GridContainerClick',
+    GridContainerMouseDown = 'GridContainerMouseDown',
     GridContainerMouseMove = 'GridContainerMouseMove',
     GridContainerMouseLeave = 'GridContainerMouseLeave',
 
@@ -46,25 +41,19 @@ export interface GridState {
     enter: (fsm: GridFSM) => void;
     exit: (fsm: GridFSM) => void;
     [GridStateInputs.EditButtonClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
-    [GridStateInputs.GridRowMouseDown]?: (fsm: GridFSM, evt: MouseEvent) => void;
-    [GridStateInputs.GridRowMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
-    [GridStateInputs.GridRowMouseUp]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.DocumentMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.DocumentMouseUp]?: (fsm: GridFSM, evt: MouseEvent) => void;
 
     [GridStateInputs.PanButtonClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
 
-    [GridStateInputs.RangeDragStart]?: (fsm: GridFSM, evt: RangeDragStartEvent) => void;
-    [GridStateInputs.RangeDrag]?: (fsm: GridFSM, evt: RangeDragEvent) => void;
-    [GridStateInputs.RangeDragEnd]?: (fsm: GridFSM, evt: RangeDragEvent) => void;
+    [GridStateInputs.RangeDragStart]?: (fsm: GridFSM, evt: DragEvent) => void;
+    [GridStateInputs.RangeDrag]?: (fsm: GridFSM, evt: DragEvent) => void;
+    [GridStateInputs.RangeDragEnd]?: (fsm: GridFSM, evt: DragEvent) => void;
 
     [GridStateInputs.GridContainerClick]?: (fsm: GridFSM, evt: MouseEvent) => void;
+    [GridStateInputs.GridContainerMouseDown]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridContainerMouseMove]?: (fsm: GridFSM, evt: MouseEvent) => void;
     [GridStateInputs.GridContainerMouseLeave]?: (fsm: GridFSM, evt: MouseEvent) => void;
-
-    [GridStateInputs.DurationCursorDragStart]?: (fsm: GridFSM, evt: CursorDragEvent) => void;
-    [GridStateInputs.DurationCursorDrag]?: (fsm: GridFSM, evt: CursorDragEvent) => void;
-    [GridStateInputs.DurationCursorDragEnd]?: (fsm: GridFSM, evt: CursorDragEvent) => void;
 }
 
 export interface GridFSM {
@@ -75,10 +64,15 @@ export interface GridFSM {
     stateInput<T>(name: GridStateInputs, evt: T, ...args: any[]): void;
     enterPreviousState(): void;
 
-    audioWindow: AudioWindow | null;
     dispatchEvent: HTMLElement['dispatchEvent'];
     range: AudioRange | null;
     interactionStateName: GridStateNames;
     project: Project;
-    rowFrames: Frame[];
+    rowFrames: GridRowRectMap;
+    hoverCursorMs: number | null;
+    containerAudioWindowRect: Rect | null;
+    globalContainerAudioWindowRect: Rect | null;
+    quanitization: Beat;
+    visibleRange: AudioRange;
+    mainScrollY: number;
 }

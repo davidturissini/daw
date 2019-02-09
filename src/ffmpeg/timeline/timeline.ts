@@ -1,20 +1,20 @@
 import { LightningElement, api } from 'lwc';
 import interact, { Interactable } from 'interactjs';
-import { Time } from '../../util/time';
+import { Time, Beat } from '../../util/time';
 import rafThrottle from 'raf-throttle';
-import { timeToPixel } from 'util/geometry';
-import { AudioWindow, mapTimeMarks, mapBeatMarks } from 'store/audiowindow';
+import { mapTimeMarks, mapBeatMarks } from 'store/audiowindow';
 import { Tempo } from 'store/project';
+import { AudioRange } from 'util/audiorange';
+import { AudioWindowRectChangeEvent } from 'cmp/audiowindow/audiowindow';
+import { Rect, pixelToTime } from 'util/geometry';
+
+export type TimelineDragEvent = CustomEvent<{
+    delta: Time;
+}>
 
 export enum TimelineVariant {
     Time = 'time',
     Beats = 'beats',
-}
-
-interface TimelineTick {
-    time: Time;
-    style: string;
-    beat?: number;
 }
 
 const quanitizationValues = [
@@ -54,9 +54,11 @@ export function getResolution(duration): number {
 
 export default class Timeline extends LightningElement {
     interact: Interactable;
-    @api audioWindow: AudioWindow;
+    @api range: AudioRange;
     @api tempo: Tempo;
     @api variant: TimelineVariant = TimelineVariant.Time;
+    @api markers: Time[] = [];
+    audioWindowRect: Rect | null = null;
 
     get isTimeVariant() {
         return this.variant === TimelineVariant.Time;
@@ -66,29 +68,22 @@ export default class Timeline extends LightningElement {
         return this.variant === TimelineVariant.Beats;
     }
 
-    get ticks(): TimelineTick[] {
-        const { audioWindow, tempo } = this;
-        const { rect, visibleRange } = audioWindow;
-        const resolution = Time.fromSeconds(getResolution(visibleRange.duration) * 4);
+    get ticks(): Time[] {
+        const { range, tempo } = this;
+        const resolution = Time.fromSeconds(getResolution(range.duration) * 4);
         if (this.variant === TimelineVariant.Time) {
-            return mapTimeMarks<TimelineTick>(audioWindow, resolution, (time: Time) => {
-                const translateX = timeToPixel(rect, visibleRange, time);
-                return {
-                    time,
-                    style: `transform: translateX(${translateX}px)`,
-                };
+            return mapTimeMarks<Time>(range, resolution, (time: Time) => {
+                return time;
             });
         }
 
-        return mapBeatMarks<TimelineTick>(audioWindow, tempo, (beat: number, time: Time) => {
-            const label = (beat % 4 === 0) ? beat / 4 : undefined;
-            const translateX = timeToPixel(rect, visibleRange, time);
-            return {
-                time,
-                beat: label,
-                style: `transform: translateX(${translateX}px)`,
-            };
+        return mapBeatMarks<Time>(range, new Beat(1/4), tempo, (beat: Beat, time: Time) => {
+            return time;
         });
+    }
+
+    onAudioWindowRectChange(evt: AudioWindowRectChangeEvent) {
+        this.audioWindowRect = evt.detail.rect;
     }
 
     /*
@@ -96,25 +91,20 @@ export default class Timeline extends LightningElement {
      * Dragging
      *
     */
-    onDragStart = () => {
-        const customEvent = new CustomEvent('timelinedragstart');
-        this.dispatchEvent(customEvent);
-    }
-
     onDrag = rafThrottle((evt) => {
-        const customEvent = new CustomEvent('timelinedrag', {
+        const { audioWindowRect } = this;
+        if (!audioWindowRect) {
+            return;
+        }
+
+        const time = pixelToTime(audioWindowRect, this.range, evt.dx);
+        const customEvent: TimelineDragEvent = new CustomEvent('timelinedrag', {
             detail: {
-                dx: evt.dx,
+                delta: time,
             },
         });
         this.dispatchEvent(customEvent);
     })
-
-    onDragEnd = () => {
-        const customEvent = new CustomEvent('timelinedragend');
-        this.dispatchEvent(customEvent);
-    }
-
     /*
      *
      * Lifecycle
@@ -123,10 +113,8 @@ export default class Timeline extends LightningElement {
     connectedCallback() {
         this.interact = interact(this.template.host).draggable({
             inertia: true,
-            axis: 'y',
-            onstart: this.onDragStart,
+            axis: 'x',
             onmove: this.onDrag,
-            onend: this.onDragEnd
         });
     }
 

@@ -12,11 +12,8 @@ import { RouteNames, routeIsActive } from 'store/route';
 import { AudioSegmentState } from 'store/audiosegment/reducer';
 import { AudioSegment } from 'store/audiosegment';
 import { Color } from 'util/color';
-import { GridElementRow } from 'cmp/grid/grid';
-import { AudioWindowState } from 'store/audiowindow/reducer';
-import { createAudioSegment, setAudioSegmentRange } from 'store/audiosegment/action';
 import { ProjectState } from 'store/project/reducer';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridClickEvent } from 'cmp/grid/events';
+import { GridClickEvent } from 'cmp/grid/events';
 import { Time } from 'util/time';
 import { Frame } from 'util/geometry';
 import { createProject } from 'store/project/action';
@@ -41,7 +38,6 @@ export default class AppElement extends LightningElement {
 
     @wire(wireSymbol, {
         paths: {
-            audiowindow: ['audiowindow', 'items'],
             audiotracks: ['audiotrack', 'items'],
             editor: ['editor'],
             route: ['router', 'route'],
@@ -55,7 +51,6 @@ export default class AppElement extends LightningElement {
             route: RouterState['route'];
             editor: EditorState;
             audiotracks: ImmutableMap<string, AudioTrack>;
-            audiowindow: AudioWindowState['items'];
             project: ProjectState;
         }
     }
@@ -94,21 +89,6 @@ export default class AppElement extends LightningElement {
 
     /*
      *
-     * Track Segment Grid Events
-     *
-    */
-    onTrackSegmentCreated(evt: AudioRangeCreatedEvent) {
-        const { id, parentId, range } = evt.detail;
-        appStore.dispatch(createAudioSegment(id, parentId, range));
-    }
-
-    onTrackSegmentRangeChange(evt: AudioRangeChangeEvent) {
-        const { id, range } = evt.detail;
-        appStore.dispatch(setAudioSegmentRange(id, range));
-    }
-
-    /*
-     *
      * Track Segment Events
      *
     */
@@ -123,31 +103,6 @@ export default class AppElement extends LightningElement {
     */
     onTrackGridClick(evt: GridClickEvent) {
         this.cursor = evt.detail.time;
-    }
-
-    /*
-     *
-     * Track Grid Getters
-     *
-    */
-    get trackGridRows(): GridElementRow[] {
-        return this.audioTracks.map((audioTrack: AudioTrack, id: string) => {
-            return {
-                id,
-                height: 60,
-                ranges: audioTrack.segments.map((segmentId) => {
-                    const segment = this.storeData.data.segments.get(segmentId) as AudioSegment;
-                    return {
-                        itemId: segmentId,
-                        range: segment.range,
-                        color: audioTrack.color,
-                    }
-                })
-                .toArray()
-            } as GridElementRow;
-        })
-        .toList()
-        .toArray();
     }
 
     /*

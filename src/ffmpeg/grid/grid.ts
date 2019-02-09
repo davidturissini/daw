@@ -1,6 +1,6 @@
 import { LightningElement, track, wire, api } from 'lwc';
 import { Time, timeZero, Beat, beatToTime } from '../../util/time';
-import { pixelToTime, Rect, Frame } from 'util/geometry';
+import { Rect } from 'util/geometry';
 import { AudioRange, BeatRange, containsTime } from 'util/audiorange';
 import { wireSymbol } from 'store/index';
 import { Color } from 'util/color';
@@ -8,14 +8,13 @@ import { mapBeatMarks, mapTimeMarks } from 'store/audiowindow';
 import { GridStateNames, GridState, GridStateInputs, GridFSM, GridStateCtor } from './states/types';
 import { IdleState } from './states/idle';
 import { DrawRangeState } from './states/drawrange';
-import { RangeDragEvent, RangeDragStartEvent, RangeDragEndEvent } from 'cmp/audiorange/audiorange';
 import { RangeDragState } from './states/rangedrag';
 import rafThrottle from 'raf-throttle';
-import { CursorDragEvent, CursorDragStartEvent, CursorDragEndEvent } from 'cmp/cursor/cursor';
 import { DurationCursorDragState } from './states/durationcursordrag';
 import { ProjectState } from 'store/project/reducer';
 import { Project } from 'store/project';
-import { isAudioRangeElement, AudioRangeElement } from 'cmp/audiowindow/audiowindow';
+import { isAudioRangeElement, AudioRangeElement, AudioWindowRectChangeEvent } from 'cmp/audiowindow/audiowindow';
+import { TimelineDragEvent } from 'cmp/timeline/timeline';
 
 export interface GridRange {
     itemId: string;
@@ -28,20 +27,30 @@ export enum GridTimeVariant {
     Beats = 'beats',
 }
 
-export interface AudioWindow {
-    rect: Rect;
-    visibleRange: AudioRange;
-    quanitization: Beat;
+export interface GridRowRectMap {
+    [key: string]: {
+        index: number;
+        rect: Rect;
+    }
 }
 
 export default class GridElement extends LightningElement implements GridFSM {
     @api canClose: boolean = false;
-    @api range: AudioRange | null = null;
+    @api range: AudioRange = new AudioRange(timeZero, Time.fromSeconds(3));
+    @api visibleRange: AudioRange = new AudioRange(timeZero, Time.fromSeconds(4));
     @track timeVariant: GridTimeVariant = GridTimeVariant.Beats;
     @track interactionStateName: GridStateNames;
-    @track gridContainerRect: Rect | null = null;
-    @track audioWindow: AudioWindow | null = null;
-    @track rowFrames: { [key: string]: { rect: Rect }} = {};
+    @track rowFrames: GridRowRectMap = {};
+    @track hoverCursorMs: number | null = null;
+    @track quanitization: Beat = new Beat(1 / 4);
+
+    get hoverCursor(): Time | null {
+        const { hoverCursorMs } = this;
+        if (!hoverCursorMs) {
+            return null;
+        }
+        return new Time(hoverCursorMs);
+    }
 
     @wire(wireSymbol, {
         paths: {
@@ -56,10 +65,6 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     get project(): Project {
         return this.storeData.data.project.currentProject!
-    }
-
-    get hasRange(): boolean {
-        return this.audioWindow !== null && this.range !== null;
     }
 
     /*
@@ -111,25 +116,12 @@ export default class GridElement extends LightningElement implements GridFSM {
      * Cursors
      *
      */
-    get virtualCursorInRange() {
-        return false;
-    }
-
-    /*
-     *
-     * Cursor Events
-     *
-     */
-    onDurationCursorDrag(evt: CursorDragEvent) {
-        this.stateInput(GridStateInputs.DurationCursorDrag, evt);
-    }
-
-    onDurationCursorDragStart(evt: CursorDragStartEvent) {
-        this.stateInput(GridStateInputs.DurationCursorDragStart, evt);
-    }
-
-    onDurationCursorDragEnd(evt: CursorDragEndEvent) {
-        this.stateInput(GridStateInputs.DurationCursorDragEnd, evt);
+    get hoverCursorInRange() {
+        const { hoverCursor } = this;
+        if (hoverCursor === null) {
+            return false;
+        }
+        return containsTime(hoverCursor, this.visibleRange);
     }
 
     /*
@@ -148,54 +140,58 @@ export default class GridElement extends LightningElement implements GridFSM {
         return vm;
     }
 
-    get gridLines(): Time[] {
-        const { audioWindow } = this;
-        if (audioWindow === null) {
-            return [];
-        }
-
+    get gridLines(): Array<{ time: Time, color: Color }> {
+        const { visibleRange } = this;
         if (this.timeVariant === GridTimeVariant.Time) {
-            const time = beatToTime(audioWindow.quanitization, this.project.tempo);
-            return mapTimeMarks<Time>(audioWindow, time, (time: Time) => {
-                return time;
+            const time = beatToTime(this.quanitization, this.project.tempo);
+            return mapTimeMarks<{ time: Time, color: Color }>(visibleRange, time, (t: Time) => {
+                return {
+                    color: new Color(56, 56, 56),
+                    time: t,
+                };
             });
         }
 
-        return mapBeatMarks<Time>(audioWindow, this.project.tempo, (beat: Number, time: Time) => {
-            return time;
+        return mapBeatMarks<{ time: Time, color: Color }>(visibleRange, this.quanitization, this.project.tempo, (beat: Beat, time: Time) => {
+            return {
+                color: new Color(56, 56, 56),
+                time
+            };
         });
     }
 
     get durationMarkerIsVisible() {
-        const { audioWindow, range } = this;
-        if (audioWindow === null || range === null) {
-            return false;
-        }
-
-        return containsTime(range.duration, audioWindow.visibleRange);
+        const { range, visibleRange } = this;
+        return containsTime(range.duration, visibleRange);
     }
 
     onColLeftSlotChange(evt) {
         const target = evt.target as HTMLSlotElement;
         requestAnimationFrame(() => {
             this.rowFrames = {};
-            target.assignedElements().forEach((elm: HTMLElement) => {
+            target.assignedElements().forEach((elm: HTMLElement, index: number) => {
                 const rowId = elm.getAttribute('data-row-id') as string;
+                const box = elm.getBoundingClientRect();
                 const rect: Rect = {
-                    height: elm.offsetHeight,
-                    width: elm.offsetWidth,
+                    height: box.height,
+                    width: box.width,
                     x: elm.offsetLeft,
                     y: elm.offsetTop,
                 };
                 this.rowFrames[rowId] = {
+                    index,
                     rect,
                 }
-            })
+            });
         });
     }
 
     onRangeSlotChange(evt) {
         const target = evt.target as HTMLSlotElement;
+        const { globalContainerAudioWindowRect } = this;
+        if (!globalContainerAudioWindowRect) {
+            return;
+        }
         requestAnimationFrame(() => {
             target.assignedElements().filter(isAudioRangeElement).forEach((elm: AudioRangeElement) => {
                 const rowId = elm.getAttribute('data-row-id') as string;
@@ -241,31 +237,11 @@ export default class GridElement extends LightningElement implements GridFSM {
      * Timeline
      *
      */
-    get timelineBpm() {
-        return this.project.tempo.beatsPerMinute;
-    }
-
-    /*
-     *
-     * Grid Row Events
-     *
-     */
-    onGridRowMouseDown(evt: MouseEvent) {
-        if ((evt.target as HTMLElement).classList.contains('row')) {
-            this.stateInput<MouseEvent>(GridStateInputs.GridRowMouseDown, evt);
+    get topTimelineMarkers(): Time[] {
+        if (this.durationMarkerIsVisible && this.range) {
+            return [this.range.duration];
         }
-    }
-
-    onGridRowMouseMove(evt: MouseEvent) {
-        if ((evt.target as HTMLElement).classList.contains('row')) {
-            this.stateInput(GridStateInputs.GridRowMouseMove, evt);
-        }
-    }
-
-    onGridRowMouseUp(evt: MouseEvent) {
-        if ((evt.target as HTMLElement).classList.contains('row')) {
-            this.stateInput(GridStateInputs.GridRowMouseUp, evt);
-        }
+        return [];
     }
 
     /*
@@ -283,6 +259,22 @@ export default class GridElement extends LightningElement implements GridFSM {
 
     onGridContainerMouseLeave(evt: MouseEvent) {
         this.stateInput(GridStateInputs.GridContainerMouseLeave, evt);
+    }
+
+    onGridContainerMouseDown(evt: MouseEvent) {
+        this.stateInput(GridStateInputs.GridContainerMouseDown, evt);
+    }
+
+    containerAudioWindowRect: Rect | null = null;
+    globalContainerAudioWindowRect: Rect | null = null;
+    onContainerAudioWindowRectChange(evt: AudioWindowRectChangeEvent) {
+        this.containerAudioWindowRect = evt.detail.rect;
+        this.globalContainerAudioWindowRect = evt.detail.globalRect;
+    }
+
+    mainScrollY: number = 0;
+    onMainScroll(evt) {
+        this.mainScrollY = evt.target.scrollTop;
     }
 
     /*
@@ -304,13 +296,13 @@ export default class GridElement extends LightningElement implements GridFSM {
      *
      */
 
-    onRangeDragStart(evt: RangeDragStartEvent) {
+    onRangeDragStart(evt: DragEvent) {
         this.stateInput(GridStateInputs.RangeDragStart, evt);
     }
-    onRangeDrag(evt: RangeDragEvent) {
+    onRangeDrag(evt: DragEvent) {
         this.stateInput(GridStateInputs.RangeDrag, evt);
     }
-    onRangeDragEnd(evt: RangeDragEndEvent) {
+    onRangeDragEnd(evt: DragEvent) {
         this.stateInput(GridStateInputs.RangeDragEnd, evt);
     }
 
@@ -319,41 +311,17 @@ export default class GridElement extends LightningElement implements GridFSM {
      * Events
      *
      */
-    onTimelineDrag(evt) {
-        const { audioWindow } = this;
-        if (audioWindow === null) {
-            return;
-        }
-
-        const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.detail.dx);
-        let start = audioWindow.visibleRange.start.minus(time);
-        if (start.milliseconds < 0) {
+    onTimelineDrag(evt: TimelineDragEvent) {
+        const { visibleRange } = this;
+        const { delta } = evt.detail;
+        let start = visibleRange.start.minus(delta);
+        if (start.lessThan(timeZero)) {
             start = timeZero;
         }
-        const range = new AudioRange(start, audioWindow.visibleRange.duration);
-        this.audioWindow = Object.assign({}, audioWindow, {
-            visibleRange: range,
-        });
+
+        const range = new AudioRange(start, visibleRange.duration);
+        this.visibleRange = range;
     }
-
-    get gridContainerElement(): HTMLElement {
-        return this.template.querySelector('.grid-container') as HTMLElement;
-    }
-
-    get hasAudioWindow() {
-        return this.audioWindow !== null;
-    }
-
-    get cursorFrameStyles() {
-        const { gridContainerRect } = this;
-        if (!gridContainerRect) {
-            return '';
-        }
-
-        const { x, y } = gridContainerRect;
-        return `transform: translate(${x}px, ${y}px)`;
-    }
-
 
     /*
      *
@@ -373,28 +341,5 @@ export default class GridElement extends LightningElement implements GridFSM {
     disconnectedCallback() {
         document.removeEventListener('mousemove', this.onDocumentMouseMove);
         document.removeEventListener('mouseup', this.onDocumentMouseUp);
-    }
-
-    renderedCallback() {
-        if (!this.audioWindow) {
-            requestAnimationFrame(() => {
-                const { gridContainerElement } = this;
-                const bounds: ClientRect = gridContainerElement.getBoundingClientRect();
-                const rect: Rect = this.gridContainerRect = {
-                    height: bounds.height,
-                    width: bounds.width,
-                    x: gridContainerElement.offsetLeft,
-                    y: gridContainerElement.offsetTop,
-                };
-
-                let duration = this.range ? this.range.duration.plus(beatToTime(new Beat(4), this.project.tempo)) : beatToTime(new Beat(10), this.project.tempo);
-
-                this.audioWindow = {
-                    rect: rect,
-                    quanitization: new Beat(1 / 4),
-                    visibleRange: new AudioRange(timeZero, duration),
-                };
-            });
-        }
     }
 }

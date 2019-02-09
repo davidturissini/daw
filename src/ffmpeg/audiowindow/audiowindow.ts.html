@@ -1,13 +1,8 @@
 <template>
     <slot
-        data-audio-window={audioWindow}
-        onslotchange={onCursorSlotChange}
-        name="cursor"
-    ></slot>
-    <slot
-        data-audio-window={audioWindow}
+        data-audio-range={range}
         onrangechange={onRangeChange}
-        onslotchange={onRangeSlotChange}
-        name="range"
+        ontimechange={onTimeChange}
+        onslotchange={onSlotChange}
     ></slot>
 </template>

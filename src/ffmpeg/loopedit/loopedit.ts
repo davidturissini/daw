@@ -214,7 +214,11 @@ export default class LoopEditElement extends LightningElement {
         return getAudioContext();
     }
 
-    get loopCurrentTime() {
-        return new Time(1000);
+    get loopCurrentTimeIsVisible() {
+        return false;
+    }
+
+    get loopCurrentTime(): Time | null {
+        return null;
     }
 }

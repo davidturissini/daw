@@ -11,7 +11,6 @@ import { reducer as editorReducer, EditorState } from './editor/reducer';
 import { reducer as audioSegmentReducer, AudioSegmentState } from './audiosegment/reducer';
 import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
-import { reducer as audioWindowReducer, AudioWindowState } from './audiowindow/reducer';
 import { reducer as loopReducer, LoopState } from './loop/reducer';
 
 // Epics
@@ -65,13 +64,11 @@ export interface AppState {
     audiosegment: AudioSegmentState;
     project: ProjectState;
     router: RouterState;
-    audiowindow: AudioWindowState;
     loop: LoopState;
 }
 
 export const appStore = createStore(
     combineReducers({
-        audiowindow: audioWindowReducer,
         audiotrack: audioTrackReducer,
         instrument: instrumentReducer,
         editor: editorReducer,

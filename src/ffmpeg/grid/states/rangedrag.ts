@@ -1,7 +1,6 @@
 import { GridStateInputs, GridState, GridFSM } from './types';
 import { BaseState } from './base';
 import { AudioRange } from 'util/audiorange';
-import { RangeDragEvent } from 'cmp/audiorange/audiorange';
 import { AudioRangeChangeEvent } from '../events';
 import { quanitizeTime } from 'store/audiowindow';
 
@@ -16,11 +15,22 @@ export class RangeDragState extends BaseState implements GridState {
         this.id = id;
     }
 
-    [GridStateInputs.RangeDrag](fsm: GridFSM, evt: RangeDragEvent) {
+    [GridStateInputs.RangeDrag](fsm: GridFSM, evt: DragEvent) {
         const { audioWindow } = fsm;
         if (!audioWindow) {
             return;
         }
+        const rect: ClientRect = (evt.target as HTMLElement).getBoundingClientRect();
+        const rowY = evt.y - rect.top;
+        const rowKey = Object.keys(fsm.rowFrames).find((key) => {
+            const rowFrame = fsm.rowFrames[key];
+            return (rowFrame.rect.y + rowFrame.rect.height > rowY);
+        });
+
+        if (!rowKey) {
+            return;
+        }
+
         const { duration: rangeDuration } = this.range;
         const nextStart = this.range.start.plus(evt.detail.time);
         this.range = new AudioRange(

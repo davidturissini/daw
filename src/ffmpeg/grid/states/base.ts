@@ -1,11 +1,9 @@
-import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
+import { GridStateInputs, GridState, GridFSM } from './types';
 import { GridCloseEvent } from './../events';
-import { RangeDragStartEvent } from 'cmp/audiorange/audiorange';
 import { absolutePixelToTime } from 'util/geometry';
 import { quanitizeTime } from 'store/audiowindow';
-import { setAudioWindowVirtualCursorTime } from 'store/audiowindow/action';
-import { appStore } from 'store/index';
-import { CursorDragEvent } from 'cmp/cursor/cursor';
+import { isAudioRangeElement } from 'cmp/audiowindow/audiowindow';
+import { getRowIndex } from './../util';
 
 export abstract class BaseState implements GridState {
     enter(fsm: GridFSM) {}
@@ -18,37 +16,33 @@ export abstract class BaseState implements GridState {
         });
         cmp.dispatchEvent(event);
     }
-    [GridStateInputs.RangeDragStart](cmp: GridFSM, evt: RangeDragStartEvent) {
-        const parentId = (evt.target as HTMLElement).getAttribute('data-row-id') as string;
-        cmp.enterState(GridStateNames.RangeDrag,
-            parentId,
-            evt.detail.itemId,
-            evt.detail.range
-        );
+    [GridStateInputs.RangeDragStart](cmp: GridFSM, evt: DragEvent) {
+        const target = evt.target as HTMLElement;
+        const { containerAudioWindowRect } = cmp;
+        if (!isAudioRangeElement(target) || containerAudioWindowRect === null) {
+            return;
+        }
+
+        const rowIndex = getRowIndex(evt.y, cmp.rowFrames);
+        console.log(rowIndex);
+        // cmp.enterState(GridStateNames.RangeDrag,
+        //     rowIndex,
+        //     target.range,
+        // );
     }
     [GridStateInputs.GridContainerMouseMove](cmp: GridFSM, evt: MouseEvent) {
-        const { audioWindow } = cmp;
-        if (audioWindow === null) {
+        const { globalContainerAudioWindowRect, visibleRange, quanitization } = cmp;
+        if (globalContainerAudioWindowRect === null) {
             return;
         }
+
         const { x } = evt;
-        const time = absolutePixelToTime(audioWindow.rect, audioWindow.visibleRange, x - audioWindow.rect.x);
-        const quanitized = quanitizeTime(audioWindow, time, cmp.project.tempo);
-        appStore.dispatch(
-            setAudioWindowVirtualCursorTime(audioWindow.id, quanitized)
-        );
+        const time = absolutePixelToTime(globalContainerAudioWindowRect, visibleRange, x - globalContainerAudioWindowRect.x);
+        const quanitized = quanitizeTime(quanitization, time, cmp.project.tempo);
+
+        cmp.hoverCursorMs = quanitized.milliseconds
     }
     [GridStateInputs.GridContainerMouseLeave](cmp: GridFSM, evt: MouseEvent) {
-        const { audioWindow } = cmp;
-        if (audioWindow === null) {
-            return;
-        }
-        appStore.dispatch(
-            setAudioWindowVirtualCursorTime(audioWindow.id, null)
-        );
-    }
-
-    [GridStateInputs.DurationCursorDragStart](fsm: GridFSM, evt: CursorDragEvent) {
-        fsm.enterState(GridStateNames.DurationCursorDrag, evt.detail.time);
+        cmp.hoverCursorMs = null;
     }
 }

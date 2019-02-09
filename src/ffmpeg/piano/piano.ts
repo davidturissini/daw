@@ -1,8 +1,6 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { MidiNote, PianoKeyMap, PianoKey } from 'util/sound';
 import { wireSymbol } from 'store/index';
-import { GridElementRow } from 'cmp/grid/grid';
-import { AudioWindowState } from 'store/audiowindow/reducer';
 import { Color } from 'util/color';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
@@ -38,13 +36,11 @@ export default class PianoElement extends LightningElement {
     @wire(wireSymbol, {
         paths: {
             instruments: ['instrument', 'items'],
-            audiowindow: ['audiowindow', 'items'],
         }
     })
     storeData: {
         data: {
             instruments: InstrumentState['items'];
-            audiowindow: AudioWindowState['items'];
         }
     }
 
@@ -59,36 +55,11 @@ export default class PianoElement extends LightningElement {
         return this.storeData.data.instruments.get(this.instrumentId) as Instrument<any>;
     }
 
-    get gridRows(): GridElementRow[] {
-        const { notes } = this;
-        return Object.keys(notes).map((octave) => {
-            const note = notes[octave];
-            const midiNotes = this.midiNotes[octave] || [];
-            const row: GridElementRow = {
-                height: note.sharp ? 30 : 45,
-                id: octave,
-                ranges: midiNotes.map((midiNote) => {
-                    return {
-                        range: midiNote.range,
-                        color: new Color(0, 255, 0),
-                        itemId: midiNote.id,
-                    };
-                })
-            };
-            return row;
-        }, {});
-    }
-
     get pianoKeyViewModels() {
         const { notes } = this;
-        const noteMap = gridRowNoteMap(notes);
         return Object.keys(notes).map((key: PianoKey) => {
             const note = notes[key]!;
             const classNames = ['key'];
-            const gridRow = noteMap[key];
-            const styles = [
-                `height: ${gridRow.height}px`
-            ];
             if (note.sharp === true) {
                 classNames.push('key--sharp');
             }
@@ -97,22 +68,8 @@ export default class PianoElement extends LightningElement {
                 note: key,
                 name: key,
                 className: classNames.join(' '),
-                style: styles.join(';')
             };
         })
-    }
-
-    get hasGridWindow() {
-        return this.gridWindowId !== null;
-    }
-
-    get gridWindow() {
-        const { gridWindowId } = this;
-        if (gridWindowId) {
-            return this.storeData.data.audiowindow.get(gridWindowId);
-        }
-
-        return null;
     }
 
     get noteViewModels() {

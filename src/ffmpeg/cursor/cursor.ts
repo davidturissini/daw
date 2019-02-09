@@ -1,26 +1,14 @@
 import { LightningElement, api } from 'lwc';
-import interact from 'interactjs';
 import { Time } from 'util/time';
 import { TimeChangeEvent } from 'cmp/audiowindow/audiowindow';
-
-export type CursorDragStartEvent = CustomEvent<{
-    time: Time,
-}>
-
-export type CursorDragEvent = CustomEvent<{
-    time: Time,
-}>
-
-export type CursorDragEndEvent = CustomEvent<{}>
+import { Color } from 'util/color';
 
 const timeSymbol = Symbol();
 
-
 export default class CursorElement extends LightningElement {
-    @api virtual: boolean = false;
-    @api userDrag;
+    @api dashed: boolean = false;
+    @api color: Color | null = null;
     connected = false;
-    interact: any;
     [timeSymbol]: Time;
 
     @api
@@ -44,55 +32,15 @@ export default class CursorElement extends LightningElement {
 
     get lineClassName() {
         let base = 'line'
-        if (this.virtual) {
-            return `${base} line--virtual`;
+        if (this.dashed) {
+            return `${base} line--dashed`;
         }
         return base;
     }
 
-    onStartDrag = (evt) => {
-        const { time } = this;
-        if (!time) {
-            return;
-        }
-        const event: CursorDragStartEvent = new CustomEvent('cursordragstart', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                time,
-            }
-        });
-
-        this.dispatchEvent(event);
-    }
-
-    onCaretDrag = (evt) => {
-        // const time = pixelToTime(audioWindow.rect, audioWindow.visibleRange, evt.dx);
-        // const event: CursorDragEvent = new CustomEvent('cursordrag', {
-        //     bubbles: true,
-        //     composed: true,
-        //     detail: {
-        //         time,
-        //     },
-        // });
-        // this.dispatchEvent(event);
-    }
-
-    onEndDrag = (evt) => {
-        const event: CursorDragEndEvent = new CustomEvent('cursordragend', {
-            bubbles: true,
-            composed: true,
-        });
-
-        this.dispatchEvent(event);
-    }
-
-    onCaretDoubleTap = (evt) => {
-        const event = new CustomEvent('cursordoubletap', {
-            bubbles: true,
-            composed: true,
-        });
-        this.dispatchEvent(event);
+    get lineStyles() {
+        const color = this.color || new Color(117, 117, 117);
+        return `border-color: ${color.rgb()}`;
     }
 
     /*
@@ -100,30 +48,11 @@ export default class CursorElement extends LightningElement {
      * Lifecycle
      *
     */
-
     connectedCallback() {
         this.connected = true;
     }
 
-    renderedCallback() {
-        if (this.userDrag && !this.interact) {
-            this.interact = interact(this.template.querySelector('.drag-triangle'));
-
-            this.interact.draggable({
-                onmove: this.onCaretDrag,
-                onstart: this.onStartDrag,
-                onend: this.onEndDrag,
-            });
-
-            this.interact.on('doubletap', this.onCaretDoubleTap);
-        }
-    }
-
     disconnectedCallback() {
         this.connected = false;
-        if (this.interact) {
-            this.interact.unset();
-            this.interact.off('doubletap', this.onCaretDoubleTap);
-        }
     }
 }

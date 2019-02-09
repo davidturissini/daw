@@ -1,19 +1,9 @@
 :host {
     display: block;
     position: absolute;
-    top: 0.1rem;
+    top: 0;
     left: 0;
     z-index: 2;
-    bottom: 0.1rem;
-    background: red;
-}
-
-:host(:focus) {
-    outline: none;
-}
-
-:host(:focus) .focus-indicator {
-    display: block;
 }
 
 :host(:hover) .handle {

@@ -1,16 +1,14 @@
 import { AudioRange } from 'util/audiorange';
-import { Time, beatToTime } from 'util/time';
+import { Time, beatToTime, timeToBeat, Beat } from 'util/time';
 import { Tempo } from 'store/project';
-import { AudioWindow } from 'cmp/grid/grid';
 
-export function mapBeatMarks<T>(audioWindow: AudioWindow, tempo: Tempo, cb: (beat: number, time: Time) => T): T[] {
-    return new BeatRange(tempo, audioWindow).map<T>(cb);
+export function mapBeatMarks<T>(range: AudioRange, quanitization: Beat, tempo: Tempo, cb: (beat: Beat, time: Time) => T): T[] {
+    return new BeatRange(tempo, range, quanitization).map<T>(cb);
 }
 
-export function mapTimeMarks<T>(audioWindow: AudioWindow, resolution: Time, fn: (time: Time) => T): T[] {
-    const { visibleRange } = audioWindow;
-    const tickValues = getTickValues(visibleRange, resolution.milliseconds);
-    const values: T[] = [];
+export function mapTimeMarks<A>(range: AudioRange, resolution: Time, fn: (time: Time) => A): A[] {
+    const tickValues = getTickValues(range, resolution.milliseconds);
+    const values: A[] = [];
     for(let i = 0; i < tickValues.length; i += 1) {
         const time = new Time(tickValues[i]);
         const value = fn(time);
@@ -33,16 +31,17 @@ function getTickValues(range: AudioRange, tickDistanceMs: number) {
 
 class BeatRange {
     tempo: Tempo;
-    audioWindow: AudioWindow;
-    constructor(tempo: Tempo, audioWindow: AudioWindow) {
+    range: AudioRange;
+    quanitization: Beat;
+    constructor(tempo: Tempo, range: AudioRange, quanitization: Beat) {
         this.tempo = tempo;
-        this.audioWindow = audioWindow;
+        this.range = range;
+        this.quanitization = quanitization;
     }
 
-    map<T>(cb: (beat: number, time: Time) => T): T[] {
-        const { audioWindow, tempo } = this;
-        const { visibleRange, quanitization } = audioWindow;
-        const { start, duration } = visibleRange;
+    map<T>(cb: (beat: Beat, time: Time) => T): T[] {
+        const { range, quanitization, tempo } = this;
+        const { start, duration } = range;
         const tickDistanceSeconds = beatToTime(quanitization, tempo).seconds;
         const min = Math.ceil(start.seconds / tickDistanceSeconds);
         const d = Math.floor((start.seconds + duration.seconds) / tickDistanceSeconds);
@@ -50,7 +49,7 @@ class BeatRange {
         for(let i = min; i <= d; i += 1) {
             if (i !== 0) {
                 const time = Time.fromSeconds(i * tickDistanceSeconds);
-                const value: T = cb(i, time);
+                const value: T = cb(timeToBeat(time, tempo), time);
                 ticks.push(value);
             }
         }
@@ -59,8 +58,7 @@ class BeatRange {
     }
 }
 
-export function quanitizeTime(audioWindow: AudioWindow, time: Time, tempo: Tempo): Time {
-    const quantizeInterval = audioWindow.quanitization;
+export function quanitizeTime(quantizeInterval: Beat, time: Time, tempo: Tempo): Time {
     const quanitizeTime = beatToTime(quantizeInterval, tempo);
     const max = time.milliseconds + quanitizeTime.milliseconds;
     const mod = max % quanitizeTime.milliseconds;

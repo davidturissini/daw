@@ -20,104 +20,60 @@
         </ffmpeg-button>
     </header>
     <ffmpeg-timeline
-        if:true={hasAudioWindow}
+        range={visibleRange}
         class="timeline"
         variant="beats"
         tempo={project.tempo}
-        audio-window={audioWindow}
+        markers={topTimelineMarkers}
         ontimelinedrag={onTimelineDrag}>
     </ffmpeg-timeline>
-    <main>
+    <main onscroll={onMainScroll}>
         <div class="col-left">
             <slot name="col-left" onslotchange={onColLeftSlotChange}></slot>
         </div>
         <div
             class="grid-container"
-            onmousemove={onGridContainerMouseMove}
-            onmouseleave={onGridContainerMouseLeave}
-            onclick={onGridContainerClick}
             >
             <ffmpeg-audiowindow
-                if:true={hasAudioWindow}
-                audio-window={audioWindow}
+                onrectchange={onContainerAudioWindowRectChange}
+                onmousedown={onGridContainerMouseDown}
+                onmousemove={onGridContainerMouseMove}
+                onmouseleave={onGridContainerMouseLeave}
+                onclick={onGridContainerClick}
                 tempo={project.tempo}
+                range={visibleRange}
             >
                 <template if:true={durationMarkerIsVisible}>
                     <ffmpeg-cursor
-                        slot="cursor"
                         class="duration-marker"
-                        oncursordragstart={onDurationCursorDragStart}
-                        oncursordrag={onDurationCursorDrag}
-                        oncursordragend={onDurationCursorDragEnd}
                         time={range.duration}
-                        user-drag
                     ></ffmpeg-cursor>
                 </template>
-                <template if:true={virtualCursorInRange}>
+                <template if:true={hoverCursorInRange}>
                     <ffmpeg-cursor
-                        slot="cursor"
-                        time={audioWindow.virtualCursor}
-                        virtual
+                        time={hoverCursor}
+                        dashed
                     ></ffmpeg-cursor>
                 </template>
                 <template for:each={gridLines} for:item="gridLine">
                     <ffmpeg-cursor
                         class="grid-time-marker"
-                        key={gridLine.milliseconds}
-                        slot="cursor"
-                        time={gridLine}
+                        color={gridLine.color}
+                        key={gridLine.time.milliseconds}
+                        time={gridLine.time}
                     ></ffmpeg-cursor>
                 </template>
-                <slot slot="range" name="range" onslotchange={onRangeSlotChange}></slot>
+                <slot
+                    ondragstart={onRangeDragStart}
+                    onslotchange={onRangeSlotChange}
+                ></slot>
             </ffmpeg-audiowindow>
-            <template for:each={rowViewModels} for:item="row" for:index="index">
-                <div
-                    class="row"
-                    style={row.style}
-                    key={row.id}
-                    data-row-index={index}
-                    onmouseup={onGridRowMouseUp}
-                    onmousedown={onGridRowMouseDown}
-                    onmousemove={onGridRowMouseMove}
-                >
-                </div>
-            </template>
         </div>
-        <!-- <div class="grid-container" onmousemove={onGridContainerMouseMove} onmouseleave={onGridContainerMouseLeave} onclick={onGridContainerClick}>
-            <template for:each={rowViewModels} for:item="row">
-                <div
-                    data-row-id={row.id}
-                    onmouseup={onGridRowMouseUp}
-                    onmousedown={onGridRowMouseDown}
-                    onmousemove={onGridRowMouseMove}
-                    class="row"
-                    key={row.id}
-                    style={row.style}
-                >
-                    <template if:true={hasAudioWindow} for:each={row.ranges} for:item="range">
-                        <ffmpeg-audiorange
-                            data-row-id={row.id}
-                            onrangedragstart={onRangeDragStart}
-                            onrangedrag={onRangeDrag}
-                            onrangedragend={onRangeDragEnd}
-                            item-id={range.itemId}
-                            color={range.color}
-                            audio-window={audioWindow}
-                            key={range.itemId}
-                            range={range.range}
-                        >
-                        </ffmpeg-audiorange>
-                    </template>
-                </div>
-            </template>
-            <slot></slot>
-        </div> -->
     </main>
     <ffmpeg-timeline
-        if:true={hasAudioWindow}
         class="time-timeline"
+        range={visibleRange}
         tempo={project.tempo}
-        audio-window={audioWindow}
         ontimelinedrag={onTimelineDrag}>
     </ffmpeg-timeline>
 </template>

@@ -8,7 +8,6 @@
                 data-row-id={pianoKey.note}
                 slot="col-left"
                 class={pianoKey.className}
-                style={pianoKey.style}
                 data-note-name={pianoKey.name}
                 onmouseenter={onKeyMouseEnter}
                 onmousedown={onKeyMouseDown}
@@ -18,7 +17,6 @@
                 <h5 class="key__name">{pianoKey.name}</h5>
             </button>
         </template>
-        <slot name="cursor" slot="cursor"></slot>
-        <slot name="range" slot="range"></slot>
+        <slot></slot>
     </ffmpeg-grid>
 </template>

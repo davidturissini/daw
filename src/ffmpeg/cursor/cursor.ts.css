@@ -1,20 +1,18 @@
 :host {
     display: block;
-    margin-left: -1px;
-    background: rgb(117, 117, 117);
     pointer-events: none;
     height: 100%;
     width: 1px;
 }
 
-.drag-triangle {
-    pointer-events: all;
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translate(-5.5px, 6px);
-    height: 0;
-    width: 0;
-    border: 6px solid transparent;
-    border-top: 10px solid rgb(174, 174, 174);
+
+.line {
+    display: block;
+    height: 100%;
+    width: 1px;
+    border-left: 1px solid;
+}
+
+.line--dashed {
+    border-left: 1px dashed;
 }

@@ -14,21 +14,23 @@
     padding: 0;
     width: 100%;
     margin: 0;
+    height: 30px;
 }
 
 .key--sharp {
     background: #000;
     color: #fff;
-    width: 150px;
     position: relative;
     z-index: 2;
+    height: 20px;
 }
 
 .key__name {
     position: absolute;
     z-index: 1;
     right: 0.5rem;
-    bottom: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
     margin: 0;
 }
 

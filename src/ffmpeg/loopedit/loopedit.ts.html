@@ -44,12 +44,11 @@
             onaudiorangecreated={onOscillatorNoteCreated}
         >
             <ffmpeg-cursor
-                slot="cursor"
+                if:true={loopCurrentTimeIsVisible}
                 time={loopCurrentTime}
             ></ffmpeg-cursor>
             <template for:each={pianoMidiNotes} for:item="midiNote">
                 <ffmpeg-audiorange
-                    slot="range"
                     data-row-id={midiNote.note}
                     key={midiNote.id}
                     range={midiNote.range}
