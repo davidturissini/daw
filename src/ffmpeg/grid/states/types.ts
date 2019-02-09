@@ -1,4 +1,4 @@
-import { AudioWindow, GridRowRectMap } from "cmp/grid/grid";
+import { GridRowRectMap } from "cmp/grid/grid";
 import { AudioRange } from "util/audiorange";
 import { Project } from "store/project";
 import { Rect } from "util/geometry";

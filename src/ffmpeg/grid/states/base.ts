@@ -39,8 +39,7 @@ export abstract class BaseState implements GridState {
         const { x } = evt;
         const time = absolutePixelToTime(globalContainerAudioWindowRect, visibleRange, x - globalContainerAudioWindowRect.x);
         const quanitized = quanitizeTime(quanitization, time, cmp.project.tempo);
-
-        cmp.hoverCursorMs = quanitized.milliseconds
+        cmp.hoverCursorMs = quanitized.milliseconds;
     }
     [GridStateInputs.GridContainerMouseLeave](cmp: GridFSM, evt: MouseEvent) {
         cmp.hoverCursorMs = null;

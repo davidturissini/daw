@@ -126,16 +126,19 @@ export function subtract(first, second) {
 
 export const timeZero = new Time(0);
 
-export class Beat {
+export interface Beat {
     index: number;
-    constructor(index: number) {
-        this.index = index;
+}
+
+export function createBeat(index: number): Beat {
+    return {
+        index,
     }
 }
 
 export function timeToBeat(time: Time, tempo: Tempo): Beat {
     const index = time.seconds * tempo.secondsPerBeat;
-    return new Beat(index);
+    return createBeat(index);
 }
 
 export function beatToTime(beat: Beat, tempo: Tempo): Time {

@@ -12,7 +12,7 @@ import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, Set
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
-import { Beat } from 'util/time';
+import { createBeat } from 'util/time';
 import { SynthLoopData } from 'store/instrument/nodes/Synth';
 
 export class LoopState extends Record<{
@@ -24,7 +24,7 @@ export class LoopState extends Record<{
 function getDefaultInstrumentLoopData(type: InstrumentType): LoopDataTypes {
     if (type === InstrumentType.DrumMachine) {
         return new DrumMachineLoopData({
-            resolution: new Beat(1 / 4)
+            resolution: createBeat(1 / 4)
         });
     } else if (type === InstrumentType.Synth) {
         return new SynthLoopData({});

@@ -1,5 +1,5 @@
 import { InstrumentAudioNode, InstrumentType } from './../types';
-import { Beat, Time } from 'util/time';
+import { Beat, Time, createBeat } from 'util/time';
 import { Tempo } from 'store/project';
 import { Record } from 'immutable';
 import { Observable } from 'rxjs';
@@ -46,7 +46,7 @@ export class DrumMachineData extends Record<{
 export class DrumMachineLoopData extends Record<{
     resolution: Beat,
 }>({
-    resolution: new Beat(1 / 4),
+    resolution: createBeat(1 / 4),
 }) {}
 
 export class DrumMachine implements InstrumentAudioNode {

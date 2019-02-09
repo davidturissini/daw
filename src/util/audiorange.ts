@@ -1,39 +1,28 @@
-import { Time, sum as sumTime, gt, subtract as subtractTime, Beat, LiveTime, beatToTime, timeToBeat } from './time';
+import { Time, sum as sumTime, gt, subtract as subtractTime, Beat, beatToTime, timeToBeat, createBeat } from './time';
 import { Tempo } from 'store/project';
 
-export class AudioRange {
+
+export interface AudioRange {
     start: Time;
     duration: Time;
-    constructor(start: Time | LiveTime, duration: Time) {
-        if (!(start instanceof Time) && !(start instanceof LiveTime)) {
-            throw new Error(`Invalid start time for AudioRange. "${start}" is not a valid instance of Time`);
-        }
-
-        if (!(duration instanceof Time)) {
-            throw new Error(`Invalid duration time for AudioRange. "${duration}" is not a valid instance of Time`);
-        }
-        this.start = start;
-        this.duration = duration;
-    }
-
-    get end() {
-        return this.start.add(this.duration);
-    }
-
-    toBeatRange(tempo: Tempo): BeatRange {
-        const start = timeToBeat(this.start, tempo);
-        const duration = timeToBeat(this.duration, tempo);
-        return new BeatRange(start, duration);
-    }
-
-    toAudioRange(tempo: Tempo): AudioRange {
-        return this;
-    }
 }
 
-export function relative(targetRange, absoluteRange) {
+export function toBeatRange(range: AudioRange, tempo: Tempo): BeatRange {
+    const start = timeToBeat(range.start, tempo);
+    const duration = timeToBeat(range.duration, tempo);
+    return new BeatRange(start, duration);
+}
+
+export function toAudioRange(tempo: Tempo): AudioRange {
+    return this;
+}
+
+export function relative(targetRange, absoluteRange): AudioRange {
     const start = subtractTime(absoluteRange.start, targetRange.start);
-    return new AudioRange(start, absoluteRange.duration);
+    return {
+        start,
+        duration: absoluteRange.duration,
+    };
 }
 
 export function split(targetRange, relativeRange) {
@@ -45,14 +34,14 @@ export function split(targetRange, relativeRange) {
     const secondDuration = subtractTime(targetRange.duration, sumTime(firstDuration, relativeRange.duration));
 
     return [
-        new AudioRange(
-            firstStart,
-            firstDuration,
-        ),
-        new AudioRange(
-            secondStart,
-            secondDuration,
-        )
+        {
+            start: firstStart,
+            duration: firstDuration,
+        },
+        {
+            start: secondStart,
+            duration: secondDuration,
+        }
     ];
 }
 
@@ -75,8 +64,10 @@ export function clamp(haystack, needle) {
     }
 
 
-    return new AudioRange(start, duration);
-
+    return {
+        start,
+        duration,
+    };
 }
 
 
@@ -92,7 +83,7 @@ export class BeatRange {
         const beatStartTime = beatToTime(this.start, tempo);
         const beatDurationTime = beatToTime(this.duration, tempo);
 
-        return new AudioRange(beatStartTime, beatDurationTime);
+        return { start: beatStartTime, duration: beatDurationTime };
     }
 
     toBeatRange(tempo: Tempo) {
@@ -104,12 +95,13 @@ export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
     const { duration } = range;
     const beats: Beat[] = [];
     for(let i = 0; i < duration.index; i += resolution.index) {
-        beats.push(new Beat(i));
+        beats.push(createBeat(i));
     }
     return beats;
 }
 
 export function containsTime(time: Time, range: AudioRange): boolean {
+    const rangeEnd = range.start.plus(range.duration);
     return (
         (
             (
@@ -117,14 +109,16 @@ export function containsTime(time: Time, range: AudioRange): boolean {
                 time.equals(range.start)
             ) &&
             (
-                time.lessThan(range.end) ||
-                time.equals(range.end)
+                time.lessThan(rangeEnd) ||
+                time.equals(rangeEnd)
             )
         )
     )
 }
 
 export function contains(needle: AudioRange, haystack: AudioRange): boolean {
+    const haystackEnd = haystack.start.plus(haystack.duration);
+    const needleEnd = needle.start.plus(needle.duration);
     return (
         (
             (
@@ -132,18 +126,18 @@ export function contains(needle: AudioRange, haystack: AudioRange): boolean {
                 needle.start.equals(haystack.start)
             ) &&
             (
-                needle.start.lessThan(haystack.end) ||
-                needle.start.equals(haystack.end)
+                needle.start.lessThan(haystackEnd) ||
+                needle.start.equals(haystackEnd)
             )
         ) &&
         (
             (
-                needle.end.lessThan(haystack.end) ||
-                needle.end.equals(haystack.end)
+                needleEnd.lessThan(haystackEnd) ||
+                needleEnd.equals(haystackEnd)
             ) &&
             (
-                needle.end.greaterThan(haystack.start) ||
-                needle.end.equals(haystack.start)
+                needleEnd.greaterThan(haystack.start) ||
+                needleEnd.equals(haystack.start)
             )
         )
     )

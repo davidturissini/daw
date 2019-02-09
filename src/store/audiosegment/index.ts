@@ -10,7 +10,7 @@ export class AudioSegment extends Record<{
     notes: ImmutableMap<string, ImmutableMap<string, MidiNote>>
 }>({
     id: '',
-    range: new AudioRange(timeZero, timeZero),
+    range: { start: timeZero, duration: timeZero },
     trackId: '',
     notes: ImmutableMap(),
 }) {}

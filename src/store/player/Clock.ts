@@ -1,4 +1,4 @@
-import { Beat, Time, timeToBeat, beatToTime, LiveTime } from "util/time";
+import { Beat, Time, timeToBeat, beatToTime, LiveTime, createBeat } from "util/time";
 import { Tempo } from "store/project";
 import { Transport } from "tone";
 
@@ -23,7 +23,7 @@ export class Clock {
     get nextBeat(): Beat {
         const { currentBeat } = this;
         const roundedBeatIndex = Math.floor(currentBeat.index / 4);
-        return new Beat((roundedBeatIndex + 1) * 4);
+        return createBeat((roundedBeatIndex + 1) * 4);
     }
 
     get nextBeatTime(): Time {
@@ -37,7 +37,7 @@ export class Clock {
     timeSincePreviousBar(): Time {
         const { currentBeat, tempo } = this;
         const mod = currentBeat.index % 4;
-        const barStart = new Beat(currentBeat.index - mod);
+        const barStart = createBeat(currentBeat.index - mod);
         return this.currentTime.minus(beatToTime(barStart, tempo));
     }
 

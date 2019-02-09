@@ -21,10 +21,10 @@ export class EditorState extends Record<{
     virtualCursor: Time | null;
     quanitization: number;
 }>({
-    visibleRange: new AudioRange(
-        timeZero,
-        Time.fromSeconds(10)
-    ),
+    visibleRange: {
+        start: timeZero,
+        duration: Time.fromSeconds(10),
+    },
     duration: Time.fromSeconds(30),
     frame: {
         height: 0,

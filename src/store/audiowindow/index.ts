@@ -1,6 +1,7 @@
 import { AudioRange } from 'util/audiorange';
 import { Time, beatToTime, timeToBeat, Beat } from 'util/time';
 import { Tempo } from 'store/project';
+import { Time as ToneTime } from 'tone';
 
 export function mapBeatMarks<T>(range: AudioRange, quanitization: Beat, tempo: Tempo, cb: (beat: Beat, time: Time) => T): T[] {
     return new BeatRange(tempo, range, quanitization).map<T>(cb);
@@ -59,16 +60,8 @@ class BeatRange {
 }
 
 export function quanitizeTime(quantizeInterval: Beat, time: Time, tempo: Tempo): Time {
+    const toneTime = new ToneTime(time.seconds);
     const quanitizeTime = beatToTime(quantizeInterval, tempo);
-    const max = time.milliseconds + quanitizeTime.milliseconds;
-    const mod = max % quanitizeTime.milliseconds;
-    const nearestMax = new Time(max - mod);
-    const nearestMin = nearestMax.minus(quanitizeTime);
-
-    const minDiff = time.milliseconds - nearestMin.milliseconds;
-    const maxDiff = nearestMax.milliseconds - time.milliseconds;
-    if (minDiff < maxDiff) {
-        return nearestMin;
-    }
-    return nearestMax;
+    const quantizedSeconds = toneTime.quantize(quanitizeTime.seconds);
+    return Time.fromSeconds(quantizedSeconds);
 }

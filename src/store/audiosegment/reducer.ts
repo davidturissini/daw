@@ -37,7 +37,10 @@ function moveSegmentReducer(state: AudioSegmentState, action: MoveSegmentAction)
     const { segmentId, time } = action.payload;
     const segment = state.items.get(segmentId) as AudioSegment;
     const newOffset = segment.range.start.plus(time).lessThan(timeZero) ? timeZero : segment.range.start.plus(time);
-    const newRange = new AudioRange(newOffset, segment.range.duration);
+    const newRange = {
+        start: newOffset,
+        duration: segment.range.duration,
+    };
     return state.setIn(['items', segmentId, 'range'], newRange);
 }
 

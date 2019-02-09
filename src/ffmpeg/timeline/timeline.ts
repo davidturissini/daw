@@ -1,6 +1,6 @@
 import { LightningElement, api } from 'lwc';
 import interact, { Interactable } from 'interactjs';
-import { Time, Beat } from '../../util/time';
+import { Time, Beat, createBeat } from '../../util/time';
 import rafThrottle from 'raf-throttle';
 import { mapTimeMarks, mapBeatMarks } from 'store/audiowindow';
 import { Tempo } from 'store/project';
@@ -77,7 +77,7 @@ export default class Timeline extends LightningElement {
             });
         }
 
-        return mapBeatMarks<Time>(range, new Beat(1/4), tempo, (beat: Beat, time: Time) => {
+        return mapBeatMarks<Time>(range, createBeat(1/4), tempo, (beat: Beat, time: Time) => {
             return time;
         });
     }

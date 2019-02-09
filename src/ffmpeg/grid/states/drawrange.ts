@@ -1,6 +1,6 @@
 import { GridStateInputs, GridStateNames, GridState, GridFSM } from './types';
 import { BaseState } from './base';
-import { AudioRange } from 'util/audiorange';
+import { AudioRange, toBeatRange } from 'util/audiorange';
 import { AudioRangeChangeEvent, AudioRangeCreatedEvent } from '../events';
 import { pixelToTime, absolutePixelToTime } from 'util/geometry';
 import { timeZero } from 'util/time';
@@ -27,14 +27,16 @@ export class DrawRangeState extends BaseState implements GridState {
             return;
         }
         evt.preventDefault();
-        console.log(evt.y, globalContainerAudioWindowRect.y, mainScrollY)
         const rowKey = getRowIndex(evt.y - globalContainerAudioWindowRect.y + mainScrollY, cmp.rowFrames);
         const row = cmp.rowFrames[rowKey];
         const rowIndex = this.rowIndex = row.index;
         this.startX = evt.x;
         const time = absolutePixelToTime(globalContainerAudioWindowRect, visibleRange, evt.x - globalContainerAudioWindowRect.x);
         const quanitized = quanitizeTime(quanitization, time, cmp.project.tempo);
-        const range = this.range = new AudioRange(quanitized, timeZero);
+        const range = this.range = {
+            start: quanitized,
+            duration: timeZero,
+        };
         const id = this.rangeId = generateId();
         const event: AudioRangeCreatedEvent = new CustomEvent('audiorangecreated', {
             bubbles: true,
@@ -43,7 +45,7 @@ export class DrawRangeState extends BaseState implements GridState {
                 id,
                 range,
                 rowIndex,
-                beatRange: range.toBeatRange(cmp.project.tempo),
+                beatRange: toBeatRange(range, cmp.project.tempo),
             },
         });
         cmp.dispatchEvent(event);
@@ -57,7 +59,10 @@ export class DrawRangeState extends BaseState implements GridState {
             const diff = evt.x - this.startX;
             const time = pixelToTime(containerAudioWindowRect, visibleRange, diff);
             const quanitized = quanitizeTime(quanitization, time, cmp.project.tempo);
-            const next = new AudioRange(this.range.start, quanitized);
+            const next = {
+                start: this.range.start,
+                duration: quanitized
+            };
 
             const event: AudioRangeChangeEvent = new CustomEvent('audiorangechange', {
                 bubbles: true,
@@ -66,7 +71,7 @@ export class DrawRangeState extends BaseState implements GridState {
                     range: next,
                     id: this.rangeId,
                     rowIndex: this.rowIndex,
-                    beatRange: next.toBeatRange(cmp.project.tempo),
+                    beatRange: toBeatRange(next, cmp.project.tempo),
                 },
             });
             cmp.dispatchEvent(event);

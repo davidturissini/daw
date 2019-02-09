@@ -42,6 +42,7 @@
                 onclick={onGridContainerClick}
                 tempo={project.tempo}
                 range={visibleRange}
+                show-grid
             >
                 <template if:true={durationMarkerIsVisible}>
                     <ffmpeg-cursor
@@ -53,14 +54,6 @@
                     <ffmpeg-cursor
                         time={hoverCursor}
                         dashed
-                    ></ffmpeg-cursor>
-                </template>
-                <template for:each={gridLines} for:item="gridLine">
-                    <ffmpeg-cursor
-                        class="grid-time-marker"
-                        color={gridLine.color}
-                        key={gridLine.time.milliseconds}
-                        time={gridLine.time}
                     ></ffmpeg-cursor>
                 </template>
                 <slot

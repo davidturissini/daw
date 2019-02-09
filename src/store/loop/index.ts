@@ -1,6 +1,6 @@
 import { Record, Map as ImmutableMap } from 'immutable';
 import { MidiNote, PianoKey } from 'util/sound';
-import { Beat, Time } from 'util/time';
+import { Beat, Time, createBeat } from 'util/time';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
 import { SynthLoopData } from 'store/instrument/nodes/Synth';
 
@@ -16,7 +16,7 @@ export class Loop extends Record<{
 }>({
     id: '',
     notes: ImmutableMap(),
-    duration: new Beat(4),
+    duration: createBeat(4),
     instrumentId: '',
     data: {},
     currentTime: null,

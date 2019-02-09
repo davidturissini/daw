@@ -13,6 +13,7 @@ export default class CursorElement extends LightningElement {
 
     @api
     set time(value: Time) {
+        this[timeSymbol] = value;
         if (this.connected === true) {
             const event: TimeChangeEvent = new CustomEvent('timechange', {
                 bubbles: true,
@@ -23,7 +24,6 @@ export default class CursorElement extends LightningElement {
             });
             this.dispatchEvent(event);
         }
-        this[timeSymbol] = value;
     }
 
     get time() {

@@ -1,8 +1,10 @@
 import { LightningElement, api, track } from 'lwc';
 import { timeToPixel, durationToWidth, Rect } from 'util/geometry';
-import { Time } from 'util/time';
+import { Time, Beat, createBeat } from 'util/time';
 import { AudioRange, BeatRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
+import { mapBeatMarks } from 'store/audiowindow';
+import { Color } from 'util/color';
 
 export interface TimeElement extends HTMLElement {
     time: Time;
@@ -68,15 +70,36 @@ function calcAudioRangeStyle(rect: Rect, visibleRange: AudioRange, range: AudioR
 
 export default class AudioWindowElement extends LightningElement {
     @api tempo: Tempo;
+    @api showGrid: boolean = false;
+    @api resolution: Beat = createBeat(1 / 4);
     @track rect: Rect | null = null;
     @track globalRect: Rect | null = null;
-    @api range: AudioRange;
+    @track internalRange: AudioRange;
+
+    @api
+    get range() {
+        return this.internalRange;
+    }
+
+    set range(value: AudioRange) {
+        this.internalRange = {
+            start: value.start,
+            duration: value.duration,
+        };
+        this.cursorChildren.forEach((child) => {
+            this.drawElementStyle(child);
+        });
+        this.rangeChildren.forEach((child) => {
+            this.drawRangeElementStyle(child);
+        });
+    }
 
     drawElementStyle(elm: TimeElement) {
         const { rect, range } = this;
         if (!rect) {
             return;
         }
+
         const px = timeToPixel(rect, range, elm.time);
         elm.style.transform = `translateX(${px}px)`;
     }
@@ -145,28 +168,41 @@ export default class AudioWindowElement extends LightningElement {
         this.dispatchEvent(event);
     }
 
+    get gridLines(): Array<{ time: Time, color: Color, style: string }> {
+        const { range, tempo, rect, resolution } = this;
+        if (!rect) {
+            return [];
+        }
+        return mapBeatMarks<{ time: Time, color: Color, style: string }>(range, resolution, tempo, (beat: Beat, time: Time) => {
+            const px = timeToPixel(rect, range, time);
+            return {
+                style: `transform: translateX(${px}px)`,
+                color: new Color(56, 56, 56),
+                time
+            };
+        });
+    }
+
     renderedCallback() {
         if (!this.rect) {
-            requestAnimationFrame(() => {
-                const rect = this.getBoundingClientRect();
-                const host = this.template.host! as HTMLElement;
-                const localRect = {
-                    height: host.offsetHeight,
-                    width: host.offsetWidth,
-                    x: host.offsetLeft,
-                    y: host.offsetTop,
-                };
+            const rect = this.getBoundingClientRect();
+            const host = this.template.host! as HTMLElement;
+            const localRect = {
+                height: host.offsetHeight,
+                width: host.offsetWidth,
+                x: host.offsetLeft,
+                y: host.offsetTop,
+            };
 
-                const globalRect = {
-                    height: rect.height,
-                    width: rect.width,
-                    x: rect.left,
-                    y: rect.top,
-                };
-                this.setRect(localRect, globalRect);
-                this.cursorChildren.forEach((child) => {
-                    this.drawElementStyle(child);
-                });
+            const globalRect = {
+                height: rect.height,
+                width: rect.width,
+                x: rect.left,
+                y: rect.top,
+            };
+            this.setRect(localRect, globalRect);
+            this.cursorChildren.forEach((child) => {
+                this.drawElementStyle(child);
             });
         }
     }

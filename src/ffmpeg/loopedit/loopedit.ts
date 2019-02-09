@@ -4,7 +4,7 @@ import { appStore, wireSymbol } from 'store/index';
 import { PianoMidiNoteMap } from 'cmp/piano/piano';
 import { MidiNote, PianoKey, notes, getAudioContext } from 'util/sound';
 import { AudioRange, BeatRange, divideBeatRange } from 'util/audiorange';
-import { timeZero, beatToTime, Beat, timeToBeat, Time } from 'util/time';
+import { timeZero, beatToTime, Beat, timeToBeat, Time, createBeat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
@@ -57,7 +57,10 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get loopRange(): AudioRange | null {
-        return new AudioRange(timeZero, beatToTime(this.loop.duration, this.project.currentProject!.tempo));
+        return {
+            start: timeZero,
+            duration: beatToTime(this.loop.duration, this.project.currentProject!.tempo),
+        };
     }
 
     instrument<T extends InstrumentData>(): Instrument<T> {
@@ -83,7 +86,7 @@ export default class LoopEditElement extends LightningElement {
         const instrument = this.instrument<DrumMachineData>();
 
         const { resolution } = data;
-        const beatTimes = divideBeatRange(new BeatRange(new Beat(0), loop.duration), resolution);
+        const beatTimes = divideBeatRange(new BeatRange(createBeat(0), loop.duration), resolution);
         const { frequency: lowerFrequency } = notes[PianoKey.C3];
         const { frequency: upperFrequency } = notes[PianoKey.G3];
         return Object.keys(PianoKey).filter((key: PianoKey) => {
@@ -124,7 +127,7 @@ export default class LoopEditElement extends LightningElement {
         const data = loop.data as DrumMachineLoopData;
         const { resolution } = data;
 
-        return divideBeatRange(new BeatRange(new Beat(0), loop.duration), resolution).map((beat, index) => {
+        return divideBeatRange(new BeatRange(createBeat(0), loop.duration), resolution).map((beat, index) => {
             return `${index} / 4`;
         });
     }
@@ -137,7 +140,7 @@ export default class LoopEditElement extends LightningElement {
         const target = evt.target as HTMLElement;
         const keyId = target.getAttribute('data-key-id') as PianoKey;
         const beatIndex = parseInt(target.getAttribute('data-beat-index') as string, 10);
-        const range = new BeatRange(new Beat(beatIndex * resolution.index), resolution);
+        const range = new BeatRange(createBeat(beatIndex * resolution.index), resolution);
         const noteId = target.getAttribute('data-id') as string;
         if (noteId !== '') {
             appStore.dispatch(

@@ -1,4 +1,13 @@
 <template>
+    <template if:true={showGrid} for:each={gridLines} for:item="gridLine">
+        <ffmpeg-cursor
+            class="grid-time-marker"
+            color={gridLine.color}
+            key={gridLine.time.milliseconds}
+            time={gridLine.time}
+            style={gridLine.style}
+        ></ffmpeg-cursor>
+    </template>
     <slot
         data-audio-range={range}
         onrangechange={onRangeChange}
