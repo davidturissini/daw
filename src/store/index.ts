@@ -5,10 +5,7 @@ import { ValueChangedEvent } from 'wire-service';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
 // Reducers
-import { reducer as audioTrackReducer, AudioTrackState } from './audiotrack/reducer';
 import { reducer as instrumentReducer, InstrumentState } from './instrument/reducer';
-import { reducer as editorReducer, EditorState } from './editor/reducer';
-import { reducer as audioSegmentReducer, AudioSegmentState } from './audiosegment/reducer';
 import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
 import { reducer as loopReducer, LoopState } from './loop/reducer';
@@ -58,10 +55,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export interface AppState {
-    audiotrack: AudioTrackState;
     instrument: InstrumentState;
-    editor: EditorState;
-    audiosegment: AudioSegmentState;
     project: ProjectState;
     router: RouterState;
     loop: LoopState;
@@ -69,10 +63,7 @@ export interface AppState {
 
 export const appStore = createStore(
     combineReducers({
-        audiotrack: audioTrackReducer,
         instrument: instrumentReducer,
-        editor: editorReducer,
-        audiosegment: audioSegmentReducer,
         project: projectReducer,
         router: routerReducer,
         loop: loopReducer,
