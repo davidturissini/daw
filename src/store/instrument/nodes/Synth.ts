@@ -1,12 +1,21 @@
 import { InstrumentAudioNode, InstrumentType } from '../types';
-import { PianoKey, notes } from 'util/sound';
+import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
-import { Observable } from 'rxjs';
 import { Record } from 'immutable';
 import { Synth, PolySynth } from 'tone';
 
-export class SynthData extends Record<{}>({
-
+export class SynthData extends Record<{
+    oscillatorType: OscillatorType;
+    attack: number;
+    decay: number;
+    sustain: number;
+    release: number;
+}>({
+    oscillatorType: 'triangle',
+    attack: 0.005,
+    decay: 0.1,
+    sustain: 0.3,
+    release: 1,
 }){ }
 
 export class SynthLoopData extends Record<{
@@ -19,18 +28,27 @@ export class SynthNode implements InstrumentAudioNode {
     audioContext: BaseAudioContext;
     dest: AudioNode | null = null;
     synth: PolySynth;
-    constructor(audioContext: BaseAudioContext) {
+    constructor(audioContext: BaseAudioContext, data: SynthData) {
         this.audioContext = audioContext;
 
-        this.synth = new PolySynth(4, Synth);
+        const synth = this.synth = new PolySynth(4, Synth);
+        synth.set({
+            oscillator: {
+                type: data.oscillatorType,
+            },
+            envelope: {
+                attack: data.attack,
+                sustain: data.sustain,
+                release: data.release,
+                decay: data.decay,
+            }
+        })
+
     }
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (this.dest) {
             this.synth.connect(this.dest);
         }
-
-        // node.start(when.seconds);
-
         if (duration !== null) {
             let normalizedDuration = duration;
 

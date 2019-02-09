@@ -1,7 +1,7 @@
 <template>
     <article class="track">
         <header>
-            <h4 class="track__title" tabindex="0">{instrument.title}</h4>
+            <h4 onfocus={onTitleFocus} class="track__title" tabindex="0">{instrument.title}</h4>
         </header>
         <ul>
             <template for:each={loops} for:item="loop">

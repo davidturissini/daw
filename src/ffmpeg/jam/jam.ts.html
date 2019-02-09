@@ -14,5 +14,12 @@
         <template if:true={isLoopEditRouteActive}>
             <ffmpeg-loopedit loop-id={routeParams.loop_id} slot="bottom"></ffmpeg-loopedit>
         </template>
+        <template if:true={isInstrumentEditRouteActive}>
+            <ffmpeg-instrumenteditor
+                instrument-id={routeParams.instrument_id}
+                slot="bottom"
+            >
+            </ffmpeg-instrumenteditor>
+        </template>
     </ffmpeg-resizecontainer>
 </template>

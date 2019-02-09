@@ -1,0 +1,11 @@
+<template>
+    <template if:true={instrumentIsSynth}>
+        <input
+            type="range"
+            oninput={onAttachInput}
+            min="0"
+            max="1"
+            step="0.1"
+            value={instrumentData.attack} />
+    </template>
+</template>

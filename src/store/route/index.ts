@@ -5,7 +5,7 @@ import browserPlugin from 'router5-plugin-browser';
 export enum RouteNames {
     ConcertMode = 'ConcertMode',
     LoopEdit = 'ConcertMode.LoopEdit',
-    ConcertInstrumentEdit = 'ConcertMode.InstrumentEdit'
+    InstrumentEdit = 'ConcertMode.InstrumentEdit'
 }
 
 export class Route<T> extends Record<{
@@ -31,7 +31,7 @@ const routes: Router5Route[] = [{
     name: RouteNames.LoopEdit,
     path: '/loops/:loop_id'
 }, {
-    name: RouteNames.ConcertInstrumentEdit,
+    name: RouteNames.InstrumentEdit,
     path: '/instruments/:instrument_id'
 }];
 

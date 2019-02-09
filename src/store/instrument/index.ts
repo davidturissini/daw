@@ -27,7 +27,7 @@ export function render(audioContext: BaseAudioContext, instrument: Instrument<an
         case InstrumentType.DrumMachine:
             return new DrumMachine(audioContext, tempo);
         case InstrumentType.Synth:
-            return new SynthNode(audioContext);
+            return new SynthNode(audioContext, instrument.data);
     }
 
     throw new Error('Could not render instrument');

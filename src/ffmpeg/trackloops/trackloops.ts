@@ -1,8 +1,10 @@
 import { LightningElement, api, wire } from 'lwc';
-import { wireSymbol } from 'store/index';
+import { wireSymbol, appStore } from 'store/index';
 import { Instrument } from 'store/instrument';
 import { LoopState } from 'store/loop/reducer';
 import { Loop } from 'store/loop';
+import { navigate } from 'store/route/action';
+import { RouteNames } from 'store/route';
 
 export type CreateLoopEvent = CustomEvent<{
     instrumentId: string;
@@ -39,5 +41,13 @@ export default class TrackLoopsElement extends LightningElement {
         });
 
         this.dispatchEvent(event);
+    }
+
+    onTitleFocus() {
+        appStore.dispatch(
+            navigate(RouteNames.InstrumentEdit, {
+                instrument_id: this.instrument.id,
+            })
+        )
     }
 }
