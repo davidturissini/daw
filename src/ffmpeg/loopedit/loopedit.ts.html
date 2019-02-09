@@ -1,38 +1,15 @@
 <template>
     <template if:true={instrumentIsDrumMachine}>
-        <div class="drum-machine">
-            <ol class="sample__switches switch-labels">
-                <template for:each={drumMachineSampleLabels} for:item="label">
-                    <li key={label} class="switch">{label}</li>
-                </template>
-            </ol>
-            <template for:each={drumMachineKeys} for:item="key">
-                <div key={key.id} class="sample">
-                    <div class="sample__data">
-                        {key.title}
-                    </div>
-                    <div class="switches-container">
-                        <ul class="sample__switches">
-                            <template for:each={key.notes} for:item="beat" for:index="beatIndex">
-                                <ffmpeg-button
-                                    button-color={beat.buttonColor}
-                                    key={beat.id}
-                                    class={beat.className}
-                                    onclick={onBeatClick}
-                                    data-id={beat.noteId}
-                                    data-key-id={key.id}
-                                    data-beat-index={beatIndex}
-                                ></ffmpeg-button>
-                            </template>
-                        </ul>
-                    </div>
-                </div>
-            </template>
-        </div>
+        <ffmpeg-drummachine
+            tempo={projectTempo}
+            notes={pianoMidiNotes}
+            onaudiorangecreated={onDrumMachineNoteCreated}
+        >
+        </ffmpeg-drummachine>
     </template>
     <template if:true={instrumentIsOscillator}>
         <ffmpeg-piano
-            notes={pianoNotes}
+            piano-keys={pianoNotes}
             audio-context={pianoAudioContext}
             tempo={projectTempo}
             instrument-id={pianoInstrumentId}
@@ -42,19 +19,12 @@
             can-close-grid={canClosePianoGrid}
             onaudiorangechange={onOscillatorNoteRangeChange}
             onaudiorangecreated={onOscillatorNoteCreated}
+            midi-notes={pianoMidiNotes}
         >
             <ffmpeg-cursor
                 if:true={loopCurrentTimeIsVisible}
                 time={loopCurrentTime}
             ></ffmpeg-cursor>
-            <template for:each={pianoMidiNotes} for:item="midiNote">
-                <ffmpeg-audiorange
-                    data-item-id={midiNote.id}
-                    data-row-id={midiNote.note}
-                    key={midiNote.id}
-                    range={midiNote.range}
-                ></ffmpeg-audiorange>
-            </template>
         </ffmpeg-piano>
     </template>
 </template>

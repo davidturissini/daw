@@ -17,8 +17,8 @@ export class DrawRangeState extends BaseState implements GridState {
         fsm.interactionStateName = GridStateNames.DrawRange;
     }
     [GridStateInputs.GridContainerMouseDown](cmp: GridFSM, evt: MouseEvent) {
-        const { globalContainerAudioWindowRect, mainScrollY, visibleRange, quanitization } = cmp;
-        if (globalContainerAudioWindowRect === null) {
+        const { globalContainerAudioWindowRect, rowFrames, mainScrollY, visibleRange, quanitization } = cmp;
+        if (globalContainerAudioWindowRect === null || rowFrames === null) {
             return;
         }
 
@@ -28,7 +28,7 @@ export class DrawRangeState extends BaseState implements GridState {
         }
         evt.preventDefault();
         const rowKey = getRowIndex(evt.y - globalContainerAudioWindowRect.y + mainScrollY, cmp.rowFrames);
-        const row = cmp.rowFrames[rowKey];
+        const row = rowFrames[rowKey];
         const rowIndex = this.rowIndex = row.index;
         this.startX = evt.x;
         const time = absolutePixelToTime(globalContainerAudioWindowRect, visibleRange, evt.x - globalContainerAudioWindowRect.x);

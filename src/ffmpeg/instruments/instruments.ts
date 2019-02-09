@@ -6,10 +6,11 @@ import { InstrumentType } from 'store/instrument/types';
 import { PianoKey } from 'util/sound';
 import { SynthData } from 'store/instrument/nodes/Synth';
 import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
+import { Color } from 'util/color';
 
 
 export default class Instruments extends LightningElement {
-    handleOscillatorNodeClick(evt: MouseEvent) {
+    onAddButtonClick(evt: MouseEvent) {
         const instrumentId = generateId();
         const type = (evt.target as HTMLElement).getAttribute('data-instrument-type');
         const loopId = generateId();
@@ -61,5 +62,13 @@ export default class Instruments extends LightningElement {
         }, {
             type: InstrumentType.Synth,
         }];
+    }
+
+    get addButtonColor() {
+        return new Color(84, 84, 84);
+    }
+
+    get addButtonTextColor() {
+        return new Color(176, 176, 176);
     }
 }

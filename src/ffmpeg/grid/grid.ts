@@ -33,14 +33,20 @@ export default class GridElement extends LightningElement implements GridFSM {
         start: timeZero,
         duration: Time.fromSeconds(3),
     };
+    @api noDraw: boolean = false;
+    @api noPan: boolean = false;
     @track visibleRange: AudioRange = {
         start: timeZero,
         duration: Time.fromSeconds(4)
     };
     @track interactionStateName: GridStateNames;
-    @track rowFrames: GridRowRectMap = {};
+    @track rowFrames: GridRowRectMap | null = null;
     @track hoverCursorMs: number | null = null;
     @track quanitization: Beat = createBeat(1 / 4);
+
+    get canDraw() {
+        return !this.noDraw;
+    }
 
     get hoverCursor(): Time | null {
         const { hoverCursorMs } = this;
@@ -128,8 +134,12 @@ export default class GridElement extends LightningElement implements GridFSM {
      *
      */
     get rowViewModels() {
-        const vm = Object.keys(this.rowFrames).map((rowId) => {
-            const { rect } = this.rowFrames[rowId];
+        const { rowFrames } = this;
+        if (!rowFrames) {
+            return [];
+        }
+        const vm = Object.keys(rowFrames).map((rowId) => {
+            const { rect } = rowFrames[rowId];
             return {
                 id: rowId,
                 style: `height: ${rect.height}px;`
@@ -146,7 +156,7 @@ export default class GridElement extends LightningElement implements GridFSM {
     onColLeftSlotChange(evt) {
         const target = evt.target as HTMLSlotElement;
         requestAnimationFrame(() => {
-            this.rowFrames = {};
+            const rowFrames = {};
             target.assignedElements().forEach((elm: HTMLElement, index: number) => {
                 const rowId = elm.getAttribute('data-row-id') as string;
                 const box = elm.getBoundingClientRect();
@@ -156,28 +166,41 @@ export default class GridElement extends LightningElement implements GridFSM {
                     x: elm.offsetLeft,
                     y: elm.offsetTop,
                 };
-                this.rowFrames[rowId] = {
+                rowFrames[rowId] = {
                     index,
                     rect,
                 }
             });
+
+            this.rowFrames = rowFrames;
+            this.renderAssignedAudioRangeElements();
         });
     }
 
+    assignedAudioRangeElements: AudioRangeElement[] = [];
     onRangeSlotChange(evt) {
         const target = evt.target as HTMLSlotElement;
         const { globalContainerAudioWindowRect } = this;
+        this.assignedAudioRangeElements = target.assignedElements().filter(isAudioRangeElement);
         if (!globalContainerAudioWindowRect) {
             return;
         }
         requestAnimationFrame(() => {
-            target.assignedElements().filter(isAudioRangeElement).forEach((elm: AudioRangeElement) => {
-                const rowId = elm.getAttribute('data-row-id') as string;
-                const rowFrame = this.rowFrames[rowId];
-                elm.style.top = `${rowFrame.rect.y}px`;
-                elm.style.height = `${rowFrame.rect.height}px`;
-            })
+            this.renderAssignedAudioRangeElements();
         });
+    }
+
+    renderAssignedAudioRangeElements() {
+        const { rowFrames } = this;
+        if (rowFrames === null) {
+            return;
+        }
+        this.assignedAudioRangeElements.forEach((elm: AudioRangeElement) => {
+            const rowId = elm.getAttribute('data-row-id') as string;
+            const rowFrame = rowFrames[rowId];
+            elm.style.top = `${rowFrame.rect.y}px`;
+            elm.style.height = `${rowFrame.rect.height}px`;
+        })
     }
 
     /*
@@ -248,6 +271,7 @@ export default class GridElement extends LightningElement implements GridFSM {
     onContainerAudioWindowRectChange(evt: AudioWindowRectChangeEvent) {
         this.containerAudioWindowRect = evt.detail.rect;
         this.globalContainerAudioWindowRect = evt.detail.globalRect;
+        this.renderAssignedAudioRangeElements();
     }
 
     mainScrollY: number = 0;

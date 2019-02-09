@@ -19,15 +19,15 @@ export abstract class BaseState implements GridState {
     }
     [GridStateInputs.RangeDragStart](cmp: GridFSM, evt: DragEvent) {
         const target = evt.target as HTMLElement;
-        const { globalContainerAudioWindowRect, mainScrollY } = cmp;
-        if (!isAudioRangeElement(target) || globalContainerAudioWindowRect === null) {
+        const { globalContainerAudioWindowRect, mainScrollY, rowFrames } = cmp;
+        if (!isAudioRangeElement(target) || rowFrames === null || globalContainerAudioWindowRect === null) {
             return;
         }
         evt.preventDefault();
         const rowIndex = getRowIndex(evt.y - globalContainerAudioWindowRect.y - mainScrollY, cmp.rowFrames);
         cmp.enterState(GridStateNames.RangeDrag,
             (evt.target as HTMLElement).getAttribute('data-item-id'),
-            Object.keys(cmp.rowFrames).indexOf(rowIndex),
+            Object.keys(rowFrames).indexOf(rowIndex),
             toAudioRange(target.range, cmp.project.tempo),
             evt.x,
             evt.y,

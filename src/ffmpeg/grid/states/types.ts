@@ -68,7 +68,7 @@ export interface GridFSM {
     range: AudioRange | null;
     interactionStateName: GridStateNames;
     project: Project;
-    rowFrames: GridRowRectMap;
+    rowFrames: GridRowRectMap | null;
     hoverCursorMs: number | null;
     containerAudioWindowRect: Rect | null;
     globalContainerAudioWindowRect: Rect | null;

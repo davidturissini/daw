@@ -8,6 +8,8 @@ export enum IconVariants {
     Columns = 'fas fa-columns',
     Play = 'fas fa-play',
     GripLines = 'fas fa-grip-lines',
+    Drum = 'fas fa-drum',
+    Plus = 'fas fa-plus'
 }
 
 export default class IconElement extends LightningElement {

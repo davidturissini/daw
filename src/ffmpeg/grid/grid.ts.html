@@ -1,12 +1,14 @@
 <template>
     <header class="toolbar">
         <ffmpeg-button
+            if:true={canDraw}
             selected={isDrawingState}
             class="toolbar__button"
             onclick={onEditButtonClick}
             icon-variant="EditPencil">
         </ffmpeg-button>
         <ffmpeg-button
+            if:true={canPan}
             onclick={onIdleButtonClick}
             selected={isIdleState}
             class="toolbar__button"

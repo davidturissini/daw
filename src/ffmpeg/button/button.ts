@@ -6,6 +6,7 @@ export default class ButtonElement extends LightningElement {
     @api iconVariant: IconVariants | null = null;
     @api selected: boolean = false;
     @api buttonColor: Color | null;
+    @api textColor: Color | null;
 
     get buttonClassName() {
         if (this.selected) {
@@ -19,10 +20,14 @@ export default class ButtonElement extends LightningElement {
     }
 
     get buttonStyle() {
-        const { buttonColor } = this;
+        const { buttonColor, textColor } = this;
+        const styles: string[] = [];
         if (buttonColor) {
-            return `background: ${buttonColor.rgb()}`;
+            styles.push(`background: ${buttonColor.rgb()}`);
         }
-        return '';
+        if (textColor) {
+            styles.push(`color: ${textColor.rgb()}`);
+        }
+        return styles.join(';');
     }
 }

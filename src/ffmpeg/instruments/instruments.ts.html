@@ -1,7 +1,17 @@
 <template>
     <template for:each={instruments} for:item="instrument">
-        <article key={instrument.type}>
-            <h6 data-instrument-type={instrument.type} onclick={handleOscillatorNodeClick} class="instrument__label">{instrument.type}</h6>
+        <article class="instrument" key={instrument.type}>
+            <ffmpeg-icon class="icon" variant="Drum"></ffmpeg-icon>
+            <h6 class="instrument__label">{instrument.type}</h6>
+            <ffmpeg-button
+                data-instrument-type={instrument.type}
+                onclick={onAddButtonClick}
+                text-color={addButtonTextColor}
+                button-color={addButtonColor}
+                class="add-button"
+                icon-variant="Plus"
+            >
+            </ffmpeg-button>
         </article>
     </template>
 </template>

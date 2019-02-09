@@ -6,6 +6,15 @@
     z-index: 2;
 }
 
+button {
+    display: block;
+    border: 0;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.4rem;
+}
+
 :host(:hover) .handle {
     opacity: 1;
 }
@@ -28,9 +37,4 @@
 .handle--end {
     left: auto;
     right: 0;
-}
-
-.container {
-    height: 100%;
-    border-radius: 0.4rem;
 }

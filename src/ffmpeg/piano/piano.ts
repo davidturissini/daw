@@ -1,7 +1,6 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { MidiNote, PianoKeyMap, PianoKey } from 'util/sound';
 import { wireSymbol } from 'store/index';
-import { Color } from 'util/color';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
 import { Instrument } from 'store/instrument';
@@ -13,25 +12,14 @@ export type PianoMidiNoteMap = {
     [octave: string]: MidiNote[]
 };
 
-function gridRowNoteMap(notes: PianoKeyMap) {
-    return Object.keys(notes).reduce((seed, octave) => {
-        const note = notes[octave];
-        const row = {
-            height: note.sharp ? 30 : 45,
-        };
-        seed[octave] = row;
-        return seed;
-    }, {});
-}
-
 export default class PianoElement extends LightningElement {
-    @api midiNotes: PianoMidiNoteMap;
+    @api midiNotes: MidiNote[];
     @api canCloseGrid: boolean = false;
     @api range: AudioRange | null = null;
     @api instrumentId: string;
     @api audioContext: BaseAudioContext;
     @api tempo: Tempo;
-    @api notes: PianoKeyMap;
+    @api pianoKeys: PianoKeyMap;
     @track gridWindowId: string | null = null;
     @wire(wireSymbol, {
         paths: {
@@ -56,9 +44,9 @@ export default class PianoElement extends LightningElement {
     }
 
     get pianoKeyViewModels() {
-        const { notes } = this;
-        return Object.keys(notes).map((key: PianoKey) => {
-            const note = notes[key]!;
+        const { pianoKeys } = this;
+        return Object.keys(pianoKeys).map((key: PianoKey) => {
+            const note = pianoKeys[key]!;
             const classNames = ['key'];
             if (note.sharp === true) {
                 classNames.push('key--sharp');
@@ -70,22 +58,6 @@ export default class PianoElement extends LightningElement {
                 className: classNames.join(' '),
             };
         })
-    }
-
-    get noteViewModels() {
-        return Object.keys(this.midiNotes).reduce((seed: any[], octave: string) => {
-            const notes = this.midiNotes[octave];
-            const midiNotes = notes.map((note) => {
-                return {
-                    octave,
-                    color: new Color(0, 255, 0),
-                    rowIndex: 12,
-                    range: note.range,
-                };
-            });
-
-            return seed.concat(midiNotes);
-        }, []);
     }
 
     /*

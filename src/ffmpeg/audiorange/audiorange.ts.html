@@ -1,7 +1,7 @@
 <template>
-    <div draggable="true" class="container" style={containerStyle}>
-        <span class="handle handle--start"></span>
+    <button draggable="true" style={containerStyle}>
+        <span if:true={canResize} class="handle handle--start"></span>
 
-        <span class="handle handle--end"></span>
-    </div>
+        <span if:true={canResize} class="handle handle--end"></span>
+    </button>
 </template>

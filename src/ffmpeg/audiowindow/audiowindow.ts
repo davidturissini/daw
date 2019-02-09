@@ -1,7 +1,7 @@
 import { LightningElement, api, track } from 'lwc';
 import { timeToPixel, durationToWidth, Rect } from 'util/geometry';
 import { Time, Beat, createBeat } from 'util/time';
-import { AudioRange, BeatRange } from 'util/audiorange';
+import { AudioRange, BeatRange, toAudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
 import { mapBeatMarks } from 'store/audiowindow';
 import { Color } from 'util/color';
@@ -109,7 +109,7 @@ export default class AudioWindowElement extends LightningElement {
         if (!rect) {
             return;
         }
-        const { width, transform } = calcAudioRangeStyle(rect, range, elm.range.toAudioRange(this.tempo));
+        const { width, transform } = calcAudioRangeStyle(rect, range, toAudioRange(elm.range, this.tempo));
         elm.style.width = width;
         elm.style.transform = transform;
     }
@@ -166,6 +166,13 @@ export default class AudioWindowElement extends LightningElement {
         });
 
         this.dispatchEvent(event);
+
+        this.cursorChildren.forEach((child) => {
+            this.drawElementStyle(child);
+        });
+        this.rangeChildren.forEach((child) => {
+            this.drawRangeElementStyle(child);
+        });
     }
 
     get gridLines(): Array<{ time: Time, color: Color, style: string }> {
@@ -202,9 +209,6 @@ export default class AudioWindowElement extends LightningElement {
                     y: rect.top,
                 };
                 this.setRect(localRect, globalRect);
-                this.cursorChildren.forEach((child) => {
-                    this.drawElementStyle(child);
-                });
             });
         }
     }

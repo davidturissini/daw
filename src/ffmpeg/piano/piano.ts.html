@@ -17,6 +17,14 @@
                 <h5 class="key__name">{pianoKey.name}</h5>
             </button>
         </template>
+        <template for:each={midiNotes} for:item="midiNote">
+            <ffmpeg-audiorange
+                data-item-id={midiNote.id}
+                data-row-id={midiNote.note}
+                key={midiNote.id}
+                range={midiNote.range}
+            ></ffmpeg-audiorange>
+        </template>
         <slot></slot>
     </ffmpeg-grid>
 </template>

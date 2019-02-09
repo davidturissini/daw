@@ -8,6 +8,9 @@ const rangeSymbol = Symbol();
 export default class AudioRangeElement extends LightningElement {
     @api color: Color | null = null;
     @api itemId: string;
+    @api noResize: boolean = false;
+
+    static delegatesFocus = true;
 
     connected = false;
     @api
@@ -23,6 +26,10 @@ export default class AudioRangeElement extends LightningElement {
             this.dispatchEvent(event);
         }
         this[rangeSymbol] = value;
+    }
+
+    get canResize() {
+        return !this.noResize;
     }
 
     get range() {
