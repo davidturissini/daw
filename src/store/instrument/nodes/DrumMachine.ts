@@ -1,22 +1,8 @@
 import { InstrumentAudioNode, InstrumentType } from './../types';
 import { Beat, Time, createBeat } from 'util/time';
 import { Record } from 'immutable';
-import { getSamples } from 'store/sample';
 import { PianoKey } from 'util/sound';
 import { Sampler as ToneSampler } from 'tone';
-
-function loadSample(note: PianoKey): AudioBuffer {
-    const samples = getSamples();
-    if (note === PianoKey.C3) {
-        return samples.drumKickAudioBuffer;
-    } else if (note === PianoKey.Csharp3) {
-        return samples.snareAudioBuffer;
-    } else if (note === PianoKey.D3) {
-        return samples.hiHatAudioBuffer;
-    }
-
-    throw new Error(`Buffer not found for note ${note}`);
-}
 
 export class DrumMachineData extends Record<{
     sampleNames: {
@@ -60,6 +46,7 @@ export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
         this.sampler = new ToneSampler({
             [PianoKey.C3]: '/samples/DDE Kick 1.wav',
             [PianoKey.Csharp3]: '/samples/DDE Snare 4.wav',
+            [PianoKey.D3]: '/samples/DDE HiHat 1.wav',
         })
     }
 

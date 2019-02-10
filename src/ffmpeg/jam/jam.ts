@@ -7,7 +7,6 @@ import { RouterState } from 'store/route/reducer';
 import { Frame } from 'util/geometry';
 import { InstrumentState } from 'store/instrument/reducer';
 import { getAudioContext } from 'util/sound';
-import { loadSamples } from 'store/sample';
 
 export default class JamElement extends LightningElement {
     @track frame: Frame | null = null;
@@ -72,7 +71,7 @@ export default class JamElement extends LightningElement {
     }
 
     connectedCallback() {
-        loadSamples(getAudioContext());
+        getAudioContext()
     }
 
     renderedCallback() {

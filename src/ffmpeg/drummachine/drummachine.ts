@@ -1,7 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { PianoKey, MidiNote } from 'util/sound';
 import { BeatRange, divideBeatRange, AudioRange, toBeatRange } from 'util/audiorange';
-import { createBeat, Beat, beatToTime, timeZero, Time } from 'util/time';
+import { createBeat, Beat, beatToTime, timeZero } from 'util/time';
 import { Tempo } from 'store/project';
 import { generateId } from 'util/uniqueid';
 import { AudioRangeCreatedEvent } from 'cmp/grid/events';
@@ -23,7 +23,7 @@ export default class DrumMachine extends LightningElement {
     get range() {
         return {
             start: timeZero,
-            duration: new Time(2000),
+            duration: beatToTime(createBeat(4), this.tempo)
         }
     }
 
