@@ -54,13 +54,8 @@ export class DrumMachine implements InstrumentAudioNode {
     audioContext: BaseAudioContext;
     dest: AudioNode | null = null;
     resolution: Beat;
-    tempo: Tempo;
     duration: Beat;
 
-    constructor(audioContext: BaseAudioContext, tempo: Tempo) {
-        this.audioContext = audioContext;
-        this.tempo = tempo;
-    }
     trigger(key: PianoKey, velicity: number, when: Time, offset: Time | null, duration: Time | null) {
         const source = this.audioContext.createBufferSource();
         if (this.dest) {

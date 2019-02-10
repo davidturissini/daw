@@ -99,9 +99,20 @@ export default class ResizeContainerElement extends LightningElement {
         if (elm) {
             elm.style.boxSizing = 'border-box';
         }
-        if (elm && this.bottomPercent === 0) {
-            this.topPercent = 0.5;
-            this.bottomPercent = 0.5;
+        if (elm) {
+            const { parentFrame } = this;
+            if (parentFrame) {
+                const { offsetHeight } = elm;
+                let bottomPercent = offsetHeight / parentFrame.height;
+                if (bottomPercent > 0.5) {
+                    bottomPercent = 0.5
+                }
+                this.topPercent = 1 - bottomPercent;
+                this.bottomPercent = bottomPercent
+            } else {
+                this.topPercent = 0.5;
+                this.bottomPercent = 0.5;
+            }
         }
     }
 

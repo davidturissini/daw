@@ -1,0 +1,14 @@
+<template>
+    <div class="buttons">
+        <template for:each={buttonViewModels} for:item="button">
+            <ffmpeg-button
+                square
+                button-color={button.color}
+                value={button.value}
+                onclick={onButtonClick}
+                key={button.value}
+                icon-variant={button.iconVariant}
+            ></ffmpeg-button>
+        </template>
+    </div>
+</template>

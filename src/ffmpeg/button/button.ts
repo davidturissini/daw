@@ -7,12 +7,18 @@ export default class ButtonElement extends LightningElement {
     @api selected: boolean = false;
     @api buttonColor: Color | null;
     @api textColor: Color | null;
+    @api value: any;
+    @api square: boolean = false;
 
     get buttonClassName() {
+        const classes: string[] = [];
         if (this.selected) {
-            return 'selected';
+            classes.push('selected');
         }
-        return '';
+        if (this.square) {
+            classes.push('button--square');
+        }
+        return classes.join(' ');
     }
 
     get hasIconVariant() {

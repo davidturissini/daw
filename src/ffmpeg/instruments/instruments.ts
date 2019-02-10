@@ -42,7 +42,7 @@ export default class Instruments extends LightningElement {
             case InstrumentType.Synth:
                 action = createInstrument<SynthData>(
                     instrumentId,
-                    'Oscillator',
+                    'Synth',
                     type,
                     new SynthData({}),
                     audioTrackId,

@@ -23,27 +23,13 @@ export class SynthLoopData extends Record<{
 }>({
 
 }) {}
-export class SynthNode implements InstrumentAudioNode {
+export class SynthNode implements InstrumentAudioNode<SynthData> {
     type: InstrumentType.Synth;
-    audioContext: BaseAudioContext;
     dest: AudioNode | null = null;
     synth: PolySynth;
-    constructor(audioContext: BaseAudioContext, data: SynthData) {
-        this.audioContext = audioContext;
-
-        const synth = this.synth = new PolySynth(4, Synth);
-        synth.set({
-            oscillator: {
-                type: data.oscillatorType,
-            },
-            envelope: {
-                attack: data.attack,
-                sustain: data.sustain,
-                release: data.release,
-                decay: data.decay,
-            }
-        })
-
+    constructor(data: SynthData) {
+        this.synth = new PolySynth(4, Synth);
+        this.update(data);
     }
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (this.dest) {
@@ -69,5 +55,20 @@ export class SynthNode implements InstrumentAudioNode {
 
     connect(node: AudioNode) {
         this.dest = node;
+    }
+
+    update(data: SynthData) {
+        const { synth } = this;
+        synth.set({
+            oscillator: {
+                type: data.oscillatorType,
+            },
+            envelope: {
+                attack: data.attack,
+                sustain: data.sustain,
+                release: data.release,
+                decay: data.decay,
+            }
+        })
     }
 }

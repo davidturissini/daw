@@ -1,11 +1,20 @@
 <template>
-    <template if:true={instrumentIsSynth}>
-        <input
-            type="range"
-            oninput={onAttachInput}
-            min="0"
-            max="1"
-            step="0.1"
-            value={instrumentData.attack} />
-    </template>
+    <div class="container">
+        <template if:true={instrumentIsSynth}>
+            <ffmpeg-buttongroup
+                value={instrumentData.oscillatorType}
+                onchange={onWaveChangeInput}
+                buttons={waveformButtons}
+            >
+            </ffmpeg-buttongroup>
+            <ffmpeg-envelopefield
+                attack={instrumentData.attack}
+                decay={instrumentData.decay}
+                sustain={instrumentData.sustain}
+                release={instrumentData.release}
+                onenvelopevaluechange={onSynthEnvelopeValueChange}
+            >
+            </ffmpeg-envelopefield>
+        </template>
+    </div>
 </template>

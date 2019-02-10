@@ -12,7 +12,7 @@ import { reducer as loopReducer, LoopState } from './loop/reducer';
 
 // Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
-import { startPlaybackEpic, playTrackLoopEpic, playPianoKeyEpic } from './player/epic';
+import { startPlaybackEpic, playTrackLoopEpic, playPianoKeyEpic, createInstrumentEpic } from './player/epic';
 import { createProjectEpic } from './project/epic';
 
 const { keys } = Object;
@@ -24,6 +24,7 @@ const rootEpic = combineEpics(
     playTrackLoopEpic,
     playPianoKeyEpic,
     createProjectEpic,
+    createInstrumentEpic,
 );
 const epicMiddleware = createEpicMiddleware();
 const middleware: Middleware[] = [epicMiddleware];

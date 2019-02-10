@@ -87,8 +87,7 @@ main {
 
 ffmpeg-audiowindow {
     display: block;
-    height: 100%;
-    width: 100%;
+    z-index: 2;
 }
 
 ffmpeg-audiowindow ffmpeg-cursor {
@@ -101,4 +100,18 @@ ffmpeg-audiowindow ffmpeg-cursor {
 
 ffmpeg-audiowindow .grid-time-marker {
     z-index: 1;
+}
+
+.grid-lane {
+    pointer-events: none;
+    background: rgb(43, 44, 49);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.grid-lane--odd {
+    background: rgb(35, 36, 41);
 }
