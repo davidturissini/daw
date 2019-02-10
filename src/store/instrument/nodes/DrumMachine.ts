@@ -1,10 +1,9 @@
 import { InstrumentAudioNode, InstrumentType } from './../types';
 import { Beat, Time, createBeat } from 'util/time';
-import { Tempo } from 'store/project';
 import { Record } from 'immutable';
-import { Observable } from 'rxjs';
 import { getSamples } from 'store/sample';
 import { PianoKey } from 'util/sound';
+import { Sampler as ToneSampler } from 'tone';
 
 function loadSample(note: PianoKey): AudioBuffer {
     const samples = getSamples();
@@ -49,24 +48,35 @@ export class DrumMachineLoopData extends Record<{
     resolution: createBeat(1 / 4),
 }) {}
 
-export class DrumMachine implements InstrumentAudioNode {
+export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
     type: InstrumentType.DrumMachine;
     audioContext: BaseAudioContext;
     dest: AudioNode | null = null;
     resolution: Beat;
     duration: Beat;
+    sampler: ToneSampler;
 
-    trigger(key: PianoKey, velicity: number, when: Time, offset: Time | null, duration: Time | null) {
-        const source = this.audioContext.createBufferSource();
+    constructor() {
+        this.sampler = new ToneSampler({
+            [PianoKey.C3]: '/samples/DDE Kick 1.wav',
+            [PianoKey.Csharp3]: '/samples/DDE Snare 4.wav',
+        })
+    }
+
+    trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (this.dest) {
-            source.connect(this.dest);
+            this.sampler.connect(this.dest);
         }
-        source.buffer = loadSample(key);
-        source.start(
-            when.seconds,
-            offset === null ? undefined : offset.seconds,
-            duration === null ? undefined : duration.seconds
-        );
+        if (duration !== null) {
+            let normalizedDuration = duration;
+
+            if (offset !== null) {
+                normalizedDuration = normalizedDuration.minus(offset);
+            }
+            this.sampler.triggerAttackRelease(key, duration.seconds, when.seconds, velocity);
+        } else {
+            this.sampler.triggerAttack([key]);
+        }
     }
 
     connect(node: AudioNode) {
@@ -74,6 +84,10 @@ export class DrumMachine implements InstrumentAudioNode {
     }
 
     release() {
+
+    }
+
+    update() {
 
     }
 }

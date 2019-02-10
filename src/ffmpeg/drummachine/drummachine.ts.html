@@ -2,6 +2,7 @@
     <ffmpeg-grid
         no-draw
         no-pan
+        no-lanes
         range={range}>
         <template for:each={drumMachineKeys} for:item="drumKey">
             <h6
@@ -15,6 +16,10 @@
         </template>
         <template for:each={drumNotes} for:item="drumNote">
             <ffmpeg-audiorange
+                class="drum-note"
+                color={drumNote.color}
+                onclick={onRangeClick}
+                data-row-index={drumNote.rowIndex}
                 data-item-id={drumNote.id}
                 data-row-id={drumNote.rowId}
                 key={drumNote.key}

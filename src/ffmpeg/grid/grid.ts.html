@@ -65,7 +65,7 @@
                     onslotchange={onRangeSlotChange}
                 ></slot>
             </ffmpeg-audiowindow>
-            <template for:each={rowLanes} for:item="lane">
+            <template if:false={noLanes} for:each={rowLanes} for:item="lane">
                 <div class={lane.className} style={lane.style} key={lane.key}></div>}
             </template>
         </div>

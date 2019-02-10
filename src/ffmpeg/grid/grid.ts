@@ -35,6 +35,7 @@ export default class GridElement extends LightningElement implements GridFSM {
     };
     @api noDraw: boolean = false;
     @api noPan: boolean = false;
+    @api noLanes: boolean = false;
     @track visibleRange: AudioRange = {
         start: timeZero,
         duration: Time.fromSeconds(4)
