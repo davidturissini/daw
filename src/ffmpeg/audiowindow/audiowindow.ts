@@ -1,216 +1,87 @@
 import { LightningElement, api, track } from 'lwc';
-import { timeToPixel, durationToWidth, Rect } from 'util/geometry';
-import { Time, Beat, createBeat } from 'util/time';
-import { AudioRange, BeatRange, toAudioRange } from 'util/audiorange';
-import { Tempo } from 'store/project';
-import { mapBeatMarks } from 'store/audiowindow';
-import { Color } from 'util/color';
+import { Rect, rectToCSS, Frame } from 'util/geometry';
+import { TickRange, Tick } from 'store/tick';
+import { NoteVariant, NoteViewData } from 'notes/index';
 
-export interface TimeElement extends HTMLElement {
-    time: Time;
-}
-
-export type TimeChangeEvent = CustomEvent<{
-    time: Time;
-}>
-
-export type AudioWindowRectChangeEvent = CustomEvent<{
+export interface AudioWindowTickRange {
     rect: Rect;
-    globalRect: Rect;
-}>
-
-function isTimeElement(elm: HTMLElement): elm is TimeElement {
-    return 'time' in elm;
+    range: TickRange;
+    id: string;
+    variant: NoteVariant;
+    data: NoteViewData;
 }
 
-export interface AudioRangeElement extends HTMLElement {
-    range: AudioRange | BeatRange;
+interface TickRangeViewModel {
+    range: TickRange;
+    style: string;
+    isDrumMachineNote: boolean;
+    data: NoteViewData;
 }
 
-export type AudioRangeElementChange = CustomEvent<{
-    range: AudioRange | BeatRange
-}>
+function tickToPixel(tick: Tick, range: TickRange, frame: Frame): number {
+    const { width } = frame;
+    const percent = (tick.index - range.start.index) / range.duration.index;
 
-export function isAudioRangeElement(elm: HTMLElement): elm is AudioRangeElement {
-    return 'range' in elm;
+    return percent * width;
 }
 
-function flattenAssignedElements<T extends HTMLElement>(slotElm: HTMLSlotElement, filter: (elm: HTMLElement) => elm is T): T[] {
-    return slotElm.assignedElements().reduce((seed: T[], assignedElm: HTMLElement) => {
-        if (assignedElm.tagName.toLowerCase() === 'slot') {
-            return seed.concat(flattenAssignedElements<T>(assignedElm as HTMLSlotElement, filter))
-        }
+function tickDurationToWidth(duration: Tick, range: TickRange, frame: Frame): number {
+    const { width } = frame;
+    const pixelsPerMillisecond = width / range.duration.index;
 
-        if (filter(assignedElm)) {
-            seed.push(assignedElm);
-        }
-        return seed;
-    }, []);
+    return pixelsPerMillisecond * duration.index
 }
 
-function calcAudioRangeStyle(rect: Rect, visibleRange: AudioRange, range: AudioRange) {
-    const frameWidth = rect.width;
-    const segmentOffset = timeToPixel(rect, visibleRange, range.start);
-    let width = durationToWidth(rect, visibleRange, range.duration);
-
-    const x = segmentOffset;
-    if (x < 0) {
-        width += x;
-    }
-
-    if (width + x > frameWidth) {
-        const diff = (width + x) - frameWidth;
-        width = width - diff;
-    }
-    return {
-        x: Math.max(x, 0),
-        width,
-    };
-}
 
 export default class AudioWindowElement extends LightningElement {
-    @api tempo: Tempo;
-    @api showGrid: boolean = false;
-    @api resolution: Beat = createBeat(1 / 4);
-    @api spaceBetween: number = 0;
-    @track rect: Rect | null = null;
-    @track globalRect: Rect | null = null;
-    @track internalRange: AudioRange;
+    @api visibleRange: TickRange;
+    @api tickRanges: AudioWindowTickRange[] = [];
+    @api padding: Frame = { width: 0, height: 0 };
+    @track frame: Frame | null = null;
 
-    @api
-    get range() {
-        return this.internalRange;
-    }
-
-    set range(value: AudioRange) {
-        this.internalRange = {
-            start: value.start,
-            duration: value.duration,
-        };
-        this.cursorChildren.forEach((child) => {
-            this.drawElementStyle(child);
-        });
-        this.rangeChildren.forEach((child) => {
-            this.drawRangeElementStyle(child);
-        });
-    }
-
-    drawElementStyle(elm: TimeElement) {
-        const { rect, range, spaceBetween } = this;
-        if (!rect) {
-            return;
-        }
-
-        const px = timeToPixel(rect, range, elm.time);
-        elm.style.transform = `translateX(${px + spaceBetween}px)`;
-    }
-
-    drawRangeElementStyle(elm: AudioRangeElement) {
-        const { range, rect, spaceBetween } = this;
-        if (!rect) {
-            return;
-        }
-        const { width, x } = calcAudioRangeStyle(rect, range, toAudioRange(elm.range, this.tempo));
-        elm.style.width = `${width - spaceBetween}px`;
-        elm.style.transform = `translate3d(${x + spaceBetween / 2}px, 0, 0)`;
-    }
-
-    renderTimeElementStyles(children: TimeElement[]) {
-        children.forEach(this.drawElementStyle, this);
-    }
-
-    cursorChildren: TimeElement[] = [];
-    rangeChildren: AudioRangeElement[] = [];
-    onSlotChange(evt) {
-        const target = evt.target as HTMLSlotElement;
-        const { cursorChildren, rangeChildren } = this;
-        const flattenedChildren = this.cursorChildren = flattenAssignedElements<TimeElement>(target, isTimeElement);
-        const flattenedRangeChildren = this.rangeChildren = flattenAssignedElements<AudioRangeElement>(target, isAudioRangeElement);
-
-        flattenedChildren.forEach((child) => {
-            if (cursorChildren.indexOf(child) === -1) {
-                this.drawElementStyle(child);
-            }
-        });
-
-        flattenedRangeChildren.forEach((child) => {
-            if (rangeChildren.indexOf(child) === -1) {
-                this.drawRangeElementStyle(child);
-            }
-        });
-    };
-
-    onRangeChange(evt: AudioRangeElementChange) {
-        const target = evt.target as HTMLElement;
-        if(isAudioRangeElement(target)) {
-            this.drawRangeElementStyle(target);
-        }
-    }
-
-    onTimeChange(evt: TimeChangeEvent) {
-        const target = evt.target as HTMLElement;
-        if(isTimeElement(target)) {
-            this.drawElementStyle(target);
-        }
-    }
-
-    setRect(rect: Rect, globalRect: Rect) {
-        this.rect = rect;
-        this.globalRect = globalRect;
-        const event: AudioWindowRectChangeEvent = new CustomEvent('rectchange', {
-            bubbles: true,
-            composed: false,
-            detail: {
-                rect,
-                globalRect,
-            }
-        });
-
-        this.dispatchEvent(event);
-
-        this.cursorChildren.forEach((child) => {
-            this.drawElementStyle(child);
-        });
-        this.rangeChildren.forEach((child) => {
-            this.drawRangeElementStyle(child);
-        });
-    }
-
-    get gridLines(): Array<{ time: Time, color: Color, style: string }> {
-        const { range, tempo, rect, resolution } = this;
-        if (!rect) {
+    get tickRangesViewModels(): TickRangeViewModel[] {
+        const { visibleRange, tickRanges, frame, padding } = this;
+        if (!frame) {
             return [];
         }
-        return mapBeatMarks<{ time: Time, color: Color, style: string }>(range, resolution, tempo, (beat: Beat, time: Time) => {
-            const px = timeToPixel(rect, range, time);
+        return tickRanges.map((tickRange) => {
+            const width = tickDurationToWidth(tickRange.range.duration, visibleRange, frame) - padding.width;
+            const x = tickToPixel(tickRange.range.start, visibleRange, frame) + (padding.width / 2);
+            const rect: Rect = {
+                y: tickRange.rect.y,
+                height: tickRange.rect.height,
+                x,
+                width,
+            }
             return {
-                style: `transform: translateX(${px}px)`,
-                color: new Color(56, 56, 56),
-                time
+                range: tickRange.range,
+                key: tickRange.id,
+                rect,
+                variant: tickRange.variant,
+                data: tickRange.data,
             };
-        });
+        })
+        .map(({ range, key, rect, variant, data }) => {
+            const isDrumMachineNote = variant === NoteVariant.DrumMachineNote;
+            return {
+                range,
+                key,
+                style: rectToCSS(rect),
+                isDrumMachineNote,
+                data,
+            }
+        })
     }
 
-    renderedCallback() {
-        if (!this.rect) {
-            requestAnimationFrame(() => {
-                const rect = this.getBoundingClientRect();
-                const host = this.template.host! as HTMLElement;
-                const localRect = {
-                    height: host.offsetHeight,
-                    width: host.offsetWidth,
-                    x: host.offsetLeft,
-                    y: host.offsetTop,
-                };
+    get hasFrame() {
+        return this.frame !== null;
+    }
 
-                const globalRect = {
-                    height: rect.height,
-                    width: rect.width,
-                    x: rect.left,
-                    y: rect.top,
-                };
-                this.setRect(localRect, globalRect);
-            });
-        }
+    connectedCallback() {
+        const rect = this.getBoundingClientRect();
+        this.frame = {
+            width: rect.width,
+            height: rect.height,
+        };
     }
 }

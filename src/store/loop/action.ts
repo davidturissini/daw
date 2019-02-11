@@ -8,6 +8,7 @@ import { Action } from 'store/index';
 import { BeatRange } from 'util/audiorange';
 import { PianoKey } from 'util/sound';
 import { Beat } from 'util/time';
+import { TickRange } from 'store/tick';
 
 export type SetLoopDurationAction = Action<{
     loopId: string;
@@ -61,9 +62,9 @@ export type CreateLoopNoteAction = Action<{
     keyId: PianoKey;
     noteId: string;
     loopId: string;
-    range: BeatRange;
+    range: TickRange;
 }>
-export function createLoopNote(loopId: string, noteId: string, keyId: PianoKey, range: BeatRange): CreateLoopNoteAction {
+export function createLoopNote(loopId: string, noteId: string, keyId: PianoKey, range: TickRange): CreateLoopNoteAction {
     return {
         type: CREATE_LOOP_NOTE,
         payload: {

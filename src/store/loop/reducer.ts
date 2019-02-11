@@ -68,7 +68,7 @@ function setLoopNoteRangeReduer(state: LoopState, action: SetLoopNoteRangeAction
 
 function setLoopDurationReducer(state: LoopState, action: SetLoopDurationAction): LoopState {
     const { loopId, duration } = action.payload;
-    return state.setIn(['items', loopId, 'duration'], duration);
+    return state.setIn(['items', loopId, 'range', 'duration'], duration);
 }
 
 export function reducer(state = new LoopState(), action) {

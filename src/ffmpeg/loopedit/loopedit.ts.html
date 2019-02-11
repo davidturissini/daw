@@ -1,10 +1,10 @@
 <template>
     <template if:true={instrumentIsDrumMachine}>
         <ffmpeg-drummachine
-            duration={loop.duration}
+            range={loop.range}
             tempo={projectTempo}
             notes={pianoMidiNotes}
-            onaudiorangecreated={onDrumMachineNoteCreated}
+            ontickrangecreated={onDrumMachineNoteCreated}
         >
         </ffmpeg-drummachine>
     </template>

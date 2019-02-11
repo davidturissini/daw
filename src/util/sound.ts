@@ -1,5 +1,5 @@
-import { BeatRange } from 'util/audiorange';
 import Tone from 'tone';
+import { TickRange } from 'store/tick';
 
 interface Note {
     frequency: number;
@@ -9,7 +9,7 @@ interface Note {
 export interface MidiNote {
     id: string;
     note: string;
-    range: BeatRange;
+    range: TickRange;
     velocity: number;
 }
 

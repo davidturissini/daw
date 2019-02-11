@@ -3,12 +3,6 @@ import { Time } from 'util/time';
 
 export type TimelineMouseEnterEvent = CustomEvent<{}>;
 export type TimelineMouseLeaveEvent = CustomEvent<{}>;
-export type AudioRangeCreatedEvent = CustomEvent<{
-    range: AudioRange;
-    beatRange: BeatRange;
-    rowIndex: number;
-    id: string;
-}>;
 
 export type AudioRangeChangeEvent = CustomEvent<{
     range: AudioRange;

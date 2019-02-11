@@ -8,10 +8,9 @@
     z-index: 1;
 }
 
-ffmpeg-cursor {
+.tick-range {
     position: absolute;
-    left: 0;
     top: 0;
-    bottom: 0;
+    left: 0;
     z-index: 1;
 }

@@ -13,7 +13,9 @@
             "lwc": ["./node_modules/@lwc/engine"],
             "wire-service": ["./node_modules/@lwc/wire-service"],
             "store/*": ["./src/store/*"],
-            "cmp/*": ["./src/ffmpeg/*"]
+            "cmp/*": ["./src/ffmpeg/*"],
+            "event/*": ["./src/event/*"],
+            "notes/*": ["./src/notes/*"]
         }
     },
 }

@@ -2,7 +2,7 @@ import { LightningElement, wire, api } from 'lwc';
 import { appStore, wireSymbol } from 'store/index';
 import { MidiNote, PianoKey, notes, getAudioContext, PianoKeyMap } from 'util/sound';
 import { AudioRange } from 'util/audiorange';
-import { timeZero, beatToTime, timeToBeat, Time, createBeat } from 'util/time';
+import { timeZero, beatToTime, timeToBeat, Time } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
@@ -11,10 +11,11 @@ import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
 import { createLoopNote, setLoopNoteRange, setLoopDuration } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
-import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridRangeChangeEvent } from 'cmp/grid/events';
+import { AudioRangeChangeEvent, GridRangeChangeEvent } from 'cmp/grid/events';
 import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
 import { EnvelopeValueChangeEvent } from 'cmp/envelopefield/envelopefield';
 import { setInstrumentData } from 'store/instrument/action';
+import { TickRangeCreatedEvent } from 'event/tickrangecreatedevent';
 
 
 export default class LoopEditElement extends LightningElement {
@@ -81,19 +82,11 @@ export default class LoopEditElement extends LightningElement {
         }
     }
 
-    onDrumMachineNoteCreated(evt: AudioRangeCreatedEvent) {
-        const { id, rowIndex, beatRange } = evt.detail;
-        const keys = Object.keys(this.drumMachineKeys());
-        const key = keys[rowIndex];
-        beatRange.duration = { index: 1/4 }
+    onDrumMachineNoteCreated(evt: TickRangeCreatedEvent<PianoKey>) {
+        const { range, parentId, id } = evt.detail;
         appStore.dispatch(
-            createLoopNote(this.loopId, id, key as PianoKey, beatRange),
+            createLoopNote(this.loopId, id, parentId, range),
         );
-        if (this.loop.duration.index <= beatRange.start.index) {
-            appStore.dispatch(
-                setLoopDuration(this.loopId, createBeat(8))
-            );
-        }
     }
 
     get drumMachineEnvelopeFields() {

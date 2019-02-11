@@ -1,17 +1,15 @@
 <template>
-    <template if:true={showGrid} for:each={gridLines} for:item="gridLine">
-        <ffmpeg-cursor
-            class="grid-time-marker"
-            color={gridLine.color}
-            key={gridLine.time.milliseconds}
-            time={gridLine.time}
-            style={gridLine.style}
-        ></ffmpeg-cursor>
+    <template if:true={hasFrame} for:each={tickRangesViewModels} for:item="vm">
+        <template if:true={vm.isDrumMachineNote}>
+            <ffmpeg-drummachinenote
+                range={vm.range}
+                piano-key={vm.data.key}
+                active={vm.data.active}
+                class="tick-range"
+                key={vm.key}
+                style={vm.style}
+            >
+            </ffmpeg-drummachinenote>
+        </template>
     </template>
-    <slot
-        data-audio-range={range}
-        onrangechange={onRangeChange}
-        ontimechange={onTimeChange}
-        onslotchange={onSlotChange}
-    ></slot>
 </template>

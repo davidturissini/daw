@@ -21,12 +21,14 @@ module.exports = {
         // Add '.ts' and '.tsx' as resolvable extensions.
         extensions: [".ts", ".js", ".css", ".html"],
         alias: {
+            event: path.resolve('./src/event'),
             util: path.resolve('./src/util'),
             store: path.resolve('./src/store'),
             lwc: '@lwc/engine',
             'wire-service': '@lwc/wire-service',
             ...lwcAliases,
             cmp: path.resolve('./src/ffmpeg'),
+            notes: path.resolve('./src/notes'),
         }
     },
     module: {

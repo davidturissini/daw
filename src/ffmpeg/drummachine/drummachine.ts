@@ -1,83 +1,56 @@
 import { LightningElement, api, track } from 'lwc';
 import { PianoKey, MidiNote } from 'util/sound';
-import { BeatRange, divideBeatRange, AudioRange, toBeatRange } from 'util/audiorange';
-import { createBeat, Beat, beatToTime, timeZero, Time } from 'util/time';
 import { Tempo } from 'store/project';
-import { generateId } from 'util/uniqueid';
-import { AudioRangeCreatedEvent } from 'cmp/grid/events';
-import { Color } from 'util/color';
 import { ButtonGroupValueChangeEvent, ButtonGroupButton } from 'cmp/buttongroup/buttongroup';
-
-interface DrumMachineNoteViewModel {
-    key: string;
-    beat: Beat;
-    rowId: PianoKey;
-    range: AudioRange;
-    rowIndex: number;
-}
+import { TickRange, QUARTER_BEAT, Tick, divideTickRange, ZERO_BEAT, FOUR_BEAT } from 'store/tick';
+import { AudioWindowGridRow, AudioWindowGridTickRange } from 'cmp/audiowindowgrid/audiowindowgrid';
+import { Frame } from 'util/geometry';
+import { DrumMachineNote } from 'notes/drummachine';
+import { NoteVariant } from 'notes/index';
 
 export default class DrumMachine extends LightningElement {
     @api notes: MidiNote[];
     @api tempo: Tempo;
-    @api duration: Beat;
+    @api range: TickRange;
+    @api resolution: Tick = QUARTER_BEAT;
+    @api loopId: string;
     @track loopIndex: number = 0;
 
-    get spaceBetween() {
-        return 20;
-    }
-
-    get range() {
-        const { loopIndex } = this;
-        const durationTime = beatToTime(this.duration, this.tempo);
+    get visibleRange(): TickRange {
         return {
-            start: new Time(durationTime.milliseconds * loopIndex),
-            duration: durationTime,
+            start: ZERO_BEAT,
+            duration: FOUR_BEAT,
         }
     }
 
-    get drumNotes(): DrumMachineNoteViewModel[] {
-        const { tempo, notes, range } = this;
-        const quarterBeat = createBeat(1 / 4);
-        const beatRange = toBeatRange(range, tempo);
-        return this.drumMachineKeys.reduce((seed: DrumMachineNoteViewModel[], { pianoKey }, index: number) => {
-            const divided: DrumMachineNoteViewModel[] = divideBeatRange(beatRange, quarterBeat).map((beat: Beat) => {
-                const start = beatToTime(beat, tempo);
+    get windowGridPadding(): Frame {
+        return {
+            width: 10,
+            height: 0,
+        };
+    }
 
+    get drumTickRanges(): AudioWindowGridTickRange<DrumMachineNote>[] {
+        const { notes, range, resolution, drumMachineKeys } = this;
+        return drumMachineKeys.reduce((seed: AudioWindowGridTickRange<DrumMachineNote>[], { pianoKey }, index: number) => {
+            const divided: AudioWindowGridTickRange<DrumMachineNote>[] = divideTickRange(range, resolution).map((tickRange: TickRange) => {
                 const existingNote = notes.find((note) => {
-                    return note.range.start.index === beat.index && note.note === pianoKey;
+                    return note.range.start.index === tickRange.start.index && note.note === pianoKey;
                 });
 
-                const range: AudioRange = {
-                    start,
-                    duration: beatToTime(quarterBeat, tempo)
-                }
-                return {
-                    color: existingNote === undefined ? new Color(61, 61, 61) : new Color(131, 131, 131),
-                    key: `${pianoKey}-${beat.index}`,
-                    beat,
+                const vm: AudioWindowGridTickRange<DrumMachineNote> = {
                     rowId: pianoKey,
-                    rowIndex: index,
-                    range,
-                } as DrumMachineNoteViewModel;
+                    range: tickRange,
+                    variant: NoteVariant.DrumMachineNote,
+                    data: {
+                        key: pianoKey,
+                        active: (existingNote !== undefined)
+                    }
+                };
+                return vm;
             })
             return seed.concat(divided);
         }, []);
-    }
-
-    onRangeClick(evt) {
-        const rowIndex = parseInt(evt.target.getAttribute('data-row-index') as string, 10);
-        const rangeId = generateId();
-        const event: AudioRangeCreatedEvent = new CustomEvent('audiorangecreated', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                range: evt.target.range as AudioRange,
-                rowIndex,
-                id: rangeId,
-                beatRange: toBeatRange(evt.target.range, this.tempo),
-            }
-        });
-        this.dispatchEvent(event);
     }
 
     get drumMachineKeys() {
@@ -105,6 +78,59 @@ export default class DrumMachine extends LightningElement {
         }, {
             pianoKey: PianoKey.G3,
             label: 'clap'
+        }]
+    }
+
+
+    get audioWindowGridRows(): AudioWindowGridRow<PianoKey, { label: string }>[] {
+        return [{
+            id: PianoKey.C3,
+            data: {
+                label: 'Drum'
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.Csharp3,
+            data: {
+                label: 'Snare',
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.D3,
+            data: {
+                label: 'closed Hihat',
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.Dsharp3,
+            data: {
+                label: 'open hihat',
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.E3,
+            data: {
+                label: 'tom',
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.F3,
+            data: {
+                label: 'rim',
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.Fsharp3,
+            data: {
+                label: 'ride',
+            },
+            frame: { width: 150, height: 60 }
+        }, {
+            id: PianoKey.G3,
+            data: {
+                label: 'clap',
+            },
+            frame: { width: 150, height: 60 }
         }]
     }
 
