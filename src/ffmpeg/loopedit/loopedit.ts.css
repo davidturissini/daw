@@ -48,3 +48,11 @@ ul {
 .switch-button {
     width: 1rem;
 }
+
+.drummachine {
+    display: flex;
+}
+
+ffmpeg-drummachine {
+    flex: 1 0 auto;
+}

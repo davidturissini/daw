@@ -1,5 +1,5 @@
 <template>
-    <ffmpeg-audiowindow onrectchange={onAudioWindowRectChange} range={range} tempo={tempo}>
+    <ffmpeg-audiowindow space-between={spaceBetween} onrectchange={onAudioWindowRectChange} range={range} tempo={tempo}>
         <template for:each={ticks} for:item="tick">
             <template if:true={isTimeVariant}>
                 <ffmpeg-timelabel

@@ -1,18 +1,42 @@
-:host {
-    display: flex;
+input {
+    margin: 0;
+    padding: 0;
+    -webkit-appearance: none;
+
+}
+input::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    background: rgb(45, 45, 45);
+    height: 3px;
 }
 
-input {
-    -webkit-appearance: slider-vertical;
+input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    background: rgb(171, 171, 171);
+    margin-top: -2px;
 }
 
 .input-container {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    padding: 0.3rem;
+    background: rgb(76, 76, 76);
+    border-radius: 0.2rem;
+    margin-top: 0.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.value-label {
+    flex: 0 1;
+    text-align: right;
+    padding-left:0.2rem;
     width: 3rem;
 }
 
 label {
-    margin-top: 0.3rem;
+    display: block;
+    font-size: 0.6rem;
 }

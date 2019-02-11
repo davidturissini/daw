@@ -48,11 +48,9 @@ class BeatRange {
         const d = Math.floor((start.seconds + duration.seconds) / tickDistanceSeconds);
         const ticks: T[] = [];
         for(let i = min; i <= d; i += 1) {
-            if (i !== 0) {
-                const time = Time.fromSeconds(i * tickDistanceSeconds);
-                const value: T = cb(timeToBeat(time, tempo), time);
-                ticks.push(value);
-            }
+            const time = Time.fromSeconds(i * tickDistanceSeconds);
+            const value: T = cb(timeToBeat(time, tempo), time);
+            ticks.push(value);
         }
 
         return ticks;

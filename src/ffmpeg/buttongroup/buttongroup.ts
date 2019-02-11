@@ -7,7 +7,8 @@ export type ButtonGroupValueChangeEvent<T> = CustomEvent<{
 
 export interface ButtonGroupButton<T> {
     value: T;
-    iconVariant: string;
+    iconVariant?: string;
+    text?: string;
 }
 
 export default class ButtonGroup<T> extends LightningElement {
@@ -31,6 +32,7 @@ export default class ButtonGroup<T> extends LightningElement {
                 color: button.value === this.value ? new Color(47, 97, 147) : null,
                 value: button.value,
                 iconVariant: button.iconVariant,
+                text: button.text,
             }
         })
     }

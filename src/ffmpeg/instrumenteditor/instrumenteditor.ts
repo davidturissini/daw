@@ -6,6 +6,7 @@ import { InstrumentType } from 'store/instrument/types';
 import { setInstrumentData } from 'store/instrument/action';
 import { EnvelopeValueChangeEvent } from 'cmp/envelopefield/envelopefield';
 import { ButtonGroupButton, ButtonGroupValueChangeEvent } from 'cmp/buttongroup/buttongroup';
+import { AttackReleaseCurve } from 'store/instrument/nodes/DrumMachine';
 
 enum WaveformTypes {
     sine = 'sine',
@@ -36,8 +37,22 @@ export default class InstrumentEditorElement extends LightningElement {
         return this.instrument.type === InstrumentType.Synth;
     }
 
+    get instrumentIsDrumMachine() {
+        return this.instrument.type === InstrumentType.DrumMachine;
+    }
+
     get instrumentData() {
         return this.instrument.data;
+    }
+
+    get attackReleaseCurveButtons(): ButtonGroupButton<AttackReleaseCurve>[] {
+        return [{
+            value: AttackReleaseCurve.exponential,
+            text: 'Exponential'
+        },{
+            value: AttackReleaseCurve.linear,
+            text: 'Linear'
+        }]
     }
 
     get waveformButtons(): ButtonGroupButton<WaveformTypes>[] {
@@ -69,5 +84,17 @@ export default class InstrumentEditorElement extends LightningElement {
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
         )
+    }
+
+    onAttackReleaseCurveChange(evt: ButtonGroupValueChangeEvent<AttackReleaseCurve>) {
+        const { value } = evt.detail;
+        const data = this.instrument.data.set('curve', value);
+        appStore.dispatch(
+            setInstrumentData(this.instrumentId, data)
+        )
+    }
+
+    get drumMachineEnvelopeFields() {
+        return ['attack', 'release'];
     }
 }

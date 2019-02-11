@@ -1,0 +1,31 @@
+<template>
+    <header class="toolbar">
+        <slot name="header"></slot>
+    </header>
+    <div class="window-top">
+        <slot name="window-top"></slot>
+    </div>
+    <main>
+        <div class="col-left">
+            <slot name="col-left" onslotchange={onColLeftSlotChange}></slot>
+        </div>
+        <div
+            class="grid-container"
+            >
+            <ffmpeg-audiowindow
+                space-between={spaceBetween}
+                onrectchange={onContainerAudioWindowRectChange}
+                tempo={tempo}
+                range={range}
+                show-grid
+            >
+                <slot
+                    onslotchange={onRangeSlotChange}
+                ></slot>
+            </ffmpeg-audiowindow>
+            <template if:false={noLanes} for:each={rowLanes} for:item="lane">
+                <div class={lane.className} style={lane.style} key={lane.key}></div>
+            </template>
+        </div>
+    </main>
+</template>

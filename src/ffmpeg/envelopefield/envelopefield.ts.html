@@ -1,5 +1,6 @@
 <template>
-    <div class="input-container">
+    <label if:true={showAttack} for="attack">Attack</label>
+    <div if:true={showAttack} class="input-container">
         <input
             id="attack"
             type="range"
@@ -8,9 +9,10 @@
             max="1"
             step="0.1"
             value={attack} />
-        <label for="attack">Attack</label>
+            <label class="value-label" for="attack">{userValues.attack}</label>
     </div>
-    <div class="input-container">
+    <label if:true={showSustain} for="sustain">Sustain</label>
+    <div if:true={showSustain} class="input-container">
         <input
             type="range"
             id="sustain"
@@ -19,9 +21,10 @@
             max="1"
             step="0.1"
             value={sustain} />
-        <label for="sustain">Sustain</label>
+            <label class="value-label" for="sustain">{userValues.sustain}</label>
     </div>
-    <div class="input-container">
+    <label if:true={showDecay} for="decay">Decay</label>
+    <div if:true={showDecay} class="input-container">
         <input
             type="range"
             id="decay"
@@ -30,9 +33,10 @@
             max="1"
             step="0.1"
             value={decay} />
-        <label for="decay">Decay</label>
+            <label class="value-label" for="decay">{userValues.decay}</label>
     </div>
-    <div class="input-container">
+    <label if:true={showRelease} for="release">Release</label>
+    <div if:true={showRelease} class="input-container">
         <input
             type="range"
             id="release"
@@ -41,6 +45,6 @@
             max="1"
             step="0.1"
             value={release} />
-        <label for="release">Release</label>
+            <label class="value-label" for="release">{userValues.release}</label>
     </div>
 </template>

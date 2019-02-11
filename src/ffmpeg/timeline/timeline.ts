@@ -58,6 +58,7 @@ export default class Timeline extends LightningElement {
     @api tempo: Tempo;
     @api variant: TimelineVariant = TimelineVariant.Time;
     @api markers: Time[] = [];
+    @api spaceBetween: number = 0;
     audioWindowRect: Rect | null = null;
 
     get isTimeVariant() {

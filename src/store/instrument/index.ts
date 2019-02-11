@@ -1,6 +1,6 @@
 import { Record, List } from 'immutable';
 import { InstrumentType, InstrumentAudioNode, InstrumentData } from './types';
-import { DrumMachine } from './nodes/DrumMachine';
+import { DrumMachine, DrumMachineData } from './nodes/DrumMachine';
 import { SynthNode, SynthData } from './nodes/Synth';
 
 export { InstrumentData } from './types';
@@ -21,10 +21,10 @@ export class Instrument<T extends InstrumentData> extends Record<{
     data: T;
 }
 
-export function createInstrumentNode(type: InstrumentType, data: InstrumentData): InstrumentAudioNode {
+export function createInstrumentNode(type: InstrumentType, data: InstrumentData): InstrumentAudioNode<InstrumentData> {
     switch(type) {
         case InstrumentType.DrumMachine:
-            return new DrumMachine();
+            return new DrumMachine(data as DrumMachineData);
         case InstrumentType.Synth:
             return new SynthNode(data as SynthData);
     }

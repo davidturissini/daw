@@ -1,5 +1,21 @@
 <template>
     <div class="container">
+        <template if:true={instrumentIsDrumMachine}>
+            <label class="field-label">Attack/Release Curve</label>
+            <ffmpeg-buttongroup
+                class="field"
+                value={instrumentData.curve}
+                onchange={onAttackReleaseCurveChange}
+                buttons={attackReleaseCurveButtons}
+            >
+            </ffmpeg-buttongroup>
+            <ffmpeg-envelopefield
+                attack={instrumentData.attack}
+                release={instrumentData.release}
+                fields={drumMachineEnvelopeFields}
+                onenvelopevaluechange={onDrumMachineEnvelopeValueChange}
+            ></ffmpeg-envelopefield>
+        </template>
         <template if:true={instrumentIsSynth}>
             <ffmpeg-buttongroup
                 value={instrumentData.oscillatorType}

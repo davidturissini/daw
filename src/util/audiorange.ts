@@ -98,10 +98,10 @@ export class BeatRange {
 }
 
 export function divideBeatRange(range: BeatRange, resolution: Beat): Beat[] {
-    const { duration } = range;
+    const { duration, start } = range;
     const beats: Beat[] = [];
     for(let i = 0; i < duration.index; i += resolution.index) {
-        beats.push(createBeat(i));
+        beats.push(createBeat(i + start.index));
     }
     return beats;
 }

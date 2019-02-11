@@ -63,8 +63,8 @@ function calcAudioRangeStyle(rect: Rect, visibleRange: AudioRange, range: AudioR
         width = width - diff;
     }
     return {
-        transform: `translate3d(${Math.max(x, 0)}px, 0px, 0)`,
-        width: `${width}px`,
+        x: Math.max(x, 0),
+        width,
     };
 }
 
@@ -72,6 +72,7 @@ export default class AudioWindowElement extends LightningElement {
     @api tempo: Tempo;
     @api showGrid: boolean = false;
     @api resolution: Beat = createBeat(1 / 4);
+    @api spaceBetween: number = 0;
     @track rect: Rect | null = null;
     @track globalRect: Rect | null = null;
     @track internalRange: AudioRange;
@@ -95,23 +96,23 @@ export default class AudioWindowElement extends LightningElement {
     }
 
     drawElementStyle(elm: TimeElement) {
-        const { rect, range } = this;
+        const { rect, range, spaceBetween } = this;
         if (!rect) {
             return;
         }
 
         const px = timeToPixel(rect, range, elm.time);
-        elm.style.transform = `translateX(${px}px)`;
+        elm.style.transform = `translateX(${px + spaceBetween}px)`;
     }
 
     drawRangeElementStyle(elm: AudioRangeElement) {
-        const { range, rect } = this;
+        const { range, rect, spaceBetween } = this;
         if (!rect) {
             return;
         }
-        const { width, transform } = calcAudioRangeStyle(rect, range, toAudioRange(elm.range, this.tempo));
-        elm.style.width = width;
-        elm.style.transform = transform;
+        const { width, x } = calcAudioRangeStyle(rect, range, toAudioRange(elm.range, this.tempo));
+        elm.style.width = `${width - spaceBetween}px`;
+        elm.style.transform = `translate3d(${x + spaceBetween / 2}px, 0, 0)`;
     }
 
     renderTimeElementStyles(children: TimeElement[]) {

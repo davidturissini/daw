@@ -1,6 +1,7 @@
 <template>
     <template if:true={instrumentIsDrumMachine}>
         <ffmpeg-drummachine
+            duration={loop.duration}
             tempo={projectTempo}
             notes={pianoMidiNotes}
             onaudiorangecreated={onDrumMachineNoteCreated}

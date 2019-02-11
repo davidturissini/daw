@@ -1,11 +1,12 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { PianoKey, MidiNote } from 'util/sound';
 import { BeatRange, divideBeatRange, AudioRange, toBeatRange } from 'util/audiorange';
-import { createBeat, Beat, beatToTime, timeZero } from 'util/time';
+import { createBeat, Beat, beatToTime, timeZero, Time } from 'util/time';
 import { Tempo } from 'store/project';
 import { generateId } from 'util/uniqueid';
 import { AudioRangeCreatedEvent } from 'cmp/grid/events';
 import { Color } from 'util/color';
+import { ButtonGroupValueChangeEvent, ButtonGroupButton } from 'cmp/buttongroup/buttongroup';
 
 interface DrumMachineNoteViewModel {
     key: string;
@@ -18,20 +19,28 @@ interface DrumMachineNoteViewModel {
 export default class DrumMachine extends LightningElement {
     @api notes: MidiNote[];
     @api tempo: Tempo;
-    @api loopId: string;
+    @api duration: Beat;
+    @track loopIndex: number = 0;
+
+    get spaceBetween() {
+        return 20;
+    }
 
     get range() {
+        const { loopIndex } = this;
+        const durationTime = beatToTime(this.duration, this.tempo);
         return {
-            start: timeZero,
-            duration: beatToTime(createBeat(4), this.tempo)
+            start: new Time(durationTime.milliseconds * loopIndex),
+            duration: durationTime,
         }
     }
 
     get drumNotes(): DrumMachineNoteViewModel[] {
-        const { tempo, notes } = this;
-        const beatRange = new BeatRange(createBeat(0), createBeat(4));
+        const { tempo, notes, range } = this;
+        const quarterBeat = createBeat(1 / 4);
+        const beatRange = toBeatRange(range, tempo);
         return this.drumMachineKeys.reduce((seed: DrumMachineNoteViewModel[], { pianoKey }, index: number) => {
-            const divided: DrumMachineNoteViewModel[] = divideBeatRange(beatRange, createBeat(1 / 4)).map((beat: Beat) => {
+            const divided: DrumMachineNoteViewModel[] = divideBeatRange(beatRange, quarterBeat).map((beat: Beat) => {
                 const start = beatToTime(beat, tempo);
 
                 const existingNote = notes.find((note) => {
@@ -40,10 +49,10 @@ export default class DrumMachine extends LightningElement {
 
                 const range: AudioRange = {
                     start,
-                    duration: beatToTime(createBeat(1 / 4), tempo)
+                    duration: beatToTime(quarterBeat, tempo)
                 }
                 return {
-                    color: existingNote === undefined ? null : new Color(255, 255, 255),
+                    color: existingNote === undefined ? new Color(61, 61, 61) : new Color(131, 131, 131),
                     key: `${pianoKey}-${beat.index}`,
                     beat,
                     rowId: pianoKey,
@@ -73,9 +82,50 @@ export default class DrumMachine extends LightningElement {
 
     get drumMachineKeys() {
         return [{
-            pianoKey: PianoKey.C3
+            pianoKey: PianoKey.C3,
+            label: 'Drum'
         }, {
-            pianoKey: PianoKey.Csharp3
+            pianoKey: PianoKey.Csharp3,
+            label: 'Snare'
+        }, {
+            pianoKey: PianoKey.D3,
+            label: 'closed Hihat'
+        }, {
+            pianoKey: PianoKey.Dsharp3,
+            label: 'open hihat'
+        }, {
+            pianoKey: PianoKey.E3,
+            label: 'tom'
+        }, {
+            pianoKey: PianoKey.F3,
+            label: 'rim'
+        }, {
+            pianoKey: PianoKey.Fsharp3,
+            label: 'ride'
+        }, {
+            pianoKey: PianoKey.G3,
+            label: 'clap'
         }]
+    }
+
+    get loopIndexButtons(): ButtonGroupButton<number>[] {
+        return [{
+            value: 0,
+            text: '1'
+        },{
+            value: 1,
+            text: '2'
+        },{
+            value: 2,
+            text: '3'
+        },{
+            value: 3,
+            text: '4'
+        }]
+    }
+
+    onLoopIndexChange(evt: ButtonGroupValueChangeEvent<number>) {
+        const { value } = evt.detail;
+        this.loopIndex = value;
     }
 }

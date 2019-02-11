@@ -2,7 +2,7 @@ import { LightningElement, wire, api } from 'lwc';
 import { appStore, wireSymbol } from 'store/index';
 import { MidiNote, PianoKey, notes, getAudioContext, PianoKeyMap } from 'util/sound';
 import { AudioRange } from 'util/audiorange';
-import { timeZero, beatToTime, timeToBeat, Time } from 'util/time';
+import { timeZero, beatToTime, timeToBeat, Time, createBeat } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
@@ -12,6 +12,9 @@ import { LoopState } from 'store/loop/reducer';
 import { createLoopNote, setLoopNoteRange, setLoopDuration } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
 import { AudioRangeCreatedEvent, AudioRangeChangeEvent, GridRangeChangeEvent } from 'cmp/grid/events';
+import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
+import { EnvelopeValueChangeEvent } from 'cmp/envelopefield/envelopefield';
+import { setInstrumentData } from 'store/instrument/action';
 
 
 export default class LoopEditElement extends LightningElement {
@@ -68,7 +71,13 @@ export default class LoopEditElement extends LightningElement {
     drumMachineKeys(): PianoKeyMap {
         return {
             [PianoKey.C3]: notes[PianoKey.C3],
-            [PianoKey.Csharp3]: notes[PianoKey.Csharp3]
+            [PianoKey.Csharp3]: notes[PianoKey.Csharp3],
+            [PianoKey.D3]: notes[PianoKey.D3],
+            [PianoKey.Dsharp3]: notes[PianoKey.Dsharp3],
+            [PianoKey.E3]: notes[PianoKey.E3],
+            [PianoKey.F3]: notes[PianoKey.F3],
+            [PianoKey.Fsharp3]: notes[PianoKey.Fsharp3],
+            [PianoKey.G3]: notes[PianoKey.G3]
         }
     }
 
@@ -80,6 +89,34 @@ export default class LoopEditElement extends LightningElement {
         appStore.dispatch(
             createLoopNote(this.loopId, id, key as PianoKey, beatRange),
         );
+    }
+
+    get drumMachineEnvelopeFields() {
+        return ['attack', 'release'];
+    }
+
+    get drumMachineAttack() {
+        return this.instrument<DrumMachineData>().data.attack;
+    }
+
+    get drumMachineRelease() {
+        return this.instrument<DrumMachineData>().data.release;
+    }
+
+    onDrumMachineEnvelopeValueChange(evt: EnvelopeValueChangeEvent) {
+        const instrument = this.instrument<DrumMachineData>();
+        const type = evt.detail.type as 'attack' | 'release';
+        const data = instrument.data.set(type, evt.detail.value);
+        appStore.dispatch(
+            setInstrumentData(instrument.id, data),
+        )
+    }
+
+    onDrumMachineLoopDurationChange() {
+        console.log('cool')
+        appStore.dispatch(
+            setLoopDuration(this.loopId, createBeat(8))
+        )
     }
 
     /*
@@ -135,6 +172,10 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get pianoInstrumentId() {
+        return this.instrument<any>().id;
+    }
+
+    get instrumentId() {
         return this.instrument<any>().id;
     }
 

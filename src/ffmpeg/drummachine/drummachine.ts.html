@@ -1,31 +1,50 @@
 <template>
-    <ffmpeg-grid
-        no-draw
-        no-pan
-        no-lanes
-        range={range}>
-        <template for:each={drumMachineKeys} for:item="drumKey">
-            <h6
-                data-row-id={drumKey.pianoKey}
-                slot="col-left"
-                key={drumKey.pianoKey}
-                class="switch"
+    <div class="audiowindow-container">
+        <ffmpeg-audiowindowgrid
+            no-lanes
+            space-between={spaceBetween}
+            range={range}
+            tempo={tempo}
+        >
+        <div slot="header">
+            <ffmpeg-buttongroup
+                value={loopIndex}
+                onchange={onLoopIndexChange}
+                buttons={loopIndexButtons}
             >
-                {drumKey.pianoKey}
-            </h6>
-        </template>
-        <template for:each={drumNotes} for:item="drumNote">
-            <ffmpeg-audiorange
-                class="drum-note"
-                color={drumNote.color}
-                onclick={onRangeClick}
-                data-row-index={drumNote.rowIndex}
-                data-item-id={drumNote.id}
-                data-row-id={drumNote.rowId}
-                key={drumNote.key}
-                range={drumNote.range}
-                no-resize
-            ></ffmpeg-audiorange>
-        </template>
-    </ffmpeg-grid>
+            </ffmpeg-buttongroup>
+        </div>
+        <ffmpeg-timeline
+            space-between={spaceBetween}
+            slot="window-top"
+            range={range}
+            tempo={tempo}
+            variant="beats"
+        >
+        </ffmpeg-timeline>
+            <template for:each={drumMachineKeys} for:item="drumKey">
+                <h6
+                    data-row-id={drumKey.pianoKey}
+                    slot="col-left"
+                    key={drumKey.pianoKey}
+                    class="key-label"
+                >
+                    {drumKey.label}
+                </h6>
+            </template>
+            <template for:each={drumNotes} for:item="drumNote">
+                <ffmpeg-audiorange
+                    class="drum-note"
+                    color={drumNote.color}
+                    onclick={onRangeClick}
+                    data-row-index={drumNote.rowIndex}
+                    data-item-id={drumNote.id}
+                    data-row-id={drumNote.rowId}
+                    key={drumNote.key}
+                    range={drumNote.range}
+                    no-resize
+                ></ffmpeg-audiorange>
+            </template>
+        </ffmpeg-audiowindowgrid>
+    </div>
 </template>

@@ -17,6 +17,7 @@ import { Clock } from 'store/player/clock';
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
+import { containsTime, clamp } from 'util/audiorange';
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};
 

@@ -2,7 +2,7 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { Synth, PolySynth } from 'tone';
+import { Synth, PolySynth, ProcessingNode } from 'tone';
 
 export class SynthData extends Record<{
     oscillatorType: OscillatorType;
@@ -25,7 +25,7 @@ export class SynthLoopData extends Record<{
 }) {}
 export class SynthNode implements InstrumentAudioNode<SynthData> {
     type: InstrumentType.Synth;
-    dest: AudioNode | null = null;
+    dest: ProcessingNode | null = null;
     synth: PolySynth;
     constructor(data: SynthData) {
         this.synth = new PolySynth(4, Synth);
@@ -53,7 +53,7 @@ export class SynthNode implements InstrumentAudioNode<SynthData> {
         }
     }
 
-    connect(node: AudioNode) {
+    connect(node: ProcessingNode) {
         this.dest = node;
     }
 

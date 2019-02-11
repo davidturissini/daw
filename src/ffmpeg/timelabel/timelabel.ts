@@ -34,7 +34,7 @@ export default class TimeLabel extends LightningElement {
     get formatted() {
         const { tempo } = this;
         if (this.isBeat && tempo) {
-            return timeToBeat(this.time, tempo).index * 4;
+            return timeToBeat(this.time, tempo).index * 4 + 1;
         }
         return TimeFormat.fromMs(this.time.milliseconds, this.format);
     }

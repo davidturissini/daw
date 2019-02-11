@@ -1,3 +1,17 @@
+:host {
+    position: relative;
+    z-index: 1;
+    display: block;
+}
+
+.key-label {
+    padding: 0 1rem;
+    margin: 0.5rem 0;
+    font-size: 0.8rem;
+    font-weight: normal;
+}
+
 .drum-note {
+    display: block;
     cursor: pointer;
 }
