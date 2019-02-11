@@ -89,6 +89,11 @@ export default class LoopEditElement extends LightningElement {
         appStore.dispatch(
             createLoopNote(this.loopId, id, key as PianoKey, beatRange),
         );
+        if (this.loop.duration.index <= beatRange.start.index) {
+            appStore.dispatch(
+                setLoopDuration(this.loopId, createBeat(8))
+            );
+        }
     }
 
     get drumMachineEnvelopeFields() {
@@ -109,13 +114,6 @@ export default class LoopEditElement extends LightningElement {
         const data = instrument.data.set(type, evt.detail.value);
         appStore.dispatch(
             setInstrumentData(instrument.id, data),
-        )
-    }
-
-    onDrumMachineLoopDurationChange() {
-        console.log('cool')
-        appStore.dispatch(
-            setLoopDuration(this.loopId, createBeat(8))
         )
     }
 

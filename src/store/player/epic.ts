@@ -17,7 +17,8 @@ import { Clock } from 'store/player/clock';
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
-import { containsTime, clamp } from 'util/audiorange';
+import { containsTime, clamp, AudioRange, contains } from 'util/audiorange';
+import { Tempo } from 'store/project';
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};
 
@@ -79,6 +80,21 @@ export function playPianoKeyEpic(actions) {
         )
 }
 
+function clampNotes(midiNotes: MidiNote[], range: AudioRange, tempo: Tempo) {
+    return midiNotes.filter((note) => {
+        return contains(note.range.toAudioRange(tempo), range);
+    })
+    .map((midiNote: MidiNote) => {
+        const noteAudioRange = midiNote.range.toAudioRange(tempo);
+        const clamped = clamp(range, noteAudioRange);
+
+        return {
+            note: midiNote,
+            clampOffsetRange: clamped,
+        };
+    })
+}
+
 export function playTrackLoopEpic(actions) {
     let clock: Clock | null = null;
     return actions.ofType(PLAY_TRACK_LOOP)
@@ -105,12 +121,12 @@ export function playTrackLoopEpic(actions) {
                         const { loop: loops } = appStore.getState();
                         const innerLoop = loops.items.get(loopId) as Loop;
 
-                        innerLoop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
+                        const flattenedNotes = innerLoop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
                             return seed.concat(noteMap.toList().toArray());
-                        }, [])
-                        .forEach((note: MidiNote) => {
-                            const timeRange = note.range.toAudioRange(tempo);
-                            instrumentNode.trigger(note.note as PianoKey, note.velocity, Time.fromSeconds(time).plus(timeRange.start), timeZero, timeRange.duration);
+                        }, []);
+
+                        clampNotes(flattenedNotes, { start: timeZero, duration: beatToTime(loop.duration, tempo) }, tempo).forEach(({ note, clampOffsetRange }) => {
+                            instrumentNode.trigger(note.note as PianoKey, note.velocity, Time.fromSeconds(time).plus(clampOffsetRange.start), timeZero, clampOffsetRange.duration);
                         })
                     }, beatToTime(loop.duration, tempo).seconds).start(startTime);
                     return () => {
