@@ -46,10 +46,3 @@
     border-top: 10px solid rgb(174, 174, 174);
     margin-bottom: -6px;
 }
-
-ffmpeg-timelabel, ffmpeg-beatlabel {
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 2;
-}

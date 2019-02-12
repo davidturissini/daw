@@ -1,22 +1,8 @@
 <template>
-    <ffmpeg-audiowindow space-between={spaceBetween} onrectchange={onAudioWindowRectChange} range={range} tempo={tempo}>
-        <template for:each={ticks} for:item="tick">
-            <template if:true={isTimeVariant}>
-                <ffmpeg-timelabel
-                    key={tick.milliseconds}
-                    class="tick-label"
-                    time={tick}
-                ></ffmpeg-timelabel>
-            </template>
-            <template if:true={isBeatVariant}>
-                <ffmpeg-timelabel
-                    key={tick.milliseconds}
-                    time={tick}
-                    tempo={tempo}
-                    is-beat
-                >
-                </ffmpeg-timelabel>
-            </template>
-        </template>
+    <ffmpeg-audiowindow
+        padding={rangePadding}
+        visible-range={visibleRange}
+        tick-ranges={tickRangesViewModels}
+    >
     </ffmpeg-audiowindow>
 </template>

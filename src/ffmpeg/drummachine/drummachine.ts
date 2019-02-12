@@ -2,7 +2,7 @@ import { LightningElement, api, track } from 'lwc';
 import { PianoKey, MidiNote } from 'util/sound';
 import { Tempo } from 'store/project';
 import { ButtonGroupValueChangeEvent, ButtonGroupButton } from 'cmp/buttongroup/buttongroup';
-import { TickRange, QUARTER_BEAT, Tick, divideTickRange, ZERO_BEAT, FOUR_BEAT } from 'store/tick';
+import { TickRange, QUARTER_BEAT, Tick, divideTickRange, ZERO_BEAT, FOUR_BEAT, tickRangeContains, inTickRange } from 'store/tick';
 import { AudioWindowGridRow, AudioWindowGridTickRange } from 'cmp/audiowindowgrid/audiowindowgrid';
 import { Frame } from 'util/geometry';
 import { DrumMachineNote } from 'notes/drummachine';
@@ -14,6 +14,7 @@ export default class DrumMachine extends LightningElement {
     @api range: TickRange;
     @api resolution: Tick = QUARTER_BEAT;
     @api loopId: string;
+    @api currentTime: Tick | null = null;
     @track loopIndex: number = 0;
 
     get visibleRange(): TickRange {
@@ -31,19 +32,25 @@ export default class DrumMachine extends LightningElement {
     }
 
     get drumTickRanges(): AudioWindowGridTickRange<DrumMachineNote>[] {
-        const { notes, range, resolution, drumMachineKeys } = this;
+        const { notes, range, resolution, drumMachineKeys, currentTime } = this;
         return drumMachineKeys.reduce((seed: AudioWindowGridTickRange<DrumMachineNote>[], { pianoKey }, index: number) => {
             const divided: AudioWindowGridTickRange<DrumMachineNote>[] = divideTickRange(range, resolution).map((tickRange: TickRange) => {
                 const existingNote = notes.find((note) => {
                     return note.range.start.index === tickRange.start.index && note.note === pianoKey;
                 });
+                const noteId = (existingNote !== undefined) ? existingNote.id : undefined;
 
+                let isPlaying = false;
+                if(currentTime && existingNote) {
+                    isPlaying = inTickRange(currentTime, existingNote.range);
+                }
                 const vm: AudioWindowGridTickRange<DrumMachineNote> = {
                     rowId: pianoKey,
                     range: tickRange,
                     variant: NoteVariant.DrumMachineNote,
                     data: {
-                        noteId: (existingNote !== undefined) ? existingNote.id : undefined,
+                        isPlaying,
+                        noteId,
                         key: pianoKey,
                     }
                 };

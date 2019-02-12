@@ -7,11 +7,11 @@ export class Tempo {
     }
 
     get beatsPerSecond(): number {
-        return 60 / this.beatsPerMinute;
+        return this.beatsPerMinute / 60;
     }
 
     get secondsPerBeat(): number {
-        return this.beatsPerMinute / 60;
+        return 60 / this.beatsPerMinute;
     }
 }
 

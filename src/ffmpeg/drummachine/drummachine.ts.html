@@ -1,12 +1,19 @@
 <template>
     <div class="audiowindow-container">
+        {currentTimeIndex}
         <ffmpeg-audiowindowgrid
             range-padding={windowGridPadding}
             visible-range={visibleRange}
             rows={audioWindowGridRows}
             tick-ranges={drumTickRanges}
         >
-        <!-- <div slot="header">
+        <ffmpeg-timeline
+            range-padding={windowGridPadding}
+            slot="window-top"
+            visible-range={visibleRange}
+        >
+        </ffmpeg-timeline>
+        <!--<div slot="header">
             <ffmpeg-buttongroup
                 value={loopIndex}
                 onchange={onLoopIndexChange}
@@ -14,6 +21,7 @@
             >
             </ffmpeg-buttongroup>
         </div>
+
         <ffmpeg-timeline
             space-between={spaceBetween}
             slot="window-top"

@@ -2,4 +2,14 @@ div {
     height: 100%;
     width: 100%;
     cursor: pointer;
+    border-radius: 0.4rem;
+    background: rgb(61, 61, 61);
+}
+
+.active {
+    background: rgb(163, 163, 163);
+}
+
+.playing {
+    background: red;
 }

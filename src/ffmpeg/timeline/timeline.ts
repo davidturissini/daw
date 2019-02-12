@@ -1,12 +1,9 @@
 import { LightningElement, api } from 'lwc';
-import interact, { Interactable } from 'interactjs';
-import { Time, Beat, createBeat } from '../../util/time';
-import rafThrottle from 'raf-throttle';
-import { mapTimeMarks, mapBeatMarks } from 'store/audiowindow';
-import { Tempo } from 'store/project';
-import { AudioRange } from 'util/audiorange';
-import { AudioWindowRectChangeEvent } from 'cmp/audiowindow/audiowindow';
-import { Rect, pixelToTime } from 'util/geometry';
+import { Time } from '../../util/time';
+import { AudioWindowTickRange } from 'cmp/audiowindow/audiowindow';
+import { Frame } from 'util/geometry';
+import { TickRange, divideTickRange, QUARTER_BEAT } from 'store/tick';
+import { NoteVariant } from 'notes/index';
 
 export type TimelineDragEvent = CustomEvent<{
     delta: Time;
@@ -53,38 +50,24 @@ export function getResolution(duration): number {
 
 
 export default class Timeline extends LightningElement {
-    interact: Interactable;
-    @api range: AudioRange;
-    @api tempo: Tempo;
-    @api variant: TimelineVariant = TimelineVariant.Time;
-    @api markers: Time[] = [];
-    @api spaceBetween: number = 0;
-    audioWindowRect: Rect | null = null;
+    @api rangePadding: Frame;
+    @api visibleRange: TickRange;
 
-    get isTimeVariant() {
-        return this.variant === TimelineVariant.Time;
-    }
-
-    get isBeatVariant() {
-        return this.variant === TimelineVariant.Beats;
-    }
-
-    get ticks(): Time[] {
-        const { range, tempo } = this;
-        const resolution = Time.fromSeconds(getResolution(range.duration) * 4);
-        if (this.variant === TimelineVariant.Time) {
-            return mapTimeMarks<Time>(range, resolution, (time: Time) => {
-                return time;
-            });
-        }
-
-        return mapBeatMarks<Time>(range, createBeat(1/4), tempo, (beat: Beat, time: Time) => {
-            return time;
-        });
-    }
-
-    onAudioWindowRectChange(evt: AudioWindowRectChangeEvent) {
-        this.audioWindowRect = evt.detail.rect;
+    get tickRangesViewModels(): AudioWindowTickRange[] {
+        return divideTickRange(this.visibleRange, QUARTER_BEAT).map((range: TickRange) => {
+            return {
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                },
+                range,
+                id: String(range.start.index),
+                variant: NoteVariant.BeatLabelNote,
+                data: {}
+            }
+        })
     }
 
     /*
@@ -92,34 +75,34 @@ export default class Timeline extends LightningElement {
      * Dragging
      *
     */
-    onDrag = rafThrottle((evt) => {
-        const { audioWindowRect } = this;
-        if (!audioWindowRect) {
-            return;
-        }
+    // onDrag = rafThrottle((evt) => {
+    //     const { audioWindowRect } = this;
+    //     if (!audioWindowRect) {
+    //         return;
+    //     }
 
-        const time = pixelToTime(audioWindowRect, this.range, evt.dx);
-        const customEvent: TimelineDragEvent = new CustomEvent('timelinedrag', {
-            detail: {
-                delta: time,
-            },
-        });
-        this.dispatchEvent(customEvent);
-    })
+    //     const time = pixelToTime(audioWindowRect, this.range, evt.dx);
+    //     const customEvent: TimelineDragEvent = new CustomEvent('timelinedrag', {
+    //         detail: {
+    //             delta: time,
+    //         },
+    //     });
+    //     this.dispatchEvent(customEvent);
+    // })
     /*
      *
      * Lifecycle
      *
     */
-    connectedCallback() {
-        this.interact = interact(this.template.host).draggable({
-            inertia: true,
-            axis: 'x',
-            onmove: this.onDrag,
-        });
-    }
+    // connectedCallback() {
+    //     this.interact = interact(this.template.host).draggable({
+    //         inertia: true,
+    //         axis: 'x',
+    //         onmove: this.onDrag,
+    //     });
+    // }
 
-    disconnectedCallback() {
-        (this.interact as any).unset();
-    }
+    // disconnectedCallback() {
+    //     (this.interact as any).unset();
+    // }
 }

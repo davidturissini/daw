@@ -3,12 +3,28 @@ import {
     DELETE_LOOP_NOTE,
     SET_LOOP_NOTE_RANGE,
     SET_LOOP_DURATION,
+    SET_LOOP_CURRENT_TIME,
  } from './const';
 import { Action } from 'store/index';
 import { BeatRange } from 'util/audiorange';
 import { PianoKey } from 'util/sound';
 import { Beat } from 'util/time';
-import { TickRange } from 'store/tick';
+import { TickRange, Tick } from 'store/tick';
+
+export type SetLoopCurrentTimeAction = Action<{
+    loopId: string;
+    currentTime: Tick;
+}>
+
+export function setLoopCurrentTime(loopId: string, currentTime: Tick): SetLoopCurrentTimeAction {
+    return {
+        type: SET_LOOP_CURRENT_TIME,
+        payload: {
+            loopId,
+            currentTime,
+        },
+    }
+}
 
 export type SetLoopDurationAction = Action<{
     loopId: string;

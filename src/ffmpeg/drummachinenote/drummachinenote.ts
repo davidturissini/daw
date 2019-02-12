@@ -9,11 +9,17 @@ export default class DrumMachineTick extends LightningElement {
     @api range: TickRange;
     @api pianoKey: PianoKey;
     @api noteId?: string;
-    get divStyle(): string {
+    @api isPlaying: boolean;
+    get divClass(): string {
+        const classNames: string[]= [];
         if (this.noteId) {
-            return `background: red`;
+            classNames.push('active');
         }
-        return 'background: white';
+        if (this.isPlaying) {
+            classNames.push('playing');
+        }
+
+        return classNames.join(' ');
     }
 
     onDivClick() {

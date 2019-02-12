@@ -37,7 +37,8 @@ if (process.env.NODE_ENV !== 'production') {
                 return (
                     action.type !== 'SET_VIRTUAL_CURSOR_TIME' &&
                     action.type !== 'SET_AUDIO_WINDOW_VISIBLE_RANGE' &&
-                    action.type !== 'SET_AUDIO_WINDOW_VIRTUAL_CURSOR_TIME'
+                    action.type !== 'SET_AUDIO_WINDOW_VIRTUAL_CURSOR_TIME' &&
+                    action.type !== 'SET_LOOP_CURRENT_TIME'
                 );
             },
             stateTransformer: (state) => {

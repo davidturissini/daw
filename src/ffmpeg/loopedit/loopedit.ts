@@ -1,8 +1,7 @@
 import { LightningElement, wire, api } from 'lwc';
 import { appStore, wireSymbol } from 'store/index';
 import { MidiNote, PianoKey, notes, getAudioContext, PianoKeyMap } from 'util/sound';
-import { AudioRange } from 'util/audiorange';
-import { timeZero, beatToTime, timeToBeat, Time } from 'util/time';
+import { timeToBeat, Time } from 'util/time';
 import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
@@ -11,12 +10,13 @@ import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
 import { createLoopNote, setLoopNoteRange, setLoopDuration, deleteLoopNote } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
-import { AudioRangeChangeEvent, GridRangeChangeEvent } from 'cmp/grid/events';
+import { GridRangeChangeEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
 import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
 import { EnvelopeValueChangeEvent } from 'cmp/envelopefield/envelopefield';
 import { setInstrumentData } from 'store/instrument/action';
 import { TickRangeCreatedEvent } from 'event/tickrangecreatedevent';
 import { TickRangeDeletedEvent } from 'event/tickrangedeletedevent';
+import { AudioRangeCreatedEvent } from 'cmp/audiowindowgrid/events';
 
 
 export default class LoopEditElement extends LightningElement {
@@ -44,13 +44,6 @@ export default class LoopEditElement extends LightningElement {
     get loop(): Loop {
         const { loopId } = this;
         return this.storeData.data.loop.get(loopId) as Loop;
-    }
-
-    get loopRange(): AudioRange | null {
-        return {
-            start: timeZero,
-            duration: beatToTime(this.loop.duration, this.project.currentProject!.tempo),
-        };
     }
 
     instrument<T extends InstrumentData>(): Instrument<T> {

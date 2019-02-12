@@ -1,49 +1,32 @@
 import { LightningElement, api } from 'lwc';
-import TimeFormat from 'hh-mm-ss';
-import { Time, timeToBeat } from 'util/time';
 import { Tempo } from 'store/project';
-import { TimeChangeEvent } from 'cmp/audiowindow/audiowindow';
+import { Tick, ONE_BEAT, QUARTER_BEAT } from 'store/tick';
 
-const timeSymbol = Symbol();
+export enum TimeLabelAlign {
+    LEFT, CENTER, RIGHT,
+}
 
 export default class TimeLabel extends LightningElement {
     @api format = 'mm:ss';
     @api isBeat: boolean = false;
-    @api tempo: Tempo | null = null;
-    connected: boolean = false;
-    [timeSymbol]: Time;
+    @api tempo: Tempo;
+    @api tick: Tick;
+    @api align: TimeLabelAlign = TimeLabelAlign.CENTER;
 
-    @api
-    set time(value) {
-        if (this.connected === true) {
-            const event: TimeChangeEvent = new CustomEvent('timechange', {
-                bubbles: true,
-                composed: true,
-                detail: {
-                    time: value,
-                }
-            });
-            this.dispatchEvent(event);
+    get className(): string | undefined {
+        const { align } = this;
+        if (align === TimeLabelAlign.CENTER) {
+            return 'center';
         }
-        this[timeSymbol] = value;
-    }
-    get time() {
-        return this[timeSymbol];
+
+        if (align === TimeLabelAlign.RIGHT) {
+            return 'right';
+        }
     }
 
     get formatted() {
-        const { tempo } = this;
-        if (this.isBeat && tempo) {
-            return timeToBeat(this.time, tempo).index * 4 + 1;
-        }
-        return TimeFormat.fromMs(this.time.milliseconds, this.format);
-    }
-
-    connectedCallback() {
-        this.connected = true;
-    }
-
-    disconnectedCallback() {
-        this.connected = false;
+        const resolutionIndex = Math.floor(this.tick.index / ONE_BEAT.index);
+        const remainder = (this.tick.index % ONE_BEAT.index) / QUARTER_BEAT.index;
+        return `${resolutionIndex + 1}.${remainder + 1}`;
     }
 }

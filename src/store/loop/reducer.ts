@@ -7,8 +7,9 @@ import {
     DELETE_LOOP_NOTE,
     SET_LOOP_NOTE_RANGE,
     SET_LOOP_DURATION,
+    SET_LOOP_CURRENT_TIME,
 } from './const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopDurationAction } from './action';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopDurationAction, SetLoopCurrentTimeAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
@@ -71,6 +72,11 @@ function setLoopDurationReducer(state: LoopState, action: SetLoopDurationAction)
     return state.setIn(['items', loopId, 'range', 'duration'], duration);
 }
 
+function setLoopCurrentTimeReducer(state: LoopState, action: SetLoopCurrentTimeAction): LoopState {
+    const { loopId, currentTime } = action.payload;
+    return state.setIn(['items', loopId, 'currentTime'], currentTime);
+}
+
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
         case CREATE_INSTRUMENT:
@@ -83,6 +89,8 @@ export function reducer(state = new LoopState(), action) {
             return setLoopNoteRangeReduer(state, action);
         case SET_LOOP_DURATION:
             return setLoopDurationReducer(state, action);
+        case SET_LOOP_CURRENT_TIME:
+            return setLoopCurrentTimeReducer(state, action);
     }
     return state;
 }

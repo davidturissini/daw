@@ -1,9 +1,8 @@
 import { Record, Map as ImmutableMap } from 'immutable';
 import { MidiNote, PianoKey } from 'util/sound';
-import { Time } from 'util/time';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
 import { SynthLoopData } from 'store/instrument/nodes/Synth';
-import { ZERO_BEAT, FOUR_BEAT, TickRange, tickRange, tick } from 'store/tick';
+import { ZERO_BEAT, FOUR_BEAT, TickRange, tickRange, Tick } from 'store/tick';
 
 export type LoopDataTypes = DrumMachineLoopData | SynthLoopData;
 
@@ -13,7 +12,7 @@ export class Loop extends Record<{
     instrumentId: string;
     range: TickRange,
     data: any;
-    currentTime: Time | null;
+    currentTime: Tick | null;
 }>({
     id: '',
     notes: ImmutableMap(),

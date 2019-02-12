@@ -15,6 +15,7 @@ interface TickRangeViewModel {
     range: TickRange;
     style: string;
     isDrumMachineNote: boolean;
+    isBeatLabelNote: boolean;
     data: NoteViewData;
 }
 
@@ -63,11 +64,13 @@ export default class AudioWindowElement extends LightningElement {
         })
         .map(({ range, key, rect, variant, data }) => {
             const isDrumMachineNote = variant === NoteVariant.DrumMachineNote;
+            const isBeatLabelNote = variant === NoteVariant.BeatLabelNote;
             return {
                 range,
                 key,
                 style: rectToCSS(rect),
                 isDrumMachineNote,
+                isBeatLabelNote,
                 data,
             }
         })
@@ -78,10 +81,12 @@ export default class AudioWindowElement extends LightningElement {
     }
 
     connectedCallback() {
-        const rect = this.getBoundingClientRect();
-        this.frame = {
-            width: rect.width,
-            height: rect.height,
-        };
+        requestAnimationFrame(() => {
+            const rect = this.getBoundingClientRect();
+            this.frame = {
+                width: rect.width,
+                height: rect.height,
+            };
+        });
     }
 }

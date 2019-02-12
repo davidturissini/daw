@@ -1,6 +1,7 @@
 <template>
     <template if:true={instrumentIsDrumMachine}>
         <ffmpeg-drummachine
+            current-time={loop.currentTime}
             range={loop.range}
             tempo={projectTempo}
             notes={pianoMidiNotes}
@@ -9,7 +10,7 @@
         >
         </ffmpeg-drummachine>
     </template>
-    <template if:true={instrumentIsOscillator}>
+    <!-- <template if:true={instrumentIsOscillator}>
         <ffmpeg-piano
             piano-keys={pianoNotes}
             audio-context={pianoAudioContext}
@@ -28,5 +29,5 @@
                 time={loopCurrentTime}
             ></ffmpeg-cursor>
         </ffmpeg-piano>
-    </template>
+    </template> -->
 </template>

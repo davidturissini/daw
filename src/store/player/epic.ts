@@ -4,21 +4,22 @@ import {
     PLAY_PIANO_KEY,
     STOP_PIANO_KEY,
 } from './const';
-import { flatMap, filter, takeUntil } from 'rxjs/operators';
+import { flatMap, filter, takeUntil, switchMap } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction } from './action';
 import { empty as emptyObservable, empty, Observable, Subscription } from 'rxjs';
 import { appStore } from '../index';
 import { createInstrumentNode } from 'store/instrument';
 import { MidiNote, PianoKey } from 'util/sound';
-import { timeZero, beatToTime, Time } from 'util/time';
+import { timeZero, Time } from 'util/time';
 import { Loop } from 'store/loop';
 import { Loop as ToneLoop, Transport } from 'tone';
 import { Clock } from 'store/player/clock';
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
-import { containsTime, clamp, AudioRange, contains } from 'util/audiorange';
 import { Tempo } from 'store/project';
+import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick } from 'store/tick';
+import { setLoopCurrentTime } from 'store/loop/action';
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};
 
@@ -80,13 +81,12 @@ export function playPianoKeyEpic(actions) {
         )
 }
 
-function clampNotes(midiNotes: MidiNote[], range: AudioRange, tempo: Tempo) {
+function clampNotes(midiNotes: MidiNote[], range: TickRange, tempo: Tempo): Array<{ note: MidiNote, clampOffsetRange: TickRange }> {
     return midiNotes.filter((note) => {
-        return contains(note.range.toAudioRange(tempo), range);
+        return tickRangeContains(note.range, range);
     })
     .map((midiNote: MidiNote) => {
-        const noteAudioRange = midiNote.range.toAudioRange(tempo);
-        const clamped = clamp(range, noteAudioRange);
+        const clamped = clampTickRange(range, midiNote.range);
 
         return {
             note: midiNote,
@@ -117,6 +117,8 @@ export function playTrackLoopEpic(actions) {
                         Transport.start();
                     }
 
+                    const loopDurationTime = tickTime(loop.range.duration, tempo);
+
                     const toneLoop = new ToneLoop((time: number) => {
                         const { loop: loops } = appStore.getState();
                         const innerLoop = loops.items.get(loopId) as Loop;
@@ -125,14 +127,49 @@ export function playTrackLoopEpic(actions) {
                             return seed.concat(noteMap.toList().toArray());
                         }, []);
 
-                        clampNotes(flattenedNotes, { start: timeZero, duration: beatToTime(loop.duration, tempo) }, tempo).forEach(({ note, clampOffsetRange }) => {
-                            instrumentNode.trigger(note.note as PianoKey, note.velocity, Time.fromSeconds(time).plus(clampOffsetRange.start), timeZero, clampOffsetRange.duration);
-                        })
-                    }, beatToTime(loop.duration, tempo).seconds).start(startTime);
+                        clampNotes(flattenedNotes, loop.range, tempo).forEach(({ note, clampOffsetRange }) => {
+                            const timeDuration = tickTime(clampOffsetRange.duration, tempo);
+                            const timeStart = tickTime(clampOffsetRange.start, tempo);
+                            instrumentNode.trigger(
+                                note.note as PianoKey,
+                                note.velocity,
+                                Time.fromSeconds(time).plus(timeStart),
+                                timeZero,
+                                timeDuration,
+                            );
+                        });
+
+                        o.next({ tempo, loopId });
+                    }, loopDurationTime.seconds).start(startTime);
                     return () => {
                         toneLoop.stop(0);
                     }
                 });
+            }),
+            switchMap(({ loopId, tempo }: { tempo: Tempo, loopId: string }) => {
+                return Observable.create((o) => {
+                    let startTime: number | null = null;
+                    let raf;
+                    function run() {
+                        raf = requestAnimationFrame((time) => {
+                            if (startTime === null) {
+                                startTime = time;
+                            }
+
+                            const timeElapsed = new Time(time - startTime);
+                            const tick = timeToTick(timeElapsed, tempo);
+                            o.next(
+                                setLoopCurrentTime(loopId, tick)
+                            );
+
+                            run();
+                        })
+                    }
+
+                    run();
+
+                    return () => cancelAnimationFrame(raf);
+                })
             })
         )
 }
