@@ -41,18 +41,21 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
 
     get rowViewModels() {
         return this.rows.map((row) => {
+            const rowFrame = this.rowsRectMap[row.id];
+            const height = rowFrame.rect.height;
             return {
                 id: row.id,
                 data: row.data,
-                style: frameToCSS(row.frame),
+                style: `padding-top:${this.rangePadding.height / 2}px; padding-bottom: ${this.rangePadding.height / 2}px; width:${row.frame.width}; height:${height}px`
             }
         })
     }
 
     get rowsRectMap(): { [key: string]: { rowId: string, rect: Rect } } {
-        let y = 0;
+        const { rangePadding } = this;
+        let y = rangePadding.height / 2;
         return this.rows.reduce((seed: { [key: string]: { rowId: string, rect: Rect } }, row) => {
-            const { height } = row.frame;
+            const height = row.frame.height + (rangePadding.height / 2);
             const rect: Rect = {
                 x: 0,
                 y: y,
@@ -64,7 +67,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
                 rect
             };
 
-            y += height;
+            y += height + rangePadding.height;
             return seed;
         }, {});
     }
@@ -82,25 +85,6 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
             return vm;
         })
     }
-
-    // /*
-    //  *
-    //  * Grid Lines
-    //  *
-    //  */
-    // get rowViewModels() {
-    //     const { rowFrames } = this;
-    //     if (!rowFrames) {
-    //         return [];
-    //     }
-    //     return Object.keys(rowFrames).map((rowId) => {
-    //         const { rect } = rowFrames[rowId];
-    //         return {
-    //             id: rowId,
-    //             style: `height: ${rect.height}px;`
-    //         }
-    //     });
-    // }
 
     // get rowLanes(): Array<{ style: string, className: string, key: string }> {
     //     const { rowFrames } = this;

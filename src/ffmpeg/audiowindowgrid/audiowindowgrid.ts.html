@@ -8,7 +8,13 @@
     <main>
         <div class="col-left">
             <template for:each={rowViewModels} for:item="vm">
-                <div style={vm.style} key={vm.id}>{vm.data.label}</div>
+                <div
+                    class="col-left-row"
+                    style={vm.style}
+                    key={vm.id}
+                >
+                    {vm.data.label}
+                </div>
             </template>
         </div>
         <div class="grid-container">

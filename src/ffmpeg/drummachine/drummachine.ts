@@ -26,7 +26,7 @@ export default class DrumMachine extends LightningElement {
     get windowGridPadding(): Frame {
         return {
             width: 10,
-            height: 0,
+            height: 10,
         };
     }
 
@@ -43,8 +43,8 @@ export default class DrumMachine extends LightningElement {
                     range: tickRange,
                     variant: NoteVariant.DrumMachineNote,
                     data: {
+                        noteId: (existingNote !== undefined) ? existingNote.id : undefined,
                         key: pianoKey,
-                        active: (existingNote !== undefined)
                     }
                 };
                 return vm;
@@ -88,49 +88,49 @@ export default class DrumMachine extends LightningElement {
             data: {
                 label: 'Drum'
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.Csharp3,
             data: {
                 label: 'Snare',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.D3,
             data: {
                 label: 'closed Hihat',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.Dsharp3,
             data: {
                 label: 'open hihat',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.E3,
             data: {
                 label: 'tom',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.F3,
             data: {
                 label: 'rim',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.Fsharp3,
             data: {
                 label: 'ride',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.G3,
             data: {
                 label: 'clap',
             },
-            frame: { width: 150, height: 60 }
+            frame: { width: 150, height: 15 }
         }]
     }
 

@@ -37,7 +37,12 @@ main {
     position: relative;
     z-index: 2;
     grid-column: 1;
-    width: 150px;
+}
+
+.col-left-row {
+    padding-left: 10px;
+    display: flex;
+    align-items: center;
 }
 
 .toolbar {
