@@ -36,7 +36,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     @api tickRanges: AudioWindowGridTickRange<any>[];
     @api rows: AudioWindowGridRow<K, T>[] = [];
     @api visibleRange: TickRange;
-    @api rangePadding: Frame;
+    @api rangePadding: Frame = { height: 0, width: 0 };
     @track resolution: Tick = QUARTER_BEAT;
 
     get rowViewModels() {

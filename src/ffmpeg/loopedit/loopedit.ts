@@ -55,7 +55,7 @@ export default class LoopEditElement extends LightningElement {
         return this.instrument().type === InstrumentType.DrumMachine;
     }
 
-    get instrumentIsOscillator() {
+    get shouldRenderPiano() {
         return this.instrument().type === InstrumentType.Synth;
     }
 

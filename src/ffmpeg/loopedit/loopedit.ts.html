@@ -11,24 +11,10 @@
         >
         </ffmpeg-drummachine>
     </template>
-    <!-- <template if:true={instrumentIsOscillator}>
+    <template if:true={shouldRenderPiano}>
         <ffmpeg-piano
-            piano-keys={pianoNotes}
-            audio-context={pianoAudioContext}
-            tempo={projectTempo}
-            instrument-id={pianoInstrumentId}
-            ongridrangechange={onPianoGridRangeChange}
             range={loopRange}
-            ongridclose={onPianoGridClose}
-            can-close-grid={canClosePianoGrid}
-            onaudiorangechange={onOscillatorNoteRangeChange}
-            onaudiorangecreated={onOscillatorNoteCreated}
-            midi-notes={pianoMidiNotes}
         >
-            <ffmpeg-cursor
-                if:true={loopCurrentTimeIsVisible}
-                time={loopCurrentTime}
-            ></ffmpeg-cursor>
         </ffmpeg-piano>
-    </template> -->
+    </template>
 </template>
