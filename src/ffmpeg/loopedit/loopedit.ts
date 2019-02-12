@@ -8,7 +8,7 @@ import { InstrumentState } from 'store/instrument/reducer';
 import { InstrumentType } from 'store/instrument/types';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
-import { createLoopNote, setLoopNoteRange, setLoopDuration, deleteLoopNote } from 'store/loop/action';
+import { createLoopNote, setLoopNoteRange, deleteLoopNote, setLoopRange } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
 import { GridRangeChangeEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
 import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
@@ -17,6 +17,7 @@ import { setInstrumentData } from 'store/instrument/action';
 import { TickRangeCreatedEvent } from 'event/tickrangecreatedevent';
 import { TickRangeDeletedEvent } from 'event/tickrangedeletedevent';
 import { AudioRangeCreatedEvent } from 'cmp/audiowindowgrid/events';
+import { LoopRangeChangeEvent } from 'event/looprangechangeevent';
 
 
 export default class LoopEditElement extends LightningElement {
@@ -109,6 +110,13 @@ export default class LoopEditElement extends LightningElement {
         appStore.dispatch(
             setInstrumentData(instrument.id, data),
         )
+    }
+
+    onLoopRangeChange(evt: LoopRangeChangeEvent) {
+        const { range } = evt.detail;
+        appStore.dispatch(
+            setLoopRange(this.loopId, range),
+        );
     }
 
     /*

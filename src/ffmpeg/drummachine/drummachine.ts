@@ -2,11 +2,13 @@ import { LightningElement, api, track } from 'lwc';
 import { PianoKey, MidiNote } from 'util/sound';
 import { Tempo } from 'store/project';
 import { ButtonGroupValueChangeEvent, ButtonGroupButton } from 'cmp/buttongroup/buttongroup';
-import { TickRange, QUARTER_BEAT, Tick, divideTickRange, ZERO_BEAT, FOUR_BEAT, tickRangeContains, inTickRange } from 'store/tick';
+import { TickRange, QUARTER_BEAT, Tick, divideTickRange, inTickRange, tick, tickPlus, tickRange, FOUR_BEAT } from 'store/tick';
 import { AudioWindowGridRow, AudioWindowGridTickRange } from 'cmp/audiowindowgrid/audiowindowgrid';
 import { Frame } from 'util/geometry';
 import { DrumMachineNote } from 'notes/drummachine';
 import { NoteVariant } from 'notes/index';
+import { loopRangeChangeEvent, LoopRangeChangeEvent } from 'event/looprangechangeevent';
+import { TickRangeCreatedEvent } from 'event/tickrangecreatedevent';
 
 export default class DrumMachine extends LightningElement {
     @api notes: MidiNote[];
@@ -17,10 +19,12 @@ export default class DrumMachine extends LightningElement {
     @api currentTime: Tick | null = null;
     @track loopIndex: number = 0;
 
+    visibleRangeDuration: Tick = FOUR_BEAT;
+
     get visibleRange(): TickRange {
         return {
-            start: ZERO_BEAT,
-            duration: FOUR_BEAT,
+            start: tick(this.visibleRangeDuration.index * this.loopIndex),
+            duration: this.visibleRangeDuration,
         }
     }
 
@@ -32,9 +36,10 @@ export default class DrumMachine extends LightningElement {
     }
 
     get drumTickRanges(): AudioWindowGridTickRange<DrumMachineNote>[] {
-        const { notes, range, resolution, drumMachineKeys, currentTime } = this;
-        return drumMachineKeys.reduce((seed: AudioWindowGridTickRange<DrumMachineNote>[], { pianoKey }, index: number) => {
-            const divided: AudioWindowGridTickRange<DrumMachineNote>[] = divideTickRange(range, resolution).map((tickRange: TickRange) => {
+        const { notes, visibleRange, resolution, drumMachineKeys, currentTime } = this;
+
+        return drumMachineKeys.reduce((seed: AudioWindowGridTickRange<DrumMachineNote>[], { pianoKey }) => {
+            const divided: AudioWindowGridTickRange<DrumMachineNote>[] = divideTickRange(visibleRange, resolution).map((tickRange: TickRange) => {
                 const existingNote = notes.find((note) => {
                     return note.range.start.index === tickRange.start.index && note.note === pianoKey;
                 });
@@ -160,5 +165,36 @@ export default class DrumMachine extends LightningElement {
     onLoopIndexChange(evt: ButtonGroupValueChangeEvent<number>) {
         const { value } = evt.detail;
         this.loopIndex = value;
+    }
+
+    onDrumNoteCreated(evt: TickRangeCreatedEvent<PianoKey>) {
+        const { range } = evt.detail;
+        const currentRangeEnd = tickPlus(this.range.start, this.range.duration);
+        if (range.start.index < currentRangeEnd.index) {
+            return;
+        }
+        const page = this.loopIndexButtons.map((button) => {
+            const paginatedRange: TickRange = {
+                start: tick(this.visibleRangeDuration.index * button.value),
+                duration: this.visibleRangeDuration,
+            };
+            return paginatedRange;
+        })
+        .find((paginatedRange: TickRange) => {
+            return inTickRange(range.start, paginatedRange);
+        });
+
+        if (!page) {
+            return;
+        }
+
+        const nextRange = tickRange(
+            this.range.start,
+            tickPlus(page.start, page.duration),
+        );
+
+        const event: LoopRangeChangeEvent = loopRangeChangeEvent(this.loopId, nextRange);
+        this.dispatchEvent(event);
+
     }
 }

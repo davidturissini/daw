@@ -84,7 +84,7 @@ export function inTickRange(tick: Tick, tickRange: TickRange): boolean {
     const haystackEnd = tickPlus(tickRange.start, tickRange.duration);
     return (
         tick.index >= tickRange.start.index &&
-        tick.index <= haystackEnd.index
+        tick.index < haystackEnd.index
     )
 }
 
