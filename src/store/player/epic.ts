@@ -106,48 +106,25 @@ interface TonePartObject {
 }
 
 class LoopPlayer {
-    duration: Time;
     notes: { [key: string]: MidiNote } = {};
     instrumentNode: InstrumentAudioNode<any>;
     tempo: Tempo;
     loopRange: TickRange;
     schedule: {[key: string]: TonePartObject } = {};
     part?: TonePart;
+    onTimeUpdate?: (time: number) => void;
     constructor(instrumentNode: InstrumentAudioNode<any>, loopRange: TickRange, tempo: Tempo) {
         this.instrumentNode = instrumentNode;
         this.tempo = tempo;
         this.loopRange = loopRange;
-        this.duration = tickTime(loopRange.duration, tempo);
     }
 
     start() {
-        this.scheduleLoop(this.duration, timeZero);
+        const { loopRange, tempo } = this;
+        const loopStartTime = tickTime(loopRange.start, tempo);
+        const loopDurationTime = tickTime(loopRange.duration, tempo);
         Transport.start();
-    }
 
-    setLoopRange(loopRange: TickRange) {
-        const { part, tempo } = this;
-        if (part) {
-            part.loopEnd = tickTime(loopRange.duration, tempo).seconds;
-            part.loopStart = tickTime(loopRange.start, tempo).seconds;
-        }
-    }
-
-    noteToPartObject(note: MidiNote, range: TickRange): TonePartObject {
-        const { tempo } = this;
-        const timeDuration = tickTime(range.duration, tempo);
-        const startTime = tickTime(range.start, tempo);
-        return {
-            time: startTime,
-            data: [
-                note.note as PianoKey,
-                note.velocity,
-                timeDuration,
-            ]
-        }
-    }
-
-    scheduleLoop(duration: Time, offset: Time) {
         const { instrumentNode, notes } = this;
         const schedule = this.schedule = {};
 
@@ -172,9 +149,40 @@ class LoopPlayer {
             );
         }, partObjectsArray as any);
         part.loop = true;
-        part.loopStart = 0;
-        part.loopEnd = duration.seconds;
+        part.loopStart = loopStartTime.seconds;
+        part.loopEnd = loopDurationTime.seconds;
         part.start(0)
+    }
+
+    setLoopRange(loopRange: TickRange) {
+        const { part, tempo } = this;
+        if (part) {
+            part.loopEnd = tickTime(loopRange.duration, tempo).seconds;
+            part.loopStart = tickTime(loopRange.start, tempo).seconds;
+        }
+    }
+
+    noteToPartObject(note: MidiNote, range: TickRange): TonePartObject {
+        const { tempo } = this;
+        const timeDuration = tickTime(range.duration, tempo);
+        const startTime = tickTime(range.start, tempo);
+        return {
+            time: startTime,
+            data: [
+                note.note as PianoKey,
+                note.velocity,
+                timeDuration,
+            ]
+        }
+    }
+
+    get currentTime(): number {
+        const { part } = this;
+        if (part) {
+            const { loopStart, progress, loopEnd } = part;
+            return (loopStart as number) + (progress * ((loopEnd as number) - (loopStart as number)));
+        }
+        return 0;
     }
 
     addNotes(notes: MidiNote[]) {
@@ -263,16 +271,11 @@ export function playTrackLoopEpic(actions) {
                             player.removeNote(action.payload.noteId);
                         });
 
-                    let startTime: number | null = null;
-                    let raf: number;
+                    let raf;
                     function run() {
-                        raf = requestAnimationFrame((time) => {
-                            if (startTime === null) {
-                                startTime = time;
-                            }
-
-                            const timeElapsed = new Time(time - startTime);
-                            const tick = timeToTick(timeElapsed, tempo);
+                        raf = requestAnimationFrame(() => {
+                            const playerTime = player.currentTime;
+                            const tick = timeToTick(Time.fromSeconds(playerTime), tempo);
                             o.next(
                                 setLoopCurrentTime(loopId, tick)
                             );

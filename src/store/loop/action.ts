@@ -9,6 +9,7 @@ import { Action } from 'store/index';
 import { BeatRange } from 'util/audiorange';
 import { PianoKey } from 'util/sound';
 import { TickRange, Tick } from 'store/tick';
+import Tone from 'tone';
 
 export type SetLoopCurrentTimeAction = Action<{
     loopId: string;
