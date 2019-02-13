@@ -12,14 +12,15 @@ import { createInstrumentNode } from 'store/instrument';
 import { MidiNote, PianoKey } from 'util/sound';
 import { timeZero, Time } from 'util/time';
 import { Loop } from 'store/loop';
-import { Loop as ToneLoop, Transport } from 'tone';
+import { Loop as ToneLoop, Transport, Part as TonePart } from 'tone';
 import { Clock } from 'store/player/clock';
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
 import { Tempo } from 'store/project';
-import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick } from 'store/tick';
-import { setLoopCurrentTime } from 'store/loop/action';
+import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick, Tick } from 'store/tick';
+import { setLoopCurrentTime, SetLoopNoteRangeAction, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
+import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from 'store/loop/const';
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};
 
@@ -95,61 +96,175 @@ function clampNotes(midiNotes: MidiNote[], range: TickRange, tempo: Tempo): Arra
     })
 }
 
+interface TonePartObject {
+    time: Time;
+    data: [
+        PianoKey,
+        number,
+        Time
+    ]
+}
+
+class LoopPlayer {
+    duration: Time;
+    notes: { [key: string]: MidiNote } = {};
+    instrumentNode: InstrumentAudioNode<any>;
+    tempo: Tempo;
+    loopRange: TickRange;
+    schedule: {[key: string]: TonePartObject } = {};
+    part?: TonePart;
+    constructor(instrumentNode: InstrumentAudioNode<any>, loopRange: TickRange, tempo: Tempo) {
+        this.instrumentNode = instrumentNode;
+        this.tempo = tempo;
+        this.loopRange = loopRange;
+        this.duration = tickTime(loopRange.duration, tempo);
+    }
+
+    start() {
+        this.scheduleLoop(this.duration, timeZero);
+        Transport.start();
+    }
+
+    setLoopRange(loopRange: TickRange) {
+        const { part, tempo } = this;
+        if (part) {
+            part.loopEnd = tickTime(loopRange.duration, tempo).seconds;
+            part.loopStart = tickTime(loopRange.start, tempo).seconds;
+        }
+    }
+
+    noteToPartObject(note: MidiNote, range: TickRange): TonePartObject {
+        const { tempo } = this;
+        const timeDuration = tickTime(range.duration, tempo);
+        const startTime = tickTime(range.start, tempo);
+        return {
+            time: startTime,
+            data: [
+                note.note as PianoKey,
+                note.velocity,
+                timeDuration,
+            ]
+        }
+    }
+
+    scheduleLoop(duration: Time, offset: Time) {
+        const { instrumentNode, notes } = this;
+        const schedule = this.schedule = {};
+
+        const values = Object.values(notes);
+        const partObjectsArray: any[] = [];
+        for(let i = 0; i < values.length; i += 1) {
+            const note = values[i];
+            const partObject = this.noteToPartObject(note, note.range);
+            schedule[note.id] = partObject;
+            partObjectsArray.push([
+                partObject.time.seconds,
+                partObject.data
+            ])
+        }
+        const part = this.part = new TonePart((time: number, [note, velocity, duration]: any) => {
+            instrumentNode.trigger(
+                note,
+                velocity,
+                Time.fromSeconds(time),
+                timeZero,
+                duration,
+            );
+        }, partObjectsArray as any);
+        part.loop = true;
+        part.loopStart = 0;
+        part.loopEnd = duration.seconds;
+        part.start(0)
+    }
+
+    addNotes(notes: MidiNote[]) {
+        const { part, schedule } = this;
+        notes.reduce((seed, note: MidiNote) => {
+            seed[note.id] = note;
+
+            if (part) {
+                const partObject = this.noteToPartObject(note, note.range);
+                schedule[note.id] = partObject;
+                (part as any).add(partObject.time.seconds, partObject.data);
+            }
+
+            return seed;
+        }, this.notes);
+    }
+
+    removeNote(noteId: string) {
+        const { schedule, part } = this;
+        if (schedule[noteId] && part) {
+            (part as any).remove(schedule[noteId].time.seconds, schedule[noteId].data);
+        }
+        delete this.notes[noteId];
+    }
+}
+
 export function playTrackLoopEpic(actions) {
-    let clock: Clock | null = null;
     return actions.ofType(PLAY_TRACK_LOOP)
         .pipe(
             flatMap((action: PlayTrackLoopAction) => {
                 const { audioContext, instrumentId, loopId, tempo } = action.payload;
-                if (clock === null) {
-                    clock = new Clock(Transport, tempo);
-                }
-
                 const { loop: loops } = appStore.getState();
                 const loop = loops.items.get(loopId) as Loop;
                 const instrumentNode = instrumentNodes[instrumentId];
                 instrumentNode.connect(audioContext.destination);
                 return Observable.create((o) => {
-                    const isTransportStarted = Transport.state === 'started';
-                    let startTime = isTransportStarted ? clock!.nextBeatTime.seconds : Transport.seconds;
+                    const player = new LoopPlayer(instrumentNode, loop.range, tempo);
+                    const { loop: loops } = appStore.getState();
+                    const innerLoop = loops.items.get(loopId) as Loop;
 
-                    if (isTransportStarted === false) {
-                        Transport.start();
-                    }
+                    const flattenedNotes = innerLoop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
+                        return seed.concat(noteMap.toList().toArray());
+                    }, []);
 
-                    const loopDurationTime = tickTime(loop.range.duration, tempo);
-
-                    const toneLoop = new ToneLoop((time: number) => {
-                        const { loop: loops } = appStore.getState();
-                        const innerLoop = loops.items.get(loopId) as Loop;
-
-                        const flattenedNotes = innerLoop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
-                            return seed.concat(noteMap.toList().toArray());
-                        }, []);
-
-                        clampNotes(flattenedNotes, loop.range, tempo).forEach(({ note, clampOffsetRange }) => {
-                            const timeDuration = tickTime(clampOffsetRange.duration, tempo);
-                            const timeStart = tickTime(clampOffsetRange.start, tempo);
-                            instrumentNode.trigger(
-                                note.note as PianoKey,
-                                note.velocity,
-                                Time.fromSeconds(time).plus(timeStart),
-                                timeZero,
-                                timeDuration,
-                            );
-                        });
-
-                        o.next({ tempo, loopId });
-                    }, loopDurationTime.seconds).start(startTime);
-                    return () => {
-                        toneLoop.stop(0);
-                    }
+                    player.addNotes(flattenedNotes);
+                    o.next({ player, loopId, tempo });
                 });
             }),
-            switchMap(({ loopId, tempo }: { tempo: Tempo, loopId: string }) => {
+            switchMap(({ player, loopId, tempo }: { player: LoopPlayer, loopId: string, tempo: Tempo }) => {
                 return Observable.create((o) => {
+                    player.start();
+
+                    actions.ofType(SET_LOOP_RANGE)
+                        .pipe(
+                            filter((action: SetLoopRangeAction) => {
+                                return action.payload.loopId === loopId;
+                            })
+                        )
+                        .subscribe((action: SetLoopRangeAction) => {
+                            player.setLoopRange(action.payload.range);
+                        });
+
+                    actions.ofType(CREATE_LOOP_NOTE)
+                        .pipe(
+                            filter((action: CreateLoopNoteAction) => {
+                                return action.payload.loopId === loopId;
+                            })
+                        )
+                        .subscribe((action: CreateLoopNoteAction) => {
+                            const midiNote: MidiNote = {
+                                note: action.payload.keyId,
+                                velocity: 1,
+                                id: action.payload.noteId,
+                                range: action.payload.range,
+                            }
+                            player.addNotes([midiNote]);
+                        });
+
+                    actions.ofType(DELETE_LOOP_NOTE)
+                        .pipe(
+                            filter((action: DeleteLoopNoteAction) => {
+                                return action.payload.loopId === loopId;
+                            })
+                        )
+                        .subscribe((action: DeleteLoopNoteAction) => {
+                            player.removeNote(action.payload.noteId);
+                        });
+
                     let startTime: number | null = null;
-                    let raf;
+                    let raf: number;
                     function run() {
                         raf = requestAnimationFrame((time) => {
                             if (startTime === null) {
@@ -167,8 +282,6 @@ export function playTrackLoopEpic(actions) {
                     }
 
                     run();
-
-                    return () => cancelAnimationFrame(raf);
                 })
             })
         )

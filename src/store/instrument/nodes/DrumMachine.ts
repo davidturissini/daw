@@ -88,8 +88,8 @@ export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
         this.dest = node;
     }
 
-    release() {
-
+    release(key: PianoKey, when: Time) {
+        this.sampler.releaseAll()
     }
 
     update(data: DrumMachineData) {
