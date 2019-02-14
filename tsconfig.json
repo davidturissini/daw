@@ -16,7 +16,8 @@
             "cmp/*": ["./src/ffmpeg/*"],
             "event/*": ["./src/event/*"],
             "notes/*": ["./src/notes/*"],
-            "keyboard/*": ["./src/keyboard/*"]
+            "keyboard/*": ["./src/keyboard/*"],
+            "markers/*": ["./src/markers/*"]
         }
     },
 }

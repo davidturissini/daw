@@ -2,7 +2,7 @@ import { LightningElement, track, api } from 'lwc';
 import { Rect, Frame } from 'util/geometry';
 import { AudioRange, BeatRange } from 'util/audiorange';
 import { Color } from 'util/color';
-import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, tickPlus } from 'store/tick';
+import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, tickPlus, quanitize, SIXTEENTH_BEAT } from 'store/tick';
 import { AudioWindowTickRange } from 'cmp/audiowindow/audiowindow';
 import { NoteViewData, NoteVariant } from 'notes/index';
 import { KeyboardVariant } from 'keyboard/index';
@@ -12,6 +12,7 @@ import { KeyboardRangeCreatedEvent, keyboardRangeCreatedEvent } from 'event/keyb
 import { generateId } from 'util/uniqueid';
 import { keyboardRangeChangedEvent, KeyboardRangeChangedEvent } from 'event/keyboardrangechangedevent';
 import { Tempo } from 'store/project';
+import { Marker } from 'markers/';
 
 export interface GridRange {
     itemId: string;
@@ -53,6 +54,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     @api variant: KeyboardVariant = KeyboardVariant.Piano;
     @api canvas: boolean = false;
     @api tempo: Tempo;
+    @api markers: Marker[] = [];
     @track resolution: Tick = QUARTER_BEAT;
     @track rect: Rect | null = null;
 
@@ -166,13 +168,14 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     } | null = null;
     onAudioWindowDragStart(evt: AudioWindowDragStartEvent) {
         evt.stopPropagation();
-        const { origin, tick } = evt.detail;
+        const { origin, tick, } = evt.detail;
         const row = this.findRowFromY(origin.y + this.mainScrollY);
         if (!row) {
             return;
         }
         const rangeId = generateId();
-        const range = tickRange(tick, tickZero);
+        const quanitizedStart = quanitize(SIXTEENTH_BEAT, tick, this.tempo);
+        const range = tickRange(quanitizedStart, tickZero);
         this.audioWindowDrag = {
             rangeId,
             range,
@@ -193,8 +196,11 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
             return;
         }
         const nextDuration = tickPlus(audioWindowDrag.range.duration, delta);
+        const quanitizedDuration = quanitize(SIXTEENTH_BEAT, nextDuration, this.tempo);
         const nextRange = tickRange(audioWindowDrag.range.start, nextDuration);
-        const event: KeyboardRangeChangedEvent<K> = keyboardRangeChangedEvent(row.id, audioWindowDrag.rangeId, nextRange);
+        audioWindowDrag.range = nextRange;
+        const quanitizedRange = tickRange(audioWindowDrag.range.start, quanitizedDuration);
+        const event: KeyboardRangeChangedEvent<K> = keyboardRangeChangedEvent(row.id, audioWindowDrag.rangeId, quanitizedRange);
         this.dispatchEvent(event);
     }
 }

@@ -123,3 +123,19 @@ export function quanitize(resolution: Tick, tick: Tick, tempo: Tempo): Tick {
     const quantizedTime = Time.fromSeconds(toneTime.quantize(quanitizeTick.seconds));
     return timeToTick(quantizedTime, tempo);
 }
+
+export function ceil(resolution: Tick, tick: Tick, tempo: Tempo): Tick {
+    const quanitized = quanitize(resolution, tick, tempo);
+    if (quanitized.index < tick.index) {
+        return tickPlus(quanitized, resolution);
+    }
+    return quanitized;
+}
+
+export function floor(resolution: Tick, tick: Tick, tempo: Tempo): Tick {
+    const quanitized = quanitize(resolution, tick, tempo);
+    if (quanitized.index > tick.index) {
+        return tickSubtract(quanitized, resolution);
+    }
+    return quanitized;
+}

@@ -1,10 +1,11 @@
 <template>
     <ffmpeg-audiowindowgrid
         canvas
-        visible-range={range}
+        visible-range={visibleRange}
         rows={gridRows}
         tick-ranges={loopRanges}
         tempo={tempo}
+        markers={audioWindowMarkers}
     >
         <ffmpeg-timeline
             tempo={tempo}

@@ -13,6 +13,7 @@
     </template>
     <template if:true={shouldRenderPiano}>
         <ffmpeg-piano
+            current-time={loop.currentTime}
             tempo={projectTempo}
             onkeyboardrangecreated={onKeyboardTickRangeCreated}
             onkeyboardrangechanged={onKeyboardTickRangeChanged}

@@ -4,6 +4,21 @@
         onmousedown={onContainerMouseDown}
         class="container"
     >
+        <template for:each={markerViewModels} for:item="marker">
+            <template if:true={marker.isCursorVariant}>
+                <ffmpeg-cursor
+                    dashed={marker.data.dashed}
+                    color={marker.data.color}
+                    class="tick-line"
+                    style={marker.style}
+                    key={marker.key}
+                >
+                </ffmpeg-cursor>
+            </template>
+        </template>
+        <!-- <template if:true={showGrid} for:each={tickLines} for:item="line">
+            <div class="tick-line" style={line.style} key={line.key}></div>
+        </template> -->
         <template if:true={hasFrame} for:each={tickRangesViewModels} for:item="vm">
             <template if:true={vm.isDrumMachineNote}>
                 <ffmpeg-drummachinenote

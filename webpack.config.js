@@ -30,6 +30,7 @@ module.exports = {
             cmp: path.resolve('./src/ffmpeg'),
             notes: path.resolve('./src/notes'),
             keyboard: path.resolve('./src/keyboard'),
+            markers: path.resolve('./src/markers'),
         }
     },
     module: {

@@ -1,7 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { AudioWindowTickRange } from 'cmp/audiowindow/audiowindow';
 import { Frame } from 'util/geometry';
-import { TickRange, divideTickRange, QUARTER_BEAT, tickRange, tickPlus, tickZero, tick } from 'store/tick';
+import { TickRange, divideTickRange, QUARTER_BEAT, tickRange, tickPlus, tickZero, tick, ceil, floor, Tick } from 'store/tick';
 import { NoteVariant } from 'notes/index';
 import { AudioWindowDragEvent } from 'event/audiowindowdragevent';
 import { timelineDragEvent, TimelineDragEvent } from 'event/timelinedrag';
@@ -52,9 +52,13 @@ export default class Timeline extends LightningElement {
     @api rangePadding: Frame = { height: 0, width: 0 };
     @api visibleRange: TickRange;
     @api tempo: Tempo;
+    @api quanitizeResolution: Tick = QUARTER_BEAT;
 
     get tickRangesViewModels(): AudioWindowTickRange[] {
-        return divideTickRange(this.visibleRange, QUARTER_BEAT).map((range: TickRange) => {
+        const { quanitizeResolution, visibleRange, tempo } = this;
+        const start = ceil(quanitizeResolution, visibleRange.start, tempo);
+        const duration = floor(quanitizeResolution, visibleRange.duration, tempo);
+        return divideTickRange(tickRange(start, duration), quanitizeResolution).map((range: TickRange) => {
             return {
                 rect: {
                     x: 0,

@@ -1,10 +1,11 @@
 import { LightningElement, api, track } from 'lwc';
 import { Rect, rectToCSS, Frame, Origin } from 'util/geometry';
-import { TickRange, Tick, tick, quanitize, SIXTEENTH_BEAT } from 'store/tick';
+import { TickRange, Tick, tick, divideTickRange, SIXTEENTH_BEAT, ceil, floor, tickRange, tickPlus } from 'store/tick';
 import { NoteVariant, NoteViewData } from 'notes/index';
 import { AudioWindowDragStartEvent, audioWindowDragStartEvent } from 'event/audiowindowdragstartevent';
 import { AudioWindowDragEvent, audioWindowDragEvent } from 'event/audiowindowdragevent';
 import { Tempo } from 'store/project';
+import { Marker, MarkerVariant } from 'markers/index';
 
 export interface AudioWindowTickRange {
     rect: Rect;
@@ -31,10 +32,14 @@ function pixelToTick(frame: Frame, range: TickRange, pixel: number): Tick {
     return tick(index);
 }
 
+function absolutePixelToTick(frame: Frame, range: TickRange, pixel: number): Tick {
+    const tick = pixelToTick(frame, range, pixel);
+    return tickPlus(tick, range.start);
+}
+
 function tickToPixel(tick: Tick, range: TickRange, frame: Frame): number {
     const { width } = frame;
     const percent = (tick.index - range.start.index) / range.duration.index;
-
     return percent * width;
 }
 
@@ -45,13 +50,22 @@ function tickDurationToWidth(duration: Tick, range: TickRange, frame: Frame): nu
     return pixelsPerMillisecond * duration.index
 }
 
+interface MarkerViewModel<T> {
+    key: string | number;
+    tick: Tick;
+    style: string;
+    isCursorVariant: boolean;
+    data: T;
+}
 
 export default class AudioWindowElement extends LightningElement {
     @api visibleRange: TickRange;
     @api tickRanges: AudioWindowTickRange[] = [];
     @api padding: Frame = { width: 0, height: 0 };
-    @api tempo: Tempo;
     @api quanitizeResolution: Tick = SIXTEENTH_BEAT;
+    @api showGrid: boolean = false;
+    @api tempo: Tempo;
+    @api markers: Marker[] = [];
     @track rect: Rect | null = null;
 
     get tickRangesViewModels(): TickRangeViewModel[] {
@@ -96,6 +110,51 @@ export default class AudioWindowElement extends LightningElement {
         return this.rect !== null;
     }
 
+    get tickLines() {
+        const { visibleRange, rect, quanitizeResolution, tempo } = this;
+        if (!rect) {
+            return [];
+        }
+        const start = ceil(quanitizeResolution, visibleRange.start, tempo);
+        const duration = floor(quanitizeResolution, visibleRange.duration, tempo);
+
+        return divideTickRange(tickRange(start, duration), quanitizeResolution).map((range) => {
+            const rangeRect: Rect = {
+                x: tickToPixel(range.start, visibleRange, rect),
+                y: 0,
+                width: 1,
+                height: rect.height,
+            }
+            return {
+                key: range.start.index,
+                style: rectToCSS(rangeRect),
+            };
+        });
+    }
+
+    get markerViewModels(): MarkerViewModel<any>[] {
+        const { visibleRange, rect } = this;
+        if(rect === null) {
+            return [];
+        }
+        return this.markers.map((marker) => {
+            const markerRect: Rect = {
+                x: tickToPixel(marker.tick, visibleRange, rect),
+                y: 0,
+                width: 1,
+                height: rect.height,
+            }
+            const isCursorVariant = marker.variant === MarkerVariant.Cursor;
+            return {
+                key: marker.key,
+                tick: marker.tick,
+                style: rectToCSS(markerRect),
+                isCursorVariant,
+                data: marker.data,
+            }
+        });
+    }
+
     /*
      *
      * Events
@@ -103,6 +162,7 @@ export default class AudioWindowElement extends LightningElement {
      */
     mouseDown: {
         origin: Origin;
+        previousX: number;
     } | null = null;
     onContainerMouseDown(evt: MouseEvent) {
         const { rect } = this;
@@ -117,11 +177,11 @@ export default class AudioWindowElement extends LightningElement {
         };
         this.mouseDown = {
             origin,
+            previousX: x,
         };
 
-        const tick = pixelToTick(rect, this.visibleRange, x);
-        const quanitized = quanitize(this.quanitizeResolution, tick, this.tempo);
-        const event: AudioWindowDragStartEvent = audioWindowDragStartEvent(origin, quanitized);
+        const tick = absolutePixelToTick(rect, this.visibleRange, x);
+        const event: AudioWindowDragStartEvent = audioWindowDragStartEvent(origin, tick);
         this.dispatchEvent(event);
     }
 
@@ -131,11 +191,11 @@ export default class AudioWindowElement extends LightningElement {
             return;
         }
 
-        const { origin } = mouseDown;
-        const x = (evt.x - rect.x) - origin.x;
+        const { origin, previousX } = mouseDown;
+        const x = (evt.x - rect.x) - previousX;
+        mouseDown.previousX = (evt.x - rect.x);
         const delta = pixelToTick(rect, this.visibleRange, x);
-        const quanitized = quanitize(this.quanitizeResolution, delta, this.tempo);
-        const event: AudioWindowDragEvent = audioWindowDragEvent(origin, quanitized);
+        const event: AudioWindowDragEvent = audioWindowDragEvent(origin, delta);
         this.dispatchEvent(event);
     }
 
