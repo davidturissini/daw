@@ -1,13 +1,12 @@
 import { LightningElement, api } from 'lwc';
-import { Time } from '../../util/time';
 import { AudioWindowTickRange } from 'cmp/audiowindow/audiowindow';
 import { Frame } from 'util/geometry';
-import { TickRange, divideTickRange, QUARTER_BEAT } from 'store/tick';
+import { TickRange, divideTickRange, QUARTER_BEAT, tickRange, tickPlus, tickZero, tick } from 'store/tick';
 import { NoteVariant } from 'notes/index';
+import { AudioWindowDragEvent } from 'event/audiowindowdragevent';
+import { timelineDragEvent, TimelineDragEvent } from 'event/timelinedrag';
+import { Tempo } from 'store/project';
 
-export type TimelineDragEvent = CustomEvent<{
-    delta: Time;
-}>
 
 export enum TimelineVariant {
     Time = 'time',
@@ -50,8 +49,9 @@ export function getResolution(duration): number {
 
 
 export default class Timeline extends LightningElement {
-    @api rangePadding: Frame;
+    @api rangePadding: Frame = { height: 0, width: 0 };
     @api visibleRange: TickRange;
+    @api tempo: Tempo;
 
     get tickRangesViewModels(): AudioWindowTickRange[] {
         return divideTickRange(this.visibleRange, QUARTER_BEAT).map((range: TickRange) => {
@@ -75,34 +75,16 @@ export default class Timeline extends LightningElement {
      * Dragging
      *
     */
-    // onDrag = rafThrottle((evt) => {
-    //     const { audioWindowRect } = this;
-    //     if (!audioWindowRect) {
-    //         return;
-    //     }
-
-    //     const time = pixelToTime(audioWindowRect, this.range, evt.dx);
-    //     const customEvent: TimelineDragEvent = new CustomEvent('timelinedrag', {
-    //         detail: {
-    //             delta: time,
-    //         },
-    //     });
-    //     this.dispatchEvent(customEvent);
-    // })
-    /*
-     *
-     * Lifecycle
-     *
-    */
-    // connectedCallback() {
-    //     this.interact = interact(this.template.host).draggable({
-    //         inertia: true,
-    //         axis: 'x',
-    //         onmove: this.onDrag,
-    //     });
-    // }
-
-    // disconnectedCallback() {
-    //     (this.interact as any).unset();
-    // }
+    onAudioWindowDrag(evt: AudioWindowDragEvent) {
+        const { visibleRange } = this;
+        const { delta } = evt.detail;
+        const inverted = tick(-delta.index);
+        let nextStart = tickPlus(visibleRange.start, inverted);
+        if (nextStart.index < 0) {
+            nextStart = tickZero;
+        }
+        const nextRange = tickRange(nextStart, visibleRange.duration);
+        const customEvent: TimelineDragEvent = timelineDragEvent(inverted, nextRange);
+        this.dispatchEvent(customEvent);
+    }
 }

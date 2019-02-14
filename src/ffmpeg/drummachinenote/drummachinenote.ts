@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import { tickRangeCreatedEvent } from 'event/tickrangecreatedevent';
+import { tickRangeCreatedEvent } from 'event/audiowindowdragevent';
 import { TickRange } from 'store/tick';
 import { PianoKey } from 'util/sound';
 import { generateId } from 'util/uniqueid';

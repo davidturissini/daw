@@ -8,7 +8,6 @@ import { Frame } from 'util/geometry';
 import { DrumMachineNote } from 'notes/drummachine';
 import { NoteVariant } from 'notes/index';
 import { loopRangeChangeEvent, LoopRangeChangeEvent } from 'event/looprangechangeevent';
-import { TickRangeCreatedEvent } from 'event/tickrangecreatedevent';
 
 export default class DrumMachine extends LightningElement {
     @api notes: MidiNote[];

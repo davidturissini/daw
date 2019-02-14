@@ -1,25 +1,38 @@
 <template>
-    <template if:true={hasFrame} for:each={tickRangesViewModels} for:item="vm">
-        <template if:true={vm.isDrumMachineNote}>
-            <ffmpeg-drummachinenote
-                is-playing={vm.data.isPlaying}
-                range={vm.range}
-                piano-key={vm.data.key}
-                note-id={vm.data.noteId}
-                class="tick-range"
-                key={vm.key}
-                style={vm.style}
-            >
-            </ffmpeg-drummachinenote>
+    <div
+        onmousemove={onContainerMouseMove}
+        onmousedown={onContainerMouseDown}
+        class="container"
+    >
+        <template if:true={hasFrame} for:each={tickRangesViewModels} for:item="vm">
+            <template if:true={vm.isDrumMachineNote}>
+                <ffmpeg-drummachinenote
+                    is-playing={vm.data.isPlaying}
+                    range={vm.range}
+                    piano-key={vm.data.key}
+                    note-id={vm.data.noteId}
+                    class="tick-range"
+                    key={vm.key}
+                    style={vm.style}
+                >
+                </ffmpeg-drummachinenote>
+            </template>
+            <template if:true={vm.isBeatLabelNote}>
+                <ffmpeg-timelabel
+                    tick={vm.range.start}
+                    class="tick-range"
+                    key={vm.key}
+                    style={vm.style}
+                >
+                </ffmpeg-timelabel>
+            </template>
+            <template if:true={vm.isMidiNote}>
+                <ffmpeg-midinote
+                    key={vm.key}
+                    style={vm.style}
+                    class="tick-range"
+                ></ffmpeg-midinote>
+            </template>
         </template>
-        <template if:true={vm.isBeatLabelNote}>
-            <ffmpeg-timelabel
-                tick={vm.range.start}
-                class="tick-range"
-                key={vm.key}
-                style={vm.style}
-            >
-            </ffmpeg-timelabel>
-        </template>
-    </template>
+    </div>
 </template>

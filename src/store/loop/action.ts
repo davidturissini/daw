@@ -43,10 +43,10 @@ export function setLoopRange(loopId: string, range: TickRange): SetLoopRangeActi
 export type SetLoopNoteRangeAction = Action<{
     loopId: string;
     noteId: string;
-    range: BeatRange;
+    range: TickRange;
     keyId: PianoKey;
 }>
-export function setLoopNoteRange(loopId: string, keyId: PianoKey, noteId: string, range: BeatRange): SetLoopNoteRangeAction {
+export function setLoopNoteRange(loopId: string, keyId: PianoKey, noteId: string, range: TickRange): SetLoopNoteRangeAction {
     return {
         type: SET_LOOP_NOTE_RANGE,
         payload: {

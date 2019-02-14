@@ -29,6 +29,7 @@ module.exports = {
             ...lwcAliases,
             cmp: path.resolve('./src/ffmpeg'),
             notes: path.resolve('./src/notes'),
+            keyboard: path.resolve('./src/keyboard'),
         }
     },
     module: {

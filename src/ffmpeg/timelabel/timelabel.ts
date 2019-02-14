@@ -11,7 +11,7 @@ export default class TimeLabel extends LightningElement {
     @api isBeat: boolean = false;
     @api tempo: Tempo;
     @api tick: Tick;
-    @api align: TimeLabelAlign = TimeLabelAlign.CENTER;
+    @api align: TimeLabelAlign = TimeLabelAlign.LEFT;
 
     get className(): string | undefined {
         const { align } = this;

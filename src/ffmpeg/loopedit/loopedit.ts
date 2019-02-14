@@ -14,10 +14,11 @@ import { GridRangeChangeEvent, AudioRangeChangeEvent } from 'cmp/grid/events';
 import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
 import { EnvelopeValueChangeEvent } from 'cmp/envelopefield/envelopefield';
 import { setInstrumentData } from 'store/instrument/action';
-import { TickRangeCreatedEvent } from 'event/tickrangecreatedevent';
 import { TickRangeDeletedEvent } from 'event/tickrangedeletedevent';
 import { AudioRangeCreatedEvent } from 'cmp/audiowindowgrid/events';
 import { LoopRangeChangeEvent } from 'event/looprangechangeevent';
+import { KeyboardRangeCreatedEvent } from 'event/keyboardrangecreatedevent';
+import { KeyboardRangeChangedEvent } from 'event/keyboardrangechangedevent';
 
 
 export default class LoopEditElement extends LightningElement {
@@ -77,10 +78,17 @@ export default class LoopEditElement extends LightningElement {
         }
     }
 
-    onDrumMachineNoteCreated(evt: TickRangeCreatedEvent<PianoKey>) {
+    onKeyboardTickRangeCreated(evt: KeyboardRangeCreatedEvent<PianoKey>) {
         const { range, parentId, id } = evt.detail;
         appStore.dispatch(
             createLoopNote(this.loopId, id, parentId, range),
+        );
+    }
+
+    onKeyboardTickRangeChanged(evt: KeyboardRangeChangedEvent<PianoKey>) {
+        const { range, parentId, id } = evt.detail;
+        appStore.dispatch(
+            setLoopNoteRange(this.loopId, parentId, id, range),
         );
     }
 

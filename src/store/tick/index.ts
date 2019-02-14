@@ -1,5 +1,6 @@
 import { Tempo } from "store/project";
 import { Time } from "util/time";
+import { Time as ToneTime } from 'tone';
 
 const TICKS_PER_QUARTER_BEAT = 960;
 
@@ -27,6 +28,8 @@ export function tickRange(start: Tick, duration: Tick): TickRange {
 
 export const tickZero = tick(0);
 export const ZERO_BEAT = tickZero
+export const SIXTEENTH_BEAT = tick(TICKS_PER_QUARTER_BEAT / 4);
+export const EIGHTH_BEAT = tick(TICKS_PER_QUARTER_BEAT / 2);
 export const QUARTER_BEAT = tick(TICKS_PER_QUARTER_BEAT);
 export const HALF_BEAT = tick(TICKS_PER_QUARTER_BEAT * 2);
 export const ONE_BEAT = tick(TICKS_PER_QUARTER_BEAT * 4);
@@ -111,4 +114,12 @@ export function clampTickRange(haystack: TickRange, needle: TickRange): TickRang
         start,
         duration,
     };
+}
+
+export function quanitize(resolution: Tick, tick: Tick, tempo: Tempo): Tick {
+    const time = tickTime(tick, tempo);
+    const toneTime = new ToneTime(time.seconds);
+    const quanitizeTick = tickTime(resolution, tempo);
+    const quantizedTime = Time.fromSeconds(toneTime.quantize(quanitizeTick.seconds));
+    return timeToTick(quantizedTime, tempo);
 }

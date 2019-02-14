@@ -5,26 +5,33 @@
     <div class="window-top">
         <slot name="window-top"></slot>
     </div>
-    <main>
+    <main onscroll={onMainScroll}>
         <div class="col-left">
             <template for:each={rowViewModels} for:item="vm">
-                <div
-                    class="col-left-row"
-                    style={vm.style}
-                    key={vm.id}
-                >
-                    {vm.data.label}
-                </div>
+                <template if:true={isPiano}>
+                    <ffmpeg-pianokey
+                        note={vm.data.note}
+                        piano-key={vm.data.pianoKey}
+                        style={vm.style}
+                        class="col-left-row"
+                        key={vm.id}
+                    ></ffmpeg-pianokey>
+                </template>
             </template>
         </div>
         <div class="grid-container">
             <ffmpeg-audiowindow
+                tempo={tempo}
                 padding={rangePadding}
                 visible-range={visibleRange}
-                onrectchange={onContainerAudioWindowRectChange}
+                onaudiowindowdragstart={onAudioWindowDragStart}
+                onaudiowindowdrag={onAudioWindowDrag}
                 tick-ranges={tickRangesViewModels}
             >
             </ffmpeg-audiowindow>
+            <template for:each={rowLanes} for:item="lane">
+                <div class={lane.className} style={lane.style} key={lane.key}></div>
+            </template>
         </div>
     </main>
 </template>

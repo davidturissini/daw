@@ -12,14 +12,13 @@ import { createInstrumentNode } from 'store/instrument';
 import { MidiNote, PianoKey } from 'util/sound';
 import { timeZero, Time } from 'util/time';
 import { Loop } from 'store/loop';
-import { Loop as ToneLoop, Transport, Part as TonePart } from 'tone';
-import { Clock } from 'store/player/clock';
+import { Transport, Part as TonePart } from 'tone';;
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
 import { Tempo } from 'store/project';
-import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick, Tick } from 'store/tick';
-import { setLoopCurrentTime, SetLoopNoteRangeAction, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
+import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick } from 'store/tick';
+import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
 import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from 'store/loop/const';
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};

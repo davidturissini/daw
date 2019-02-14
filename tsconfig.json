@@ -15,7 +15,8 @@
             "store/*": ["./src/store/*"],
             "cmp/*": ["./src/ffmpeg/*"],
             "event/*": ["./src/event/*"],
-            "notes/*": ["./src/notes/*"]
+            "notes/*": ["./src/notes/*"],
+            "keyboard/*": ["./src/keyboard/*"]
         }
     },
 }

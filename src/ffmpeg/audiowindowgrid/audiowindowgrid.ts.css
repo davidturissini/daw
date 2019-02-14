@@ -98,11 +98,6 @@ ffmpeg-audiowindow .grid-time-marker {
 .grid-lane {
     pointer-events: none;
     background: rgb(43, 44, 49);
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1;
 }
 
 .grid-lane--odd {

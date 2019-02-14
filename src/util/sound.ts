@@ -1,7 +1,7 @@
 import Tone from 'tone';
 import { TickRange } from 'store/tick';
 
-interface Note {
+export interface Note {
     frequency: number;
     sharp: boolean;
 }

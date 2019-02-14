@@ -1,8 +1,17 @@
 <template>
     <ffmpeg-audiowindowgrid
+        canvas
         visible-range={range}
         rows={gridRows}
         tick-ranges={loopRanges}
+        tempo={tempo}
     >
+        <ffmpeg-timeline
+            tempo={tempo}
+            ontimelinedrag={onTimelineDrag}
+            slot="window-top"
+            visible-range={visibleRange}
+        >
+        </ffmpeg-timeline>
     </ffmpeg-audiowindowgrid>
 </template>
