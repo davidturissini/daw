@@ -1,25 +1,28 @@
 <template>
-    <template if:true={instrumentIsDrumMachine}>
-        <ffmpeg-drummachine
-            current-time={loop.currentTime}
-            range={loop.range}
-            tempo={projectTempo}
-            notes={pianoMidiNotes}
-            onlooprangechange={onLoopRangeChange}
-            ontickrangecreated={onDrumMachineNoteCreated}
-            ontickrangedeleted={onDrumMachineNoteDeleted}
-        >
-        </ffmpeg-drummachine>
-    </template>
-    <template if:true={shouldRenderPiano}>
-        <ffmpeg-piano
-            current-time={loop.currentTime}
-            tempo={projectTempo}
-            onkeyboardrangecreated={onKeyboardTickRangeCreated}
-            onkeyboardrangechanged={onKeyboardTickRangeChanged}
-            notes={pianoMidiNotes}
-            range={loop.range}
-        >
-        </ffmpeg-piano>
-    </template>
+    <div
+        class="container"
+        onmidinotecreated={onMidiNoteCreated}
+        onmidinoterangechanged={onMidiNoteRangeChanged}
+        onmidinotedeleted={onMidiNoteDeleted}
+        onlooprangechange={onLoopRangeChange}
+    >
+        <template if:true={instrumentIsDrumMachine}>
+            <ffmpeg-drummachine
+                current-time={loop.currentTime}
+                range={loop.range}
+                tempo={projectTempo}
+                notes={midiNotes}
+            >
+            </ffmpeg-drummachine>
+        </template>
+        <template if:true={shouldRenderPiano}>
+            <ffmpeg-piano
+                current-time={loop.currentTime}
+                tempo={projectTempo}
+                notes={midiNotes}
+                range={loop.range}
+            >
+            </ffmpeg-piano>
+        </template>
+    </div>
 </template>

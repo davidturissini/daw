@@ -2,17 +2,22 @@ import { LightningElement, track, api } from 'lwc';
 import { Rect, Frame } from 'util/geometry';
 import { AudioRange, BeatRange } from 'util/audiorange';
 import { Color } from 'util/color';
-import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, tickPlus, quanitize, SIXTEENTH_BEAT } from 'store/tick';
+import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, quanitize, SIXTEENTH_BEAT } from 'store/tick';
 import { AudioWindowTickRange } from 'cmp/audiowindow/audiowindow';
 import { NoteViewData, NoteVariant } from 'notes/index';
-import { KeyboardVariant } from 'keyboard/index';
 import { AudioWindowDragEvent } from 'event/audiowindowdragevent';
 import { AudioWindowDragStartEvent } from 'event/audiowindowdragstartevent';
-import { KeyboardRangeCreatedEvent, keyboardRangeCreatedEvent } from 'event/keyboardrangecreatedevent';
 import { generateId } from 'util/uniqueid';
-import { keyboardRangeChangedEvent, KeyboardRangeChangedEvent } from 'event/keyboardrangechangedevent';
 import { Tempo } from 'store/project';
-import { Marker } from 'markers/';
+import { Marker } from 'markers/index';
+import { MidiNoteCreatedEvent, midiNoteCreatedEvent } from 'event/midinotecreatedevent';
+import { MidiNoteRangeChangedEvent, midiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
+import { PianoKey, Note } from 'util/sound';
+
+
+export enum KeyboardVariant {
+    Piano, DrumMachine
+}
 
 export interface GridRange {
     itemId: string;
@@ -27,34 +32,34 @@ export interface GridRowRectMap {
     }
 }
 
-export interface AudioWindowGridRow<K extends string, T> {
+export interface KeyboardKeyViewModel<K extends string, T> {
     id: K;
     data: T;
+    pianoKey: PianoKey;
+    note: Note;
     frame: Frame;
 }
 
-export interface AudioWindowGridTickRange<T> {
+export interface KeyboardNoteViewModel<T> {
     range: TickRange;
     rowId: string;
     variant: NoteVariant;
     data: T;
 }
 
-interface AudioWindowGridRowViewModel<T> {
-    id: string;
-    data: T;
+interface AudioWindowGridRowViewModel<T> extends KeyboardKeyViewModel<any, T> {
     style: string;
 }
 
 export default class GridElement<K extends string, T extends NoteViewData> extends LightningElement {
-    @api tickRanges: AudioWindowGridTickRange<any>[];
-    @api rows: AudioWindowGridRow<K, T>[] = [];
+    @api notes: KeyboardNoteViewModel<any>[];
+    @api keys: KeyboardKeyViewModel<K, T>[] = [];
     @api visibleRange: TickRange;
-    @api rangePadding: Frame = { height: 0, width: 0 };
+    @api notePadding: Frame = { height: 0, width: 0 };
     @api variant: KeyboardVariant = KeyboardVariant.Piano;
     @api canvas: boolean = false;
     @api tempo: Tempo;
-    @api markers: Marker[] = [];
+    @api markers: Marker<any>[] = [];
     @track resolution: Tick = QUARTER_BEAT;
     @track rect: Rect | null = null;
 
@@ -80,27 +85,26 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
      * variants
      *
      */
-    get isPiano(): boolean {
-        return this.variant === KeyboardVariant.Piano;
-    }
-
-    get rowViewModels():AudioWindowGridRowViewModel<any>[] {
-        return this.rows.map((row) => {
+    get rowViewModels(): AudioWindowGridRowViewModel<any>[] {
+        return this.keys.map((row) => {
             const rowFrame = this.rowsRectMap[row.id];
             const height = rowFrame.rect.height;
             return {
                 id: row.id,
                 data: row.data,
-                style: `padding-top:${this.rangePadding.height / 2}px; padding-bottom: ${this.rangePadding.height / 2}px; width:${row.frame.width}; height:${height}px`
+                pianoKey: row.pianoKey,
+                frame: rowFrame.rect,
+                note: row.note,
+                style: `padding-top:${this.notePadding.height / 2}px; padding-bottom: ${this.notePadding.height / 2}px; width:${row.frame.width}; height:${height}px`
             }
         })
     }
 
     get rowsRectMap(): { [key: string]: { rowId: string, rect: Rect } } {
-        const { rangePadding } = this;
-        let y = rangePadding.height / 2;
-        return this.rows.reduce((seed: { [key: string]: { rowId: string, rect: Rect } }, row) => {
-            const height = row.frame.height + (rangePadding.height / 2);
+        const { notePadding } = this;
+        let y = notePadding.height / 2;
+        return this.keys.reduce((seed: { [key: string]: { rowId: string, rect: Rect } }, row) => {
+            const height = row.frame.height + (notePadding.height / 2);
             const rect: Rect = {
                 x: 0,
                 y: y,
@@ -112,25 +116,25 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
                 rect
             };
 
-            y += height + rangePadding.height;
+            y += height + notePadding.height;
             return seed;
         }, {});
     }
 
-    findRowFromY(y: number): AudioWindowGridRow<K, T> | null {
-        const { rows } = this;
+    findRowFromY(y: number): KeyboardKeyViewModel<K, T> | null {
+        const { keys } = this;
         let rowY = 0;
-        for(let i = 0; i < rows.length; i += 1) {
-            rowY += rows[i].frame.height;
+        for(let i = 0; i < keys.length; i += 1) {
+            rowY += keys[i].frame.height;
             if (rowY > y) {
-                return rows[i];
+                return keys[i];
             }
         }
         return null;
     }
 
     get tickRangesViewModels(): AudioWindowTickRange[] {
-        return this.tickRanges.map((gridTickRange) => {
+        return this.notes.map((gridTickRange) => {
             const { rowId, rect: rowRect } = this.rowsRectMap[gridTickRange.rowId];
             const vm: AudioWindowTickRange = {
                 id: `${rowId}-${gridTickRange.range.start.index}`,
@@ -180,7 +184,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
             rangeId,
             range,
         }
-        const event: KeyboardRangeCreatedEvent<K> = keyboardRangeCreatedEvent(row.id, rangeId, range);
+        const event: MidiNoteCreatedEvent = midiNoteCreatedEvent(row.id as PianoKey, rangeId, range);
         this.dispatchEvent(event);
     }
 
@@ -195,12 +199,17 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
         if (!row) {
             return;
         }
-        const nextDuration = tickPlus(audioWindowDrag.range.duration, delta);
-        const quanitizedDuration = quanitize(SIXTEENTH_BEAT, nextDuration, this.tempo);
-        const nextRange = tickRange(audioWindowDrag.range.start, nextDuration);
-        audioWindowDrag.range = nextRange;
-        const quanitizedRange = tickRange(audioWindowDrag.range.start, quanitizedDuration);
-        const event: KeyboardRangeChangedEvent<K> = keyboardRangeChangedEvent(row.id, audioWindowDrag.rangeId, quanitizedRange);
+        const { rangeId, range } = audioWindowDrag;
+        const event: MidiNoteRangeChangedEvent = midiNoteRangeChangedEvent({
+            key: row.id as PianoKey,
+            noteId: rangeId,
+            currentRange: range,
+            startDelta: tickZero,
+            durationDelta: delta,
+            quanitizeResolution: SIXTEENTH_BEAT,
+            tempo: this.tempo
+        });
+        audioWindowDrag.range = event.detail.range;
         this.dispatchEvent(event);
     }
 }

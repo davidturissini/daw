@@ -1,13 +1,12 @@
 import { LightningElement, api, track } from 'lwc';
-import { PianoKey, MidiNote } from 'util/sound';
+import { PianoKey, MidiNote, notes } from 'util/sound';
 import { Tempo } from 'store/project';
 import { ButtonGroupValueChangeEvent, ButtonGroupButton } from 'cmp/buttongroup/buttongroup';
-import { TickRange, QUARTER_BEAT, Tick, divideTickRange, inTickRange, tick, tickPlus, tickRange, FOUR_BEAT } from 'store/tick';
-import { AudioWindowGridRow, AudioWindowGridTickRange } from 'cmp/audiowindowgrid/audiowindowgrid';
+import { TickRange, QUARTER_BEAT, Tick, divideTickRange, inTickRange, tick, FOUR_BEAT } from 'store/tick';
 import { Frame } from 'util/geometry';
 import { DrumMachineNote } from 'notes/drummachine';
 import { NoteVariant } from 'notes/index';
-import { loopRangeChangeEvent, LoopRangeChangeEvent } from 'event/looprangechangeevent';
+import { KeyboardVariant, KeyboardNoteViewModel, KeyboardKeyViewModel } from 'cmp/keyboard/keyboard';
 
 export default class DrumMachine extends LightningElement {
     @api notes: MidiNote[];
@@ -34,11 +33,11 @@ export default class DrumMachine extends LightningElement {
         };
     }
 
-    get drumTickRanges(): AudioWindowGridTickRange<DrumMachineNote>[] {
+    get drumTickRanges(): KeyboardNoteViewModel<DrumMachineNote>[] {
         const { notes, visibleRange, resolution, drumMachineKeys, currentTime } = this;
 
-        return drumMachineKeys.reduce((seed: AudioWindowGridTickRange<DrumMachineNote>[], { pianoKey }) => {
-            const divided: AudioWindowGridTickRange<DrumMachineNote>[] = divideTickRange(visibleRange, resolution).map((tickRange: TickRange) => {
+        return drumMachineKeys.reduce((seed: KeyboardNoteViewModel<DrumMachineNote>[], { pianoKey }) => {
+            const divided: KeyboardNoteViewModel<DrumMachineNote>[] = divideTickRange(visibleRange, resolution).map((tickRange: TickRange) => {
                 const existingNote = notes.find((note) => {
                     return note.range.start.index === tickRange.start.index && note.note === pianoKey;
                 });
@@ -48,7 +47,7 @@ export default class DrumMachine extends LightningElement {
                 if(currentTime && existingNote) {
                     isPlaying = inTickRange(currentTime, existingNote.range);
                 }
-                const vm: AudioWindowGridTickRange<DrumMachineNote> = {
+                const vm: KeyboardNoteViewModel<DrumMachineNote> = {
                     rowId: pianoKey,
                     range: tickRange,
                     variant: NoteVariant.DrumMachineNote,
@@ -92,52 +91,71 @@ export default class DrumMachine extends LightningElement {
         }]
     }
 
+    get keyboardVariant() {
+        return KeyboardVariant.DrumMachine;
+    }
 
-    get audioWindowGridRows(): AudioWindowGridRow<PianoKey, { label: string }>[] {
+    get audioWindowGridRows(): KeyboardKeyViewModel<PianoKey, { label: string }>[] {
         return [{
             id: PianoKey.C3,
+            pianoKey: PianoKey.C3,
+            note: notes[PianoKey.C3],
             data: {
                 label: 'Drum'
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.Csharp3,
+            pianoKey: PianoKey.Csharp3,
+            note: notes[PianoKey.Csharp3],
             data: {
                 label: 'Snare',
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.D3,
+            pianoKey: PianoKey.D3,
+            note: notes[PianoKey.D3],
             data: {
                 label: 'closed Hihat',
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.Dsharp3,
+            pianoKey: PianoKey.Dsharp3,
+            note: notes[PianoKey.Dsharp3],
             data: {
                 label: 'open hihat',
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.E3,
+            pianoKey: PianoKey.E3,
+            note: notes[PianoKey.E3],
             data: {
                 label: 'tom',
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.F3,
+            pianoKey: PianoKey.F3,
+            note: notes[PianoKey.F3],
             data: {
                 label: 'rim',
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.Fsharp3,
+            pianoKey: PianoKey.Fsharp3,
+            note: notes[PianoKey.Fsharp3],
             data: {
                 label: 'ride',
             },
             frame: { width: 150, height: 20 }
         }, {
             id: PianoKey.G3,
+            pianoKey: PianoKey.G3,
+            note: notes[PianoKey.G3],
             data: {
                 label: 'clap',
             },
@@ -164,36 +182,5 @@ export default class DrumMachine extends LightningElement {
     onLoopIndexChange(evt: ButtonGroupValueChangeEvent<number>) {
         const { value } = evt.detail;
         this.loopIndex = value;
-    }
-
-    onDrumNoteCreated(evt: TickRangeCreatedEvent<PianoKey>) {
-        const { range } = evt.detail;
-        const currentRangeEnd = tickPlus(this.range.start, this.range.duration);
-        if (range.start.index < currentRangeEnd.index) {
-            return;
-        }
-        const page = this.loopIndexButtons.map((button) => {
-            const paginatedRange: TickRange = {
-                start: tick(this.visibleRangeDuration.index * button.value),
-                duration: this.visibleRangeDuration,
-            };
-            return paginatedRange;
-        })
-        .find((paginatedRange: TickRange) => {
-            return inTickRange(range.start, paginatedRange);
-        });
-
-        if (!page) {
-            return;
-        }
-
-        const nextRange = tickRange(
-            this.range.start,
-            tickPlus(page.start, page.duration),
-        );
-
-        const event: LoopRangeChangeEvent = loopRangeChangeEvent(this.loopId, nextRange);
-        this.dispatchEvent(event);
-
     }
 }

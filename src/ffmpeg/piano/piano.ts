@@ -1,14 +1,15 @@
 import { LightningElement, api, track } from 'lwc';
 import { MidiNote, PianoKey, notes } from 'util/sound';
 import { TickRange, Tick } from 'store/tick';
-import { AudioWindowGridRow, AudioWindowGridTickRange } from 'cmp/audiowindowgrid/audiowindowgrid';
-import { PianoKeyboard } from 'keyboard/index';
 import { NoteVariant } from 'notes/index';
 import { MidiNoteViewData } from 'notes/midinote';
 import { TimelineDragEvent } from 'event/timelinedrag';
 import { Tempo } from 'store/project';
 import { Marker, MarkerVariant, MarkerCursorData } from 'markers/index';
 import { Color } from 'util/color';
+import { KeyboardNoteViewModel, KeyboardKeyViewModel } from 'cmp/keyboard/keyboard';
+import { PianoKeyboard } from 'keyboard/index';
+
 
 export type PianoMidiNoteMap = {
     [octave: string]: MidiNote[]
@@ -21,15 +22,14 @@ export default class PianoElement extends LightningElement {
     @track visibleRange: TickRange;
     @api tempo: Tempo;
 
-    get gridRows(): AudioWindowGridRow<PianoKey, PianoKeyboard>[] {
+    get gridRows(): KeyboardKeyViewModel<PianoKey, PianoKeyboard>[] {
         return Object.keys(PianoKey).map((pianoKey: PianoKey) => {
             const note = notes[PianoKey[pianoKey]];
-            const vm: AudioWindowGridRow<PianoKey, PianoKeyboard> = {
+            const vm: KeyboardKeyViewModel<PianoKey, PianoKeyboard> = {
                 id: pianoKey,
-                data: {
-                    pianoKey,
-                    note,
-                },
+                pianoKey,
+                note,
+                data: {},
                 frame: {
                     width: 150,
                     height: 20
@@ -40,7 +40,7 @@ export default class PianoElement extends LightningElement {
         });
     }
 
-    get loopRanges(): AudioWindowGridTickRange<MidiNoteViewData>[] {
+    get loopRanges(): KeyboardNoteViewModel<MidiNoteViewData>[] {
         return this.notes.map((note) => {
             return {
                 range: note.range,

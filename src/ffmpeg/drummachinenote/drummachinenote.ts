@@ -1,9 +1,9 @@
 import { LightningElement, api } from 'lwc';
-import { tickRangeCreatedEvent } from 'event/audiowindowdragevent';
 import { TickRange } from 'store/tick';
 import { PianoKey } from 'util/sound';
 import { generateId } from 'util/uniqueid';
-import { tickRangeDeletedEvent } from 'event/tickrangedeletedevent';
+import { MidiNoteCreatedEvent, midiNoteCreatedEvent } from 'event/midinotecreatedevent';
+import { MidiNoteDeletedEvent, midiNoteDeletedEvent } from 'event/midinotedeletedevent';
 
 export default class DrumMachineTick extends LightningElement {
     @api range: TickRange;
@@ -25,11 +25,11 @@ export default class DrumMachineTick extends LightningElement {
     onDivClick() {
         const { noteId } = this;
         if (!noteId) {
-            const event = tickRangeCreatedEvent<PianoKey>(this.pianoKey, generateId(), this.range);
-            this.dispatchEvent(event);
+            const createMidiEvent: MidiNoteCreatedEvent = midiNoteCreatedEvent(this.pianoKey, generateId(), this.range);
+            this.dispatchEvent(createMidiEvent);
             return;
         }
-        const event = tickRangeDeletedEvent<PianoKey>(this.pianoKey, noteId);
-        this.dispatchEvent(event);
+        const deleteMidiEvent: MidiNoteDeletedEvent = midiNoteDeletedEvent(this.pianoKey, noteId);
+        this.dispatchEvent(deleteMidiEvent);
     }
 }

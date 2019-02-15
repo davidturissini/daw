@@ -1,6 +1,7 @@
 import { Tempo } from "store/project";
 import { Time } from "util/time";
 import { Time as ToneTime } from 'tone';
+import { Frame } from "util/geometry";
 
 const TICKS_PER_QUARTER_BEAT = 960;
 
@@ -138,4 +139,25 @@ export function floor(resolution: Tick, tick: Tick, tempo: Tempo): Tick {
         return tickSubtract(quanitized, resolution);
     }
     return quanitized;
+}
+
+
+/*
+ *
+ *
+ *  Pixel Conversions
+ *
+ */
+
+export function pixelToTick(frame: Frame, range: TickRange, pixel: number): Tick {
+    const { width } = frame;
+    const percent = (pixel / width);
+
+    const index = percent * range.duration.index;
+    return tick(index);
+}
+
+export function absolutePixelToTick(frame: Frame, range: TickRange, pixel: number): Tick {
+    const tick = pixelToTick(frame, range, pixel);
+    return tickPlus(tick, range.start);
 }

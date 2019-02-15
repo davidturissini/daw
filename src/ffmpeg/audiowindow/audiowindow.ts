@@ -1,11 +1,12 @@
 import { LightningElement, api, track } from 'lwc';
 import { Rect, rectToCSS, Frame, Origin } from 'util/geometry';
-import { TickRange, Tick, tick, divideTickRange, SIXTEENTH_BEAT, ceil, floor, tickRange, tickPlus } from 'store/tick';
+import { TickRange, Tick, divideTickRange, SIXTEENTH_BEAT, ceil, floor, tickRange, tickPlus, absolutePixelToTick, pixelToTick } from 'store/tick';
 import { NoteVariant, NoteViewData } from 'notes/index';
 import { AudioWindowDragStartEvent, audioWindowDragStartEvent } from 'event/audiowindowdragstartevent';
 import { AudioWindowDragEvent, audioWindowDragEvent } from 'event/audiowindowdragevent';
 import { Tempo } from 'store/project';
 import { Marker, MarkerVariant } from 'markers/index';
+import interactjs, { Interactable } from 'interactjs';
 
 export interface AudioWindowTickRange {
     rect: Rect;
@@ -16,6 +17,8 @@ export interface AudioWindowTickRange {
 }
 
 interface TickRangeViewModel {
+    id: string;
+    key: string;
     range: TickRange;
     style: string;
     isDrumMachineNote: boolean;
@@ -24,18 +27,7 @@ interface TickRangeViewModel {
     data: NoteViewData;
 }
 
-function pixelToTick(frame: Frame, range: TickRange, pixel: number): Tick {
-    const { width } = frame;
-    const percent = (pixel / width);
 
-    const index = percent * range.duration.index;
-    return tick(index);
-}
-
-function absolutePixelToTick(frame: Frame, range: TickRange, pixel: number): Tick {
-    const tick = pixelToTick(frame, range, pixel);
-    return tickPlus(tick, range.start);
-}
 
 function tickToPixel(tick: Tick, range: TickRange, frame: Frame): number {
     const { width } = frame;
@@ -65,7 +57,7 @@ export default class AudioWindowElement extends LightningElement {
     @api quanitizeResolution: Tick = SIXTEENTH_BEAT;
     @api showGrid: boolean = false;
     @api tempo: Tempo;
-    @api markers: Marker[] = [];
+    @api markers: Marker<any>[] = [];
     @track rect: Rect | null = null;
 
     get tickRangesViewModels(): TickRangeViewModel[] {
@@ -84,17 +76,19 @@ export default class AudioWindowElement extends LightningElement {
             }
             return {
                 range: tickRange.range,
+                id: tickRange.id,
                 key: tickRange.id,
                 tickRect,
                 variant: tickRange.variant,
                 data: tickRange.data,
             };
         })
-        .map(({ range, key, tickRect, variant, data }) => {
+        .map(({ range, id, key, tickRect, variant, data }) => {
             const isDrumMachineNote = variant === NoteVariant.DrumMachineNote;
             const isBeatLabelNote = variant === NoteVariant.BeatLabelNote;
             const isMidiNote = variant === NoteVariant.MidiNote;
             return {
+                id,
                 range,
                 key,
                 style: rectToCSS(tickRect),
@@ -157,72 +151,53 @@ export default class AudioWindowElement extends LightningElement {
 
     /*
      *
-     * Events
-     *
-     */
-    mouseDown: {
-        origin: Origin;
-        previousX: number;
-    } | null = null;
-    onContainerMouseDown(evt: MouseEvent) {
-        const { rect } = this;
-        if (rect === null) {
-            return;
-        }
-        const x = evt.x - rect.x;
-        const y = evt.y - rect.y;
-        const origin: Origin = {
-            x,
-            y,
-        };
-        this.mouseDown = {
-            origin,
-            previousX: x,
-        };
-
-        const tick = absolutePixelToTick(rect, this.visibleRange, x);
-        const event: AudioWindowDragStartEvent = audioWindowDragStartEvent(origin, tick);
-        this.dispatchEvent(event);
-    }
-
-    onContainerMouseMove(evt: MouseEvent) {
-        const { rect, mouseDown } = this;
-        if (rect === null || mouseDown === null) {
-            return;
-        }
-
-        const { origin, previousX } = mouseDown;
-        const x = (evt.x - rect.x) - previousX;
-        mouseDown.previousX = (evt.x - rect.x);
-        const delta = pixelToTick(rect, this.visibleRange, x);
-        const event: AudioWindowDragEvent = audioWindowDragEvent(origin, delta);
-        this.dispatchEvent(event);
-    }
-
-    onDocumentMouseUp = (evt: MouseEvent) => {
-        this.mouseDown = null;
-    }
-
-    /*
-     *
      * Lifecycle
      *
      */
     connectedCallback() {
         requestAnimationFrame(() => {
-            const rect = this.getBoundingClientRect();
-            this.rect = {
-                width: rect.width,
-                height: rect.height,
-                x: rect.left,
-                y: rect.top,
+            const clientRect = this.getBoundingClientRect();
+            const rect = this.rect = {
+                width: clientRect.width,
+                height: clientRect.height,
+                x: clientRect.left,
+                y: clientRect.top,
             };
-        });
 
-        document.addEventListener('mouseup', this.onDocumentMouseUp);
+        });
+    }
+
+    containerInteractable: Interactable | null = null;
+    renderedCallback() {
+        if (!this.containerInteractable) {
+            this.containerInteractable = interactjs(this.template.querySelector('.container')).draggable({
+                onstart: (evt) => {
+                    const x = evt.x0 - this.rect!.x;
+                    const origin = {
+                        x,
+                        y: evt.y0 - this.rect!.y,
+                    };
+                    const tick = pixelToTick(this.rect!, this.visibleRange, x);
+                    const event: AudioWindowDragStartEvent = audioWindowDragStartEvent(origin, tick);
+                    this.dispatchEvent(event);
+                },
+                onmove: (evt) => {
+                    const origin: Origin = {
+                        x: evt.x0 - this.rect!.x - evt.dx,
+                        y: evt.y0 - this.rect!.y - evt.dy,
+                    }
+                    const delta = pixelToTick(this.rect!, this.visibleRange, evt.dx);
+                    const event: AudioWindowDragEvent = audioWindowDragEvent(origin, delta);
+                    this.dispatchEvent(event);
+                },
+                onend: () => {
+
+                }
+            })
+        }
     }
 
     disconnectedCallback() {
-        document.removeEventListener('mouseup', this.onDocumentMouseUp);
+        (this.containerInteractable as any).unset();
     }
 }

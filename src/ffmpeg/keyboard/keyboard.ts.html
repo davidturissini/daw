@@ -8,15 +8,14 @@
     <main onscroll={onMainScroll}>
         <div class="col-left">
             <template for:each={rowViewModels} for:item="vm">
-                <template if:true={isPiano}>
-                    <ffmpeg-pianokey
-                        note={vm.data.note}
-                        piano-key={vm.data.pianoKey}
-                        style={vm.style}
-                        class="col-left-row"
-                        key={vm.id}
-                    ></ffmpeg-pianokey>
-                </template>
+                <ffmpeg-keyboardkey
+                    style={vm.style}
+                    class="col-left-row"
+                    key={vm.id}
+                    note={vm.note}
+                    piano-key={vm.pianoKey}
+                    variant={variant}>
+                </ffmpeg-keyboardkey>
             </template>
         </div>
         <div class="grid-container">
@@ -24,7 +23,7 @@
                 markers={markers}
                 show-grid
                 tempo={tempo}
-                padding={rangePadding}
+                padding={notePadding}
                 visible-range={visibleRange}
                 onaudiowindowdragstart={onAudioWindowDragStart}
                 onaudiowindowdrag={onAudioWindowDrag}

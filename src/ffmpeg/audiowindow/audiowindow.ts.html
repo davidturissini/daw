@@ -1,9 +1,5 @@
 <template>
-    <div
-        onmousemove={onContainerMouseMove}
-        onmousedown={onContainerMouseDown}
-        class="container"
-    >
+    <div class="container">
         <template for:each={markerViewModels} for:item="marker">
             <template if:true={marker.isCursorVariant}>
                 <ffmpeg-cursor
@@ -16,9 +12,9 @@
                 </ffmpeg-cursor>
             </template>
         </template>
-        <!-- <template if:true={showGrid} for:each={tickLines} for:item="line">
+        <template if:true={showGrid} for:each={tickLines} for:item="line">
             <div class="tick-line" style={line.style} key={line.key}></div>
-        </template> -->
+        </template>
         <template if:true={hasFrame} for:each={tickRangesViewModels} for:item="vm">
             <template if:true={vm.isDrumMachineNote}>
                 <ffmpeg-drummachinenote
@@ -43,7 +39,14 @@
             </template>
             <template if:true={vm.isMidiNote}>
                 <ffmpeg-midinote
-                    key={vm.key}
+                    range={vm.range}
+                    quanitize-resolution={quanitizeResolution}
+                    tempo={tempo}
+                    parent-visible-range={visibleRange}
+                    parent-rect={rect}
+                    note-id={vm.data.noteId}
+                    key={vm.data.noteId}
+                    piano-key={vm.data.key}
                     style={vm.style}
                     class="tick-range"
                 ></ffmpeg-midinote>

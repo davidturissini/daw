@@ -1,9 +1,9 @@
 <template>
-    <ffmpeg-audiowindowgrid
+    <ffmpeg-keyboard
         canvas
         visible-range={visibleRange}
-        rows={gridRows}
-        tick-ranges={loopRanges}
+        keys={gridRows}
+        notes={loopRanges}
         tempo={tempo}
         markers={audioWindowMarkers}
     >
@@ -14,5 +14,5 @@
             visible-range={visibleRange}
         >
         </ffmpeg-timeline>
-    </ffmpeg-audiowindowgrid>
+    </ffmpeg-keyboard>
 </template>

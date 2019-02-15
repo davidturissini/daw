@@ -6,7 +6,7 @@ export type AudioWindowDragEvent = CustomEvent<{
     delta: Tick;
 }>;
 
-export function audioWindowDragEvent(origin: Origin, delta: Tick): AudioWindowDragEvent {
+export function audioWindowDragEvent( origin: Origin, delta: Tick): AudioWindowDragEvent {
     return new CustomEvent('audiowindowdrag', {
         bubbles: true,
         composed: false,

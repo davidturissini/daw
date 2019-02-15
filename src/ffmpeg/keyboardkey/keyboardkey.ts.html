@@ -1,0 +1,16 @@
+<template>
+    <template if:true={isPianoVariant}>
+        <ffmpeg-pianokey
+            class="key-element"
+            note={note}
+            piano-key={pianoKey}
+        ></ffmpeg-pianokey>
+    </template>
+    <template if:true={isDrumMachine}>
+        <ffmpeg-drummachinekey
+            class="key-element"
+            note={note}
+            piano-key={pianoKey}
+        ></ffmpeg-drummachinekey>
+    </template>
+</template>
