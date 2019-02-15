@@ -9,6 +9,7 @@ export interface ButtonGroupButton<T> {
     value: T;
     iconVariant?: string;
     text?: string;
+    key: string | number;
 }
 
 export default class ButtonGroup<T> extends LightningElement {
@@ -29,6 +30,7 @@ export default class ButtonGroup<T> extends LightningElement {
     get buttonViewModels() {
         return this.buttons.map((button: ButtonGroupButton<any>) => {
             return {
+                key: button.key,
                 color: button.value === this.value ? new Color(47, 97, 147) : null,
                 value: button.value,
                 iconVariant: button.iconVariant,

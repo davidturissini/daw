@@ -1,6 +1,6 @@
 import { LightningElement, api, track } from 'lwc';
 import { MidiNote, PianoKey, notes } from 'util/sound';
-import { TickRange, Tick } from 'store/tick';
+import { TickRange, Tick, SIXTEENTH_BEAT, EIGHTH_BEAT, QUARTER_BEAT, HALF_BEAT, ONE_BEAT, tick } from 'store/tick';
 import { NoteVariant } from 'notes/index';
 import { MidiNoteViewData } from 'notes/midinote';
 import { TimelineDragEvent } from 'event/timelinedrag';
@@ -9,6 +9,7 @@ import { Marker, MarkerVariant, MarkerCursorData } from 'markers/index';
 import { Color } from 'util/color';
 import { KeyboardNoteViewModel, KeyboardKeyViewModel } from 'cmp/keyboard/keyboard';
 import { PianoKeyboard } from 'keyboard/index';
+import { ButtonGroupButton, ButtonGroupValueChangeEvent } from 'cmp/buttongroup/buttongroup';
 
 
 export type PianoMidiNoteMap = {
@@ -21,6 +22,7 @@ export default class PianoElement extends LightningElement {
     @api currentTime: Tick | null = null;
     @track visibleRange: TickRange;
     @api tempo: Tempo;
+    @track quanitizeIntervalIndex: number = QUARTER_BEAT.index;
 
     get gridRows(): KeyboardKeyViewModel<PianoKey, PianoKeyboard>[] {
         return Object.keys(PianoKey).map((pianoKey: PianoKey) => {
@@ -82,6 +84,34 @@ export default class PianoElement extends LightningElement {
         return markers;
     }
 
+    get quanitizeIntervalButtons(): ButtonGroupButton<number>[] {
+        return [{
+            value: SIXTEENTH_BEAT.index,
+            text: '1/16',
+            key: '1/16',
+        },{
+            value: EIGHTH_BEAT.index,
+            text: '1/8',
+            key: '1/8',
+        },{
+            value: QUARTER_BEAT.index,
+            text: '1/4',
+            key: '1/4',
+        },{
+            value: HALF_BEAT.index,
+            text: '1/2',
+            key: '1/2',
+        },{
+            value: ONE_BEAT.index,
+            text: '1/1',
+            key: '1/1',
+        }]
+    }
+
+    get quanitizeResolution(): Tick {
+        return tick(this.quanitizeIntervalIndex);
+    }
+
     /*
      *
      * Events
@@ -89,6 +119,11 @@ export default class PianoElement extends LightningElement {
     */
     onTimelineDrag(evt: TimelineDragEvent) {
         this.visibleRange = evt.detail.range
+    }
+
+    onQuanitizeIntervalChange(evt: ButtonGroupValueChangeEvent<number>) {
+        const { value } = evt.detail;
+        this.quanitizeIntervalIndex = value;
     }
 
     /*

@@ -1,12 +1,21 @@
 <template>
     <ffmpeg-keyboard
         canvas
+        quanitize-resolution={quanitizeResolution}
         visible-range={visibleRange}
         keys={gridRows}
         notes={loopRanges}
         tempo={tempo}
         markers={audioWindowMarkers}
     >
+        <header slot="header">
+            <ffmpeg-buttongroup
+                value={quanitizeIntervalIndex}
+                onchange={onQuanitizeIntervalChange}
+                buttons={quanitizeIntervalButtons}
+            >
+            </ffmpeg-buttongroup>
+        </header>
         <ffmpeg-timeline
             tempo={tempo}
             ontimelinedrag={onTimelineDrag}

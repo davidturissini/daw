@@ -2,7 +2,7 @@ import { LightningElement, track, api } from 'lwc';
 import { Rect, Frame } from 'util/geometry';
 import { AudioRange, BeatRange } from 'util/audiorange';
 import { Color } from 'util/color';
-import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, quanitize, SIXTEENTH_BEAT } from 'store/tick';
+import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, quanitize } from 'store/tick';
 import { AudioWindowTickRange } from 'cmp/audiowindow/audiowindow';
 import { NoteViewData, NoteVariant } from 'notes/index';
 import { AudioWindowDragEvent } from 'event/audiowindowdragevent';
@@ -60,7 +60,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     @api canvas: boolean = false;
     @api tempo: Tempo;
     @api markers: Marker<any>[] = [];
-    @track resolution: Tick = QUARTER_BEAT;
+    @api quanitizeResolution: Tick = QUARTER_BEAT;
     @track rect: Rect | null = null;
 
      /*
@@ -178,7 +178,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
             return;
         }
         const rangeId = generateId();
-        const quanitizedStart = quanitize(SIXTEENTH_BEAT, tick, this.tempo);
+        const quanitizedStart = quanitize(this.quanitizeResolution, tick, this.tempo);
         const range = tickRange(quanitizedStart, tickZero);
         this.audioWindowDrag = {
             rangeId,
@@ -206,7 +206,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
             currentRange: range,
             startDelta: tickZero,
             durationDelta: delta,
-            quanitizeResolution: SIXTEENTH_BEAT,
+            quanitizeResolution: this.quanitizeResolution,
             tempo: this.tempo
         });
         audioWindowDrag.range = event.detail.range;

@@ -73,16 +73,16 @@ export default class LoopEditElement extends LightningElement {
     }
 
     onMidiNoteCreated(evt: MidiNoteCreatedEvent) {
-        const { range, key, noteId } = evt.detail;
+        const { key, noteId, quanitizedRange } = evt.detail;
         appStore.dispatch(
-            createLoopNote(this.loopId, noteId, key, range),
+            createLoopNote(this.loopId, noteId, key, quanitizedRange),
         );
     }
 
     onMidiNoteRangeChanged(evt: MidiNoteRangeChangedEvent) {
-        const { range, key, noteId } = evt.detail;
+        const { key, noteId, quanitizedRange } = evt.detail;
         appStore.dispatch(
-            setLoopNoteRange(this.loopId, key, noteId, range),
+            setLoopNoteRange(this.loopId, key, noteId, quanitizedRange),
         );
     }
 
