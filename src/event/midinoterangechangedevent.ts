@@ -32,11 +32,10 @@ export function midiNoteRangeChangedEvent(options: MidiNoteRangeChangedEventOpti
     const nextDuration = tickPlus(currentRange.duration, durationDelta);
     const quanitizedDuration = quanitize(quanitizeResolution, nextDuration, tempo);
 
-    const nextStart = tickPlus(currentRange.start, startDelta);
+    let nextStart = tickPlus(currentRange.start, startDelta);
     const quanitizedStart = quanitize(quanitizeResolution, nextStart, tempo);
     const nextRange = tickRange(nextStart, nextDuration);
     const quanitizedRange = tickRange(quanitizedStart, quanitizedDuration);
-
     return new CustomEvent('midinoterangechanged', {
         bubbles: true,
         composed: true,

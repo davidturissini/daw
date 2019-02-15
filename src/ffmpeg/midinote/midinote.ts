@@ -1,6 +1,6 @@
 import { LightningElement, api } from 'lwc';
 import { PianoKey } from 'util/sound';
-import { TickRange, Tick, pixelToTick, tickZero } from 'store/tick';
+import { TickRange, Tick, pixelToTick, tickZero, tickPlus, tick } from 'store/tick';
 import { Rect } from 'util/geometry';
 import { Tempo } from 'store/project';
 import interactjs, { Interactable } from 'interactjs';
@@ -48,22 +48,35 @@ export default class MidiNoteElement extends LightningElement {
             // Even if "noDrag" prop is false,
             // We have to hookup the interactable
             // because we need to capture the event before it reaches the audio window
+            let startRange!: TickRange;
             this.interactable = interactjs(this.template.querySelector('.container')).draggable({
+                onstart: () => {
+                    startRange = this.range;
+                },
                 onmove: (evt) => {
                     const { noteId, noDrag } = this;
                     if (!noteId || noDrag === true) {
                         return;
                     }
-                    const delta = pixelToTick(this.parentRect, this.parentVisibleRange, evt.dx);
+
+                    let delta = pixelToTick(this.parentRect, this.parentVisibleRange, evt.dx);
+                    const nextStart = tickPlus(startRange.start, delta);
+                    if (nextStart.index < 0) {
+                        const diff = -nextStart.index;
+                        delta = tick(diff);
+                        console.log('delta', diff);
+                    }
+
                     const event: MidiNoteRangeChangedEvent = midiNoteRangeChangedEvent({
                         key: this.pianoKey,
                         noteId,
-                        currentRange: this.range,
+                        currentRange: startRange,
                         durationDelta: tickZero,
                         quanitizeResolution: this.quanitizeResolution,
                         tempo: this.tempo,
                         startDelta: delta,
                     });
+                    startRange = event.detail.range;
                     this.dispatchEvent(event);
                 },
             })

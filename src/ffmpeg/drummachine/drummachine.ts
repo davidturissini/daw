@@ -2,11 +2,13 @@ import { LightningElement, api, track } from 'lwc';
 import { PianoKey, MidiNote, notes } from 'util/sound';
 import { Tempo } from 'store/project';
 import { ButtonGroupValueChangeEvent, ButtonGroupButton } from 'cmp/buttongroup/buttongroup';
-import { TickRange, QUARTER_BEAT, Tick, divideTickRange, inTickRange, tick, FOUR_BEAT } from 'store/tick';
+import { TickRange, QUARTER_BEAT, Tick, divideTickRange, inTickRange, tick, FOUR_BEAT, tickRange } from 'store/tick';
 import { Frame } from 'util/geometry';
 import { DrumMachineNote } from 'notes/drummachine';
 import { NoteVariant } from 'notes/index';
 import { KeyboardVariant, KeyboardNoteViewModel, KeyboardKeyViewModel } from 'cmp/keyboard/keyboard';
+import { MidiNoteCreatedEvent } from 'event/midinotecreatedevent';
+import { KeyboardRangeChangeEvent, keyboardRangeChangeEvent } from 'event/keyboardrangechange';
 
 export default class DrumMachine extends LightningElement {
     @api notes: MidiNote[];
@@ -166,21 +168,35 @@ export default class DrumMachine extends LightningElement {
     get loopIndexButtons(): ButtonGroupButton<number>[] {
         return [{
             value: 0,
-            text: '1'
+            text: '1',
+            key: 0,
         },{
             value: 1,
-            text: '2'
+            text: '2',
+            key: 1,
         },{
             value: 2,
-            text: '3'
+            text: '3',
+            key: 2,
         },{
             value: 3,
-            text: '4'
+            text: '4',
+            key: 3,
         }]
     }
 
     onLoopIndexChange(evt: ButtonGroupValueChangeEvent<number>) {
         const { value } = evt.detail;
         this.loopIndex = value;
+    }
+
+
+    onDrumMidiNoteCreated(evt: MidiNoteCreatedEvent) {
+        const { range } = evt.detail;
+        if (range.start.index >= this.range.duration.index) {
+            const nextRange = tickRange(this.range.start, tick(this.range.duration.index * 2));
+            const rangeChangeEvent: KeyboardRangeChangeEvent = keyboardRangeChangeEvent(nextRange);
+            this.dispatchEvent(rangeChangeEvent);
+        }
     }
 }

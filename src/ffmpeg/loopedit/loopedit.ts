@@ -10,7 +10,7 @@ import { LoopState } from 'store/loop/reducer';
 import { createLoopNote, setLoopNoteRange, deleteLoopNote, setLoopRange } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
 import { MidiNoteDeletedEvent } from 'event/midinotedeletedevent';
-import { LoopRangeChangeEvent } from 'event/looprangechangeevent';
+import { KeyboardRangeChangeEvent } from 'event/keyboardrangechange';
 import { MidiNoteCreatedEvent } from 'event/midinotecreatedevent';
 import { MidiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
 
@@ -73,9 +73,9 @@ export default class LoopEditElement extends LightningElement {
     }
 
     onMidiNoteCreated(evt: MidiNoteCreatedEvent) {
-        const { key, noteId, quanitizedRange } = evt.detail;
+        const { key, noteId, range } = evt.detail;
         appStore.dispatch(
-            createLoopNote(this.loopId, noteId, key, quanitizedRange),
+            createLoopNote(this.loopId, noteId, key, range),
         );
     }
 
@@ -93,7 +93,7 @@ export default class LoopEditElement extends LightningElement {
         );
     }
 
-    onLoopRangeChange(evt: LoopRangeChangeEvent) {
+    onKeyboardRangeChange(evt: KeyboardRangeChangeEvent) {
         const { range } = evt.detail;
         appStore.dispatch(
             setLoopRange(this.loopId, range),

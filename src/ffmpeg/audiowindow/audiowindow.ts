@@ -157,7 +157,7 @@ export default class AudioWindowElement extends LightningElement {
     connectedCallback() {
         requestAnimationFrame(() => {
             const clientRect = this.getBoundingClientRect();
-            const rect = this.rect = {
+            this.rect = {
                 width: clientRect.width,
                 height: clientRect.height,
                 x: clientRect.left,
@@ -170,10 +170,11 @@ export default class AudioWindowElement extends LightningElement {
     containerInteractable: Interactable | null = null;
     renderedCallback() {
         if (!this.containerInteractable) {
+            let origin: Origin | null = null;
             this.containerInteractable = interactjs(this.template.querySelector('.container')).draggable({
                 onstart: (evt) => {
                     const x = evt.x0 - this.rect!.x;
-                    const origin = {
+                    origin = {
                         x,
                         y: evt.y0 - this.rect!.y,
                     };
@@ -182,12 +183,8 @@ export default class AudioWindowElement extends LightningElement {
                     this.dispatchEvent(event);
                 },
                 onmove: (evt) => {
-                    const origin: Origin = {
-                        x: evt.x0 - this.rect!.x - evt.dx,
-                        y: evt.y0 - this.rect!.y - evt.dy,
-                    }
                     const delta = pixelToTick(this.rect!, this.visibleRange, evt.dx);
-                    const event: AudioWindowDragEvent = audioWindowDragEvent(origin, delta);
+                    const event: AudioWindowDragEvent = audioWindowDragEvent(origin!, delta);
                     this.dispatchEvent(event);
                 },
                 onend: () => {

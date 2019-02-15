@@ -18,8 +18,8 @@ import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrumen
 import { InstrumentAudioNode } from 'store/instrument/types';
 import { Tempo } from 'store/project';
 import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick } from 'store/tick';
-import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction } from 'store/loop/action';
-import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE } from 'store/loop/const';
+import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction } from 'store/loop/action';
+import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};
 
@@ -79,20 +79,6 @@ export function playPianoKeyEpic(actions) {
                 return empty();
             })
         )
-}
-
-function clampNotes(midiNotes: MidiNote[], range: TickRange, tempo: Tempo): Array<{ note: MidiNote, clampOffsetRange: TickRange }> {
-    return midiNotes.filter((note) => {
-        return tickRangeContains(note.range, range);
-    })
-    .map((midiNote: MidiNote) => {
-        const clamped = clampTickRange(range, midiNote.range);
-
-        return {
-            note: midiNote,
-            clampOffsetRange: clamped,
-        };
-    })
 }
 
 interface TonePartObject {
@@ -199,6 +185,13 @@ class LoopPlayer {
         }, this.notes);
     }
 
+    setNoteRange(noteId: string, range: TickRange) {
+        const note = this.notes[noteId];
+        this.removeNote(noteId);
+        note.range = range;
+        this.addNotes([note]);
+    }
+
     removeNote(noteId: string) {
         const { schedule, part } = this;
         if (schedule[noteId] && part) {
@@ -258,6 +251,16 @@ export function playTrackLoopEpic(actions) {
                                 range: action.payload.range,
                             }
                             player.addNotes([midiNote]);
+                        });
+
+                    actions.ofType(SET_LOOP_NOTE_RANGE)
+                        .pipe(
+                            filter((action: SetLoopNoteRangeAction) => {
+                                return action.payload.loopId === loopId;
+                            })
+                        )
+                        .subscribe((action: SetLoopNoteRangeAction) => {
+                            player.setNoteRange(action.payload.noteId, action.payload.range);
                         });
 
                     actions.ofType(DELETE_LOOP_NOTE)
