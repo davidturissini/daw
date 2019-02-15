@@ -1,3 +1,15 @@
 <template>
-    <div class={divClass} onclick={onDivClick} style={divStyle}></div>
+    <ffmpeg-midinote
+        onclick={onMidiNoteClick}
+        range={range}
+        note-id={noteId}
+        parent-rect={parentRect}
+        tempo={tempo}
+        quanitize-resolution={quanitizeResolution}
+        parent-visible-range={parentVisibleRange}
+        piano-key={pianoKey}
+        color={noteColor}
+        no-drag
+    >
+    </ffmpeg-midinote>
 </template>
