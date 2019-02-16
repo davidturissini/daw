@@ -53,9 +53,12 @@ interface AudioWindowGridRowViewModel<T> extends KeyboardKeyViewModel<any, T> {
     style: string;
 }
 
+const keysSymbol = Symbol();
+
+const { create } = Object;
+
 export default class GridElement<K extends string, T extends NoteViewData> extends LightningElement {
     @api notes: KeyboardNoteViewModel<any>[];
-    @api keys: KeyboardKeyViewModel<K, T>[] = [];
     @api visibleRange: TickRange;
     @api notePadding: Frame = { height: 0, width: 0 };
     @api variant: KeyboardVariant = KeyboardVariant.Piano;
@@ -65,6 +68,36 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     @api quanitizeResolution: Tick = QUARTER_BEAT;
     @api instrumentId: string;
     @track rect: Rect | null = null;
+    rowsRectMap: { [key: string]: { rowId: string, rect: Rect } };
+    [keysSymbol]: KeyboardKeyViewModel<K, T>[];
+
+    @api
+    set keys(value: KeyboardKeyViewModel<K, T>[]) {
+        const { notePadding } = this;
+        let y = notePadding.height / 2;
+        this.rowsRectMap = value.reduce((seed: { [key: string]: { rowId: string, rect: Rect } }, row) => {
+            const height = row.frame.height + (notePadding.height / 2);
+            const rect: Rect = {
+                x: 0,
+                y: y,
+                height,
+                width: 0,
+            }
+            seed[row.id as string] = {
+                rowId: row.id,
+                rect
+            };
+
+            y += height + notePadding.height;
+            return seed;
+        }, create(null));
+
+        this[keysSymbol] = value;
+    }
+
+    get keys(): KeyboardKeyViewModel<K, T>[] {
+        return this[keysSymbol];
+    }
 
     /*
      *
@@ -84,27 +117,6 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
                 style: `padding-top:${this.notePadding.height / 2}px; padding-bottom: ${this.notePadding.height / 2}px; width:${row.frame.width}; height:${height}px`
             }
         })
-    }
-
-    get rowsRectMap(): { [key: string]: { rowId: string, rect: Rect } } {
-        const { notePadding } = this;
-        let y = notePadding.height / 2;
-        return this.keys.reduce((seed: { [key: string]: { rowId: string, rect: Rect } }, row) => {
-            const height = row.frame.height + (notePadding.height / 2);
-            const rect: Rect = {
-                x: 0,
-                y: y,
-                height,
-                width: 0,
-            }
-            seed[row.id as string] = {
-                rowId: row.id,
-                rect
-            };
-
-            y += height + notePadding.height;
-            return seed;
-        }, {});
     }
 
     findRowFromY(y: number): KeyboardKeyViewModel<K, T> | null {

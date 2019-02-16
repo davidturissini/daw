@@ -185,7 +185,7 @@ export default class AudioWindowElement extends LightningElement {
         }
         const { x } = evt;
         const localX = x - rect.x;
-        const tick = pixelToTick(rect, this.visibleRange, localX);
+        const tick = absolutePixelToTick(rect, this.visibleRange, localX);
         const event: AudioWindowMouseEnterEvent = audioWindowMouseEnterEvent(tick, quanitizeResolution, tempo);
         this.dispatchEvent(event);
     }
@@ -197,7 +197,7 @@ export default class AudioWindowElement extends LightningElement {
         }
         const { x } = evt;
         const localX = x - rect.x;
-        const tick = pixelToTick(rect, this.visibleRange, localX);
+        const tick = absolutePixelToTick(rect, this.visibleRange, localX);
         const event: AudioWindowMouseMoveEvent = audioWindowMouseMoveEvent(tick, quanitizeResolution, tempo);
         this.dispatchEvent(event);
     }

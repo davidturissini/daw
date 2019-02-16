@@ -1,8 +1,15 @@
 <template>
     <article onclick={onLoopClick}>
         <ffmpeg-button
+            if:true={isStopped}
             onclick={onPlayButtonClick}
             icon-variant="Play"
+        >
+        </ffmpeg-button>
+        <ffmpeg-button
+            if:true={isPlaying}
+            onclick={onStopButtonClick}
+            icon-variant="Times"
         >
         </ffmpeg-button>
     </article>

@@ -4,12 +4,27 @@ import {
     SET_LOOP_NOTE_RANGE,
     SET_LOOP_RANGE,
     SET_LOOP_CURRENT_TIME,
+    SET_LOOP_PLAY_STATE,
  } from './const';
 import { Action } from 'store/index';
-import { BeatRange } from 'util/audiorange';
 import { PianoKey } from 'util/sound';
 import { TickRange, Tick } from 'store/tick';
-import Tone from 'tone';
+import { LoopPlayState } from './index';
+
+export type SetLoopPlayStateAction = Action<{
+    loopId: string;
+    playState: LoopPlayState;
+}>
+
+export function setLoopPlayState(loopId: string, playState: LoopPlayState): SetLoopPlayStateAction {
+    return {
+        type: SET_LOOP_PLAY_STATE,
+        payload: {
+            loopId,
+            playState,
+        }
+    }
+}
 
 export type SetLoopCurrentTimeAction = Action<{
     loopId: string;

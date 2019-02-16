@@ -3,11 +3,25 @@ import {
     START_PLAYBACK,
     PLAY_PIANO_KEY,
     STOP_PIANO_KEY,
+    STOP_LOOP,
 } from './const';
 import { Action } from 'store/index';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
 import { PianoKey } from 'util/sound';
+
+export type StopLoopAction = Action<{
+    loopId: string;
+}>
+
+export function stopLoop(loopId: string): StopLoopAction {
+    return {
+        type: STOP_LOOP,
+        payload: {
+            loopId,
+        }
+    }
+}
 
 export type StopPianoKeyAction = Action<{
     instrumentId: string;

@@ -1,7 +1,7 @@
 import { LightningElement, api, track, wire } from 'lwc';
-import { Loop } from 'store/loop';
+import { Loop, LoopPlayState } from 'store/loop';
 import { appStore, wireSymbol } from 'store/index';
-import { playTrackLoop } from 'store/player/action';
+import { playTrackLoop, stopLoop } from 'store/player/action';
 import { getAudioContext } from 'util/sound';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
@@ -21,6 +21,21 @@ export default class TrackLoopElement<T extends string> extends LightningElement
         data: {
             project: ProjectState;
         }
+    }
+
+    get isPlaying() {
+        return this.loop.playState === LoopPlayState.PLAYING;
+    }
+
+    get isStopped() {
+        return this.loop.playState === LoopPlayState.STOPPED;
+    }
+
+    onStopButtonClick(evt: MouseEvent) {
+        evt.stopPropagation();
+        appStore.dispatch(
+            stopLoop(this.loop.id)
+        )
     }
 
     onPlayButtonClick(evt: MouseEvent) {

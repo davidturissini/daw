@@ -1,5 +1,5 @@
 import { Record, Map as ImmutableMap } from 'immutable';
-import { Loop, LoopDataTypes } from './index';
+import { Loop, LoopDataTypes, LoopPlayState } from './index';
 import { CREATE_INSTRUMENT } from 'store/instrument/const';
 import { CreateInstrumentAction } from 'store/instrument/action';
 import {
@@ -8,13 +8,18 @@ import {
     SET_LOOP_NOTE_RANGE,
     SET_LOOP_RANGE,
     SET_LOOP_CURRENT_TIME,
+    SET_LOOP_PLAY_STATE,
 } from './const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction } from './action';
+import {
+    STOP_LOOP,
+} from 'store/player/const';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, setLoopPlayState, SetLoopPlayStateAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
 import { createBeat } from 'util/time';
 import { SynthLoopData } from 'store/instrument/nodes/Synth';
+import { StopLoopAction } from 'store/player/action';
 
 export class LoopState extends Record<{
     items: ImmutableMap<string, Loop>
@@ -77,6 +82,19 @@ function setLoopCurrentTimeReducer(state: LoopState, action: SetLoopCurrentTimeA
     return state.setIn(['items', loopId, 'currentTime'], currentTime);
 }
 
+function setLoopPlayStateReducer(state: LoopState, action: SetLoopPlayStateAction): LoopState {
+    const { loopId, playState } = action.payload;
+    return state.setIn(['items', loopId, 'playState'], playState);
+}
+
+function stopLoopReducer(state: LoopState, action: StopLoopAction): LoopState {
+    const { loopId } = action.payload;
+    return state.mergeIn(['items', loopId], {
+        currentTime: null,
+        playState: LoopPlayState.STOPPED,
+    });
+}
+
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
         case CREATE_INSTRUMENT:
@@ -91,6 +109,10 @@ export function reducer(state = new LoopState(), action) {
             return setLoopRangeReducer(state, action);
         case SET_LOOP_CURRENT_TIME:
             return setLoopCurrentTimeReducer(state, action);
+        case SET_LOOP_PLAY_STATE:
+            return setLoopPlayStateReducer(state, action);
+        case STOP_LOOP:
+            return stopLoopReducer(state, action);
     }
     return state;
 }
