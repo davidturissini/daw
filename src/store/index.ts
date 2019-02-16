@@ -87,18 +87,36 @@ export interface Action<T> {
     payload: T;
 }
 
-function dispatchStoreData(store: Store, paths: ReduxWireConfig['paths'], eventTarget: EventTarget) {
-    const state = store.getState();
-    const data = keys(paths).reduce((seed, key) => {
-        const path = [...paths[key]];
-        const first = path.shift() as string;
-        seed[key] = state[first].getIn(path);
-        return seed;
-    }, {});
+function createDispatchFunction() {
+    let lastState: any | null = null;
+    return function dispatchStoreData(store: Store, paths: ReduxWireConfig['paths'], eventTarget: EventTarget) {
+        const state = store.getState();
+        const data = keys(paths).reduce((seed, key) => {
+            const path = [...paths[key]];
+            const first = path.shift() as string;
+            seed[key] = state[first].getIn(path);
+            return seed;
+        }, {});
 
-    eventTarget.dispatchEvent(
-        new ValueChangedEvent({ data })
-    )
+        if (lastState !== null) {
+            const keys = Object.keys(data);
+            let haveNewData = false;
+            for(let i = 0; i < keys.length; i += 1) {
+                const key = keys[i];
+                if (data[key] !== lastState[key]) {
+                    haveNewData = true;
+                }
+            }
+            if (haveNewData === false) {
+                return;
+            }
+        }
+
+        lastState = data;
+        eventTarget.dispatchEvent(
+            new ValueChangedEvent({ data })
+        )
+    }
 }
 
 register(wireSymbol, function (eventTarget) {
@@ -109,6 +127,7 @@ register(wireSymbol, function (eventTarget) {
             unsubscribe();
             unsubscribe = null;
         }
+        const dispatchStoreData = createDispatchFunction();
         const { paths } = config;
         dispatchStoreData(appStore, paths, eventTarget);
 
