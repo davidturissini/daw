@@ -8,36 +8,31 @@ import { Action } from 'store/index';
 import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
 import { PianoKey } from 'util/sound';
-import { Instrument } from 'store/instrument';
 
 export type StopPianoKeyAction = Action<{
-    instrument: Instrument<any>;
+    instrumentId: string;
     key: PianoKey;
 }>
-export function stopPianoKey(instrument: Instrument<any>, key: PianoKey): StopPianoKeyAction {
+export function stopPianoKey(instrumentId: string, key: PianoKey): StopPianoKeyAction {
     return {
         type: STOP_PIANO_KEY,
         payload: {
-            instrument,
+            instrumentId,
             key,
         },
     }
 }
 
 export type PlayPianoKeyAction = Action<{
-    audioContext: BaseAudioContext;
-    instrument: Instrument<any>;
+    instrumentId: string;
     key: PianoKey
-    tempo: Tempo;
 }>
-export function playPianoKey(audioContext: BaseAudioContext, instrument: Instrument<any>, key: PianoKey, tempo: Tempo): PlayPianoKeyAction {
+export function playPianoKey(instrumentId: string, key: PianoKey): PlayPianoKeyAction {
     return {
         type: PLAY_PIANO_KEY,
         payload: {
-            audioContext,
-            instrument,
+            instrumentId,
             key,
-            tempo,
         }
     }
 }

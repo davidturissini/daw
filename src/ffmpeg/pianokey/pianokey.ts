@@ -13,4 +13,13 @@ export default class PianoKeyElement extends LightningElement {
         }
         return '';
     }
+
+    get containerClassName() {
+        const { note } = this;
+        if (note.sharp) {
+            return 'container container--sharp';
+        }
+
+        return 'container';
+    }
 }

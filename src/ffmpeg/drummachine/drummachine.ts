@@ -17,6 +17,7 @@ export default class DrumMachine extends LightningElement {
     @api resolution: Tick = QUARTER_BEAT;
     @api loopId: string;
     @api currentTime: Tick | null = null;
+    @api instrumentId: string;
     @track loopIndex: number = 0;
 
     visibleRangeDuration: Tick = FOUR_BEAT;

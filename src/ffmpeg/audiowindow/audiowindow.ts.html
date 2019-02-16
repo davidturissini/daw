@@ -1,15 +1,30 @@
 <template>
-    <div class="container">
+    <div class="container" onmouseenter={onContainerMouseEnter} onmousemove={onContainerMouseMove} onmouseleave={onContainerMouseLeave}>
         <template for:each={markerViewModels} for:item="marker">
             <template if:true={marker.isCursorVariant}>
                 <ffmpeg-cursor
                     dashed={marker.data.dashed}
                     color={marker.data.color}
-                    class="tick-line"
+                    class="tick-line marker"
                     style={marker.style}
                     key={marker.key}
                 >
                 </ffmpeg-cursor>
+            </template>
+            <template if:true={marker.isCaretVariant}>
+                <ffmpeg-markercaret
+                    tick={marker.tick}
+                    parent-rect={rect}
+                    parent-visible-range={visibleRange}
+                    quanitize-resolution={quanitizeResolution}
+                    tempo={tempo}
+                    marker-id={marker.data.markerId}
+                    color={marker.data.color}
+                    class="tick-line marker"
+                    style={marker.style}
+                    key={marker.key}
+                >
+                </ffmpeg-markercaret>
             </template>
         </template>
         <template if:true={showGrid} for:each={tickLines} for:item="line">

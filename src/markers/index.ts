@@ -2,7 +2,8 @@ import { Tick } from "store/tick";
 import { Color } from "util/color";
 
 export enum MarkerVariant {
-    Cursor
+    Cursor,
+    Caret
 }
 
 export interface MarkerCursorData {
@@ -10,7 +11,17 @@ export interface MarkerCursorData {
     dashed: boolean;
 }
 
-export type MarkerData = MarkerCursorData;
+export enum MarkerCaretAlign {
+    LEFT, CENTER, RIGHT
+}
+
+export interface MarkerCaretData {
+    markerId: string;
+    color: Color;
+    align: MarkerCaretAlign;
+}
+
+export type MarkerData = MarkerCursorData | MarkerCaretData;
 
 export interface Marker<T extends MarkerData> {
     tick: Tick;

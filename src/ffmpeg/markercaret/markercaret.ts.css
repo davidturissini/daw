@@ -1,0 +1,11 @@
+.caret {
+    display: block;
+    height: 0;
+    width: 0;
+    border: 5px solid transparent;
+    border-right: 5px solid;
+    position: absolute;
+    right: 100%;
+    bottom: 0;
+    z-index: 1;
+}

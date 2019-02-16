@@ -1,5 +1,9 @@
+:host {
+    display: block;
+}
+
 .buttons {
-    display: inline-flex;
+    display: flex;
     border-radius: 0.3rem;
     overflow: hidden;
 }

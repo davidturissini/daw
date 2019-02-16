@@ -4,3 +4,7 @@
     width: 100%;
     border: 0;
 }
+
+button {
+    text-align: left;
+}

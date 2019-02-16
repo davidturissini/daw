@@ -13,6 +13,8 @@ import { Marker } from 'markers/index';
 import { MidiNoteCreatedEvent, midiNoteCreatedEvent } from 'event/midinotecreatedevent';
 import { MidiNoteRangeChangedEvent, midiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
 import { PianoKey, Note } from 'util/sound';
+import { appStore } from 'store/index';
+import { playPianoKey, stopPianoKey } from 'store/player/action';
 
 
 export enum KeyboardVariant {
@@ -61,24 +63,8 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     @api tempo: Tempo;
     @api markers: Marker<any>[] = [];
     @api quanitizeResolution: Tick = QUARTER_BEAT;
+    @api instrumentId: string;
     @track rect: Rect | null = null;
-
-     /*
-     *
-     * lifecycle
-     *
-     */
-    connectedCallback() {
-        requestAnimationFrame(() => {
-            const rect = this.getBoundingClientRect();
-            this.rect = {
-                width: rect.width,
-                height: rect.height,
-                x: rect.left,
-                y: rect.top,
-            }
-        });
-    }
 
     /*
      *
@@ -211,5 +197,48 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
         });
         audioWindowDrag.range = event.detail.range;
         this.dispatchEvent(event);
+    }
+
+    keyPlaying: PianoKey | null = null;
+    onKeyboardKeyMouseDown(evt) {
+        const target = evt.target as any;
+        this.keyPlaying = target.pianoKey as PianoKey;
+        appStore.dispatch(
+            playPianoKey(this.instrumentId, this.keyPlaying)
+        );
+    }
+
+    onDocumentMouseUp = (evt) => {
+        const { keyPlaying } = this;
+        if (keyPlaying === null) {
+            return;
+        }
+        this.keyPlaying = null;
+        appStore.dispatch(
+            stopPianoKey(this.instrumentId, keyPlaying)
+        );
+    }
+
+     /*
+     *
+     * lifecycle
+     *
+     */
+    connectedCallback() {
+        requestAnimationFrame(() => {
+            const rect = this.getBoundingClientRect();
+            this.rect = {
+                width: rect.width,
+                height: rect.height,
+                x: rect.left,
+                y: rect.top,
+            }
+        });
+
+        document.addEventListener('mouseup', this.onDocumentMouseUp);
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener('mouseup', this.onDocumentMouseUp);
     }
 }

@@ -32,6 +32,7 @@ export const ZERO_BEAT = tickZero
 export const SIXTEENTH_BEAT = tick(TICKS_PER_QUARTER_BEAT / 4);
 export const EIGHTH_BEAT = tick(TICKS_PER_QUARTER_BEAT / 2);
 export const QUARTER_BEAT = tick(TICKS_PER_QUARTER_BEAT);
+export const THIRD_BEAT = tick(TICKS_PER_QUARTER_BEAT * 4 / 3);
 export const HALF_BEAT = tick(TICKS_PER_QUARTER_BEAT * 2);
 export const ONE_BEAT = tick(TICKS_PER_QUARTER_BEAT * 4);
 export const FOUR_BEAT = tick(TICKS_PER_QUARTER_BEAT * 16);

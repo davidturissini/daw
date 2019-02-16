@@ -1,15 +1,20 @@
 import { LightningElement, api, track } from 'lwc';
 import { MidiNote, PianoKey, notes } from 'util/sound';
-import { TickRange, Tick, SIXTEENTH_BEAT, EIGHTH_BEAT, QUARTER_BEAT, HALF_BEAT, ONE_BEAT, tick } from 'store/tick';
+import { TickRange, Tick, SIXTEENTH_BEAT, EIGHTH_BEAT, QUARTER_BEAT, HALF_BEAT, ONE_BEAT, tick, THIRD_BEAT, tickRange, tickSubtract } from 'store/tick';
 import { NoteVariant } from 'notes/index';
 import { MidiNoteViewData } from 'notes/midinote';
 import { TimelineDragEvent } from 'event/timelinedrag';
 import { Tempo } from 'store/project';
-import { Marker, MarkerVariant, MarkerCursorData } from 'markers/index';
+import { Marker, MarkerVariant, MarkerCursorData, MarkerCaretData, MarkerCaretAlign } from 'markers/index';
 import { Color } from 'util/color';
 import { KeyboardNoteViewModel, KeyboardKeyViewModel } from 'cmp/keyboard/keyboard';
 import { PianoKeyboard } from 'keyboard/index';
 import { ButtonGroupButton, ButtonGroupValueChangeEvent } from 'cmp/buttongroup/buttongroup';
+import { MarkerTickChangedEvent } from 'event/markertickchanged';
+import { KeyboardRangeChangeEvent, keyboardRangeChangeEvent } from 'event/keyboardrangechange';
+import { AudioWindowMouseEnterEvent } from 'event/audiowindowmouseenterevent';
+import { AudioWindowMouseMoveEvent } from 'event/audiowindowmousemoveevent';
+import { AudioWindowMouseLeaveEvent } from 'event/audiowindowmouseleaveevent';
 
 
 export type PianoMidiNoteMap = {
@@ -23,10 +28,13 @@ export default class PianoElement extends LightningElement {
     @track visibleRange: TickRange;
     @api tempo: Tempo;
     @track quanitizeIntervalIndex: number = QUARTER_BEAT.index;
+    @track userPosition: Tick | null = null;
+    @api instrumentId: string;
 
     get gridRows(): KeyboardKeyViewModel<PianoKey, PianoKeyboard>[] {
-        return Object.keys(PianoKey).map((pianoKey: PianoKey) => {
-            const note = notes[PianoKey[pianoKey]];
+        return Object.keys(PianoKey).map((key: PianoKey) => {
+            const pianoKey = PianoKey[key];
+            const note = notes[pianoKey];
             const vm: KeyboardKeyViewModel<PianoKey, PianoKeyboard> = {
                 id: pianoKey,
                 pianoKey,
@@ -49,15 +57,28 @@ export default class PianoElement extends LightningElement {
                 rowId: note.note,
                 data: {
                     noteId: note.id,
-                    key: PianoKey[note.note],
+                    key: note.note,
                 },
                 variant: NoteVariant.MidiNote
             };
         });
     }
 
+    get timelineMarkers(): Marker<MarkerCaretData>[] {
+        return [{
+            tick: this.range.duration,
+            key: 'duration',
+            variant: MarkerVariant.Caret,
+            data: {
+                markerId: 'duration',
+                align: MarkerCaretAlign.RIGHT,
+                color: new Color(255, 255, 255),
+            },
+        }];
+    }
+
     get audioWindowMarkers(): Marker<MarkerCursorData>[] {
-        const { currentTime } = this;
+        const { currentTime, userPosition } = this;
         const markers = [{
             tick: this.range.duration,
             key: 'duration',
@@ -80,6 +101,18 @@ export default class PianoElement extends LightningElement {
             })
         }
 
+        if (userPosition) {
+            markers.push({
+                tick: userPosition,
+                key: 'userPosition',
+                variant: MarkerVariant.Cursor,
+                data: {
+                    color: new Color(255, 255, 255),
+                    dashed: true,
+                }
+            })
+        }
+
 
         return markers;
     }
@@ -97,6 +130,10 @@ export default class PianoElement extends LightningElement {
             value: QUARTER_BEAT.index,
             text: '1/4',
             key: '1/4',
+        },{
+            value: THIRD_BEAT.index,
+            text: '1/3',
+            key: '1/3',
         },{
             value: HALF_BEAT.index,
             text: '1/2',
@@ -124,6 +161,38 @@ export default class PianoElement extends LightningElement {
     onQuanitizeIntervalChange(evt: ButtonGroupValueChangeEvent<number>) {
         const { value } = evt.detail;
         this.quanitizeIntervalIndex = value;
+    }
+
+    onTimelineMarkerTickChanged(evt: MarkerTickChangedEvent) {
+        const { markerId, quanitized } = evt.detail;
+        if (markerId === 'duration') {
+            const range = tickRange(this.range.start, tickSubtract(quanitized, this.range.start));
+            const event: KeyboardRangeChangeEvent = keyboardRangeChangeEvent(range);
+            this.dispatchEvent(event);
+        }
+    }
+
+    onDurationInput(evt: Event) {
+        const target = evt.target as HTMLInputElement;
+        const duration = parseInt(target.value, 10) * QUARTER_BEAT.index;
+        const range = tickRange(this.range.start, tick(duration));
+        const event: KeyboardRangeChangeEvent = keyboardRangeChangeEvent(range);
+        this.dispatchEvent(event);
+    }
+
+
+    onKeyboardMouseEnter(evt: AudioWindowMouseEnterEvent) {
+        const { quanitized } = evt.detail;
+        this.userPosition = quanitized;
+    }
+
+    onKeyboardMouseMove(evt: AudioWindowMouseMoveEvent) {
+        const { quanitized } = evt.detail;
+        this.userPosition = quanitized;
+    }
+
+    onKeyboardMouseLeave(evt: AudioWindowMouseLeaveEvent) {
+        this.userPosition = null;
     }
 
     /*

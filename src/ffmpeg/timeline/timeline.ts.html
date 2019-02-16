@@ -1,10 +1,14 @@
 <template>
     <ffmpeg-audiowindow
+        show-grid
+        markers={markers}
+        inertia-drag
         tempo={tempo}
         onaudiowindowdrag={onAudioWindowDrag}
         padding={rangePadding}
         visible-range={visibleRange}
         tick-ranges={tickRangesViewModels}
+        grid-line-color={audioWindowGridLineColor}
     >
     </ffmpeg-audiowindow>
 </template>

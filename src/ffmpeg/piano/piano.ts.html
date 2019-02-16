@@ -7,8 +7,16 @@
         notes={loopRanges}
         tempo={tempo}
         markers={audioWindowMarkers}
+        onaudiowindowmouseenter={onKeyboardMouseEnter}
+        onaudiowindowmousemove={onKeyboardMouseMove}
+        onaudiowindowmouseleave={onKeyboardMouseLeave}
+        instrument-id={instrumentId}
     >
         <header slot="header">
+            <div>
+                Duration:
+                <input type="number" oninput={onDurationInput} />
+            </div>
             <ffmpeg-buttongroup
                 value={quanitizeIntervalIndex}
                 onchange={onQuanitizeIntervalChange}
@@ -17,7 +25,9 @@
             </ffmpeg-buttongroup>
         </header>
         <ffmpeg-timeline
+            markers={timelineMarkers}
             tempo={tempo}
+            onmarkertickchanged={onTimelineMarkerTickChanged}
             ontimelinedrag={onTimelineDrag}
             slot="window-top"
             visible-range={visibleRange}

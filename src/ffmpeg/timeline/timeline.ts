@@ -6,6 +6,8 @@ import { NoteVariant } from 'notes/index';
 import { AudioWindowDragEvent } from 'event/audiowindowdragevent';
 import { timelineDragEvent, TimelineDragEvent } from 'event/timelinedrag';
 import { Tempo } from 'store/project';
+import { Marker } from 'markers/index';
+import { Color } from 'util/color';
 
 
 export enum TimelineVariant {
@@ -49,10 +51,11 @@ export function getResolution(duration): number {
 
 
 export default class Timeline extends LightningElement {
-    @api rangePadding: Frame = { height: 0, width: 0 };
+    @api rangePadding: Frame = { height: 0, width: 5 };
     @api visibleRange: TickRange;
     @api tempo: Tempo;
     @api quanitizeResolution: Tick = QUARTER_BEAT;
+    @api markers: Marker<any>[] = [];
 
     get tickRangesViewModels(): AudioWindowTickRange[] {
         const { quanitizeResolution, visibleRange, tempo } = this;
@@ -62,7 +65,7 @@ export default class Timeline extends LightningElement {
             return {
                 rect: {
                     x: 0,
-                    y: 0,
+                    y: 3,
                     width: 0,
                     height: 0,
                 },
@@ -72,6 +75,10 @@ export default class Timeline extends LightningElement {
                 data: {}
             }
         })
+    }
+
+    get audioWindowGridLineColor() {
+        return new Color(70, 70, 70);
     }
 
     /*

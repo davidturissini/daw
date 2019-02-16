@@ -1,6 +1,7 @@
 <template>
     <div class="audiowindow-container">
         <ffmpeg-keyboard
+            instrument-id={instrumentId}
             onmidinotecreated={onDrumMidiNoteCreated}
             tempo={tempo}
             note-padding={windowGridPadding}

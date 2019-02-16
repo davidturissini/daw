@@ -4,12 +4,12 @@ import {
     PLAY_PIANO_KEY,
     STOP_PIANO_KEY,
 } from './const';
-import { flatMap, filter, takeUntil, switchMap } from 'rxjs/operators';
+import { flatMap, filter, takeUntil } from 'rxjs/operators';
 import { StartPlaybackAction, PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction } from './action';
 import { empty as emptyObservable, empty, Observable, Subscription } from 'rxjs';
 import { appStore } from '../index';
 import { createInstrumentNode } from 'store/instrument';
-import { MidiNote, PianoKey } from 'util/sound';
+import { MidiNote, PianoKey, getAudioContext } from 'util/sound';
 import { timeZero, Time } from 'util/time';
 import { Loop } from 'store/loop';
 import { Transport, Part as TonePart } from 'tone';;
@@ -17,7 +17,7 @@ import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
 import { Tempo } from 'store/project';
-import { tickTime, TickRange, tickRangeContains, clampTickRange, timeToTick } from 'store/tick';
+import { tickTime, TickRange, timeToTick } from 'store/tick';
 import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction } from 'store/loop/action';
 import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
 
@@ -52,9 +52,9 @@ export function playPianoKeyEpic(actions) {
     return actions.ofType(PLAY_PIANO_KEY)
         .pipe(
             flatMap((action: PlayPianoKeyAction) => {
-                const { audioContext, instrument, key } = action.payload;
-                const instrumentNode = instrumentNodes[instrument.id];
-                instrumentNode.connect(audioContext.destination);
+                const { instrumentId, key } = action.payload;
+                const instrumentNode = instrumentNodes[instrumentId];
+                instrumentNode.connect(getAudioContext().destination);
                 Observable.create((o) => {
                     instrumentNode.trigger(key, 1, timeZero, null, null)
 
@@ -67,7 +67,7 @@ export function playPianoKeyEpic(actions) {
                         actions.ofType(STOP_PIANO_KEY)
                             .pipe(
                                 filter((action: StopPianoKeyAction) => {
-                                    return action.payload.instrument === instrument && action.payload.key === key;
+                                    return action.payload.instrumentId === instrumentId && action.payload.key === key;
                                 })
                             )
                     )
@@ -223,7 +223,7 @@ export function playTrackLoopEpic(actions) {
                     o.next({ player, loopId, tempo });
                 });
             }),
-            switchMap(({ player, loopId, tempo }: { player: LoopPlayer, loopId: string, tempo: Tempo }) => {
+            flatMap(({ player, loopId, tempo }: { player: LoopPlayer, loopId: string, tempo: Tempo }) => {
                 return Observable.create((o) => {
                     player.start();
 

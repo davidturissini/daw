@@ -1,6 +1,6 @@
 :host {
     display: block;
-    height: 1rem;
+    height: 100%;
     user-select: none;
     position: relative;
     z-index: 1;
@@ -9,40 +9,6 @@
     font-size: 0.6rem;
 }
 
-.tick {
-    display: inline-flex;
-    flex-direction: column;
-    position: absolute;
-    left: 0;
-    top: 0.25rem;
-    z-index: 2;
-    font-size: 0.8rem;
-}
-
-.tick-label {
-    transform: translateX(-50%);
-    margin-bottom: 0.5rem;
-}
-
-.beat-label {
-    transform: translateX(-50%);
-}
-
-.marker {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    z-index: 3;
-    display: block;
-}
-
-
-.marker-arrow {
-    display: block;
-    pointer-events: all;
-    height: 0;
-    width: 0;
-    border: 6px solid transparent;
-    border-top: 10px solid rgb(174, 174, 174);
-    margin-bottom: -6px;
+ffmpeg-audiowindow {
+    cursor: grab;
 }

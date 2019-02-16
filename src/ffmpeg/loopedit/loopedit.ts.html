@@ -8,6 +8,7 @@
     >
         <template if:true={instrumentIsDrumMachine}>
             <ffmpeg-drummachine
+                instrument-id={instrumentId}
                 current-time={loop.currentTime}
                 range={loop.range}
                 tempo={projectTempo}
@@ -17,6 +18,7 @@
         </template>
         <template if:true={shouldRenderPiano}>
             <ffmpeg-piano
+                instrument-id={instrumentId}
                 current-time={loop.currentTime}
                 tempo={projectTempo}
                 notes={midiNotes}

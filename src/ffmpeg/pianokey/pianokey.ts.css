@@ -8,17 +8,19 @@ button {
     border: 0;
     position: relative;
     z-index: 1;
-}
-
-.key-label {
-    position: absolute;
-    right: 0.5rem;
-    bottom: 0.5rem;
-    z-index: 2;
+    text-align: left;
+    border-bottom: 1px solid #000;
 }
 
 .sharp {
     background: #000;
     color: #fff;
+    width: 80%;
+    border: 0;
 
+}
+
+.container {
+    height: 100%;
+    background: #fff;
 }

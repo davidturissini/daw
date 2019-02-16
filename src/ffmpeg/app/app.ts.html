@@ -1,20 +1,6 @@
 <template>
     <header class="header">
-        <ffmpeg-controls
-            onsilencedetectbuttonclick={onSilenceDetectButtonClick}
-            onstopbuttonclick={onStopButtonClick}
-            onplaybuttonclick={onPlayButtonClick}>
-        </ffmpeg-controls>
         <span>{projectBpm} bpm</span>
-        <ffmpeg-button
-            icon-variant="TrackList"
-            onclick={onTrackListButtonClick}
-        >
-        </ffmpeg-button>
-        <ffmpeg-button
-            onclick={onPerformanceModeButtonClick}
-            icon-variant="Columns"
-        ></ffmpeg-button>
     </header>
     <aside class="left-col">
         <ffmpeg-instruments></ffmpeg-instruments>
