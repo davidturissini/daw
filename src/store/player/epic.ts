@@ -17,7 +17,6 @@ import { Loop, LoopPlayState } from 'store/loop';
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
-import { Tempo } from 'store/project';
 import { timeToTick } from 'store/tick';
 import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, setLoopPlayState } from 'store/loop/action';
 import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
@@ -87,6 +86,8 @@ export function playPianoKeyEpic(actions) {
         )
 }
 
+const { keys: objectKeys } = Object;
+
 export function playTrackLoopEpic(actions) {
     return actions.ofType(PLAY_TRACK_LOOP)
         .pipe(
@@ -107,18 +108,19 @@ export function playTrackLoopEpic(actions) {
                     player.addNotes(flattenedNotes);
 
                     let when = timeZero;
-                    if (Object.keys(loopPlayers).length === 1) {
+                    if (objectKeys(loopPlayers).length === 1) {
                         Transport.start();
                     } else {
                         const p = loopPlayers[Object.keys(loopPlayers)[0]];
-                        when = Time.fromSeconds(Transport.nextSubdivision('0:4:0'));
+                        const t = Transport.nextSubdivision('0:5:0')
+                        console.log(t, Transport.seconds)
                     }
 
                     player.start(when);
                     o.next({ player });
                     return () => {
                         delete loopPlayers[loopId];
-                        if (Object.keys(loopPlayers).length === 0) {
+                        if (objectKeys(loopPlayers).length === 0) {
                             Transport.stop();
                         }
                     }
