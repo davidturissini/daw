@@ -31,6 +31,7 @@ module.exports = {
             notes: path.resolve('./src/notes'),
             keyboard: path.resolve('./src/keyboard'),
             markers: path.resolve('./src/markers'),
+            units: path.resolve('./src/units'),
         }
     },
     module: {

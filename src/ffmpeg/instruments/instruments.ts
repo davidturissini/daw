@@ -7,6 +7,14 @@ import { PianoKey } from 'util/sound';
 import { SynthData } from 'store/instrument/nodes/Synth';
 import { DrumMachineData } from 'store/instrument/nodes/DrumMachine';
 import { Color } from 'util/color';
+import { NoiseSynthData } from 'store/instrument/nodes/NoiseSynth';
+import { AMSynthData } from 'store/instrument/nodes/AMSynth';
+import { DuoSynthData } from 'store/instrument/nodes/DuoSynth';
+import { FMSynthData } from 'store/instrument/nodes/FMSynth';
+import { MonoSynthData } from 'store/instrument/nodes/MonoSynth';
+import { PluckSynthData } from 'store/instrument/nodes/PluckSynth';
+import { MetalSynthData } from 'store/instrument/nodes/MetalSynth';
+import { MembraneSynthData } from 'store/instrument/nodes/MembraneSynth';
 
 
 export default class Instruments extends LightningElement {
@@ -49,6 +57,86 @@ export default class Instruments extends LightningElement {
                     loopId,
                 );
                 break;
+            case InstrumentType.NoiseSynth:
+                action = createInstrument<NoiseSynthData>(
+                    instrumentId,
+                    'Noise Synth',
+                    type,
+                    new NoiseSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.AMSynth:
+                action = createInstrument<AMSynthData>(
+                    instrumentId,
+                    'AM Synth',
+                    type,
+                    new AMSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.DuoSynth:
+                action = createInstrument<DuoSynthData>(
+                    instrumentId,
+                    'Duo Synth',
+                    type,
+                    new DuoSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.FMSynth:
+                action = createInstrument<FMSynthData>(
+                    instrumentId,
+                    'FM Synth',
+                    type,
+                    new FMSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.MonoSynth:
+                action = createInstrument<MonoSynthData>(
+                    instrumentId,
+                    'Mono Synth',
+                    type,
+                    new MonoSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.PluckSynth:
+                action = createInstrument<PluckSynthData>(
+                    instrumentId,
+                    'Pluck Synth',
+                    type,
+                    new PluckSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.MetalSynth:
+                action = createInstrument<MetalSynthData>(
+                    instrumentId,
+                    'Metal Synth',
+                    type,
+                    new MetalSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
+            case InstrumentType.MembraneSynth:
+                action = createInstrument<MembraneSynthData>(
+                    instrumentId,
+                    'Membrane Synth',
+                    type,
+                    new MembraneSynthData({}),
+                    audioTrackId,
+                    loopId,
+                );
+                break;
             default:
                 throw new Error(`Not Implemented ${type}`);
         }
@@ -56,12 +144,13 @@ export default class Instruments extends LightningElement {
         appStore.dispatch(action);
     }
 
-    get instruments() {
-        return [{
-            type: InstrumentType.DrumMachine,
-        }, {
-            type: InstrumentType.Synth,
-        }];
+    get instruments(): Array<{ type: InstrumentType }> {
+        return Object.keys(InstrumentType).map((key) => {
+            const type = InstrumentType[key];
+            return {
+                type,
+            };
+        });
     }
 
     get addButtonColor() {

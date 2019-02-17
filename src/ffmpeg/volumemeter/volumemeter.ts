@@ -1,73 +1,71 @@
-import { LightningElement, track } from 'lwc';
-import rafThrottle from 'raf-throttle';
+import { LightningElement, api } from 'lwc';
+import { Decibel, decibel } from 'units/decibel';
 
 export default class VolumeMeter extends LightningElement {
-    @track channels: Array<{
-        volume: number;
-        lastClip: number | null;
-    }> = [];
-    processor: ScriptProcessorNode;
-    averaging = 0.95;
-    clipLevel = 0.98;
-    clipLag = 250;
-    constructor() {
-        super();
-    }
+    @api meter: Decibel = decibel(-100);
 
-    connectedCallback() {
-        this.channels = [{
-            volume: 0,
-            lastClip: null,
-        }, {
-            volume: 0,
-            lastClip: null,
-        }];
-        //this.processor.onaudioprocess = this.draw;
-    }
+    get totalScaleValue(): number {
+        const { meter } = this;
+        const { value: meterValue } = meter;
+        const min = -100;
+        let y = 1 - (meterValue / -100);
 
-    draw = rafThrottle((evt) => {
-        const { inputBuffer } = evt;
-        this.channels.forEach((channel, index) => {
-            const { volume } = channel;
-            const buf = inputBuffer.getChannelData(index);
-            const { length: bufLength } = buf;
-            let sum = 0;
-
-            // Do a root-mean-square on the samples: sum up the squares...
-            for (let i = 0; i < bufLength; i += 1) {
-                const x = buf[i];
-                if (Math.abs(x) >= this.clipLevel) {
-                    channel.lastClip = window.performance.now();
-                }
-                sum += x * x;
-            }
-
-            // ... then take the square root of the sum.
-            const rms =  Math.sqrt(sum / bufLength);
-
-            // Now smooth this out with the averaging factor applied
-            // to the previous sample - take the max here because we
-            // want "fast attack, slow release."
-            channel.volume = Math.max(rms, volume * this.averaging);
-        });
-    })
-
-    checkClipping(channel) {
-		if ((channel.lastClip + this.clipLag) < window.performance.now()) {
-            return false;
+        if (meterValue <= min) {
+            y = 0;
         }
-		return true;
+
+        return y;
     }
 
-    get channelViews() {
-        return this.channels.map((channel, index) => {
-            const isClipping = this.checkClipping(channel);
-            const background = isClipping ? 'red' : 'rgb(104, 185, 118)';
-            const style = `background: ${background}; transform: scale(1, ${channel.volume})`
-            return {
-                key: index,
-                style,
-            }
-        })
+    get indicatorStyle() {
+        const { meter } = this;
+        const { value: meterValue } = meter;
+        const min = -100;
+        const max = 0;
+        let y = 1 - (meterValue / -100);
+
+        if (meterValue >= max) {
+            y = 1;
+        } else if (meterValue <= min) {
+            y = 0;
+        }
+
+        return `transform: scale(1, ${y})`
+    }
+
+    get greenStyle() {
+        const { totalScaleValue } = this;
+        const max = 0.6;
+        let y = 1;
+        if (totalScaleValue < max) {
+            y = totalScaleValue / 0.6;
+        }
+        return `transform: scale(1, ${y})`;
+    }
+
+    get yellowStyle() {
+        const { totalScaleValue } = this;
+        const min = 0.6;
+        const max = 1;
+        let y = 1;
+        if (totalScaleValue < min) {
+            y = 0;
+        } else if (totalScaleValue > min && totalScaleValue < max) {
+            y = (totalScaleValue - min) / (max - min)
+        }
+        return `transform: scale(1, ${y})`;
+    }
+
+    get redStyle() {
+        const { totalScaleValue } = this;
+        const min = 1;
+        const max = 50;
+        let y = 1;
+        if (totalScaleValue < min) {
+            y = 0;
+        } else if (totalScaleValue > min && totalScaleValue < max) {
+            y = (totalScaleValue - min) / (max - min)
+        }
+        return `transform: scale(1, ${y})`;
     }
 }

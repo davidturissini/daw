@@ -2,12 +2,15 @@
     <section class="gain-levels">
         <input
             class="gain-input"
-            value={masterGain}
-            min="0"
+            value={masterGainValue}
+            min="-80"
             max="10"
             step="0.1"
             type="range"
             oninput={handleGainChange} />
-        <ffmpeg-volumemeter class="gain-meter"></ffmpeg-volumemeter>
+        <ffmpeg-volumemeter
+            meter={masterMeterDecibel}
+            class="gain-meter"
+        ></ffmpeg-volumemeter>
     </section>
 </template>

@@ -1,4 +1,3 @@
-export const START_PLAYBACK = 'START_PLAYBACK';
 export const PLAY_TRACK_LOOP = 'PLAY_TRACK_LOOP';
 export const STOP_LOOP = 'STOP_LOOP';
 

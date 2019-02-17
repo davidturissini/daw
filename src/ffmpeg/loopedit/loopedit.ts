@@ -51,7 +51,7 @@ export default class LoopEditElement extends LightningElement {
     }
 
     get shouldRenderPiano() {
-        return this.instrument().type === InstrumentType.Synth;
+        return !this.instrumentIsDrumMachine;
     }
 
     /*

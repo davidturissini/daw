@@ -2,7 +2,7 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { Synth, PolySynth, ProcessingNode } from 'tone';
+import { Synth, PolySynth, AudioNode as ToneAudioNode } from 'tone';
 
 export class SynthData extends Record<{
     oscillatorType: OscillatorType;
@@ -25,16 +25,12 @@ export class SynthLoopData extends Record<{
 }) {}
 export class SynthNode implements InstrumentAudioNode<SynthData> {
     type: InstrumentType.Synth;
-    dest: ProcessingNode | null = null;
     synth: PolySynth;
     constructor(data: SynthData) {
         this.synth = new PolySynth(4, Synth);
         this.update(data);
     }
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
-        if (this.dest) {
-            this.synth.connect(this.dest);
-        }
         if (duration !== null) {
             let normalizedDuration = duration;
 
@@ -53,8 +49,8 @@ export class SynthNode implements InstrumentAudioNode<SynthData> {
         }
     }
 
-    connect(node: ProcessingNode) {
-        this.dest = node;
+    connect(node: ToneAudioNode) {
+        this.synth.connect(node);
     }
 
     update(data: SynthData) {

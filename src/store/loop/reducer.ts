@@ -13,13 +13,21 @@ import {
 import {
     STOP_LOOP,
 } from 'store/player/const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, setLoopPlayState, SetLoopPlayStateAction } from './action';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, SetLoopPlayStateAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
 import { createBeat } from 'util/time';
 import { SynthLoopData } from 'store/instrument/nodes/Synth';
 import { StopLoopAction } from 'store/player/action';
+import { NoiseSynthLoopData } from 'store/instrument/nodes/NoiseSynth';
+import { AMSynthLoopData } from 'store/instrument/nodes/AMSynth';
+import { DuoSynthLoopData } from 'store/instrument/nodes/DuoSynth';
+import { FMSynthLoopData } from 'store/instrument/nodes/FMSynth';
+import { MonoSynthLoopData } from 'store/instrument/nodes/MonoSynth';
+import { PluckSynthLoopData } from 'store/instrument/nodes/PluckSynth';
+import { MetalSynthLoopData } from 'store/instrument/nodes/MetalSynth';
+import { MembraneSynthLoopData } from 'store/instrument/nodes/MembraneSynth';
 
 export class LoopState extends Record<{
     items: ImmutableMap<string, Loop>
@@ -28,12 +36,29 @@ export class LoopState extends Record<{
 }) {}
 
 function getDefaultInstrumentLoopData(type: InstrumentType): LoopDataTypes {
-    if (type === InstrumentType.DrumMachine) {
-        return new DrumMachineLoopData({
-            resolution: createBeat(1 / 4)
-        });
-    } else if (type === InstrumentType.Synth) {
-        return new SynthLoopData({});
+    switch(type) {
+        case InstrumentType.DrumMachine:
+            return new DrumMachineLoopData({
+                resolution: createBeat(1 / 4)
+            });
+        case InstrumentType.Synth:
+            return new SynthLoopData({});
+        case InstrumentType.NoiseSynth:
+            return new NoiseSynthLoopData({});
+        case InstrumentType.AMSynth:
+            return new AMSynthLoopData({});
+        case InstrumentType.DuoSynth:
+            return new DuoSynthLoopData({});
+        case InstrumentType.FMSynth:
+            return new FMSynthLoopData({});
+        case InstrumentType.MonoSynth:
+            return new MonoSynthLoopData({});
+        case InstrumentType.PluckSynth:
+            return new PluckSynthLoopData({});
+        case InstrumentType.MetalSynth:
+            return new MetalSynthLoopData({});
+        case InstrumentType.MembraneSynth:
+            return new MembraneSynthLoopData({});
     }
 
     throw new Error('Not implemented');

@@ -1,12 +1,10 @@
 import {
     PLAY_TRACK_LOOP,
-    START_PLAYBACK,
     PLAY_PIANO_KEY,
     STOP_PIANO_KEY,
     STOP_LOOP,
 } from './const';
 import { Action } from 'store/index';
-import { AudioRange } from 'util/audiorange';
 import { Tempo } from 'store/project';
 import { PianoKey } from 'util/sound';
 
@@ -54,34 +52,15 @@ export function playPianoKey(instrumentId: string, key: PianoKey): PlayPianoKeyA
 export type PlayTrackLoopAction = Action<{
     loopId: string;
     instrumentId: string;
-    audioContext: AudioContext;
     tempo: Tempo;
 }>;
-export function playTrackLoop(audioContext: AudioContext, loopId: string, instrumentId: string, tempo: Tempo): PlayTrackLoopAction {
+export function playTrackLoop(loopId: string, instrumentId: string, tempo: Tempo): PlayTrackLoopAction {
     return {
         type: PLAY_TRACK_LOOP,
         payload: {
-            audioContext,
             loopId,
             instrumentId,
             tempo,
-        }
-    }
-}
-
-export type StartPlaybackAction = Action<{
-    range: AudioRange;
-    repeat: boolean;
-    audioContext: AudioContext;
-}>
-
-export function startPlayback(audioContext: AudioContext, range: AudioRange, repeat: boolean): StartPlaybackAction {
-    return {
-        type: START_PLAYBACK,
-        payload: {
-            audioContext,
-            range,
-            repeat,
         }
     }
 }

@@ -9,10 +9,16 @@ import { reducer as instrumentReducer, InstrumentState } from './instrument/redu
 import { reducer as projectReducer, ProjectState } from './project/reducer';
 import { reducer as routerReducer, RouterState } from './route/reducer';
 import { reducer as loopReducer, LoopState } from './loop/reducer';
+import { reducer as masterOutReducer, MasterOutState } from './masterout/reducer';
 
 // Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
-import { startPlaybackEpic, playTrackLoopEpic, playPianoKeyEpic, createInstrumentEpic } from './player/epic';
+import {
+    setMasterOutGainEpic,
+    playTrackLoopEpic,
+    playPianoKeyEpic,
+    createInstrumentEpic,
+} from './player/epic';
 import { createProjectEpic } from './project/epic';
 
 const { keys } = Object;
@@ -20,11 +26,11 @@ const { keys } = Object;
 const rootEpic = combineEpics(
     createRouterEpic,
     navigateEpic,
-    startPlaybackEpic,
     playTrackLoopEpic,
     playPianoKeyEpic,
     createProjectEpic,
     createInstrumentEpic,
+    setMasterOutGainEpic,
 );
 const epicMiddleware = createEpicMiddleware();
 const middleware: Middleware[] = [epicMiddleware];
@@ -38,7 +44,8 @@ if (process.env.NODE_ENV !== 'production') {
                     action.type !== 'SET_VIRTUAL_CURSOR_TIME' &&
                     action.type !== 'SET_AUDIO_WINDOW_VISIBLE_RANGE' &&
                     action.type !== 'SET_AUDIO_WINDOW_VIRTUAL_CURSOR_TIME' &&
-                    action.type !== 'SET_LOOP_CURRENT_TIME'
+                    action.type !== 'SET_LOOP_CURRENT_TIME' &&
+                    action.type !== 'SET_MASTER_OUT_METER_LEVEL'
                 );
             },
             stateTransformer: (state) => {
@@ -61,6 +68,7 @@ export interface AppState {
     project: ProjectState;
     router: RouterState;
     loop: LoopState;
+    masterout: MasterOutState;
 }
 
 export const appStore = createStore(
@@ -69,6 +77,7 @@ export const appStore = createStore(
         project: projectReducer,
         router: routerReducer,
         loop: loopReducer,
+        masterout: masterOutReducer,
     }),
     applyMiddleware(...middleware),
 );

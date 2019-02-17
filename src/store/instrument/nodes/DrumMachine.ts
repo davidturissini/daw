@@ -2,7 +2,7 @@ import { InstrumentAudioNode, InstrumentType } from './../types';
 import { Beat, Time, createBeat } from 'util/time';
 import { Record } from 'immutable';
 import { PianoKey } from 'util/sound';
-import { Sampler as ToneSampler, ProcessingNode } from 'tone';
+import { Sampler as ToneSampler, AudioNode as ToneAudioNode } from 'tone';
 
 export enum AttackReleaseCurve {
     linear = 'linear',
@@ -48,7 +48,6 @@ export class DrumMachineLoopData extends Record<{
 export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
     type: InstrumentType.DrumMachine;
     audioContext: BaseAudioContext;
-    dest: ProcessingNode | null = null;
     resolution: Beat;
     duration: Beat;
     sampler: ToneSampler;
@@ -69,9 +68,6 @@ export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
     }
 
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
-        if (this.dest) {
-            this.sampler.connect(this.dest);
-        }
         if (duration !== null) {
             let normalizedDuration = duration;
 
@@ -84,12 +80,12 @@ export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
         }
     }
 
-    connect(node: ProcessingNode) {
-        this.dest = node;
+    release() {
+        this.sampler.releaseAll()
     }
 
-    release(key: PianoKey, when: Time) {
-        this.sampler.releaseAll()
+    connect(node: ToneAudioNode) {
+        this.sampler.connect(node);
     }
 
     update(data: DrumMachineData) {

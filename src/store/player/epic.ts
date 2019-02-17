@@ -1,17 +1,16 @@
 import {
-    START_PLAYBACK,
     PLAY_TRACK_LOOP,
     PLAY_PIANO_KEY,
     STOP_PIANO_KEY,
     STOP_LOOP,
 } from './const';
-import { flatMap, filter, takeUntil, switchMap } from 'rxjs/operators';
-import { StartPlaybackAction, PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction, StopLoopAction } from './action';
-import { empty as emptyObservable, empty, Observable, Subscription } from 'rxjs';
+import { flatMap, filter, takeUntil, switchMap, repeat, distinctUntilChanged } from 'rxjs/operators';
+import { PlayTrackLoopAction, PlayPianoKeyAction, StopPianoKeyAction, StopLoopAction } from './action';
+import { empty as emptyObservable, empty, Observable, Subscription, animationFrameScheduler } from 'rxjs';
 import { appStore } from '../index';
 import { createInstrumentNode } from 'store/instrument';
-import { MidiNote, getAudioContext } from 'util/sound';
-import { timeZero, Time } from 'util/time';
+import { MidiNote } from 'util/sound';
+import { timeZero } from 'util/time';
 import { Loop, LoopPlayState } from 'store/loop';
 
 import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
@@ -21,12 +20,47 @@ import { timeToTick } from 'store/tick';
 import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, setLoopPlayState } from 'store/loop/action';
 import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
 import { LoopPlayer } from './LoopPlayer';
-import { Transport } from 'tone';
+import {
+    Transport,
+    Master as ToneMaster,
+    Meter as ToneMeter,
+    Gain as ToneGain,
+} from 'tone';
+import { SET_MASTER_OUT_GAIN } from 'store/masterout/const';
+import { SetMasterOutGainAction, setMasterOutMeterLevel } from 'store/masterout/action';
+import { decibel, Decibel } from 'units/decibel';
 
+// Tonejs bindings
 Transport.PPQ = 960;
+
+const masterOutMeter = new ToneMeter(0.8);
+const masterOutGain = new ToneGain(0, 'db');
+ToneMaster.chain(masterOutGain, masterOutMeter);
+
+const masterOut = ToneMaster;
 
 const instrumentNodes: { [key: string]: InstrumentAudioNode<any> } = {};
 const loopPlayers: { [key: string]: LoopPlayer } = {};
+
+Observable.create((o) => {
+    animationFrameScheduler.schedule(() => {
+        const level = masterOutMeter.getLevel();
+        o.next(decibel(level));
+        o.complete();
+    });
+})
+.pipe(
+    repeat(),
+    distinctUntilChanged((x: Decibel, y: Decibel) => x.value === y.value),
+    filter((decibel: Decibel) => {
+        return decibel.value > -100;
+    })
+)
+.subscribe((level: Decibel) => {
+    appStore.dispatch(
+        setMasterOutMeterLevel(level)
+    );
+})
 
 export function createInstrumentEpic(actions) {
     return actions.ofType(CREATE_INSTRUMENT)
@@ -34,6 +68,7 @@ export function createInstrumentEpic(actions) {
             flatMap((action: CreateInstrumentAction<any>) => {
                 const { id: instrumentId, data, type } = action.payload;
                 const instrumentNode = createInstrumentNode(type, data);
+                instrumentNode.connect(masterOut);
                 instrumentNodes[instrumentId] = instrumentNode;
 
                 return Observable.create((o) => {
@@ -59,7 +94,6 @@ export function playPianoKeyEpic(actions) {
             flatMap((action: PlayPianoKeyAction) => {
                 const { instrumentId, key } = action.payload;
                 const instrumentNode = instrumentNodes[instrumentId];
-                instrumentNode.connect(getAudioContext().destination);
                 Observable.create((o) => {
                     instrumentNode.trigger(key, 1, timeZero, null, null)
 
@@ -92,11 +126,10 @@ export function playTrackLoopEpic(actions) {
     return actions.ofType(PLAY_TRACK_LOOP)
         .pipe(
             flatMap((action: PlayTrackLoopAction) => {
-                const { audioContext, instrumentId, loopId, tempo } = action.payload;
+                const { instrumentId, loopId, tempo } = action.payload;
                 const { loop: loops } = appStore.getState();
                 const loop = loops.items.get(loopId) as Loop;
                 const instrumentNode = instrumentNodes[instrumentId];
-                instrumentNode.connect(audioContext.destination);
                 return Observable.create((o) => {
                     const player = loopPlayers[loopId] = new LoopPlayer(instrumentNode, loop.range, tempo);
                     const { loop: loops } = appStore.getState();
@@ -210,10 +243,11 @@ export function playTrackLoopEpic(actions) {
         )
 }
 
-export function startPlaybackEpic(actions) {
-    return actions.ofType(START_PLAYBACK)
+export function setMasterOutGainEpic(actions) {
+    return actions.ofType(SET_MASTER_OUT_GAIN)
         .pipe(
-            flatMap((action: StartPlaybackAction) => {
+            flatMap((action: SetMasterOutGainAction) => {
+                masterOutGain.gain.setValueAtTime(action.payload.gain.value, 0);
                 return emptyObservable();
             })
         )
