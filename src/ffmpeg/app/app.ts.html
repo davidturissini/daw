@@ -1,16 +1,12 @@
 <template>
-    <header class="header">
-        <span>{projectBpm} bpm</span>
-    </header>
-    <aside class="left-col">
-        <ffmpeg-instruments></ffmpeg-instruments>
-    </aside>
-    <main class="body">
+    <ffmpeg-layout>
+        <span slot="header">{projectBpm} bpm</span>
+        <ffmpeg-instruments slot="left-col"></ffmpeg-instruments>
         <template if:true={isConcertModeRoute}>
-            <ffmpeg-jam></ffmpeg-jam>
+            <ffmpeg-jam slot="main"></ffmpeg-jam>
         </template>
-    </main>
-    <section class="master-out">
-        <ffmpeg-masterout></ffmpeg-masterout>
-    </section>
+        <template if:true={isLoopEditRouteActive}>
+            <ffmpeg-loopedit loop-id={routeParams.loop_id} slot="bottom"></ffmpeg-loopedit>
+        </template>
+    </ffmpeg-layout>
 </template>

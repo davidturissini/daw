@@ -1,7 +1,0 @@
-<template>
-    <slot onslotchange={onMainSlotChange}></slot>
-    <div if:true={hasResizer} class="resizer">
-        <ffmpeg-icon variant="GripLines"></ffmpeg-icon>
-    </div>
-    <slot onslotchange={onBottomSlotChange} name="bottom"></slot>
-</template>

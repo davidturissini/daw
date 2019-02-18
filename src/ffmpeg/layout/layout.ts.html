@@ -1,0 +1,22 @@
+<template>
+    <div class="container" style={containerStyle}>
+        <header class="cell header">
+            <slot name="header"></slot>
+        </header>
+        <div style={leftColStyle} class="cell left-col">
+            <slot name="left-col" onslotchange={onCellSlotChange}></slot>
+            <div class="left-col-resizer resizer resizer--vertical resizer--right">
+                <ffmpeg-icon class="icon" variant="GripLines"></ffmpeg-icon>
+            </div>
+        </div>
+        <main class="cell body">
+            <slot name="main" onslotchange={onCellSlotChange}></slot>
+        </main>
+        <aside class="cell footer">
+            <div class="bottom-row-resizer resizer resizer--horizontal resizer--top">
+                <ffmpeg-icon class="icon" variant="GripLines"></ffmpeg-icon>
+            </div>
+            <slot name="bottom" onslotchange={onCellSlotChange}></slot>
+        </aside>
+    </div>
+</template>

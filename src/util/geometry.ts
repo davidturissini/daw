@@ -47,3 +47,7 @@ export function frameToCSS(frame: Frame): string {
 export function rectToCSS(rect: Rect): string {
     return `transform:translate(${rect.x}px, ${rect.y}px);${frameToCSS(rect)}`
 }
+
+export function originToTransform(origin: Origin): string {
+    return `transform:translate(${origin.x}px, ${origin.y}px)`
+}

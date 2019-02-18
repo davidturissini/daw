@@ -2,7 +2,7 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { AudioNode as ToneAudioNode, FMSynth, BasicOscillatorType } from 'tone';
+import { AudioNode as ToneAudioNode, FMSynth, BasicOscillatorType, PolySynth } from 'tone';
 
 export class FMSynthData extends Record<{
     harmonicity: number;
@@ -58,9 +58,10 @@ export class FMSynthLoopData extends Record<{
 
 export class FMSynthNode implements InstrumentAudioNode<FMSynthData> {
     type: InstrumentType.FMSynth;
-    synth: FMSynth;
+    synth: PolySynth;
     constructor(data: FMSynthData) {
-        this.synth = new FMSynth(data);
+        this.synth = new PolySynth(4, FMSynth);
+        this.update(data);
     }
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (duration !== null) {
@@ -71,13 +72,13 @@ export class FMSynthNode implements InstrumentAudioNode<FMSynthData> {
             }
             this.synth.triggerAttackRelease(key, duration.seconds, when.seconds, velocity);
         } else {
-            this.synth.triggerAttack(key);
+            this.synth.triggerAttack([key]);
         }
     }
 
     release() {
         if (this.synth) {
-            this.synth.triggerRelease();
+            this.synth.releaseAll();
         }
     }
 
@@ -86,23 +87,6 @@ export class FMSynthNode implements InstrumentAudioNode<FMSynthData> {
     }
 
     update(data: FMSynthData) {
-        const { synth } = this;
-        synth.harmonicity.setValueAtTime(data.harmonicity, 0);
-        synth.modulationIndex.setValueAtTime(data.modulationIndex, 0);
-        synth.detune.setValueAtTime(data.detune, 0);
-        synth.oscillator.type = data.oscillator.type;
-
-        synth.envelope.attack = data.envelope.attack;
-        synth.envelope.decay = data.envelope.decay;
-        synth.envelope.sustain = data.envelope.sustain;
-        synth.envelope.release = data.envelope.release;
-
-        synth.modulation.type = data.modulation.type;
-
-        synth.modulationEnvelope.attack = data.modulationEnvelope.attack;
-        synth.modulationEnvelope.decay = data.modulationEnvelope.decay;
-        synth.modulationEnvelope.sustain = data.modulationEnvelope.sustain;
-        synth.modulationEnvelope.release = data.modulationEnvelope.release;
-
+        this.synth.set(data.toJS());
     }
 }

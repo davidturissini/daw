@@ -1,5 +1,16 @@
 <template>
-    <ffmpeg-resizecontainer parent-frame={frame}>
+    <section class="tracks">
+        <template for:each={instruments} for:item="instrument">
+            <ffmpeg-trackloops
+                class="track-loop"
+                instrument={instrument}
+                key={instrument.id}
+                oncreatetrackloop={onCreateTrackLoop}
+            >
+            </ffmpeg-trackloops>
+        </template>
+    </section>
+    <!-- <ffmpeg-resizecontainer parent-frame={frame}>
         <section class="tracks">
             <template for:each={instruments} for:item="instrument">
                 <ffmpeg-trackloops
@@ -21,5 +32,5 @@
             >
             </ffmpeg-instrumenteditor>
         </template>
-    </ffmpeg-resizecontainer>
+    </ffmpeg-resizecontainer> -->
 </template>

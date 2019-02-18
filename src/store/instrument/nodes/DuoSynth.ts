@@ -2,7 +2,7 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { AudioNode as ToneAudioNode, OscillatorType as ToneOscillatorType, DuoSynth } from 'tone';
+import { AudioNode as ToneAudioNode, OscillatorType as ToneOscillatorType, DuoSynth, PolySynth } from 'tone';
 
 export class DuoSynthData extends Record<{
     vibratoAmount: number;
@@ -98,9 +98,10 @@ export class DuoSynthLoopData extends Record<{
 
 export class DuoSynthNode implements InstrumentAudioNode<DuoSynthData> {
     type: InstrumentType.DuoSynth;
-    synth: DuoSynth;
+    synth: PolySynth;
     constructor(data: DuoSynthData) {
-        this.synth = new DuoSynth(data);
+        this.synth = new PolySynth(4, DuoSynth);
+        this.update(data);
     }
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (duration !== null) {
@@ -111,13 +112,13 @@ export class DuoSynthNode implements InstrumentAudioNode<DuoSynthData> {
             }
             this.synth.triggerAttackRelease(key, duration.seconds, when.seconds, velocity);
         } else {
-            this.synth.triggerAttack(key);
+            this.synth.triggerAttack([key]);
         }
     }
 
     release() {
         if (this.synth) {
-            this.synth.triggerRelease();
+            this.synth.releaseAll();
         }
     }
 
@@ -126,39 +127,6 @@ export class DuoSynthNode implements InstrumentAudioNode<DuoSynthData> {
     }
 
     update(data: DuoSynthData) {
-        const { synth } = this;
-        synth.vibratoAmount.setValueAtTime(data.vibratoAmount, 0);
-        synth.vibratoRate.setValueAtTime(data.vibratoRate, 0);
-        synth.harmonicity.setValueAtTime(data.harmonicity, 0);
-
-        synth.voice0.volume.setValueAtTime(data.voice0.volume, 0);
-        synth.voice0.portamento = data.voice0.portamento;
-        synth.voice0.oscillator.type = data.voice0.oscillator.type;
-
-        synth.voice0.filterEnvelope.attack = data.voice0.filterEnvelope.attack;
-        synth.voice0.filterEnvelope.decay = data.voice0.filterEnvelope.decay;
-        synth.voice0.filterEnvelope.sustain = data.voice0.filterEnvelope.sustain;
-        synth.voice0.filterEnvelope.release = data.voice0.filterEnvelope.release;
-
-        synth.voice0.envelope.attack = data.voice0.envelope.attack;
-        synth.voice0.envelope.decay = data.voice0.envelope.decay;
-        synth.voice0.envelope.sustain = data.voice0.envelope.sustain;
-        synth.voice0.envelope.release = data.voice0.envelope.release;
-
-
-        synth.voice1.volume.setValueAtTime(data.voice0.volume, 0);
-        synth.voice1.portamento = data.voice0.portamento;
-        synth.voice1.oscillator.type = data.voice0.oscillator.type;
-
-        synth.voice1.filterEnvelope.attack = data.voice0.filterEnvelope.attack;
-        synth.voice1.filterEnvelope.decay = data.voice0.filterEnvelope.decay;
-        synth.voice1.filterEnvelope.sustain = data.voice0.filterEnvelope.sustain;
-        synth.voice1.filterEnvelope.release = data.voice0.filterEnvelope.release;
-
-        synth.voice1.envelope.attack = data.voice0.envelope.attack;
-        synth.voice1.envelope.decay = data.voice0.envelope.decay;
-        synth.voice1.envelope.sustain = data.voice0.envelope.sustain;
-        synth.voice1.envelope.release = data.voice0.envelope.release;
-
+        this.synth.set(data.toJS());
     }
 }

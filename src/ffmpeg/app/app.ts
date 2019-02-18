@@ -5,29 +5,38 @@ import { RouterState } from 'store/route/reducer';
 import { RouteNames, routeIsActive } from 'store/route';
 import { ProjectState } from 'store/project/reducer';
 import { Time } from 'util/time';
-import { Frame } from 'util/geometry';
+import { Rect } from 'util/geometry';
 import { createProject } from 'store/project/action';
 import { Tempo } from 'store/project';
 
 export default class AppElement extends LightningElement {
     @track cursor: Time | null = null;
-    @track mainFrame: Frame | null = null;
+    @track rect: Rect | null = null;
 
     @wire(wireSymbol, {
         paths: {
-            route: ['router', 'route'],
+            router: ['router'],
             project: ['project'],
         }
     })
     storeData: {
         data: {
-            route: RouterState['route'];
+            router: RouterState;
             project: ProjectState;
         }
     }
 
     get route() {
-        return this.storeData.data.route;
+        return this.storeData.data.router.route;
+    }
+
+    /*
+     *
+     * Layout
+     *
+    */
+    get hasRect(): boolean {
+        return this.rect !== null;
     }
 
     /*
@@ -51,9 +60,38 @@ export default class AppElement extends LightningElement {
         return false;
     }
 
+    get isLoopEditRouteActive(): boolean {
+        const { route } = this.storeData.data.router;
+        if (route) {
+            return route.name === RouteNames.LoopEdit;
+        }
+        return false;
+    }
+
+    get routeParams() {
+        const { route } = this.storeData.data.router;
+        if (route) {
+            return route.params;
+        }
+        return {};
+    }
+
     connectedCallback() {
         appStore.dispatch(createProject('', new Tempo(128)))
         appStore.dispatch(createRouter());
         window.history.replaceState(history.state, '', window.location.pathname);
+    }
+
+    renderedCallback() {
+        const { rect } = this;
+        if (rect === null) {
+            const boundingClientRect = this.getBoundingClientRect();
+            this.rect = {
+                x: boundingClientRect.left,
+                y: boundingClientRect.top,
+                width: boundingClientRect.width,
+                height: boundingClientRect.height,
+            };
+        }
     }
 }

@@ -2,7 +2,7 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { AudioNode as ToneAudioNode, MonoSynth, BasicOscillatorType, FilterType } from 'tone';
+import { AudioNode as ToneAudioNode, MonoSynth, BasicOscillatorType, FilterType, PolySynth } from 'tone';
 
 export class MonoSynthData extends Record<{
     frequency: PianoKey;
@@ -66,9 +66,10 @@ export class MonoSynthLoopData extends Record<{
 
 export class MonoSynthNode implements InstrumentAudioNode<MonoSynthData> {
     type: InstrumentType.MonoSynth;
-    synth: MonoSynth;
+    synth: PolySynth;
     constructor(data: MonoSynthData) {
-        this.synth = new MonoSynth(data);
+        this.synth = new PolySynth(4, MonoSynth);
+        this.update(data);
     }
     trigger(key: PianoKey, velocity: number, when: Time, offset: Time | null, duration: Time | null) {
         if (duration !== null) {
@@ -79,13 +80,13 @@ export class MonoSynthNode implements InstrumentAudioNode<MonoSynthData> {
             }
             this.synth.triggerAttackRelease(key, duration.seconds, when.seconds, velocity);
         } else {
-            this.synth.triggerAttack(key);
+            this.synth.triggerAttack([key]);
         }
     }
 
     release() {
         if (this.synth) {
-            this.synth.triggerRelease();
+            this.synth.releaseAll();
         }
     }
 
@@ -94,27 +95,6 @@ export class MonoSynthNode implements InstrumentAudioNode<MonoSynthData> {
     }
 
     update(data: MonoSynthData) {
-        const { synth } = this;
-        synth.frequency.setValueAtTime(data.frequency, 0);
-        synth.detune.setValueAtTime(data.detune, 0);
-        synth.oscillator.type = data.oscillator.type;
-
-        synth.envelope.attack = data.envelope.attack;
-        synth.envelope.decay = data.envelope.decay;
-        synth.envelope.sustain = data.envelope.sustain;
-        synth.envelope.release = data.envelope.release;
-
-        synth.filter.Q.setValueAtTime(data.filter.Q, 0);
-        synth.filter.type = data.filter.type;
-        synth.filter.rolloff = data.filter.rolloff;
-
-        synth.filterEnvelope.attack = data.filterEnvelope.attack;
-        synth.filterEnvelope.decay = data.filterEnvelope.decay;
-        synth.filterEnvelope.sustain = data.filterEnvelope.sustain;
-        synth.filterEnvelope.release = data.filterEnvelope.release;
-
-        synth.filterEnvelope.octaves = data.filterEnvelope.octaves;
-        synth.filterEnvelope.exponent = data.filterEnvelope.exponent;
-
+        this.synth.set(data.toJS());
     }
 }

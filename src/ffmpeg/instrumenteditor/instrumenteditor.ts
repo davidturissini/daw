@@ -48,10 +48,12 @@ export default class InstrumentEditorElement extends LightningElement {
     get attackReleaseCurveButtons(): ButtonGroupButton<AttackReleaseCurve>[] {
         return [{
             value: AttackReleaseCurve.exponential,
-            text: 'Exponential'
+            text: 'Exponential',
+            key: AttackReleaseCurve.exponential
         },{
             value: AttackReleaseCurve.linear,
-            text: 'Linear'
+            text: 'Linear',
+            key: AttackReleaseCurve.linear
         }]
     }
 
@@ -59,15 +61,19 @@ export default class InstrumentEditorElement extends LightningElement {
         return [{
             value: WaveformTypes.sine,
             iconVariant: 'Drum',
+            key: WaveformTypes.sine,
         },{
             value: WaveformTypes.square,
             iconVariant: 'Drum',
+            key: WaveformTypes.square,
         },{
             value: WaveformTypes.triangle,
             iconVariant: 'Drum',
+            key: WaveformTypes.triangle,
         },{
             value: WaveformTypes.sawtooth,
             iconVariant: 'Drum',
+            key: WaveformTypes.sawtooth,
         }]
     }
 
