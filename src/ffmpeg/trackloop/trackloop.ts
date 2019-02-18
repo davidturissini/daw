@@ -5,8 +5,9 @@ import { playTrackLoop, stopLoop } from 'store/player/action';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
 import { ProjectState } from 'store/project/reducer';
+import { Color } from 'util/color';
 
-export default class TrackLoopElement<T extends string> extends LightningElement {
+export default class TrackLoopElement extends LightningElement {
     @api loop: Loop;
     @api instrumentId: string;
     @track isLoopEditRouteActive: boolean = false;
@@ -20,6 +21,10 @@ export default class TrackLoopElement<T extends string> extends LightningElement
         data: {
             project: ProjectState;
         }
+    }
+
+    get buttonColor() {
+        return new Color(84, 84, 84);
     }
 
     get isPlaying() {
@@ -51,6 +56,7 @@ export default class TrackLoopElement<T extends string> extends LightningElement
     onLoopClick(evt: MouseEvent) {
         appStore.dispatch(
             navigate(RouteNames.LoopEdit, {
+                instrument_id: this.instrumentId,
                 loop_id: this.loop.id,
             })
         );

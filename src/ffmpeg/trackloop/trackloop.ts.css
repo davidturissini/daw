@@ -1,6 +1,6 @@
 :host {
     display: flex;
-    background: #ccc;
+    background: rgba(163, 163, 163, 1);
     text-align: left;
 }
 

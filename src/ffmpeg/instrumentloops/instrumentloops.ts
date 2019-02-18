@@ -12,6 +12,7 @@ export type CreateLoopEvent = CustomEvent<{
 
 export default class TrackLoopsElement extends LightningElement {
     @api instrument: Instrument<any>;
+    @api active: boolean;
 
     @wire(wireSymbol, {
         paths: {
@@ -22,6 +23,13 @@ export default class TrackLoopsElement extends LightningElement {
         data: {
             loop: LoopState['items']
         }
+    }
+
+    get containerClassName() {
+        if (this.active) {
+            return 'loops active';
+        }
+        return 'loops';
     }
 
     get loops() {

@@ -8,6 +8,8 @@ import { Time } from 'util/time';
 import { Rect } from 'util/geometry';
 import { createProject } from 'store/project/action';
 import { Tempo } from 'store/project';
+import { LoopState } from 'store/loop/reducer';
+import { Loop } from 'store/loop';
 
 export default class AppElement extends LightningElement {
     @track cursor: Time | null = null;
@@ -17,12 +19,14 @@ export default class AppElement extends LightningElement {
         paths: {
             router: ['router'],
             project: ['project'],
+            loops: ['loop', 'items'],
         }
     })
     storeData: {
         data: {
             router: RouterState;
             project: ProjectState;
+            loops: LoopState['items'];
         }
     }
 
@@ -53,13 +57,6 @@ export default class AppElement extends LightningElement {
      * Routing
      *
     */
-    get isConcertModeRoute() {
-        if (this.route) {
-            return routeIsActive(RouteNames.ConcertMode, {});
-        }
-        return false;
-    }
-
     get isLoopEditRouteActive(): boolean {
         const { route } = this.storeData.data.router;
         if (route) {
@@ -74,6 +71,15 @@ export default class AppElement extends LightningElement {
             return route.params;
         }
         return {};
+    }
+
+    get routeParamsInstrumentId() {
+        if (this.isLoopEditRouteActive) {
+            const { routeParams } = this;
+            const loop = this.storeData.data.loops.get(routeParams.loop_id) as Loop;
+            return loop.instrumentId;
+        }
+        return null;
     }
 
     connectedCallback() {

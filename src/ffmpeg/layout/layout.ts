@@ -7,21 +7,28 @@ const SPACER_WIDTH = SPACER_HEIGHT;
 export default class ResizeContainerElement extends LightningElement {
     leftColInteractable: Interactable | null = null;
     bottomRowInteractable: Interactable | null = null;
+    rightColInteractable: Interactable | null = null;
+
     @track leftColCollapsed = false;
     @track bottomRowCollapsed = false;
+    @track rightColCollapsed = false;
+
     @track leftColumnWidth = 250;
     @track bottomRowHeight = 200;
+    @track rightColumnWidth = 250;
 
     @api bottomRowMinHeight: number = 200;
     @api leftColMinWidth: number = 250;
+    @api rightColMinWidth: number = 250;
 
     get containerStyle() {
         const computedLeftColumnWidth = this.leftColCollapsed ? SPACER_WIDTH : this.leftColumnWidth;
         const computedBottomRowHeight = this.bottomRowCollapsed ? SPACER_HEIGHT : this.bottomRowHeight;
+        const computedRightColumnWidth = this.rightColCollapsed ? SPACER_HEIGHT : this.rightColumnWidth;
 
         const styles = [
             `grid-template-rows: auto 100fr ${computedBottomRowHeight}px`,
-            `grid-template-columns: ${computedLeftColumnWidth}px 100fr`
+            `grid-template-columns: ${computedLeftColumnWidth}px 100fr ${computedRightColumnWidth}px`
         ]
         return styles.join(';');
     }
@@ -76,6 +83,26 @@ export default class ResizeContainerElement extends LightningElement {
             })
             .on('doubletap', (evt) => {
                 this.bottomRowCollapsed = !this.bottomRowCollapsed;
+            });
+        }
+
+        if (this.rightColInteractable === null) {
+            this.rightColInteractable = interactjs(this.template.querySelector('.right-col-resizer')).draggable({
+                axis: 'y',
+                onmove: (evt) => {
+                    if (this.rightColCollapsed === true) {
+                        return;
+                    }
+                    let next = this.rightColumnWidth + -evt.dx;
+                    if (next < this.rightColMinWidth) {
+                        next = this.rightColMinWidth;
+                    }
+
+                    this.rightColumnWidth = next;
+                }
+            })
+            .on('doubletap', (evt) => {
+                this.rightColCollapsed = !this.rightColCollapsed;
             });
         }
     }

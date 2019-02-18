@@ -12,6 +12,12 @@
         <main class="cell body">
             <slot name="main" onslotchange={onCellSlotChange}></slot>
         </main>
+        <div class="cell right-col">
+            <div class="right-col-resizer resizer resizer--vertical resizer--left">
+                <ffmpeg-icon class="icon" variant="GripLines"></ffmpeg-icon>
+            </div>
+            <slot name="right-col" onslotchange={onCellSlotChange}></slot>
+        </div>
         <aside class="cell footer">
             <div class="bottom-row-resizer resizer resizer--horizontal resizer--top">
                 <ffmpeg-icon class="icon" variant="GripLines"></ffmpeg-icon>

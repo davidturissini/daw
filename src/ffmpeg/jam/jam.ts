@@ -1,23 +1,24 @@
-import { LightningElement, wire, track } from 'lwc';
+import { LightningElement, wire, api } from 'lwc';
 import { wireSymbol } from 'store/index';
 import { generateId } from 'util/uniqueid';
-import { CreateLoopEvent } from 'cmp/trackloops/trackloops';
-import { RouterState } from 'store/route/reducer';
-import { Frame } from 'util/geometry';
 import { InstrumentState } from 'store/instrument/reducer';
+import { Instrument } from 'store/instrument';
+
+interface InstrumentViewModel {
+    instrument: Instrument<any>;
+    active: boolean;
+}
 
 export default class JamElement extends LightningElement {
-    @track frame: Frame | null = null;
+    @api selectedInstrumentId?: string;
     @wire(wireSymbol, {
         paths: {
             instruments: ['instrument', 'items'],
-            router: ['router']
         }
     })
     storeData: {
         data: {
             instruments: InstrumentState['items'];
-            router: RouterState;
         }
     }
 
@@ -25,31 +26,23 @@ export default class JamElement extends LightningElement {
         return this.storeData.data.instruments.toList().toArray();
     }
 
+    get instrumentViewModels(): InstrumentViewModel[] {
+        const { selectedInstrumentId } = this;
+        return this.instruments.map((instrument) => {
+            return {
+                instrument,
+                active: instrument.id === selectedInstrumentId,
+            };
+        })
+    }
+
     /*
      *
      * Track Loop Events
      *
      */
-    onCreateTrackLoop(evt: CreateLoopEvent) {
+    onCreateTrackLoop(evt) {
         const loopId = generateId();
 
-    }
-
-    get hasFrame() {
-        return this.frame !== null;
-    }
-
-    renderedCallback() {
-        if (!this.frame) {
-            requestAnimationFrame(() => {
-                const host = this.template.host! as HTMLElement;
-                const rect = host.getBoundingClientRect();
-                const frame: Frame = {
-                    height: rect.height,
-                    width: rect.width,
-                };
-                this.frame = frame;
-            });
-        }
     }
 }

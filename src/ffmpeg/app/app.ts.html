@@ -2,11 +2,22 @@
     <ffmpeg-layout>
         <span slot="header">{projectBpm} bpm</span>
         <ffmpeg-instruments slot="left-col"></ffmpeg-instruments>
-        <template if:true={isConcertModeRoute}>
-            <ffmpeg-jam slot="main"></ffmpeg-jam>
-        </template>
+        <ffmpeg-jam
+            selected-instrument-id={routeParamsInstrumentId}
+            slot="main"
+        >
+        </ffmpeg-jam>
         <template if:true={isLoopEditRouteActive}>
-            <ffmpeg-loopedit loop-id={routeParams.loop_id} slot="bottom"></ffmpeg-loopedit>
+            <ffmpeg-loopedit
+                loop-id={routeParams.loop_id}
+                slot="bottom"
+            >
+            </ffmpeg-loopedit>
+            <ffmpeg-instrumenteditor
+                instrument-id={routeParamsInstrumentId}
+                slot="right-col"
+            >
+            </ffmpeg-instrumenteditor>
         </template>
     </ffmpeg-layout>
 </template>
