@@ -35,6 +35,7 @@ export default class ResizeContainerElement extends LightningElement {
 
     onCellSlotChange(evt) {
         const target = evt.target as HTMLSlotElement;
+
         target.assignedElements().forEach((elm: HTMLElement) => {
             elm.style.position = 'absolute';
             elm.style.left = '0';

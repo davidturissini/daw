@@ -1,15 +1,18 @@
 import { LightningElement, wire, track } from 'lwc';
 import { wireSymbol, appStore } from 'store/index';
-import { createRouter } from 'store/route/action';
+import { createRouter, navigate } from 'store/route/action';
 import { RouterState } from 'store/route/reducer';
-import { RouteNames, routeIsActive } from 'store/route';
+import { RouteNames } from 'store/route';
 import { ProjectState } from 'store/project/reducer';
 import { Time } from 'util/time';
 import { Rect } from 'util/geometry';
 import { createProject } from 'store/project/action';
 import { Tempo } from 'store/project';
 import { LoopState } from 'store/loop/reducer';
-import { Loop } from 'store/loop';
+import { DeleteInstrumentEvent } from 'event/deleteinstrumentevent';
+import { deleteInstrument } from 'store/instrument/action';
+import { InstrumentState } from 'store/instrument/reducer';
+import { Instrument } from 'store/instrument';
 
 export default class AppElement extends LightningElement {
     @track cursor: Time | null = null;
@@ -20,6 +23,7 @@ export default class AppElement extends LightningElement {
             router: ['router'],
             project: ['project'],
             loops: ['loop', 'items'],
+            instruments: ['instrument', 'items'],
         }
     })
     storeData: {
@@ -27,6 +31,7 @@ export default class AppElement extends LightningElement {
             router: RouterState;
             project: ProjectState;
             loops: LoopState['items'];
+            instruments: InstrumentState['items'];
         }
     }
 
@@ -65,6 +70,14 @@ export default class AppElement extends LightningElement {
         return false;
     }
 
+    get isInstrumentEditRouteActive() {
+        const { route } = this.storeData.data.router;
+        if (route) {
+            return route.name === RouteNames.InstrumentEdit || this.isLoopEditRouteActive;
+        }
+        return false;
+    }
+
     get routeParams() {
         const { route } = this.storeData.data.router;
         if (route) {
@@ -74,12 +87,29 @@ export default class AppElement extends LightningElement {
     }
 
     get routeParamsInstrumentId() {
-        if (this.isLoopEditRouteActive) {
+        if (this.isInstrumentEditRouteActive) {
             const { routeParams } = this;
-            const loop = this.storeData.data.loops.get(routeParams.loop_id) as Loop;
-            return loop.instrumentId;
+            return routeParams.instrument_id;
         }
         return null;
+    }
+
+    /*
+     *
+     * Events
+     *
+    */
+    onDeleteInstrument(evt: DeleteInstrumentEvent) {
+        const { instrumentId } = evt.detail;
+        const instrument = this.storeData.data.instruments.get(instrumentId) as Instrument<any>;
+        if (this.isInstrumentEditRouteActive) {
+            appStore.dispatch(
+                navigate(RouteNames.ConcertMode, {})
+            );
+        }
+        appStore.dispatch(
+            deleteInstrument(instrumentId, instrument.loops)
+        );
     }
 
     connectedCallback() {

@@ -1,4 +1,4 @@
-import { LightningElement, wire, api } from 'lwc';
+import { wire, api, LightningElement } from 'lwc';
 import { appStore, wireSymbol } from 'store/index';
 import { MidiNote, PianoKey, notes, PianoKeyMap } from 'util/sound';
 import { ProjectState } from 'store/project/reducer';

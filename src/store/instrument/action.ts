@@ -3,8 +3,24 @@ import { InstrumentType } from './types';
 import {
     CREATE_INSTRUMENT,
     SET_INSTRUMENT_DATA,
+    DELETE_INSTRUMENT,
 } from './const';
 import { InstrumentData } from './index';
+import { List } from 'immutable';
+
+export type DeleteInstrumentAction = Action<{
+    instrumentId: string;
+    loopIds: List<string>
+}>
+export function deleteInstrument(instrumentId: string, loopIds: List<string>): DeleteInstrumentAction {
+    return {
+        type: DELETE_INSTRUMENT,
+        payload: {
+            instrumentId,
+            loopIds,
+        }
+    }
+}
 
 export type SetInstrumentDataAction<T extends InstrumentData> = Action<{
     instrumentId: string;

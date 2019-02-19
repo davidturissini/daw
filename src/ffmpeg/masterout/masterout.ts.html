@@ -1,16 +1,19 @@
 <template>
     <section class="gain-levels">
-        <input
+        <!-- <input
             class="gain-input"
             value={masterGainValue}
             min="-80"
             max="10"
             step="0.1"
             type="range"
-            oninput={handleGainChange} />
-        <ffmpeg-volumemeter
-            meter={masterMeterDecibel}
-            class="gain-meter"
-        ></ffmpeg-volumemeter>
+            oninput={handleGainChange} /> -->
+        <ffmpeg-input>
+            <ffmpeg-volumemeter
+                orientation={masterMeterOrientation}
+                meter={masterMeterDecibel}
+                class="gain-meter"
+            ></ffmpeg-volumemeter>
+        </ffmpeg-input>
     </section>
 </template>

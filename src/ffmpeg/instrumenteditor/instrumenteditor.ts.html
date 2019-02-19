@@ -32,5 +32,157 @@
             >
             </ffmpeg-envelopefield>
         </template>
+        <template if:true={instrumentIsNoiseSynth}>
+            <ffmpeg-buttongroup
+                value={instrumentData.noiseType}
+                onchange={onNoiseTypeChange}
+                buttons={noiseSynthNoiseTypes}
+            >
+            </ffmpeg-buttongroup>
+            <ffmpeg-envelopefield
+                attack={instrumentData.attack}
+                decay={instrumentData.decay}
+                sustain={instrumentData.sustain}
+                fields={noiseSynthEnvelopeFields}
+                onenvelopevaluechange={onSynthEnvelopeValueChange}
+            >
+            </ffmpeg-envelopefield>
+        </template>
+        <template if:true={instrumentIsFMSynth}>
+            <ffmpeg-buttongroup
+                value={instrumentData.oscillator.type}
+                onchange={onFMSynthOscillatorChange}
+                buttons={fmSynthOscillatorButtons}
+            >
+            </ffmpeg-buttongroup>
+            <ffmpeg-envelopefield
+                attack={instrumentData.envelope.attack}
+                decay={instrumentData.envelope.decay}
+                sustain={instrumentData.envelope.sustain}
+                release={instrumentData.envelope.release}
+                onenvelopevaluechange={onFMSynthEnvelopeValueChange}
+            >
+            </ffmpeg-envelopefield>
+            <div>
+                Harmonicity
+                <input type="number" value={instrumentData.harmonicity} />
+            </div>
+            <div>
+                Detune
+                <input type="number" value={instrumentData.detune} />
+            </div>
+
+            <div>
+                Modulation
+            </div>
+            <div>
+                Index
+                <input type="number" value={instrumentData.modulationIndex} />
+            </div>
+            <ffmpeg-buttongroup
+                value={instrumentData.modulation.type}
+                onchange={onFMSynthOscillatorModulationTypeChange}
+                buttons={fmSynthOscillatorButtons}
+            >
+            </ffmpeg-buttongroup>
+            <ffmpeg-envelopefield
+                attack={instrumentData.modulationEnvelope.attack}
+                decay={instrumentData.modulationEnvelope.decay}
+                sustain={instrumentData.modulationEnvelope.sustain}
+                release={instrumentData.modulationEnvelope.release}
+                onenvelopevaluechange={onFMSynthModulationEnvelopeValueChange}
+            >
+            </ffmpeg-envelopefield>
+        </template>
+        <template if:true={instrumentIsMembraneSynth}>
+            <ffmpeg-waveformfield
+                value={instrumentData.oscillator.type}
+                onwaveformchange={onOscillatorTypeChange}
+            >
+            </ffmpeg-waveformfield>
+            <ffmpeg-envelopefield
+                attack={instrumentData.envelope.attack}
+                decay={instrumentData.envelope.decay}
+                sustain={instrumentData.envelope.sustain}
+                release={instrumentData.envelope.release}
+                onenvelopevaluechange={onEnvelopeValueChanged}
+            >
+            </ffmpeg-envelopefield>
+        </template>
+        <template if:true={instrumentIsAMSynth}>
+            <div>
+                Harmonicity
+                <input type="number" value={instrumentData.harmonicity} />
+            </div>
+            <div>
+                Detune
+                <input type="number" value={instrumentData.detune} />
+            </div>
+            <ffmpeg-waveformfield
+                value={instrumentData.oscillator.type}
+                onwaveformchange={onOscillatorTypeChange}
+            >
+            </ffmpeg-waveformfield>
+            <ffmpeg-envelopefield
+                attack={instrumentData.envelope.attack}
+                decay={instrumentData.envelope.decay}
+                sustain={instrumentData.envelope.sustain}
+                release={instrumentData.envelope.release}
+                onenvelopevaluechange={onEnvelopeValueChanged}
+            >
+            </ffmpeg-envelopefield>
+            <ffmpeg-waveformfield
+                value={instrumentData.modulation.type}
+                onwaveformchange={onModulationTypeChange}
+            >
+            </ffmpeg-waveformfield>
+            <ffmpeg-envelopefield
+                attack={instrumentData.modulationEnvelope.attack}
+                decay={instrumentData.modulationEnvelope.decay}
+                sustain={instrumentData.modulationEnvelope.sustain}
+                release={instrumentData.modulationEnvelope.release}
+                onenvelopevaluechange={onModulationEnvelopeChanged}
+            >
+            </ffmpeg-envelopefield>
+        </template>
+        <template if:true={instrumentIsMonoSynth}>
+            <div>
+                Frequency
+                <input type="text" value={instrumentData.frequency} />
+            </div>
+            <div>
+                Detune
+                <input type="number" value={instrumentData.detune} />
+            </div>
+            <ffmpeg-waveformfield
+                value={instrumentData.oscillator.type}
+                onwaveformchange={onOscillatorTypeChange}
+            >
+            </ffmpeg-waveformfield>
+            <ffmpeg-envelopefield
+                attack={instrumentData.envelope.attack}
+                decay={instrumentData.envelope.decay}
+                sustain={instrumentData.envelope.sustain}
+                release={instrumentData.envelope.release}
+                onenvelopevaluechange={onModulationEnvelopeChanged}
+            >
+            </ffmpeg-envelopefield>
+
+            <ffmpeg-filterfield
+                type={instrumentData.filter.type}
+                q={instrumentData.filter.Q}
+                rolloff={instrumentData.filter.rolloff}
+                onfilterchanged={onFilterChanged}
+            >
+            </ffmpeg-filterfield>
+            <ffmpeg-envelopefield
+                attack={instrumentData.filterEnvelope.attack}
+                decay={instrumentData.filterEnvelope.decay}
+                sustain={instrumentData.filterEnvelope.sustain}
+                release={instrumentData.filterEnvelope.release}
+                onenvelopevaluechange={onFilterEnvelopeChanged}
+            >
+            </ffmpeg-envelopefield>
+        </template>
     </div>
 </template>

@@ -1,8 +1,9 @@
 :host {
     display: flex;
     flex: 1 0 auto;
-    flex-direction: column;
+    flex-direction: row;
     color: rgb(153, 153, 153);
+    overflow-x: auto;
 }
 
 .track {
@@ -22,7 +23,6 @@
 }
 
 .track-loop {
-    width: 100px;
     border-left: 1px solid rgb(55, 55, 55);
 }
 

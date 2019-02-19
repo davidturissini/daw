@@ -1,11 +1,14 @@
+:host {
+    display: flex;
+}
+
 .loops {
     color: rgb(190, 190, 190);
     display: flex;
     flex-direction: column;
     text-align: center;
     background: rgb(96, 96, 96);
-    height: 100%;
-    padding: 0 0.5rem;
+    padding: 0 0.5rem 1rem;
     border-radius: 0.3rem;
 }
 

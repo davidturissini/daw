@@ -1,6 +1,7 @@
 :host {
     display: block;
     background: rgb(96, 96, 96);
+    overflow-y: scroll;
 }
 
 .container {

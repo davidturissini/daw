@@ -1,7 +1,7 @@
 import { Record, Map as ImmutableMap } from 'immutable';
 import { Loop, LoopDataTypes, LoopPlayState } from './index';
-import { CREATE_INSTRUMENT } from 'store/instrument/const';
-import { CreateInstrumentAction } from 'store/instrument/action';
+import { CREATE_INSTRUMENT, DELETE_INSTRUMENT } from 'store/instrument/const';
+import { CreateInstrumentAction, deleteInstrument, DeleteInstrumentAction } from 'store/instrument/action';
 import {
     CREATE_LOOP_NOTE,
     DELETE_LOOP_NOTE,
@@ -120,6 +120,15 @@ function stopLoopReducer(state: LoopState, action: StopLoopAction): LoopState {
     });
 }
 
+function deleteInstrumentReducer(state: LoopState, action: DeleteInstrumentAction): LoopState {
+    const { loopIds } = action.payload;
+    return state.update('items', (loopItems) => {
+        return loopIds.reduce((seed: LoopState['items'], loopId: string) => {
+            return seed.delete(loopId);
+        }, loopItems);
+    })
+}
+
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
         case CREATE_INSTRUMENT:
@@ -138,6 +147,8 @@ export function reducer(state = new LoopState(), action) {
             return setLoopPlayStateReducer(state, action);
         case STOP_LOOP:
             return stopLoopReducer(state, action);
+        case DELETE_INSTRUMENT:
+            return deleteInstrumentReducer(state, action);
     }
     return state;
 }

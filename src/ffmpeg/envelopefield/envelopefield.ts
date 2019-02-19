@@ -66,10 +66,10 @@ export default class EnvelopeFieldElement extends LightningElement {
 
     get userValues() {
         return {
-            attack: this.attack * 100,
-            sustain: this.sustain * 100,
-            decay: this.decay * 100,
-            release: this.release * 100,
+            attack: this.attack,
+            sustain: this.sustain ,
+            decay: this.decay,
+            release: this.release,
         };
     }
 }

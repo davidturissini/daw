@@ -1,0 +1,15 @@
+<template>
+    <ffmpeg-buttongroup
+        value={type}
+        onchange={onFilterTypeChange}
+        buttons={filterTypes}
+    >
+    </ffmpeg-buttongroup>
+    <ffmpeg-buttongroup
+        value={rolloff}
+        onchange={onRolloffChange}
+        buttons={filterRolloffButtons}
+    >
+    </ffmpeg-buttongroup>
+    <input type="number" value={q} oninput={onQChange} />
+</template>

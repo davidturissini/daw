@@ -2,6 +2,7 @@
     display: flex;
     background: rgb(177, 177, 177);
 }
+
 .container {
     display: grid;
     background: rgb(100, 100, 100);
@@ -9,10 +10,11 @@
     border:1px solid rgb(81, 81, 81);
     box-sizing: border-box;
     flex: 1 0 auto;
+    overflow: hidden;
+    border-radius: 0.3rem;
 }
 
 .resizer {
-    background: rgb(143, 143, 143);
     position: absolute;
     z-index: 1;
     display: flex;
@@ -28,8 +30,8 @@
 }
 
 .resizer--horizontal .icon {
-    color: #fff;
-    transform: scale(0.6, 0.6);
+    color: rgb(163, 163, 163);
+    transform: scale(0.6, 0.6) translateY(-2px);
 }
 
 .resizer--vertical {
@@ -44,8 +46,7 @@
 }
 
 .resizer--vertical .icon {
-    transform: scale(0.6, 0.6) rotate(90deg);
-    color: #fff;
+    color: rgb(163, 163, 163);
 }
 
 .resizer--right {
@@ -58,6 +59,14 @@
 
 .resizer--top {
     bottom: 100%;
+}
+
+.resizer--right .icon {
+    transform: scale(0.6, 0.6) translateX(2px) rotate(90deg);
+}
+
+.resizer--left .icon {
+    transform: scale(0.6, 0.6) translateX(-2px) rotate(90deg);
 }
 
 .left-col {
@@ -76,6 +85,7 @@
     border-radius: 0 0 0 0.3rem;
     border-left:1px solid rgb(81, 81, 81);
     border-bottom:1px solid rgb(81, 81, 81);
+    background: rgb(46, 46, 46);
 }
 
 .body {
@@ -91,6 +101,7 @@
     grid-column-start: 1;
     grid-column-end: 4;
     grid-row: 3;
+    background: rgb(46, 46, 46);
     border-top:1px solid rgb(81, 81, 81);
 }
 

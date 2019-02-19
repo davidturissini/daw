@@ -5,6 +5,8 @@ import { LoopState } from 'store/loop/reducer';
 import { Loop } from 'store/loop';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
+import { DeleteInstrumentEvent, deleteInstrumentEvent } from 'event/deleteinstrumentevent';
+import { RouterState } from 'store/route/reducer';
 
 export type CreateLoopEvent = CustomEvent<{
     instrumentId: string;
@@ -16,11 +18,13 @@ export default class TrackLoopsElement extends LightningElement {
 
     @wire(wireSymbol, {
         paths: {
-            loop: ['loop', 'items']
+            loop: ['loop', 'items'],
+            router: ['router']
         }
     })
     storeData: {
         data: {
+            router: RouterState;
             loop: LoopState['items']
         }
     }
@@ -51,11 +55,22 @@ export default class TrackLoopsElement extends LightningElement {
         this.dispatchEvent(event);
     }
 
-    onTitleFocus() {
+    onContainerFocus() {
+        const { route } = this.storeData.data.router;
+        if (route && route.params.instrument_id === this.instrument.id) {
+            return;
+        }
         appStore.dispatch(
             navigate(RouteNames.InstrumentEdit, {
                 instrument_id: this.instrument.id,
             })
         )
+    }
+
+    onContainerKeyUp(evt: KeyboardEvent) {
+        if (evt.which === 8 && evt.target === evt.currentTarget) {
+            const event: DeleteInstrumentEvent = deleteInstrumentEvent(this.instrument.id);
+            this.dispatchEvent(event);
+        }
     }
 }

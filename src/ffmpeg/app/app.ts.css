@@ -8,11 +8,14 @@
     color: rgb(52, 52, 52);
 }
 
-.master-out {
+.header {
     display: flex;
-    grid-column: 3;
+    flex: 1;
 }
 
+.project-data {
+    flex: 1;
+}
 
 ffmpeg-layout {
     flex: 1 0;

@@ -1,23 +1,41 @@
 <template>
     <ffmpeg-layout>
-        <span slot="header">{projectBpm} bpm</span>
+        <!-- header -->
+        <div slot="header" class="header">
+            <div class="project-data">
+                <span>{projectBpm} bpm</span>
+            </div>
+            <ffmpeg-masterout></ffmpeg-masterout>
+        </div>
+
+        <!-- left col -->
         <ffmpeg-instruments slot="left-col"></ffmpeg-instruments>
+
+        <!-- main -->
         <ffmpeg-jam
             selected-instrument-id={routeParamsInstrumentId}
+            ondeleteinstrument={onDeleteInstrument}
             slot="main"
         >
         </ffmpeg-jam>
-        <template if:true={isLoopEditRouteActive}>
-            <ffmpeg-loopedit
-                loop-id={routeParams.loop_id}
-                slot="bottom"
-            >
-            </ffmpeg-loopedit>
+
+        <!-- right col -->
+        <template if:true={isInstrumentEditRouteActive}>
             <ffmpeg-instrumenteditor
                 instrument-id={routeParamsInstrumentId}
                 slot="right-col"
             >
             </ffmpeg-instrumenteditor>
         </template>
+
+        <!-- bottom -->
+        <template if:true={isLoopEditRouteActive}>
+            <ffmpeg-loopedit
+                loop-id={routeParams.loop_id}
+                slot="bottom"
+            >
+            </ffmpeg-loopedit>
+        </template>
+
     </ffmpeg-layout>
 </template>

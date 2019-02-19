@@ -2,19 +2,15 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { NoiseSynth, AudioNode as ToneAudioNode } from 'tone';
-
-enum NoiseSynthNoiseType {
-    white = 'white'
-}
+import { NoiseSynth, AudioNode as ToneAudioNode, NoiseType } from 'tone';
 
 export class NoiseSynthData extends Record<{
-    noiseType: NoiseSynthNoiseType,
+    noiseType: NoiseType,
     attack: number,
     decay: number,
     sustain: number,
 }>({
-    noiseType: NoiseSynthNoiseType.white,
+    noiseType: 'white',
     attack: 0.005,
     decay: 0.1,
     sustain: 0.3,
