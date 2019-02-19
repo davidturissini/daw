@@ -8,7 +8,7 @@ export interface Note {
 
 export interface MidiNote {
     id: string;
-    note: PianoKey;
+    pianoKey: PianoKey;
     range: TickRange;
     velocity: number;
 }

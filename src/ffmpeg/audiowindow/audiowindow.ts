@@ -179,10 +179,11 @@ export default class AudioWindowElement extends LightningElement {
      *
      */
     onContainerMouseEnter(evt: MouseEvent) {
-        const { rect, tempo, quanitizeResolution } = this;
-        if (!rect) {
+        if (!this.rect) {
             return;
         }
+        this.updateRect();
+        const { rect, tempo, quanitizeResolution } = this;
         const { x } = evt;
         const localX = x - rect.x;
         const tick = absolutePixelToTick(rect, this.visibleRange, localX);
@@ -207,6 +208,16 @@ export default class AudioWindowElement extends LightningElement {
         this.dispatchEvent(event);
     }
 
+    updateRect() {
+        const clientRect = this.getBoundingClientRect();
+        this.rect = {
+            width: clientRect.width,
+            height: clientRect.height,
+            x: clientRect.left,
+            y: clientRect.top,
+        };
+    }
+
     /*
      *
      * Lifecycle
@@ -214,21 +225,14 @@ export default class AudioWindowElement extends LightningElement {
      */
     connectedCallback() {
         requestAnimationFrame(() => {
-            const clientRect = this.getBoundingClientRect();
-            this.rect = {
-                width: clientRect.width,
-                height: clientRect.height,
-                x: clientRect.left,
-                y: clientRect.top,
-            };
-
+            this.updateRect();
         });
     }
 
     containerInteractable: Interactable | null = null;
     renderedCallback() {
         if (!this.containerInteractable) {
-            let origin: Origin | null = null;
+            let origin: Origin;
 
             const dragOptions: DraggableOptions = {
                 onstart: (evt) => {
@@ -241,9 +245,13 @@ export default class AudioWindowElement extends LightningElement {
                     const event: AudioWindowDragStartEvent = audioWindowDragStartEvent(origin, tick);
                     this.dispatchEvent(event);
                 },
-                onmove: rafThrottle((evt) => {
+                onmove: rafThrottle((evt: interactjs.InteractEvent) => {
+                    const moveOrigin = {
+                        x: origin.x + evt.dx,
+                        y: origin.y + evt.dy,
+                    };
                     const delta = pixelToTick(this.rect!, this.visibleRange, evt.dx);
-                    const event: AudioWindowDragEvent = audioWindowDragEvent(origin!, delta);
+                    const event: AudioWindowDragEvent = audioWindowDragEvent(moveOrigin, delta);
                     this.dispatchEvent(event);
                 }),
                 onend: () => {

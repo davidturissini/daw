@@ -17,8 +17,8 @@ import { CREATE_INSTRUMENT, SET_INSTRUMENT_DATA } from 'store/instrument/const';
 import { CreateInstrumentAction, SetInstrumentDataAction } from 'store/instrument/action';
 import { InstrumentAudioNode } from 'store/instrument/types';
 import { timeToTick } from 'store/tick';
-import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, setLoopPlayState } from 'store/loop/action';
-import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE } from 'store/loop/const';
+import { setLoopCurrentTime, SetLoopRangeAction, CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, setLoopPlayState, SetLoopNoteKeyAction } from 'store/loop/action';
+import { SET_LOOP_RANGE, CREATE_LOOP_NOTE, DELETE_LOOP_NOTE, SET_LOOP_NOTE_RANGE, SET_LOOP_NOTE_KEY } from 'store/loop/const';
 import { LoopPlayer } from './LoopPlayer';
 import {
     Transport,
@@ -135,9 +135,7 @@ export function playTrackLoopEpic(actions) {
                     const { loop: loops } = appStore.getState();
                     const innerLoop = loops.items.get(loopId) as Loop;
 
-                    const flattenedNotes = innerLoop.notes.toList().toArray().reduce((seed: MidiNote[], noteMap) => {
-                        return seed.concat(noteMap.toList().toArray());
-                    }, []);
+                    const flattenedNotes = innerLoop.notes.toList().toArray();
                     player.addNotes(flattenedNotes);
 
                     let when = timeZero;
@@ -179,12 +177,22 @@ export function playTrackLoopEpic(actions) {
                                 )
                                 .subscribe((action: CreateLoopNoteAction) => {
                                     const midiNote: MidiNote = {
-                                        note: action.payload.keyId,
+                                        pianoKey: action.payload.pianoKey,
                                         velocity: 1,
                                         id: action.payload.noteId,
                                         range: action.payload.range,
                                     }
                                     player.addNotes([midiNote]);
+                                });
+
+                            const setLoopNoteKeySubscription = actions.ofType(SET_LOOP_NOTE_KEY)
+                                .pipe(
+                                    filter((action: SetLoopNoteKeyAction) => {
+                                        return action.payload.loopId === loopId;
+                                    })
+                                )
+                                .subscribe((action: CreateLoopNoteAction) => {
+                                    player.setNotePianoKey(action.payload.noteId, action.payload.pianoKey);
                                 });
 
                             const setLoopNoteRangeSubscription = actions.ofType(SET_LOOP_NOTE_RANGE)
@@ -226,6 +234,7 @@ export function playTrackLoopEpic(actions) {
                             return () => {
                                 cancelAnimationFrame(raf);
                                 player.stop(timeZero);
+                                setLoopNoteKeySubscription.unsubscribe();
                                 deleteLoopNoteSubscription.unsubscribe();
                                 setLoopNoteRangeSubscription.unsubscribe();
                                 createLoopNoteSubscription.unsubscribe();

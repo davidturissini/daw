@@ -1,26 +1,27 @@
 import { wire, api, LightningElement } from 'lwc';
 import { appStore, wireSymbol } from 'store/index';
 import { MidiNote, PianoKey, notes, PianoKeyMap } from 'util/sound';
-import { ProjectState } from 'store/project/reducer';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
 import { InstrumentType } from 'store/instrument/types';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
-import { createLoopNote, setLoopNoteRange, deleteLoopNote, setLoopRange } from 'store/loop/action';
+import { createLoopNote, setLoopNoteRange, deleteLoopNote, setLoopRange, setLoopNoteKey } from 'store/loop/action';
 import { Map as ImmutableMap } from 'immutable';
 import { MidiNoteDeletedEvent } from 'event/midinotedeletedevent';
 import { KeyboardRangeChangeEvent } from 'event/keyboardrangechange';
 import { MidiNoteCreatedEvent } from 'event/midinotecreatedevent';
 import { MidiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
+import { Tempo } from 'store/project';
+import { MidiNoteKeyChangedEvent } from 'event/midinotekeychangedevent';
 
 
 export default class LoopEditElement extends LightningElement {
     @api loopId: string;
+    @api tempo: Tempo;
 
     @wire(wireSymbol, {
         paths: {
-            project: ['project'],
             instruments: ['instrument', 'items'],
             loop: ['loop', 'items']
         }
@@ -28,13 +29,8 @@ export default class LoopEditElement extends LightningElement {
     storeData: {
         data: {
             loop: LoopState['items'];
-            project: ProjectState;
             instruments: InstrumentState['items'];
         },
-    }
-
-    get project() {
-        return this.storeData.data.project;
     }
 
     get loop(): Loop {
@@ -80,16 +76,16 @@ export default class LoopEditElement extends LightningElement {
     }
 
     onMidiNoteRangeChanged(evt: MidiNoteRangeChangedEvent) {
-        const { key, noteId, quanitizedRange } = evt.detail;
+        const { noteId, quanitizedRange } = evt.detail;
         appStore.dispatch(
-            setLoopNoteRange(this.loopId, key, noteId, quanitizedRange),
+            setLoopNoteRange(this.loopId, noteId, quanitizedRange),
         );
     }
 
     onMidiNoteDeleted(evt: MidiNoteDeletedEvent) {
-        const { id, key } = evt.detail;
+        const { id } = evt.detail;
         appStore.dispatch(
-            deleteLoopNote(this.loopId, id, key)
+            deleteLoopNote(this.loopId, id)
         );
     }
 
@@ -97,6 +93,13 @@ export default class LoopEditElement extends LightningElement {
         const { range } = evt.detail;
         appStore.dispatch(
             setLoopRange(this.loopId, range),
+        );
+    }
+
+    onMidiNoteKeyChanged(evt: MidiNoteKeyChangedEvent) {
+        const { noteId, key } = evt.detail;
+        appStore.dispatch(
+            setLoopNoteKey(this.loopId, noteId, key)
         );
     }
 
@@ -115,12 +118,7 @@ export default class LoopEditElement extends LightningElement {
             return [];
         }
 
-        const obj = loop.notes.reduce((seed: MidiNote[], note: ImmutableMap<string, MidiNote>) => {
-            return seed.concat(
-                note.valueSeq().toList().toArray()
-            );
-        }, []);
-        return obj;
+        return loop.notes.toList().toArray();
     }
 
     get pianoNotes() {
@@ -133,9 +131,5 @@ export default class LoopEditElement extends LightningElement {
 
     get instrumentId() {
         return this.instrument<any>().id;
-    }
-
-    get projectTempo() {
-        return this.storeData.data.project.currentProject!.tempo;
     }
 }

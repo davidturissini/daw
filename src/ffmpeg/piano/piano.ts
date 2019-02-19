@@ -54,10 +54,10 @@ export default class PianoElement extends LightningElement {
         return this.notes.map((note) => {
             return {
                 range: note.range,
-                rowId: note.note,
+                rowId: note.pianoKey,
                 data: {
                     noteId: note.id,
-                    key: note.note,
+                    key: note.pianoKey,
                 },
                 variant: NoteVariant.MidiNote
             };
@@ -171,15 +171,6 @@ export default class PianoElement extends LightningElement {
             this.dispatchEvent(event);
         }
     }
-
-    onDurationInput(evt: Event) {
-        const target = evt.target as HTMLInputElement;
-        const duration = parseInt(target.value, 10) * QUARTER_BEAT.index;
-        const range = tickRange(this.range.start, tick(duration));
-        const event: KeyboardRangeChangeEvent = keyboardRangeChangeEvent(range);
-        this.dispatchEvent(event);
-    }
-
 
     onKeyboardMouseEnter(evt: AudioWindowMouseEnterEvent) {
         const { quanitized } = evt.detail;

@@ -168,28 +168,28 @@ export default class InstrumentEditorElement extends LightningElement {
         const data = this.instrument.data.setIn(['oscillator', 'type'], value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onEnvelopeValueChanged(evt: EnvelopeValueChangeEvent) {
         const data = this.instrument.data.setIn(['envelope', evt.detail.type], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onModulationEnvelopeChanged(evt: EnvelopeValueChangeEvent) {
         const data = this.instrument.data.setIn(['modulationEnvelope', evt.detail.type], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onModulationTypeChange(evt: ButtonGroupValueChangeEvent<WaveformTypes>) {
         const data = this.instrument.data.setIn(['modulation', 'type'], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onFilterChanged(evt: FilterChangedEvent) {
@@ -199,14 +199,14 @@ export default class InstrumentEditorElement extends LightningElement {
             .setIn(['filter', 'rolloff'], evt.detail.rolloff);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onFilterEnvelopeValueChanged(evt: EnvelopeValueChangeEvent) {
         const data = this.instrument.data.setIn(['filterEnvelope', evt.detail.type], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     /*
@@ -218,14 +218,14 @@ export default class InstrumentEditorElement extends LightningElement {
         const data = this.instrument.data.setIn(['envelope', evt.detail.type], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onFMSynthModulationEnvelopeValueChange(evt: EnvelopeValueChangeEvent) {
         const data = this.instrument.data.setIn(['modulationEnvelope', evt.detail.type], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onFMSynthOscillatorChange(evt: ButtonGroupValueChangeEvent<WaveformTypes>) {
@@ -233,14 +233,14 @@ export default class InstrumentEditorElement extends LightningElement {
         const data = this.instrument.data.setIn(['oscillator', 'type'], value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
     onFMSynthOscillatorModulationTypeChange(evt: ButtonGroupValueChangeEvent<WaveformTypes>) {
         const data = this.instrument.data.setIn(['modulation', 'type'], evt.detail.value);
         appStore.dispatch(
             setInstrumentData(this.instrumentId, data)
-        )
+        );
     }
 
      /*

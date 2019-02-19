@@ -6,13 +6,14 @@ import { RouteNames } from 'store/route';
 import { ProjectState } from 'store/project/reducer';
 import { Time } from 'util/time';
 import { Rect } from 'util/geometry';
-import { createProject } from 'store/project/action';
-import { Tempo } from 'store/project';
+import { createProject, setProjectTempo } from 'store/project/action';
+import { Tempo, Project } from 'store/project';
 import { LoopState } from 'store/loop/reducer';
 import { DeleteInstrumentEvent } from 'event/deleteinstrumentevent';
 import { deleteInstrument } from 'store/instrument/action';
 import { InstrumentState } from 'store/instrument/reducer';
 import { Instrument } from 'store/instrument';
+import { generateId } from 'util/uniqueid';
 
 export default class AppElement extends LightningElement {
     @track cursor: Time | null = null;
@@ -53,8 +54,23 @@ export default class AppElement extends LightningElement {
      * Project
      *
     */
+   get currentProject(): Project | null {
+        const { currentProjectId, items: projectItems } = this.storeData.data.project;
+        if (currentProjectId === null) {
+            return null;
+        }
+        return projectItems.get(currentProjectId) as Project;
+   }
+
     get projectBpm() {
-        return this.storeData.data.project.currentProject!.tempo.beatsPerMinute;
+        const { currentProjectId, items: projectItems } = this.storeData.data.project;
+        const tempo = projectItems.getIn([currentProjectId, 'tempo']) as Tempo;
+        return tempo.beatsPerMinute;
+    }
+
+    get projectTempo() {
+        const { currentProjectId, items: projectItems } = this.storeData.data.project;
+        return projectItems.getIn([currentProjectId, 'tempo']) as Tempo;
     }
 
     /*
@@ -112,8 +128,15 @@ export default class AppElement extends LightningElement {
         );
     }
 
+    onProjectBpmChange(evt) {
+        const value = parseInt(evt.target.value, 10);
+        appStore.dispatch(
+            setProjectTempo(this.currentProject!.id, new Tempo(value))
+        )
+    }
+
     connectedCallback() {
-        appStore.dispatch(createProject('', new Tempo(128)))
+        appStore.dispatch(createProject(generateId(), 'My Project', new Tempo(128)))
         appStore.dispatch(createRouter());
         window.history.replaceState(history.state, '', window.location.pathname);
     }

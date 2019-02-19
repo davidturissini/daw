@@ -1,1 +1,2 @@
 export const CREATE_PROJECT = 'CREATE_PROJECT';
+export const SET_PROJECT_TEMPO = 'SET_PROJECT_TEMPO';

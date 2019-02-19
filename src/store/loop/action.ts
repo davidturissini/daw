@@ -5,11 +5,29 @@ import {
     SET_LOOP_RANGE,
     SET_LOOP_CURRENT_TIME,
     SET_LOOP_PLAY_STATE,
+    SET_LOOP_NOTE_KEY,
  } from './const';
 import { Action } from 'store/index';
 import { PianoKey } from 'util/sound';
 import { TickRange, Tick } from 'store/tick';
 import { LoopPlayState } from './index';
+
+export type SetLoopNoteKeyAction = Action<{
+    loopId: string;
+    noteId: string;
+    pianoKey: PianoKey;
+}>
+
+export function setLoopNoteKey(loopId: string, noteId: string, pianoKey: PianoKey): SetLoopNoteKeyAction {
+    return {
+        type: SET_LOOP_NOTE_KEY,
+        payload: {
+            loopId,
+            noteId,
+            pianoKey,
+        }
+    }
+}
 
 export type SetLoopPlayStateAction = Action<{
     loopId: string;
@@ -59,47 +77,43 @@ export type SetLoopNoteRangeAction = Action<{
     loopId: string;
     noteId: string;
     range: TickRange;
-    keyId: PianoKey;
 }>
-export function setLoopNoteRange(loopId: string, keyId: PianoKey, noteId: string, range: TickRange): SetLoopNoteRangeAction {
+export function setLoopNoteRange(loopId: string, noteId: string, range: TickRange): SetLoopNoteRangeAction {
     return {
         type: SET_LOOP_NOTE_RANGE,
         payload: {
             loopId,
             noteId,
             range,
-            keyId,
         }
     }
 }
 
 export type DeleteLoopNoteAction = Action<{
-    keyId: PianoKey;
     noteId: string;
     loopId: string;
 }>
-export function deleteLoopNote(loopId: string, noteId: string, keyId: PianoKey): DeleteLoopNoteAction {
+export function deleteLoopNote(loopId: string, noteId: string): DeleteLoopNoteAction {
     return {
         type: DELETE_LOOP_NOTE,
         payload: {
             loopId,
             noteId,
-            keyId,
         }
     }
 }
 
 export type CreateLoopNoteAction = Action<{
-    keyId: PianoKey;
+    pianoKey: PianoKey;
     noteId: string;
     loopId: string;
     range: TickRange;
 }>
-export function createLoopNote(loopId: string, noteId: string, keyId: PianoKey, range: TickRange): CreateLoopNoteAction {
+export function createLoopNote(loopId: string, noteId: string, pianoKey: PianoKey, range: TickRange): CreateLoopNoteAction {
     return {
         type: CREATE_LOOP_NOTE,
         payload: {
-            keyId,
+            pianoKey,
             loopId,
             noteId,
             range,

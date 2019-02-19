@@ -3,6 +3,7 @@ import { wireSymbol } from 'store/index';
 import { generateId } from 'util/uniqueid';
 import { InstrumentState } from 'store/instrument/reducer';
 import { Instrument } from 'store/instrument';
+import { Tempo } from 'store/project';
 
 interface InstrumentViewModel {
     instrument: Instrument<any>;
@@ -11,6 +12,7 @@ interface InstrumentViewModel {
 
 export default class JamElement extends LightningElement {
     @api selectedInstrumentId?: string;
+    @api tempo: Tempo;
     @wire(wireSymbol, {
         paths: {
             instruments: ['instrument', 'items'],

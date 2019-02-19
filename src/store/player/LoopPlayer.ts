@@ -85,7 +85,7 @@ export class LoopPlayer {
         return {
             time: startTime,
             data: [
-                note.note as PianoKey,
+                note.pianoKey,
                 note.velocity,
                 timeDuration,
             ]
@@ -121,6 +121,13 @@ export class LoopPlayer {
         const note = this.notes[noteId];
         this.removeNote(noteId);
         note.range = range;
+        this.addNotes([note]);
+    }
+
+    setNotePianoKey(noteId: string, pianoKey: PianoKey) {
+        const note = this.notes[noteId];
+        this.removeNote(noteId);
+        note.pianoKey = pianoKey;
         this.addNotes([note]);
     }
 

@@ -1,7 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { PianoKey } from 'util/sound';
 import { TickRange, Tick, pixelToTick, tickZero, tickPlus, tick } from 'store/tick';
-import { Rect } from 'util/geometry';
+import { Rect, Origin } from 'util/geometry';
 import { Tempo } from 'store/project';
 import interactjs, { Interactable } from 'interactjs';
 import { MidiNoteRangeChangedEvent, midiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
@@ -36,7 +36,7 @@ export default class MidiNoteElement extends LightningElement {
                 // ESC
                 const { noteId } = this;
                 if (noteId) {
-                    const deleteEvent: MidiNoteDeletedEvent = midiNoteDeletedEvent(this.pianoKey, noteId);
+                    const deleteEvent: MidiNoteDeletedEvent = midiNoteDeletedEvent(noteId);
                     this.dispatchEvent(deleteEvent);
                 }
                 break;
@@ -48,9 +48,15 @@ export default class MidiNoteElement extends LightningElement {
             // Even if "noDrag" prop is false,
             // We have to hookup the interactable
             // because we need to capture the event before it reaches the audio window
-            let startRange!: TickRange;
+            let startRange: TickRange;
+            let origin: Origin;
             this.interactable = interactjs(this.template.querySelector('.container')).draggable({
-                onstart: () => {
+                onstart: (evt) => {
+                    const x = evt.x0 - this.parentRect.x;
+                    origin = {
+                        x,
+                        y: evt.y0 - this.parentRect.y,
+                    };
                     startRange = this.range;
                 },
                 onmove: (evt) => {
@@ -58,23 +64,22 @@ export default class MidiNoteElement extends LightningElement {
                     if (!noteId || noDrag === true) {
                         return;
                     }
-
+                    origin.x += evt.dx;
+                    origin.y += evt.dy;
                     let delta = pixelToTick(this.parentRect, this.parentVisibleRange, evt.dx);
                     const nextStart = tickPlus(startRange.start, delta);
                     if (nextStart.index < 0) {
                         const diff = -nextStart.index;
                         delta = tick(diff);
-                        console.log('delta', diff);
                     }
-
                     const event: MidiNoteRangeChangedEvent = midiNoteRangeChangedEvent({
-                        key: this.pianoKey,
                         noteId,
                         currentRange: startRange,
                         durationDelta: tickZero,
                         quanitizeResolution: this.quanitizeResolution,
                         tempo: this.tempo,
                         startDelta: delta,
+                        origin,
                     });
                     startRange = event.detail.range;
                     this.dispatchEvent(event);

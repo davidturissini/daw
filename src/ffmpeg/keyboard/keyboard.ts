@@ -1,5 +1,5 @@
 import { LightningElement, track, api } from 'lwc';
-import { Rect, Frame } from 'util/geometry';
+import { Rect, Frame, Origin } from 'util/geometry';
 import { AudioRange, BeatRange } from 'util/audiorange';
 import { Color } from 'util/color';
 import { TickRange, Tick, QUARTER_BEAT, tickRange, tickZero, quanitize } from 'store/tick';
@@ -15,6 +15,7 @@ import { MidiNoteRangeChangedEvent, midiNoteRangeChangedEvent } from 'event/midi
 import { PianoKey, Note } from 'util/sound';
 import { appStore } from 'store/index';
 import { playPianoKey, stopPianoKey } from 'store/player/action';
+import { MidiNoteKeyChangedEvent, midiNoteKeyChangedEvent } from 'event/midinotekeychangedevent';
 
 
 export enum KeyboardVariant {
@@ -57,7 +58,7 @@ const keysSymbol = Symbol();
 
 const { create } = Object;
 
-export default class GridElement<K extends string, T extends NoteViewData> extends LightningElement {
+export default class KeyboardElement<K extends string, T extends NoteViewData> extends LightningElement {
     @api notes: KeyboardNoteViewModel<any>[];
     @api visibleRange: TickRange;
     @api notePadding: Frame = { height: 0, width: 0 };
@@ -167,6 +168,7 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
     audioWindowDrag: {
         rangeId: string;
         range: TickRange;
+        origin: Origin;
     } | null = null;
     onAudioWindowDragStart(evt: AudioWindowDragStartEvent) {
         evt.stopPropagation();
@@ -178,11 +180,13 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
         const rangeId = generateId();
         const quanitizedStart = quanitize(this.quanitizeResolution, tick, this.tempo);
         const range = tickRange(quanitizedStart, tickZero);
+        const pianoKey = row.id as PianoKey;
         this.audioWindowDrag = {
             rangeId,
             range,
+            origin,
         }
-        const event: MidiNoteCreatedEvent = midiNoteCreatedEvent(row.id as PianoKey, rangeId, range);
+        const event: MidiNoteCreatedEvent = midiNoteCreatedEvent(pianoKey, rangeId, range);
         this.dispatchEvent(event);
     }
 
@@ -193,19 +197,15 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
             return;
         }
         const { origin, delta } = evt.detail;
-        const row = this.findRowFromY(origin.y + this.mainScrollY);
-        if (!row) {
-            return;
-        }
         const { rangeId, range } = audioWindowDrag;
         const event: MidiNoteRangeChangedEvent = midiNoteRangeChangedEvent({
-            key: row.id as PianoKey,
             noteId: rangeId,
             currentRange: range,
             startDelta: tickZero,
             durationDelta: delta,
             quanitizeResolution: this.quanitizeResolution,
-            tempo: this.tempo
+            tempo: this.tempo,
+            origin,
         });
         audioWindowDrag.range = event.detail.range;
         this.dispatchEvent(event);
@@ -229,6 +229,17 @@ export default class GridElement<K extends string, T extends NoteViewData> exten
         appStore.dispatch(
             stopPianoKey(this.instrumentId, keyPlaying)
         );
+    }
+
+    onMidiNoteRangeChanged(evt: MidiNoteRangeChangedEvent) {
+        const { origin, noteId } = evt.detail;
+        const row = this.findRowFromY(origin.y + this.mainScrollY);
+        if (!row) {
+            return;
+        }
+        const foundPianoKey = row.id as PianoKey;
+        const event: MidiNoteKeyChangedEvent = midiNoteKeyChangedEvent(noteId, foundPianoKey);
+        this.dispatchEvent(event);
     }
 
      /*

@@ -78,7 +78,6 @@ export default class ResizeContainerElement extends LightningElement {
                     if (next < this.bottomRowMinHeight) {
                         next = this.bottomRowMinHeight;
                     }
-
                     this.bottomRowHeight = next;
                 }
             })

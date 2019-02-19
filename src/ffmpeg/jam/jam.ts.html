@@ -2,6 +2,7 @@
     <section class="tracks">
         <template for:each={instrumentViewModels} for:item="vm">
             <ffmpeg-instrumentloops
+                tempo={tempo}
                 class="track-loop"
                 instrument={vm.instrument}
                 key={vm.instrument.id}

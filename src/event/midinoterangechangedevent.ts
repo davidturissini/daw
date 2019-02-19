@@ -1,33 +1,33 @@
 import { Tick, tickPlus, quanitize, tickRange, TickRange } from "store/tick";
 import { Tempo } from "store/project";
-import { PianoKey } from "util/sound";
+import { Origin } from "util/geometry";
 
 export type MidiNoteRangeChangedEvent = CustomEvent<{
     noteId: string;
     range: TickRange;
     quanitizedRange: TickRange;
-    key: PianoKey;
+    origin: Origin;
 }>;
 
 interface MidiNoteRangeChangedEventOptions {
-    key: PianoKey,
     noteId: string;
     currentRange: TickRange;
     startDelta: Tick;
     durationDelta: Tick;
     quanitizeResolution: Tick;
     tempo: Tempo;
+    origin: Origin;
 }
 
 export function midiNoteRangeChangedEvent(options: MidiNoteRangeChangedEventOptions): MidiNoteRangeChangedEvent {
     const {
-        key,
         noteId,
         currentRange,
         durationDelta,
         quanitizeResolution,
         tempo,
-        startDelta
+        startDelta,
+        origin,
     } = options;
     const nextDuration = tickPlus(currentRange.duration, durationDelta);
     const quanitizedDuration = quanitize(quanitizeResolution, nextDuration, tempo);
@@ -40,10 +40,10 @@ export function midiNoteRangeChangedEvent(options: MidiNoteRangeChangedEventOpti
         bubbles: true,
         composed: true,
         detail: {
-            key,
             noteId,
             range: nextRange,
             quanitizedRange,
+            origin,
         }
     });
 }

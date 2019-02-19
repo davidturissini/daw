@@ -1,7 +1,7 @@
 import { Record, Map as ImmutableMap } from 'immutable';
 import { Loop, LoopDataTypes, LoopPlayState } from './index';
 import { CREATE_INSTRUMENT, DELETE_INSTRUMENT } from 'store/instrument/const';
-import { CreateInstrumentAction, deleteInstrument, DeleteInstrumentAction } from 'store/instrument/action';
+import { CreateInstrumentAction, DeleteInstrumentAction } from 'store/instrument/action';
 import {
     CREATE_LOOP_NOTE,
     DELETE_LOOP_NOTE,
@@ -9,11 +9,12 @@ import {
     SET_LOOP_RANGE,
     SET_LOOP_CURRENT_TIME,
     SET_LOOP_PLAY_STATE,
+    SET_LOOP_NOTE_KEY,
 } from './const';
 import {
     STOP_LOOP,
 } from 'store/player/const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, SetLoopPlayStateAction } from './action';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, SetLoopPlayStateAction, SetLoopNoteKeyAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
@@ -77,24 +78,24 @@ function createInstrumentReducer(state: LoopState, action: CreateInstrumentActio
 }
 
 function createLoopNoteReducer(state: LoopState, action: CreateLoopNoteAction): LoopState {
-    const { loopId, keyId, noteId, range } = action.payload;
+    const { loopId, pianoKey, noteId, range } = action.payload;
     const note: MidiNote = {
         id: noteId,
         range,
-        note: keyId,
+        pianoKey,
         velocity: 1,
     }
-    return state.setIn(['items', loopId, 'notes', keyId, noteId], note);
+    return state.setIn(['items', loopId, 'notes', noteId], note);
 }
 
 function deleteLoopNoteReducer(state: LoopState, action: DeleteLoopNoteAction): LoopState {
-    const { loopId, keyId, noteId } = action.payload;
-    return state.deleteIn(['items', loopId, 'notes', keyId, noteId]);
+    const { loopId, noteId } = action.payload;
+    return state.deleteIn(['items', loopId, 'notes', noteId]);
 }
 
 function setLoopNoteRangeReduer(state: LoopState, action: SetLoopNoteRangeAction): LoopState {
-    const { loopId, keyId, noteId, range } = action.payload;
-    return state.setIn(['items', loopId, 'notes', keyId, noteId, 'range'], range);
+    const { loopId, noteId, range } = action.payload;
+    return state.setIn(['items', loopId, 'notes', noteId, 'range'], range);
 }
 
 function setLoopRangeReducer(state: LoopState, action: SetLoopRangeAction): LoopState {
@@ -129,6 +130,11 @@ function deleteInstrumentReducer(state: LoopState, action: DeleteInstrumentActio
     })
 }
 
+function setLoopNoteKeyReducer(state: LoopState, action: SetLoopNoteKeyAction): LoopState {
+    const { loopId, pianoKey, noteId } = action.payload;
+    return state.setIn(['items', loopId, 'notes', noteId, 'pianoKey'], pianoKey);
+}
+
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
         case CREATE_INSTRUMENT:
@@ -149,6 +155,8 @@ export function reducer(state = new LoopState(), action) {
             return stopLoopReducer(state, action);
         case DELETE_INSTRUMENT:
             return deleteInstrumentReducer(state, action);
+        case SET_LOOP_NOTE_KEY:
+            return setLoopNoteKeyReducer(state, action);
     }
     return state;
 }

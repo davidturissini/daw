@@ -18,7 +18,9 @@ export class Tempo {
 export class Project extends Record<{
     name: string;
     tempo: Tempo;
+    id: string;
 }>({
+    id: '',
     name: '',
     tempo: new Tempo(128)
 }) {

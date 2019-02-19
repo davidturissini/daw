@@ -5,13 +5,14 @@
         onmidinoterangechanged={onMidiNoteRangeChanged}
         onmidinotedeleted={onMidiNoteDeleted}
         onkeyboardrangechange={onKeyboardRangeChange}
+        onmidinotekeychanged={onMidiNoteKeyChanged}
     >
         <template if:true={instrumentIsDrumMachine}>
             <ffmpeg-drummachine
                 instrument-id={instrumentId}
                 current-time={loop.currentTime}
                 range={loop.range}
-                tempo={projectTempo}
+                tempo={tempo}
                 notes={midiNotes}
             >
             </ffmpeg-drummachine>
@@ -20,7 +21,7 @@
             <ffmpeg-piano
                 instrument-id={instrumentId}
                 current-time={loop.currentTime}
-                tempo={projectTempo}
+                tempo={tempo}
                 notes={midiNotes}
                 range={loop.range}
             >

@@ -7,6 +7,7 @@ import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
 import { DeleteInstrumentEvent, deleteInstrumentEvent } from 'event/deleteinstrumentevent';
 import { RouterState } from 'store/route/reducer';
+import { Tempo } from 'store/project';
 
 export type CreateLoopEvent = CustomEvent<{
     instrumentId: string;
@@ -15,6 +16,7 @@ export type CreateLoopEvent = CustomEvent<{
 export default class TrackLoopsElement extends LightningElement {
     @api instrument: Instrument<any>;
     @api active: boolean;
+    @api tempo: Tempo;
 
     @wire(wireSymbol, {
         paths: {

@@ -3,7 +3,7 @@
         <!-- header -->
         <div slot="header" class="header">
             <div class="project-data">
-                <span>{projectBpm} bpm</span>
+                <span><input type="number" value={projectBpm} oninput={onProjectBpmChange} /> bpm</span>
             </div>
             <ffmpeg-masterout></ffmpeg-masterout>
         </div>
@@ -13,6 +13,7 @@
 
         <!-- main -->
         <ffmpeg-jam
+            tempo={projectTempo}
             selected-instrument-id={routeParamsInstrumentId}
             ondeleteinstrument={onDeleteInstrument}
             slot="main"
@@ -31,6 +32,7 @@
         <!-- bottom -->
         <template if:true={isLoopEditRouteActive}>
             <ffmpeg-loopedit
+                tempo={projectTempo}
                 loop-id={routeParams.loop_id}
                 slot="bottom"
             >

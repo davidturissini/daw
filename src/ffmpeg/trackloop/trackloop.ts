@@ -1,27 +1,17 @@
-import { LightningElement, api, track, wire } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { Loop, LoopPlayState } from 'store/loop';
-import { appStore, wireSymbol } from 'store/index';
+import { appStore } from 'store/index';
 import { playTrackLoop, stopLoop } from 'store/player/action';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
-import { ProjectState } from 'store/project/reducer';
 import { Color } from 'util/color';
+import { Tempo } from 'store/project';
 
 export default class TrackLoopElement extends LightningElement {
     @api loop: Loop;
     @api instrumentId: string;
+    @api tempo: Tempo;
     @track isLoopEditRouteActive: boolean = false;
-
-    @wire(wireSymbol, {
-        paths: {
-            project: ['project']
-        }
-    })
-    storeData: {
-        data: {
-            project: ProjectState;
-        }
-    }
 
     get buttonColor() {
         return new Color(84, 84, 84);
@@ -48,7 +38,7 @@ export default class TrackLoopElement extends LightningElement {
             playTrackLoop(
                 this.loop.id,
                 this.instrumentId,
-                this.storeData.data.project.currentProject!.tempo,
+                this.tempo,
             )
         );
     }
