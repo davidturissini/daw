@@ -2,7 +2,8 @@ import { InstrumentAudioNode, InstrumentType } from '../types';
 import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
-import { AMSynth, AudioNode as ToneAudioNode, OscillatorType as ToneOscillatorType, BasicOscillatorType, PolySynth } from 'tone';
+import { AMSynth, AudioNode as ToneAudioNode, BasicOscillatorType, PolySynth } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class AMSynthData extends Record<{
     harmonicity: number,
@@ -86,5 +87,9 @@ export class AMSynthNode implements InstrumentAudioNode<AMSynthData> {
 
     update(data: AMSynthData) {
         this.synth.set(data.toJS());
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

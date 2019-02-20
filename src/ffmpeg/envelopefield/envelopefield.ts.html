@@ -5,9 +5,9 @@
             id="attack"
             type="range"
             oninput={onAttackInput}
-            min="0"
-            max="100"
-            step="1"
+            min="0.001"
+            max="1"
+            step="0.05"
             value={attack} />
             <label class="value-label" for="attack">{userValues.attack}</label>
     </div>
@@ -17,9 +17,9 @@
             type="range"
             id="sustain"
             oninput={onSustainInput}
-            min="0"
-            max="100"
-            step="1"
+            min="0.001"
+            max="1"
+            step="0.05"
             value={sustain} />
             <label class="value-label" for="sustain">{userValues.sustain}</label>
     </div>
@@ -29,9 +29,9 @@
             type="range"
             id="decay"
             oninput={onDecayInput}
-            min="0"
-            max="100"
-            step="1"
+            min="0.001"
+            max="1"
+            step="0.05"
             value={decay} />
             <label class="value-label" for="decay">{userValues.decay}</label>
     </div>
@@ -41,9 +41,9 @@
             type="range"
             id="release"
             oninput={onReleaseInput}
-            min="0"
-            max="100"
-            step="1"
+            min="0.001"
+            max="1"
+            step="0.05"
             value={release} />
             <label class="value-label" for="release">{userValues.release}</label>
     </div>

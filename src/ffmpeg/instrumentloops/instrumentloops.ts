@@ -2,12 +2,13 @@ import { LightningElement, api, wire } from 'lwc';
 import { wireSymbol, appStore } from 'store/index';
 import { Instrument } from 'store/instrument';
 import { LoopState } from 'store/loop/reducer';
-import { Loop } from 'store/loop';
 import { navigate } from 'store/route/action';
 import { RouteNames } from 'store/route';
 import { DeleteInstrumentEvent, deleteInstrumentEvent } from 'event/deleteinstrumentevent';
 import { RouterState } from 'store/route/reducer';
 import { Tempo } from 'store/project';
+import { VolumeMeterOrientation } from 'cmp/volumemeter/volumemeter';
+import { instrumentMeters } from 'audio/instruments';
 
 export type CreateLoopEvent = CustomEvent<{
     instrumentId: string;
@@ -21,7 +22,7 @@ export default class TrackLoopsElement extends LightningElement {
     @wire(wireSymbol, {
         paths: {
             loop: ['loop', 'items'],
-            router: ['router']
+            router: ['router'],
         }
     })
     storeData: {
@@ -41,8 +42,16 @@ export default class TrackLoopsElement extends LightningElement {
     get loops() {
         const { loop: loopItems } = this.storeData.data;
         return this.instrument.loops.map((loopId) => {
-            return loopItems.get(loopId) as Loop;
-        })
+            return loopItems.get(loopId);
+        }).filter((loop) => loop !== undefined);
+    }
+
+    get volumeMeterOrientation() {
+        return VolumeMeterOrientation.Vertical;
+    }
+
+    get instrumentMeter() {
+        return instrumentMeters[this.instrument.id];
     }
 
     onCreateTrackLoopClick(evt) {

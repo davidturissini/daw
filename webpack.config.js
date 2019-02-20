@@ -32,6 +32,7 @@ module.exports = {
             keyboard: path.resolve('./src/keyboard'),
             markers: path.resolve('./src/markers'),
             units: path.resolve('./src/units'),
+            audio: path.resolve('./src/audio'),
         }
     },
     module: {

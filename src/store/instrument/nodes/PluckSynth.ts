@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { AudioNode as ToneAudioNode, PluckSynth } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class PluckSynthData extends Record<{
     attackNoise: number;
@@ -50,5 +51,9 @@ export class PluckSynthNode implements InstrumentAudioNode<PluckSynthData> {
         synth.attackNoise = data.attackNoise;
         synth.dampening.setValueAtTime(data.dampening, 0);
         synth.resonance.setValueAtTime(data.resonance, 0);
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { Synth, PolySynth, AudioNode as ToneAudioNode } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class SynthData extends Record<{
     oscillatorType: OscillatorType;
@@ -66,5 +67,9 @@ export class SynthNode implements InstrumentAudioNode<SynthData> {
                 decay: data.decay,
             }
         })
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

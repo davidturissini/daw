@@ -16,7 +16,6 @@ export class Loop extends Record<{
     instrumentId: string;
     range: TickRange,
     data: any;
-    currentTime: Tick | null;
     playState: LoopPlayState;
 }>({
     id: '',
@@ -24,7 +23,6 @@ export class Loop extends Record<{
     range: tickRange(ZERO_BEAT, FOUR_BEAT),
     instrumentId: '',
     data: {},
-    currentTime: null,
     playState: LoopPlayState.STOPPED,
 }) {
     notes: ImmutableMap<string, MidiNote>;

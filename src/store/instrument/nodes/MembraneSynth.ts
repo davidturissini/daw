@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { AudioNode as ToneAudioNode, MembraneSynth, BasicOscillatorType, EnvelopeAttackCurve } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class MembraneSynthData extends Record<{
     pitchDecay: number;
@@ -77,5 +78,9 @@ export class MembraneSynthNode implements InstrumentAudioNode<MembraneSynthData>
         synth.envelope.release = data.envelope.release;
 
         synth.envelope.attackCurve = data.envelope.attackCurve;
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

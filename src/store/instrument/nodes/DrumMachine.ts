@@ -3,6 +3,7 @@ import { Beat, Time, createBeat } from 'util/time';
 import { Record } from 'immutable';
 import { PianoKey } from 'util/sound';
 import { Sampler as ToneSampler, AudioNode as ToneAudioNode } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export enum AttackReleaseCurve {
     linear = 'linear',
@@ -93,5 +94,9 @@ export class DrumMachine implements InstrumentAudioNode<DrumMachineData> {
         sampler.attack = data.attack;
         sampler.release = data.release;
         (sampler as any).curve = data.curve;
+    }
+
+    setVolume(volume: Decibel) {
+        this.sampler.volume.setValueAtTime(volume.value, 0);
     }
 }

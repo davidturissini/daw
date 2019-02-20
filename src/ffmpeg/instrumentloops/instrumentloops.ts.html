@@ -16,5 +16,9 @@
             </template>
         </ul>
         <button onclick={onCreateTrackLoopClick}>Add Loop</button>
+        <ffmpeg-volumemeter
+            meter={instrumentMeter}
+            orientation={volumeMeterOrientation}
+        ></ffmpeg-volumemeter>
     </article>
 </template>

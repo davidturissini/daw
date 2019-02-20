@@ -1,4 +1,4 @@
-import { wire, api, LightningElement } from 'lwc';
+import { wire, api, LightningElement, track } from 'lwc';
 import { appStore, wireSymbol } from 'store/index';
 import { MidiNote, PianoKey, notes, PianoKeyMap } from 'util/sound';
 import { Instrument, InstrumentData } from 'store/instrument';
@@ -7,18 +7,22 @@ import { InstrumentType } from 'store/instrument/types';
 import { Loop } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
 import { createLoopNote, setLoopNoteRange, deleteLoopNote, setLoopRange, setLoopNoteKey } from 'store/loop/action';
-import { Map as ImmutableMap } from 'immutable';
 import { MidiNoteDeletedEvent } from 'event/midinotedeletedevent';
 import { KeyboardRangeChangeEvent } from 'event/keyboardrangechange';
 import { MidiNoteCreatedEvent } from 'event/midinotecreatedevent';
 import { MidiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
 import { Tempo } from 'store/project';
 import { MidiNoteKeyChangedEvent } from 'event/midinotekeychangedevent';
+import { loopPlayers } from 'audio/loop';
+import { Tick, timeToTick } from 'store/tick';
+import { Observable, Subscription, animationFrameScheduler } from 'rxjs';
+import { repeat } from 'rxjs/operators';
 
 
 export default class LoopEditElement extends LightningElement {
     @api loopId: string;
     @api tempo: Tempo;
+    @track currentTime: Tick | null = null;
 
     @wire(wireSymbol, {
         paths: {
@@ -131,5 +135,40 @@ export default class LoopEditElement extends LightningElement {
 
     get instrumentId() {
         return this.instrument<any>().id;
+    }
+
+    /*
+     *
+     *  Lifecycle
+     *
+     */
+    currentTimeSubscription: Subscription | null = null;
+    connectedCallback() {
+        const { tempo } = this;
+
+        this.currentTimeSubscription = Observable.create((o) => {
+            animationFrameScheduler.schedule(() => {
+                const player = loopPlayers[this.loopId];
+                if (!player) {
+                    o.complete();
+                    return;
+                }
+                const tick = timeToTick(player.currentTime, tempo);
+                o.next(tick);
+                o.complete();
+            });
+        })
+        .pipe(
+            repeat(),
+        )
+        .subscribe((tick) => {
+            this.currentTime = tick;
+        })
+    }
+
+    disconnectedCallback() {
+        if (this.currentTimeSubscription) {
+            this.currentTimeSubscription.unsubscribe();
+        }
     }
 }

@@ -1,20 +1,20 @@
 import { Record, Map as ImmutableMap } from 'immutable';
 import { Loop, LoopDataTypes, LoopPlayState } from './index';
-import { CREATE_INSTRUMENT, DELETE_INSTRUMENT } from 'store/instrument/const';
-import { CreateInstrumentAction, DeleteInstrumentAction } from 'store/instrument/action';
+import { DELETE_INSTRUMENT } from 'store/instrument/const';
+import { DeleteInstrumentAction } from 'store/instrument/action';
 import {
     CREATE_LOOP_NOTE,
     DELETE_LOOP_NOTE,
     SET_LOOP_NOTE_RANGE,
     SET_LOOP_RANGE,
-    SET_LOOP_CURRENT_TIME,
     SET_LOOP_PLAY_STATE,
     SET_LOOP_NOTE_KEY,
+    CREATE_LOOP,
 } from './const';
 import {
     STOP_LOOP,
 } from 'store/player/const';
-import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, SetLoopPlayStateAction, SetLoopNoteKeyAction } from './action';
+import { CreateLoopNoteAction, DeleteLoopNoteAction, SetLoopNoteRangeAction, SetLoopRangeAction, SetLoopCurrentTimeAction, SetLoopPlayStateAction, SetLoopNoteKeyAction, CreateLoopAction } from './action';
 import { MidiNote } from 'util/sound';
 import { InstrumentType } from 'store/instrument/types';
 import { DrumMachineLoopData } from 'store/instrument/nodes/DrumMachine';
@@ -65,12 +65,12 @@ function getDefaultInstrumentLoopData(type: InstrumentType): LoopDataTypes {
     throw new Error('Not implemented');
 }
 
-function createInstrumentReducer(state: LoopState, action: CreateInstrumentAction<any>): LoopState {
-    const { loopId, id, type } = action.payload;
+function createLoopReducer(state: LoopState, action: CreateLoopAction): LoopState {
+    const { loopId, instrumentId, instrumentType } = action.payload;
 
-    const data = getDefaultInstrumentLoopData(type);
+    const data = getDefaultInstrumentLoopData(instrumentType);
     const loop = new Loop({
-        instrumentId: id,
+        instrumentId,
         id: loopId,
         data,
     });
@@ -103,11 +103,6 @@ function setLoopRangeReducer(state: LoopState, action: SetLoopRangeAction): Loop
     return state.setIn(['items', loopId, 'range'], range);
 }
 
-function setLoopCurrentTimeReducer(state: LoopState, action: SetLoopCurrentTimeAction): LoopState {
-    const { loopId, currentTime } = action.payload;
-    return state.setIn(['items', loopId, 'currentTime'], currentTime);
-}
-
 function setLoopPlayStateReducer(state: LoopState, action: SetLoopPlayStateAction): LoopState {
     const { loopId, playState } = action.payload;
     return state.setIn(['items', loopId, 'playState'], playState);
@@ -137,8 +132,8 @@ function setLoopNoteKeyReducer(state: LoopState, action: SetLoopNoteKeyAction): 
 
 export function reducer(state = new LoopState(), action) {
     switch(action.type) {
-        case CREATE_INSTRUMENT:
-            return createInstrumentReducer(state, action);
+        case CREATE_LOOP:
+            return createLoopReducer(state, action);
         case CREATE_LOOP_NOTE:
             return createLoopNoteReducer(state, action);
         case DELETE_LOOP_NOTE:
@@ -147,8 +142,6 @@ export function reducer(state = new LoopState(), action) {
             return setLoopNoteRangeReduer(state, action);
         case SET_LOOP_RANGE:
             return setLoopRangeReducer(state, action);
-        case SET_LOOP_CURRENT_TIME:
-            return setLoopCurrentTimeReducer(state, action);
         case SET_LOOP_PLAY_STATE:
             return setLoopPlayStateReducer(state, action);
         case STOP_LOOP:

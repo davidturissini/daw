@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { AudioNode as ToneAudioNode, MonoSynth, BasicOscillatorType, FilterType, PolySynth } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class MonoSynthData extends Record<{
     frequency: PianoKey;
@@ -96,5 +97,9 @@ export class MonoSynthNode implements InstrumentAudioNode<MonoSynthData> {
 
     update(data: MonoSynthData) {
         this.synth.set(data.toJS());
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

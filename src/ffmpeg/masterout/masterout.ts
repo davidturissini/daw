@@ -4,6 +4,7 @@ import { setMasterOutGain } from 'store/masterout/action';
 import { decibel } from 'units/decibel';
 import { MasterOutState } from 'store/masterout/reducer';
 import { VolumeMeterOrientation } from 'cmp/volumemeter/volumemeter';
+import { masterOutMeter } from 'audio/instruments';
 
 export default class MasterOut extends LightningElement {
     @wire(wireSymbol, {
@@ -22,8 +23,8 @@ export default class MasterOut extends LightningElement {
         return this.storeData.data.masterout.gain.value;
     }
 
-    get masterMeterDecibel() {
-        return this.storeData.data.masterout.meter;
+    get masterMeter() {
+        return masterOutMeter;
     }
 
     get masterMeterOrientation() {

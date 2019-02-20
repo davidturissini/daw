@@ -16,31 +16,37 @@ interface TonePartObject {
 
 export class LoopPlayer {
     notes: { [key: string]: MidiNote } = {};
-    instrumentNode: InstrumentAudioNode<any>;
-    tempo: Tempo;
-    loopRange: TickRange;
+    loopId: string;
     schedule: {[key: string]: TonePartObject } = {};
     part?: TonePart;
+    tempo: Tempo | null = null;
+    loopRange: TickRange | null = null;
+    instrumentNode: InstrumentAudioNode<any> | null = null;
     onTimeUpdate?: (time: number) => void;
-    constructor(instrumentNode: InstrumentAudioNode<any>, loopRange: TickRange, tempo: Tempo) {
-        this.instrumentNode = instrumentNode;
-        this.tempo = tempo;
-        this.loopRange = loopRange;
+    constructor(loopId: string) {
+        this.loopId = loopId;
     }
 
     start(when: Time) {
-        const { loopRange, tempo } = this;
+        const { loopRange, tempo, instrumentNode, notes } = this;
+        if (!tempo) {
+            throw new Error(`Cannot start loop player for loop with id "${this.loopId}". "${tempo}" is not a valid tempo`);
+        }
+        if (!loopRange) {
+            throw new Error(`Cannot start loop player for loop with id "${this.loopId}". "${loopRange}" is not a valid range`);
+        }
+        if (!instrumentNode) {
+            throw new Error(`Cannot start loop player for loop with id "${this.loopId}". "${instrumentNode}" is not a instrument node`);
+        }
         const loopStartTime = tickTime(loopRange.start, tempo);
         const loopDurationTime = tickTime(loopRange.duration, tempo);
 
-        const { instrumentNode, notes } = this;
         const schedule = this.schedule = {};
-
         const values = Object.values(notes);
         const partObjectsArray: any[] = [];
         for(let i = 0; i < values.length; i += 1) {
             const note = values[i];
-            const partObject = this.noteToPartObject(note, note.range);
+            const partObject = this.noteToPartObject(note, note.range, tempo);
             schedule[note.id] = partObject;
             partObjectsArray.push([
                 partObject.time.seconds,
@@ -59,7 +65,7 @@ export class LoopPlayer {
         part.loop = true;
         part.loopStart = loopStartTime.seconds;
         part.loopEnd = loopDurationTime.seconds;
-        part.start(when.seconds)
+        part.start(when.seconds);
     }
 
     stop(when: Time) {
@@ -73,13 +79,17 @@ export class LoopPlayer {
     setLoopRange(loopRange: TickRange) {
         const { part, tempo } = this;
         if (part) {
-            part.loopEnd = tickTime(loopRange.duration, tempo).seconds;
-            part.loopStart = tickTime(loopRange.start, tempo).seconds;
+            part.loopEnd = tickTime(loopRange.duration, tempo!).seconds;
+            part.loopStart = tickTime(loopRange.start, tempo!).seconds;
         }
+        this.loopRange = loopRange;
     }
 
-    noteToPartObject(note: MidiNote, range: TickRange): TonePartObject {
-        const { tempo } = this;
+    setTempo(tempo: Tempo) {
+        this.tempo = tempo;
+    }
+
+    noteToPartObject(note: MidiNote, range: TickRange, tempo: Tempo): TonePartObject {
         const timeDuration = tickTime(range.duration, tempo);
         const startTime = tickTime(range.start, tempo);
         return {
@@ -108,20 +118,26 @@ export class LoopPlayer {
             seed[note.id] = note;
 
             if (part) {
-                const partObject = this.noteToPartObject(note, note.range);
+                const partObject = this.noteToPartObject(note, note.range, this.tempo!);
                 schedule[note.id] = partObject;
                 (part as any).add(partObject.time.seconds, partObject.data);
             }
 
             return seed;
         }, this.notes);
+        console.log(this.notes);
     }
 
     setNoteRange(noteId: string, range: TickRange) {
+        console.log('set rag', this.notes)
         const note = this.notes[noteId];
         this.removeNote(noteId);
         note.range = range;
         this.addNotes([note]);
+    }
+
+    setInstrumentNode(instrumentNode: InstrumentAudioNode<any>) {
+        this.instrumentNode = instrumentNode;
     }
 
     setNotePianoKey(noteId: string, pianoKey: PianoKey) {

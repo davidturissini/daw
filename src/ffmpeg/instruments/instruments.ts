@@ -21,7 +21,6 @@ export default class Instruments extends LightningElement {
     onAddButtonClick(evt: MouseEvent) {
         const instrumentId = generateId();
         const type = (evt.target as HTMLElement).getAttribute('data-instrument-type');
-        const loopId = generateId();
         const audioTrackId = generateId();
         let action: CreateInstrumentAction<any>;
         switch(type) {
@@ -44,7 +43,6 @@ export default class Instruments extends LightningElement {
                     type,
                     data,
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.Synth:
@@ -54,7 +52,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new SynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.NoiseSynth:
@@ -64,7 +61,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new NoiseSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.AMSynth:
@@ -74,7 +70,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new AMSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.DuoSynth:
@@ -84,7 +79,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new DuoSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.FMSynth:
@@ -94,7 +88,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new FMSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.MonoSynth:
@@ -104,7 +97,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new MonoSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.PluckSynth:
@@ -114,7 +106,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new PluckSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.MetalSynth:
@@ -124,7 +115,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new MetalSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             case InstrumentType.MembraneSynth:
@@ -134,7 +124,6 @@ export default class Instruments extends LightningElement {
                     type,
                     new MembraneSynthData({}),
                     audioTrackId,
-                    loopId,
                 );
                 break;
             default:

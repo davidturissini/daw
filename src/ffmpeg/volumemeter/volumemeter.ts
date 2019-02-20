@@ -1,12 +1,16 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { Decibel, decibel } from 'units/decibel';
+import { Meter as ToneMeter } from 'tone';
+import { Subscription, Observable, animationFrameScheduler } from 'rxjs';
+import { repeat, distinctUntilChanged, filter } from 'rxjs/operators';
 
 export enum VolumeMeterOrientation {
     Horizontal, Vertical
 }
 
 export default class VolumeMeter extends LightningElement {
-    @api meter: Decibel = decibel(-100);
+    @api meter: ToneMeter;
+    @track decibel: Decibel = decibel(-100);
     @api orientation: VolumeMeterOrientation = VolumeMeterOrientation.Vertical;
 
     get isHorizontal() {
@@ -14,12 +18,12 @@ export default class VolumeMeter extends LightningElement {
     }
 
     get isVertical() {
-        return !this.isHorizontal;
+        return this.orientation === VolumeMeterOrientation.Vertical;
     }
 
     get totalScaleValue(): number {
-        const { meter } = this;
-        const { value: meterValue } = meter;
+        const { decibel } = this;
+        const { value: meterValue } = decibel;
         const min = -100;
         let y = 1 - (meterValue / -100);
 
@@ -31,8 +35,8 @@ export default class VolumeMeter extends LightningElement {
     }
 
     get indicatorStyle() {
-        const { meter } = this;
-        const { value: meterValue } = meter;
+        const { decibel } = this;
+        const { value: meterValue } = decibel;
         const min = -100;
         const max = 0;
         let y = 1 - (meterValue / -100);
@@ -74,6 +78,7 @@ export default class VolumeMeter extends LightningElement {
             x: this.isHorizontal ? value : 1,
             y: this.isVertical ? value : 1,
         }
+
         return `transform: scale(${scale.x}, ${scale.y})`;
     }
 
@@ -101,5 +106,57 @@ export default class VolumeMeter extends LightningElement {
         }
 
         return className.join(' ');
+    }
+
+    buildIndicatorClassName(color: string) {
+        const classNames = ['indicator', `indicator--${color}`];
+        if (this.isVertical) {
+            classNames.push('indicator--vertical');
+        }
+        return classNames.join(' ');
+    }
+
+    get greenIndicatorClassName() {
+        return this.buildIndicatorClassName('green');
+    }
+
+    get yellowIndicatorClassName() {
+        return this.buildIndicatorClassName('yellow');
+    }
+
+    get redIndicatorClassName() {
+        return this.buildIndicatorClassName('red');
+    }
+
+    meterSubscription: Subscription | null = null
+    connectMeterSubscription(): Subscription {
+        const { meter } = this;
+        return Observable.create((o) => {
+            animationFrameScheduler.schedule(() => {
+                const level = meter.getLevel();
+                o.next(decibel(level));
+                o.complete();
+            });
+        })
+        .pipe(
+            repeat(),
+            distinctUntilChanged((x: Decibel, y: Decibel) => x.value === y.value),
+            filter((decibelValue: Decibel) => {
+                return decibelValue.value > -100;
+            })
+        )
+        .subscribe((decibelValue: Decibel) => {
+            this.decibel = decibelValue;
+        })
+    }
+
+    connectedCallback() {
+        this.meterSubscription = this.connectMeterSubscription();
+    }
+
+    disconnectedCallback() {
+        if (this.meterSubscription) {
+            this.meterSubscription.unsubscribe();
+        }
     }
 }

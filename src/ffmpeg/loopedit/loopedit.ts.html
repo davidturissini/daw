@@ -20,7 +20,7 @@
         <template if:true={shouldRenderPiano}>
             <ffmpeg-piano
                 instrument-id={instrumentId}
-                current-time={loop.currentTime}
+                current-time={currentTime}
                 tempo={tempo}
                 notes={midiNotes}
                 range={loop.range}

@@ -10,6 +10,7 @@ import { MonoSynthNode, MonoSynthData } from './nodes/MonoSynth';
 import { PluckSynthNode, PluckSynthData } from './nodes/PluckSynth';
 import { MetalSynthNode, MetalSynthData } from './nodes/MetalSynth';
 import { MembraneSynthNode, MembraneSynthData } from './nodes/MembraneSynth';
+import { Decibel, decibel } from 'units/decibel';
 
 export { InstrumentData } from './types';
 
@@ -19,12 +20,14 @@ export class Instrument<T extends InstrumentData> extends Record<{
     data: any;
     loops: List<string>;
     title: string;
+    volume: Decibel;
 }>({
     type: InstrumentType.DrumMachine,
     id: '',
     data: {},
     loops: List(),
     title: '',
+    volume: decibel(1),
 }) {
     data: T;
 }

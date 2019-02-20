@@ -6,11 +6,29 @@ import {
     SET_LOOP_CURRENT_TIME,
     SET_LOOP_PLAY_STATE,
     SET_LOOP_NOTE_KEY,
+    CREATE_LOOP,
  } from './const';
 import { Action } from 'store/index';
 import { PianoKey } from 'util/sound';
 import { TickRange, Tick } from 'store/tick';
 import { LoopPlayState } from './index';
+import { InstrumentType } from 'store/instrument/types';
+
+export type CreateLoopAction = Action<{
+    instrumentId: string;
+    loopId: string;
+    instrumentType: InstrumentType;
+}>
+export function createLoop(instrumentId: string, loopId: string, instrumentType: InstrumentType): CreateLoopAction {
+    return {
+        type: CREATE_LOOP,
+        payload: {
+            instrumentId,
+            loopId,
+            instrumentType,
+        }
+    }
+}
 
 export type SetLoopNoteKeyAction = Action<{
     loopId: string;
@@ -41,21 +59,6 @@ export function setLoopPlayState(loopId: string, playState: LoopPlayState): SetL
             loopId,
             playState,
         }
-    }
-}
-
-export type SetLoopCurrentTimeAction = Action<{
-    loopId: string;
-    currentTime: Tick;
-}>
-
-export function setLoopCurrentTime(loopId: string, currentTime: Tick): SetLoopCurrentTimeAction {
-    return {
-        type: SET_LOOP_CURRENT_TIME,
-        payload: {
-            loopId,
-            currentTime,
-        },
     }
 }
 

@@ -11,6 +11,7 @@ import { MonoSynthData } from "./nodes/MonoSynth";
 import { PluckSynthData } from "./nodes/PluckSynth";
 import { MetalSynthData } from "./nodes/MetalSynth";
 import { MembraneSynthData } from "./nodes/MembraneSynth";
+import { Decibel } from "units/decibel";
 
 export type InstrumentData = DrumMachineData | SynthData | NoiseSynthData | AMSynthData | DuoSynthData | FMSynthData | MonoSynthData | PluckSynthData | MetalSynthData | MembraneSynthData;
 
@@ -33,4 +34,5 @@ export interface InstrumentAudioNode<T extends InstrumentData> {
     release(): void;
     connect(note: ToneAudioNode | ToneMaster): void;
     update(data: T): void;
+    setVolume(decibel: Decibel): void;
 }

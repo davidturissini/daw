@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { AudioNode as ToneAudioNode, OscillatorType as ToneOscillatorType, DuoSynth, PolySynth } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class DuoSynthData extends Record<{
     vibratoAmount: number;
@@ -128,5 +129,9 @@ export class DuoSynthNode implements InstrumentAudioNode<DuoSynthData> {
 
     update(data: DuoSynthData) {
         this.synth.set(data.toJS());
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

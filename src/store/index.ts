@@ -11,25 +11,50 @@ import { reducer as routerReducer, RouterState } from './route/reducer';
 import { reducer as loopReducer, LoopState } from './loop/reducer';
 import { reducer as masterOutReducer, MasterOutState } from './masterout/reducer';
 
-// Epics
+// Store Epics
 import { createRouterEpic, navigateEpic } from './route/epic';
-import {
-    setMasterOutGainEpic,
-    playTrackLoopEpic,
-    playPianoKeyEpic,
-    createInstrumentEpic,
-} from './player/epic';
 import { createProjectEpic } from './project/epic';
+import { createInstrumentEpic as loopCreateInstrumentEpic } from './loop/epic';
+
+// Audio Epics
+import {
+    createLoopEpic as audioCreateLoopEpic,
+    playLoopEpic,
+    deleteLoopNoteEpic,
+    setLoopNoteRangeEpic,
+    createLoopEpic,
+    setLoopNoteKeyEpic,
+    createLoopNoteEpic,
+    setLoopRangeEpic,
+} from 'audio/loop';
+import {
+    createInstrumentEpic as audioCreateInstrumentEpic,
+    playPianoKeyEpic,
+    setInstrumentVolumeEpic,
+    setMasterOutGainEpic,
+} from 'audio/instruments';
 
 const { keys } = Object;
 
 const rootEpic = combineEpics(
     createRouterEpic,
     navigateEpic,
-    playTrackLoopEpic,
-    playPianoKeyEpic,
+    playLoopEpic,
     createProjectEpic,
-    createInstrumentEpic,
+    audioCreateInstrumentEpic,
+    loopCreateInstrumentEpic,
+
+
+    // audio epics
+    audioCreateLoopEpic,
+    deleteLoopNoteEpic,
+    setLoopNoteRangeEpic,
+    createLoopEpic,
+    setLoopNoteKeyEpic,
+    createLoopNoteEpic,
+    setLoopRangeEpic,
+    playPianoKeyEpic,
+    setInstrumentVolumeEpic,
     setMasterOutGainEpic,
 );
 const epicMiddleware = createEpicMiddleware();
@@ -45,7 +70,8 @@ if (process.env.NODE_ENV !== 'production') {
                     action.type !== 'SET_AUDIO_WINDOW_VISIBLE_RANGE' &&
                     action.type !== 'SET_AUDIO_WINDOW_VIRTUAL_CURSOR_TIME' &&
                     action.type !== 'SET_LOOP_CURRENT_TIME' &&
-                    action.type !== 'SET_MASTER_OUT_METER_LEVEL'
+                    action.type !== 'SET_MASTER_OUT_METER_LEVEL' &&
+                    action.type !== 'SET_INSTRUMENT_VOLUME_METER_VALUE'
                 );
             },
             stateTransformer: (state) => {

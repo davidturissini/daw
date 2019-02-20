@@ -7,6 +7,7 @@ import {
 import { Action } from 'store/index';
 import { Tempo } from 'store/project';
 import { PianoKey } from 'util/sound';
+import { Loop } from 'store/loop';
 
 export type StopLoopAction = Action<{
     loopId: string;
@@ -50,16 +51,14 @@ export function playPianoKey(instrumentId: string, key: PianoKey): PlayPianoKeyA
 }
 
 export type PlayTrackLoopAction = Action<{
-    loopId: string;
-    instrumentId: string;
+    loop: Loop;
     tempo: Tempo;
 }>;
-export function playTrackLoop(loopId: string, instrumentId: string, tempo: Tempo): PlayTrackLoopAction {
+export function playTrackLoop(loop: Loop, tempo: Tempo): PlayTrackLoopAction {
     return {
         type: PLAY_TRACK_LOOP,
         payload: {
-            loopId,
-            instrumentId,
+            loop,
             tempo,
         }
     }

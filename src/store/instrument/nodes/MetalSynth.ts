@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { AudioNode as ToneAudioNode, MetalSynth } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class MetalSynthData extends Record<{
     frequency: number;
@@ -74,5 +75,9 @@ export class MetalSynthNode implements InstrumentAudioNode<MetalSynthData> {
 
         synth.resonance = data.resonance;
         synth.octaves = data.octaves;
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

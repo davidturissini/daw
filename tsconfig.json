@@ -18,7 +18,8 @@
             "notes/*": ["./src/notes/*"],
             "keyboard/*": ["./src/keyboard/*"],
             "markers/*": ["./src/markers/*"],
-            "units/*": ["./src/units/*"]
+            "units/*": ["./src/units/*"],
+            "audio/*": ["./src/audio/*"]
         }
     },
 }

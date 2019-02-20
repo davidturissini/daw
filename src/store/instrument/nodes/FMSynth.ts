@@ -3,6 +3,7 @@ import { PianoKey } from 'util/sound';
 import { Time } from 'util/time';
 import { Record } from 'immutable';
 import { AudioNode as ToneAudioNode, FMSynth, BasicOscillatorType, PolySynth } from 'tone';
+import { Decibel } from 'units/decibel';
 
 export class FMSynthData extends Record<{
     harmonicity: number;
@@ -88,5 +89,9 @@ export class FMSynthNode implements InstrumentAudioNode<FMSynthData> {
 
     update(data: FMSynthData) {
         this.synth.set(data.toJS());
+    }
+
+    setVolume(volume: Decibel) {
+        this.synth.volume.setValueAtTime(volume.value, 0);
     }
 }

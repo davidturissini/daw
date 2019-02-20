@@ -36,8 +36,7 @@ export default class TrackLoopElement extends LightningElement {
         evt.stopPropagation();
         appStore.dispatch(
             playTrackLoop(
-                this.loop.id,
-                this.instrumentId,
+                this.loop,
                 this.tempo,
             )
         );
