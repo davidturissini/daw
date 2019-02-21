@@ -4,7 +4,7 @@ import { MidiNote, PianoKey, notes, PianoKeyMap } from 'util/sound';
 import { Instrument, InstrumentData } from 'store/instrument';
 import { InstrumentState } from 'store/instrument/reducer';
 import { InstrumentType } from 'store/instrument/types';
-import { Loop } from 'store/loop';
+import { Loop, LoopPlayState } from 'store/loop';
 import { LoopState } from 'store/loop/reducer';
 import { createLoopNote, setLoopNoteRange, deleteLoopNote, setLoopRange, setLoopNoteKey } from 'store/loop/action';
 import { MidiNoteDeletedEvent } from 'event/midinotedeletedevent';
@@ -14,15 +14,13 @@ import { MidiNoteRangeChangedEvent } from 'event/midinoterangechangedevent';
 import { Tempo } from 'store/project';
 import { MidiNoteKeyChangedEvent } from 'event/midinotekeychangedevent';
 import { loopPlayers } from 'audio/loop';
-import { Tick, timeToTick } from 'store/tick';
-import { Observable, Subscription, animationFrameScheduler } from 'rxjs';
-import { repeat } from 'rxjs/operators';
-
+import { Tick } from 'store/tick';
+import { Subscription } from 'rxjs';
 
 export default class LoopEditElement extends LightningElement {
     @api loopId: string;
     @api tempo: Tempo;
-    @track currentTime: Tick | null = null;
+    @track loopCurrentTime: Tick | null = null;
 
     @wire(wireSymbol, {
         paths: {
@@ -35,6 +33,13 @@ export default class LoopEditElement extends LightningElement {
             loop: LoopState['items'];
             instruments: InstrumentState['items'];
         },
+    }
+
+    get currentTime(): Tick | null {
+        if (this.loop.playState === LoopPlayState.STOPPED) {
+            return null;
+        }
+        return this.loopCurrentTime;
     }
 
     get loop(): Loop {
@@ -144,25 +149,13 @@ export default class LoopEditElement extends LightningElement {
      */
     currentTimeSubscription: Subscription | null = null;
     connectedCallback() {
-        const { tempo } = this;
+        const player = loopPlayers[this.loopId];
+        if (!player) {
+            return;
+        }
 
-        this.currentTimeSubscription = Observable.create((o) => {
-            animationFrameScheduler.schedule(() => {
-                const player = loopPlayers[this.loopId];
-                if (!player) {
-                    o.complete();
-                    return;
-                }
-                const tick = timeToTick(player.currentTime, tempo);
-                o.next(tick);
-                o.complete();
-            });
-        })
-        .pipe(
-            repeat(),
-        )
-        .subscribe((tick) => {
-            this.currentTime = tick;
+        this.currentTimeSubscription = player.currentTime.subscribe((tick) => {
+            this.loopCurrentTime = tick;
         })
     }
 

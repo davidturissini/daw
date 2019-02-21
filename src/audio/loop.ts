@@ -1,6 +1,6 @@
 import { CREATE_LOOP, SET_LOOP_RANGE, CREATE_LOOP_NOTE, SET_LOOP_NOTE_KEY, SET_LOOP_NOTE_RANGE, DELETE_LOOP_NOTE } from 'store/loop/const';
 import { flatMap, takeUntil, filter } from 'rxjs/operators';
-import { CreateLoopAction, SetLoopRangeAction, CreateLoopNoteAction, SetLoopNoteKeyAction, SetLoopNoteRangeAction, DeleteLoopNoteAction } from 'store/loop/action';
+import { CreateLoopAction, SetLoopRangeAction, CreateLoopNoteAction, SetLoopNoteKeyAction, SetLoopNoteRangeAction, DeleteLoopNoteAction, setLoopPlayState } from 'store/loop/action';
 import { empty, Observable } from 'rxjs';
 import { LoopPlayer } from './LoopPlayer';
 import { PlayTrackLoopAction, StopLoopAction } from 'store/player/action';
@@ -9,6 +9,7 @@ import { timeZero } from 'util/time';
 import { Transport } from 'tone';
 import { instrumentNodes } from './instruments';
 import { MidiNote } from 'util/sound';
+import { LoopPlayState } from 'store/loop';
 
 const emptyObservable = empty();
 const { keys: objectKeys } = Object;
@@ -117,8 +118,7 @@ export function playLoopEpic(actions) {
                 player.start(when);
 
                 return Observable.create((o) => {
-
-
+                    o.next(setLoopPlayState(loopId, LoopPlayState.PLAYING));
                     return () => player.stop(timeZero);
                 })
                 .pipe(

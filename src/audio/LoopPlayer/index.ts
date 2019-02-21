@@ -2,8 +2,10 @@ import { Time, timeZero } from "util/time";
 import { PianoKey, MidiNote } from "util/sound";
 import { InstrumentAudioNode } from "store/instrument/types";
 import { Tempo } from "store/project";
-import { TickRange, tickTime } from "store/tick";
+import { TickRange, tickTime, Tick, timeToTick } from "store/tick";
 import { Part as TonePart } from 'tone';
+import { Observable, animationFrameScheduler, ConnectableObservable, Subscription } from "rxjs";
+import { repeat, publishReplay, endWith } from "rxjs/operators";
 
 interface TonePartObject {
     time: Time;
@@ -22,9 +24,21 @@ export class LoopPlayer {
     tempo: Tempo | null = null;
     loopRange: TickRange | null = null;
     instrumentNode: InstrumentAudioNode<any> | null = null;
-    onTimeUpdate?: (time: number) => void;
+    timeUpdateObservable: ConnectableObservable<Tick>;
+    timeUpdateSubscription: Subscription | null = null;
     constructor(loopId: string) {
         this.loopId = loopId;
+        this.timeUpdateObservable = Observable.create((o) => {
+            animationFrameScheduler.schedule(() => {
+                const tick = timeToTick(this.calcCurrentTime(), this.tempo!);
+                o.next(tick);
+                o.complete();
+            });
+        })
+        .pipe(
+            repeat(),
+            publishReplay(),
+        );
     }
 
     start(when: Time) {
@@ -66,13 +80,18 @@ export class LoopPlayer {
         part.loopStart = loopStartTime.seconds;
         part.loopEnd = loopDurationTime.seconds;
         part.start(when.seconds);
+        this.timeUpdateSubscription = this.timeUpdateObservable.connect();
     }
 
     stop(when: Time) {
-        const { part } = this;
+        const { part, timeUpdateSubscription } = this;
         if (part) {
             part.stop(when.seconds);
             part.cancel(when.seconds);
+        }
+        if (timeUpdateSubscription) {
+            timeUpdateSubscription.unsubscribe();
+            this.timeUpdateSubscription = null;
         }
     }
 
@@ -102,7 +121,7 @@ export class LoopPlayer {
         }
     }
 
-    get currentTime(): Time {
+    calcCurrentTime() {
         const { part } = this;
         if (part) {
             const { loopStart, progress, loopEnd } = part;
@@ -110,6 +129,10 @@ export class LoopPlayer {
             return Time.fromSeconds(seconds);
         }
         return timeZero;
+    }
+
+    get currentTime(): Observable<Tick | null> {
+        return this.timeUpdateObservable;
     }
 
     addNotes(notes: MidiNote[]) {
@@ -125,11 +148,9 @@ export class LoopPlayer {
 
             return seed;
         }, this.notes);
-        console.log(this.notes);
     }
 
     setNoteRange(noteId: string, range: TickRange) {
-        console.log('set rag', this.notes)
         const note = this.notes[noteId];
         this.removeNote(noteId);
         note.range = range;
