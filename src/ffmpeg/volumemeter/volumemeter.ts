@@ -85,7 +85,7 @@ export default class VolumeMeter extends LightningElement {
     get redStyle() {
         const { totalScaleValue } = this;
         const min = 1;
-        const max = 50;
+        const max = 1.1;
         let value = 1;
         if (totalScaleValue < min) {
             value = 0;

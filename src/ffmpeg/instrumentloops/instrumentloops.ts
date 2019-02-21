@@ -9,6 +9,10 @@ import { RouterState } from 'store/route/reducer';
 import { Tempo } from 'store/project';
 import { VolumeMeterOrientation } from 'cmp/volumemeter/volumemeter';
 import { instrumentMeters } from 'audio/instruments';
+import { RangeInputOrienation } from 'cmp/rangeinput/rangeinput';
+import { InstrumentState } from 'store/instrument/reducer';
+import { setInstrumentVolume } from 'store/instrument/action';
+import { decibel } from 'units/decibel';
 
 export type CreateLoopEvent = CustomEvent<{
     instrumentId: string;
@@ -28,8 +32,12 @@ export default class TrackLoopsElement extends LightningElement {
     storeData: {
         data: {
             router: RouterState;
-            loop: LoopState['items']
+            loop: LoopState['items'];
         }
+    }
+
+    get instrumentVolumeValue(): number {
+        return this.instrument.volume.value;
     }
 
     get containerClassName() {
@@ -52,6 +60,10 @@ export default class TrackLoopsElement extends LightningElement {
 
     get instrumentMeter() {
         return instrumentMeters[this.instrument.id];
+    }
+
+    get volumeRangeOrientation() {
+        return RangeInputOrienation.Vertical;
     }
 
     onCreateTrackLoopClick(evt) {
@@ -83,5 +95,12 @@ export default class TrackLoopsElement extends LightningElement {
             const event: DeleteInstrumentEvent = deleteInstrumentEvent(this.instrument.id);
             this.dispatchEvent(event);
         }
+    }
+
+    onVolumeInput(evt) {
+        const value = parseFloat(evt.detail.value);
+        appStore.dispatch(
+            setInstrumentVolume(this.instrument.id, decibel(value)),
+        );
     }
 }

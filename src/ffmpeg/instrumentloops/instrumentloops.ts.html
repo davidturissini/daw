@@ -16,9 +16,21 @@
             </template>
         </ul>
         <button onclick={onCreateTrackLoopClick}>Add Loop</button>
-        <ffmpeg-volumemeter
-            meter={instrumentMeter}
-            orientation={volumeMeterOrientation}
-        ></ffmpeg-volumemeter>
+        <section class="audio-controls">
+            <ffmpeg-rangeinput
+                min="-100"
+                step="1"
+                max="20"
+                value={instrumentVolumeValue}
+                class="audio-controls__range-input"
+                orientation={volumeRangeOrientation}
+                oninput={onVolumeInput}
+            ></ffmpeg-rangeinput>
+            <ffmpeg-volumemeter
+                class="audio-controls__volume-meter"
+                meter={instrumentMeter}
+                orientation={volumeMeterOrientation}
+            ></ffmpeg-volumemeter>
+        </section>
     </article>
 </template>

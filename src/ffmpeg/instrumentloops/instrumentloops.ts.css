@@ -32,3 +32,20 @@ ul, li {
 ul {
     flex: 1 0 auto;
 }
+
+.audio-controls {
+    display: flex;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.audio-controls__volume-meter {
+    height: 150px;
+    width: 12px;
+    margin-left: 0.5rem;
+}
+
+.audio-controls__range-input {
+    height: 150px;
+    width: 14px;
+}
